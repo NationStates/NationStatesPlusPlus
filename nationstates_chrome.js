@@ -9,8 +9,7 @@ if (endIndex > -1) {
 	region = window.location.href.substring(index);
 }
 if (region.indexOf("display_region_rmb") == -1) {
-	console.log(region);
-
+	//console.log(region);
 	var elems = document.getElementsByTagName('*'), i;
 
 	for (i in elems) {
@@ -21,7 +20,7 @@ if (region.indexOf("display_region_rmb") == -1) {
 		}
 	}
 
-	var quote ="<div style='text-align:right; float:right; margin-top:-17px;'><a href='javascript:void(0);' onclick='quotePost(this);'>Quote</a></div>";
+	var quote ="<div style='text-align:right; float:right; margin-top:-18px;'><a href='javascript:void(0);' onclick='quotePost(this);'>Quote</a></div>";
 	var showSuppressedButton = "<div class='rmbbuttons'><a href='' class='forumpaneltoggle rmbshow'><img src='/images/rmbbshow.png' alt='Show' title='Show post'></a></div>";
 
 	var rmbPost = document.forms["rmb"];
@@ -40,6 +39,8 @@ if (region.indexOf("display_region_rmb") == -1) {
 		   } );
 		   elems[i].innerHTML = html;
 		   break;
+		} else if ((" " + elems[i].className + " ").indexOf(" rmbview ") > -1) {
+			elems[i].parentNode.removeChild(elems[i]);
 		}
 	}
 
@@ -58,6 +59,10 @@ if (region.indexOf("display_region_rmb") == -1) {
 		$(formHtml).insertBefore('.rmbrow:first');
 	}
 
+	//Move forum view to the top
+	var forumViewHTML = "<p class='rmbview'><a href='/region=capitalist_paradise/page=display_region_rmb'>Switch to Forum View</a></p>";
+	$(forumViewHTML).insertBefore('.rmbrow:first');
+
 	var atEarliestMessage = false;
 	var rmboffset = 10;
 	$(window).scroll(function() {
@@ -65,7 +70,8 @@ if (region.indexOf("display_region_rmb") == -1) {
 			return;
 		}
 		setTimeout(function() {
-			if ($(window).scrollTop() == $(document).height() - $(window).height()) {
+			//console.log("Scroll Top: " + $(window).scrollTop() + " Document Height: " + $(document).height() + " Window Height: " + $(window).height());
+			if (isInRange($(window).scrollTop() - 5, $(document).height() - $(window).height(), $(window).scrollTop() + 5)) {
 				$.get('/page=ajax/a=rmb/region=' + region + '/offset=' + rmboffset, function(data) {
 					if (data.length > 1) {
 						//Format HTML
@@ -86,6 +92,13 @@ if (region.indexOf("display_region_rmb") == -1) {
 	});
 }
 
+function isInRange(min, value, max) {
+	if (value > min && value < max) {
+		return true;
+	}
+	return false;
+}
+
 function parseRMBPost(innerHTML, quoteHTML, className) {
 	if (innerHTML.indexOf("rmbsuppressed") > -1) {
 		//Check if it is self-deleted or mod deleted
@@ -103,13 +116,13 @@ function parseRMBPost(innerHTML, quoteHTML, className) {
 				var postEnd = data.indexOf('</div></div><div class="rmbspacer">', postStart) + 6;
 				
 				var postHTML = data.substring(postStart, postEnd);
-				console.log(postHTML);
+				//console.log(postHTML);
 				document.getElementById(postName).innerHTML = postHTML;
 			});
 			innerHTML += "<div id='post-" + postId + "' class='hide suppressedbody-" + postId + "'></div>"
 			innerHTML += "</div><div class='rmbspacer'></div>";
-			quoteHTML = "";
 		}
+		quoteHTML = "";
 	}
 	return ("<div class='" + className + "' style='display: block;'>" + innerHTML + quoteHTML + "</div>");
 }
@@ -128,7 +141,7 @@ function quotePost(post) {
 			}
 		}
 	});
-	console.log("nation: " + nation);
+	//console.log("nation: " + nation);
 	$(post.parentNode.parentNode).children().each(function() {
 		if ($(this).attr('class') == "rmbmsg2") {
 			var text = "";
@@ -148,16 +161,18 @@ function quotePost(post) {
 			});
 			var form = document.forms["rmb"];
 			$(form).children().each(function() {
-				console.log("class: " + $(this).attr('class'));
+				//console.log("class: " + $(this).attr('class'));
 				if ($(this).attr('class') == "widebox") {
+					$(this).attr("id","widebox-form");
 					var textArea = $(this).find("textarea");
 					var value = $(textArea).val();
 					if (value.length > 0) {
 						value += "\n";
 					}
-					value += nation + " said,\n"
+					value += nation + " said,\n";
 					value += "[i]" + text + "[/i]";
-					$(textArea).val(value);
+					$(textArea).val(value + "\n");
+					$("#html,body").animate({scrollTop: $("#widebox-form").offset().top - 100});
 				}
 			});
 		}
