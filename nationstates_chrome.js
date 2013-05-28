@@ -39,8 +39,6 @@ if (region.indexOf("display_region_rmb") == -1) {
 		   } );
 		   elems[i].innerHTML = html;
 		   break;
-		} else if ((" " + elems[i].className + " ").indexOf(" rmbview ") > -1) {
-			elems[i].parentNode.removeChild(elems[i]);
 		}
 	}
 
@@ -59,9 +57,10 @@ if (region.indexOf("display_region_rmb") == -1) {
 		$(formHtml).insertBefore('.rmbrow:first');
 	}
 
-	//Move forum view to the top
-	var forumViewHTML = "<p class='rmbview'><a href='/region=capitalist_paradise/page=display_region_rmb'>Switch to Forum View</a></p>";
-	$(forumViewHTML).insertBefore('.rmbrow:first');
+	var forumView = jQuery('#content').find('.rmbview');
+	var forumViewHTML = forumView.html();
+	forumView.remove();
+	$("<p class='rmbview'>" + forumViewHTML + "</p>").insertBefore('.rmbrow:first');
 
 	var atEarliestMessage = false;
 	var rmboffset = 10;
@@ -173,6 +172,7 @@ function quotePost(post) {
 					value += "[i]" + text + "[/i]";
 					$(textArea).val(value + "\n");
 					$("#html,body").animate({scrollTop: $("#widebox-form").offset().top - 100});
+					$(textArea).focus();
 				}
 			});
 		}
