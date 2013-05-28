@@ -1,4 +1,3 @@
-
 //Find the region name
 var index = window.location.href.indexOf("region=") + 7;
 var endIndex = window.location.href.indexOf("#");
@@ -20,7 +19,8 @@ if (region.indexOf("display_region_rmb") == -1) {
 		}
 	}
 
-	var quote ="<div style='text-align:right; float:right; margin-top:-18px;'><a href='javascript:void(0);' onclick='quotePost(this);'>Quote</a></div>";
+	//var quote ="<div style='text-align:right; float:right; margin-top:-18px;'><a href='javascript:void(0);' onclick='quotePost(this);'>Quote</a></div>";
+	var quote = '<div class="transparentoid" style="color: white; font-weight: bold; font-size: 8pt; padding: 2px 8px 2px 8px; background: black; background-color: rgba(0,0,0,0.2); border-radius: 30px; text-align:right; float:right; margin-top: -18px;margin-right: -7px;"><a href="javascript:void(0);" onclick="quotePost(this);">Quote</a></div>';
 	var showSuppressedButton = "<div class='rmbbuttons'><a href='' class='forumpaneltoggle rmbshow'><img src='/images/rmbbshow.png' alt='Show' title='Show post'></a></div>";
 
 	var rmbPost = document.forms["rmb"];
