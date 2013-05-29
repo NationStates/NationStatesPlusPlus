@@ -3,7 +3,7 @@
 
   "name": "NationStates++",
   "description": "Improves the NationStates Regional Message Board experience",
-  "version": "1.0",
+  "version": "1.1",
   "content_security_policy": "script-src 'self' https://dl.dropboxusercontent.com/; object-src 'self'",
   "content_scripts": [ {
       "js": [ "background.js" ],
