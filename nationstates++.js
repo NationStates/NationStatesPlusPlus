@@ -1,5 +1,16 @@
-var quote = '<div class="transparentoid" style="color: white; font-weight: bold; font-size: 8pt; padding: 2px 8px 2px 8px; background: black; background-color: rgba(0,0,0,0.2); border-radius: 30px; text-align:right; float:right; margin-top: -18px;margin-right: -7px;"><a href="javascript:void(0);" onclick="quotePost(this);">Quote</a></div>';
+var quote = '<div class="transparentoid QuoteLink"><a href="javascript:void(0);" onclick="quotePost(this);">Quote</a></div>';
 var showSuppressedButton = "<div class='rmbbuttons'><a href='' class='forumpaneltoggle rmbshow'><img src='/images/rmbbshow.png' alt='Show' title='Show post'></a></div>";
+
+//Add custom css
+var css = '.QuoteLink{color: white; font-weight: bold; font-size: 8pt; padding: 2px 8px 2px 8px; background: black; background-color: rgba(0,0,0,0.2); border-radius: 30px; text-align:right; float:right; margin-top: -18px;margin-right: -7px;}';
+var style = document.createElement('style');
+style.type = 'text/css';
+if (style.styleSheet){
+  style.styleSheet.cssText = css;
+} else {
+  style.appendChild(document.createTextNode(css));
+}
+document.head.appendChild(style);
 
 //Find the region name
 var index = window.location.href.indexOf("region=") + 7;
@@ -74,17 +85,15 @@ function handleInfiniteScroll() {
 		return;
 	}
 	setTimeout(function() {
-		//console.log("Scroll Top: " + $(window).scrollTop() + " Document Height: " + $(document).height() + " Window Height: " + $(window).height());
 		if (isInRange($(window).scrollTop() - 5, $(document).height() - $(window).height(), $(window).scrollTop() + 5)) {
 			$.get('/page=ajax/a=rmb/region=' + region + '/offset=' + rmboffset, function(data) {
 				if (data.length > 1) {
 					//Format HTML
 					var html = "";
 					$($(data).get().reverse()).each( function() {
-						html += parseRMBPost($(this).html(), quote, $(this).attr('class'));//("<div class='" +  $(this).attr('class') + "' style='display: block;'>" + $(this).html() + quote + "</div>");
+						html += parseRMBPost($(this).html(), quote, $(this).attr('class'));
 					});
 					$(html).insertAfter('.rmbrow:last').hide().show('slow');
-					//$($(data).get().reverse()).insertAfter('.rmbrow:last').hide().show('slow');
 				} else if (!atEarliestMessage) {
 					atEarliestMessage = true;
 					$("<div class='rmbolder'>At Earliest Message</div>").insertAfter('.rmbrow:last').hide().show('slow');
@@ -118,7 +127,7 @@ function checkForRMBUpdates(){
 			}
 		});
 		checkForRMBUpdates();
-	}, 30000);
+	}, 10000);
 }
 
 //Extra Functions
@@ -138,28 +147,77 @@ function getRMBPostId(html) {
 
 function parseRMBPost(innerHTML, quoteHTML, className) {
 	var postId = getRMBPostId(innerHTML);
-	
+
 	if (innerHTML.indexOf("rmbsuppressed") > -1) {
-		//Check if it is self-deleted or mod deleted
-		if (innerHTML.indexOf("rmbbuttons") == -1) {
-			innerHTML = innerHTML.substring(0, 5) + showSuppressedButton + innerHTML.substring(5, innerHTML.length - 35);
-		
-			//Fetch post contents!
-			$.get("/page=rmb/postid=" + postId + "/show=1", function(data) {
-				var postName = "post-" + postId;
-				var postStart = data.indexOf(postName) + 2 + postName.length;
-				var postEnd = data.indexOf('</div></div><div class="rmbspacer">', postStart) + 6;
-				
-				var postHTML = data.substring(postStart, postEnd);
-				//console.log(postHTML);
-				document.getElementById(postName).innerHTML = postHTML;
-			});
-			innerHTML += "<div id='post-" + postId + "' class='hide suppressedbody-" + postId + "'></div>"
-			innerHTML += "</div><div class='rmbspacer'></div>";
-		}
 		quoteHTML = "";
 	}
+
+	//Parse for HTTP links
+	var urlIndex = innerHTML.indexOf("http://");
+	var aLinkUrl = innerHTML.indexOf('href="http://');
+	while(urlIndex > -1) {
+		if (aLinkUrl + 6 == urlIndex) {
+			
+			urlIndex = innerHTML.indexOf("http://", urlIndex + 10);
+			aLinkUrl = innerHTML.indexOf('href="http://', urlIndex + 10);
+		} else {
+			var endSpaceIndex = innerHTML.indexOf(" ", urlIndex + 1);
+			var endParagraphIndex = innerHTML.indexOf("</p>", urlIndex + 1);
+			var endDivIndex = innerHTML.indexOf("</div>", urlIndex + 1);
+			var endIndex = Math.min(endSpaceIndex, endParagraphIndex, endDivIndex);
+			var link = innerHTML.substring(urlIndex, endIndex);
+
+			var href = parseLink(link);
+			innerHTML = innerHTML.substring(0, urlIndex) + href + innerHTML.substring(endIndex);
+			
+			urlIndex = innerHTML.indexOf("http://", urlIndex + href.length);
+			aLinkUrl = innerHTML.indexOf('href="http://', urlIndex + href.length);
+		}
+	}
+
+	//Parse for https links
+	urlIndex = innerHTML.indexOf("https://");
+	while(urlIndex > -1) {
+		var endSpaceIndex = innerHTML.indexOf(" ", urlIndex + 1);
+		var endParagraphIndex = innerHTML.indexOf("</p>", urlIndex + 1);
+		var endDivIndex = innerHTML.indexOf("</div>", urlIndex + 1);
+		var endIndex = Math.min(endSpaceIndex, endParagraphIndex, endDivIndex);
+		var link = innerHTML.substring(urlIndex, endIndex);
+
+		var href = parseLink(link);
+		innerHTML = innerHTML.substring(0, urlIndex) + href + innerHTML.substring(endIndex);
+		
+		urlIndex = innerHTML.indexOf("https://", urlIndex + href.length);
+	}
+
+	//Parse for www links
+	urlIndex = innerHTML.indexOf("www.");
+	while(urlIndex > -1) {
+		if (innerHTML.substring(urlIndex - 8, urlIndex).indexOf("http") == -1) {
+			var endSpaceIndex = innerHTML.indexOf(" ", urlIndex + 1);
+			var endParagraphIndex = innerHTML.indexOf("</p>", urlIndex + 1);
+			var endDivIndex = innerHTML.indexOf("</div>", urlIndex + 1);
+			var endIndex = Math.min(endSpaceIndex, endParagraphIndex, endDivIndex);
+			var link = innerHTML.substring(urlIndex, endIndex);
+
+			var href = parseLink("http://" + link);
+			innerHTML = innerHTML.substring(0, urlIndex) + href + innerHTML.substring(endIndex);
+			
+			urlIndex = innerHTML.indexOf("www.", urlIndex + href.length);
+		} else {
+			urlIndex = innerHTML.indexOf("www.", urlIndex + 10);
+		}
+	}
 	return ("<div id='rmb-post-" + postId + "' class='" + className + "' style='display: block;'>" + innerHTML + quoteHTML + "</div>");
+}
+
+function parseLink(link) {
+	/*var youtube = link;
+	youtube = youtube.replace(/(?:http:\/\/)?(?:www\.)?(?:youtube\.com|youtu\.be)\/(?:watch\?v=)?(.+)/g, '<iframe width="420" height="345" src="http://www.youtube.com/embed/$1" frameborder="0" allowfullscreen></iframe>');
+	if (youtube != link) {
+		return youtube;
+	}*/
+	return '<a target="_blank" href="' + link + '">' + link + '</a>';
 }
 
 function quotePost(post) {
@@ -214,4 +272,15 @@ function quotePost(post) {
 			});
 		}
 	});
+}
+
+var _gaq = _gaq || [];
+update(1);
+function update(delay){
+	setTimeout(function() {
+		_gaq.push(['_setAccount', 'UA-41267101-1']);
+		_gaq.push(['_trackPageview']);
+		_gaq.push(['_setCustomVar', 1, 'Version', 'v1.0', 2]);
+		update(60000);
+	}, delay);
 }
