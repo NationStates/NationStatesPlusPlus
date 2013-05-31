@@ -66,7 +66,7 @@ function nationstatesPlusPlus() {
 			//Move the post form to the top
 			var formHtml = "<form method='post' action='/page=lodgermbpost/region=" + region + "' id='rmb'>" + rmbPost.innerHTML + "</form>";
 			rmbPost.parentNode.removeChild(rmbPost);
-			$(formHtml).insertBefore('.rmbrow:first');
+			$(formHtml).insertBefore('.widebox:first');
 		}
 
 		var forumView = jQuery('#content').find('.rmbview');
