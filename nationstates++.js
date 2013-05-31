@@ -79,19 +79,20 @@ function nationstatesPlusPlus() {
 			var formHtml = "<div id='rmb-post-form' style='display: none;'><form method='post' action='/page=lodgermbpost/region=" + region + "' id='rmb'>" + rmbPost.innerHTML + "</form></div>";
 			rmbPost.parentNode.removeChild(rmbPost);
 		}
-		$(formHtml).insertBefore('.rmbrow:first');
+		var widebox = $('.widebox:last');
+		widebox.prepend(formHtml);
 
 		//Move "Switch to Forum View" to top of RMB posts
 		var forumView = jQuery('#content').find('.rmbview');
 		var forumViewHTML = forumView.html();
 		forumView.remove();
-		$("<p class='rmbview'>" + forumViewHTML + "</p>").insertBefore('.rmbrow:first');
-		
-		//Add rmb menu area
-		$("<div id='rmb-menu' style='text-align: center;'><div class='transparentoid QuoteMenu'><a href='javascript:void(0);' onclick='toggleRMBPostForm();'>Leave a message</a></div> - <div class='transparentoid QuoteMenu'><a href='javascript:void(0);' onclick='toggleSearchForm();'>Search messages</a></div></div").insertBefore('.rmbtable2:first');
-		
+		$("<p class='rmbview'>" + forumViewHTML + "</p>").insertBefore(".rmbrow:first");
+	
 		//Add search box
-		$("<div id='searchbox' style='display: none;'><div style='margin-top:6px; text-align:center;'><input placeholder='Coming Soon!' type='search' style='text-align:center; width:35%; height:25px;' name='googlesearch' onkeydown='if (event.keyCode == 13) { searchRMB() }' disabled></div></div>").insertBefore('.rmbtable2:first');
+		widebox.prepend("<div id='searchbox' style='display: none;'><div style='margin-top:6px; text-align:center;'><input placeholder='Coming Soon!' type='search' style='text-align:center; width:35%; height:25px;' name='googlesearch' onkeydown='if (event.keyCode == 13) { searchRMB() }' disabled></div></div>");
+
+		//Add rmb menu area
+		widebox.prepend("<div id='rmb-menu' style='text-align: center;'><div class='transparentoid QuoteMenu'><a href='javascript:void(0);' onclick='toggleRMBPostForm();'>Leave a message</a></div> - <div class='transparentoid QuoteMenu'><a href='javascript:void(0);' onclick='toggleSearchForm();'>Search messages</a></div></div");
 
 		//Setup infinite scroll
 		$(window).scroll(handleInfiniteScroll);
