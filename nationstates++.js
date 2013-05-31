@@ -262,12 +262,14 @@ function quotePost(post) {
 					if (value.length > 0) {
 						value += "\n";
 					}
-					value += nation + " said,\n";
+					value += "[b]" + nation + " said,[/b]\n";
 					value += "[i]" + text + "[/i]";
 					$(textArea).val(value + "\n");
 					//$("#html,body").animate({scrollTop: $("#widebox-form").offset().top - 100});
 					$('body,html').animate({scrollTop: $("#widebox-form").offset().top - 100});
 					$(textArea).focus();
+					var v = $(textArea).val();
+					$(textArea).val(v);
 				}
 			});
 		}
