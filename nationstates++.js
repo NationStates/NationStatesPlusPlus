@@ -262,14 +262,13 @@ function quotePost(post) {
 					if (value.length > 0) {
 						value += "\n";
 					}
-					value += "[b]" + nation + " said,[/b]\n";
+					value += "[b]>[/b] " + nation + " said:\n";
 					value += "[i]" + text + "[/i]";
-					$(textArea).val(value + "\n");
+					$(textArea).val(value + "\n\n");
 					//$("#html,body").animate({scrollTop: $("#widebox-form").offset().top - 100});
 					$('body,html').animate({scrollTop: $("#widebox-form").offset().top - 100});
 					$(textArea).focus();
-					var v = $(textArea).val();
-					$(textArea).val(v);
+					$(textArea).caretToEnd()
 				}
 			});
 		}
