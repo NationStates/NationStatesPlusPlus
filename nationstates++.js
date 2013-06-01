@@ -4,6 +4,7 @@ var showSuppressedButton = "<div class='rmbbuttons'><a href='' class='forumpanel
 //Add custom css
 var css = '.QuoteLink{color: white; font-weight: bold; font-size: 8pt; padding: 2px 8px 2px 8px; background: black; background-color: rgba(0,0,0,0.2); border-radius: 30px; text-align:right; float:right; margin-top: -18px;margin-right: -7px;}';
 css += '.QuoteMenu{color: white; font-weight: bold; font-size: 12pt; padding: 2px 8px 2px 8px; background: black; background-color: rgba(0,0,0,0.2); border-radius: 14px; display: inline-block;}';
+css += '.highlight {background: #FFFF00;}';
 var style = document.createElement('style');
 style.type = 'text/css';
 if (style.styleSheet){
@@ -31,7 +32,6 @@ if (typeof nationSelector.attr("href") == 'undefined') {
 	nation = nationSelector.attr("href").substring(7);
 }
 console.log("Nation: " + nation);
-
 	
 function nationstatesPlusPlus() {
 	if (region.indexOf("display_region_rmb") == -1) {
@@ -45,6 +45,8 @@ function nationstatesPlusPlus() {
 				break;
 			}
 		}
+		
+		$('input:radio:checked')
 
 		var rmbPost = document.forms["rmb"];
 		if (typeof rmbPost == 'undefined') {
@@ -61,7 +63,8 @@ function nationstatesPlusPlus() {
 					html += parseRMBPost($(this).html(), quote, $(this).attr('class'));
 			   } );
 			   elems[i].innerHTML = html;
-			   break;
+			} else if ((" " + elems[i].className + " ").indexOf(" small ") > -1) {
+				$(elems[i]).attr("class", "btn");
 			}
 		}
 
@@ -89,7 +92,7 @@ function nationstatesPlusPlus() {
 		$("<p class='rmbview'>" + forumViewHTML + "</p>").insertBefore(".rmbrow:first");
 	
 		//Add search box
-		widebox.prepend("<div id='searchbox' style='display: none;'><div style='margin-top:6px; text-align:center;'><input placeholder='Coming Soon!' type='search' style='text-align:center; width:35%; height:25px;' name='googlesearch' onkeydown='if (event.keyCode == 13) { searchRMB() }' disabled></div></div>");
+		widebox.prepend("<div id='searchbox' style='display: none;'><div style='margin-top:6px; text-align:center;'><input id='rmb-search-input' placeholder='Search' type='search' style='width:35%; height:25px;' name='googlesearch' onkeydown='if (event.keyCode == 13) { searchRMB(); } else { cancelSearch(); }'></div></div>");
 
 		//Add rmb menu area
 		widebox.prepend("<div id='rmb-menu' style='text-align: center;'><div class='transparentoid QuoteMenu'><a href='javascript:void(0);' onclick='toggleRMBPostForm();'>Leave a message</a></div> - <div class='transparentoid QuoteMenu'><a href='javascript:void(0);' onclick='toggleSearchForm();'>Search messages</a></div></div");
@@ -99,8 +102,151 @@ function nationstatesPlusPlus() {
 	}
 }
 
+var keywords;
+var lastSearchSuccessful = false;
+var searchOffset = 0;
+var results = 0;
+var maxResults = 10;
+var cancelled = false;
 function searchRMB() {
-	//TODO!
+	var searchWords = document.getElementById("rmb-search-input").value;
+	keywords = searchToKeywords(searchWords);
+	console.log("Keywords: " + keywords);
+	//Hide RMB
+	var rmb = $('.rmbtable2:last');
+	rmb.attr("style", "display: none;");
+	var searchResults = document.getElementById("rmb-search-results");
+	if (searchResults === null) {
+		$("<div id='rmb-search-results' style='display: block;' class='rmbtable2'></div>").insertBefore(rmb);
+		searchResults = document.getElementById("rmb-search-results");
+		$(searchResults).html("<p></p>");
+	} else {
+		$(searchResults).attr("style", "display: block;");
+		$(searchResults).html("<p></p>");
+	}
+	cancelled = false;
+	results = 0;
+	maxResults = 10;
+	searchOffset = rmboffset;
+	rmb.children().each(searchRMBPost);
+	searchOlderRMBPosts();
+}
+
+/**
+	Converts a search input into an array of keywords to search for.
+	Each word separated by one or more spaces is considered a keyword,
+	Unless the text is inside a pair of ""'s.
+*/
+function searchToKeywords(search) {
+	var keys = new Array();
+	var start = 0;
+	var foundQuote = false;
+	for (var i = 0, len = search.length; i < len; i++) {
+		if (search[i] == '"') {
+			if (!foundQuote) {
+				foundQuote = true;
+			} else {
+				foundQuote = false;
+				keys.push(search.substring(start + 1, i).trim());
+				start = i + 1;
+			}
+		} else if (search[i] == " " && !foundQuote) {
+			if (i != start) {
+				keys.push(search.substring(start, i).trim());
+			}
+			start = i + 1;
+		}
+	}
+	var lastKey;
+	if (foundQuote) {
+		lastKey = search.substring(start + 1).trim();
+	} else {
+		lastKey = search.substring(start).trim();
+	}
+	if (lastKey.length > 0) {
+		keys.push(lastKey);
+	}
+	return keys;
+}
+
+function cancelSearch() {
+	cancelled = true;
+	var wantToCancel = document.getElementById("want-to-cancel-search");
+	if (wantToCancel != null) {
+		$(wantToCancel).remove();
+	}
+}
+
+function searchOlderRMBPosts() {
+	getRMBPosts(searchOffset, function(data) {
+		if (cancelled) {
+			return;
+		}
+		var searchResults = document.getElementById("rmb-search-results");
+		if (data.length > 1) {
+			//Process RMB posts
+			$($(data).get().reverse()).each(searchRMBPost);
+			searchOffset += 10;
+
+			//User is scrolling near bottom, keep adding more results!
+			if (isInRange($(window).scrollTop() - 5, $(document).height() - $(window).height(), $(window).scrollTop() + (screen.height / 2.5))) {
+				if (results + 5 >= maxResults) {
+					maxResults += 10;
+				}
+			}
+			
+			var wantToCancel = document.getElementById("want-to-cancel-search");
+			if (results < maxResults) {
+				//We haven't found results, did user give us a useless query?
+				if (results == 0) {
+					if (wantToCancel === null) {
+						$(searchResults).append("<div id='want-to-cancel-search' class='rmbolder'>Searched <div style='display:inline;' id='searched-count'>" + searchOffset + "</div> posts so far... Want to start over?  <button id='cancel-search' class='btn' onclick='cancelSearch()'>Cancel</button></div>");
+						$('body,html').animate({scrollTop: $(document).height()});
+					} else {
+						$("#searched-count").html(searchOffset);
+					}
+					wantToCancel = null; //set to null so it is not removed later
+				}
+				//Keep searching!
+				searchOlderRMBPosts();
+			} else {
+				$(searchResults).append("<div id='search-paused' class='rmbolder'>Load More Results</div>");
+			}
+			
+			//Remove want to cancel
+			if (wantToCancel != null) {
+				$(wantToCancel).remove();
+			}
+		} else {
+			if (results == 0) {
+				$(searchResults).append("<div class='rmbolder'>No Search Results</div>");
+				rmb.attr("style", "display: block;");
+				lastSearchSuccessful = false;
+			} else {
+				lastSearchSuccessful = true;
+				$(searchResults).append("<div class='rmbolder'>End of Search Results</div>");
+			}
+		}
+	});
+}
+
+function searchRMBPost() {
+	var result = null;
+	var lowercaseHtml = $(this).html().toLowerCase();
+	for (i in keywords) {
+		var keyword = keywords[i];
+		if (keyword === null || keyword.length == 0) {
+			continue;
+		}
+		if (lowercaseHtml.indexOf(keyword.toLowerCase()) > -1) {
+			if (result === null) {
+				var postId = getRMBPostId($(this).html()) + "-search";
+				result = $(document.getElementById("rmb-search-results")).append(parseRMBPostWithId($(this).html(), quote, $(this).attr('class'), postId));
+				results++;
+			}
+			$(result).highlight(keyword);
+		}
+	}
 }
 
 function isRMBPostFormVisible() {
@@ -114,6 +260,25 @@ function toggleRMBPostForm() {
 		$("#rmb-post-form").attr("style", "");
 	}
 	$("#searchbox").attr("style", "display: none;");
+	//Hide search results
+	var searchResults = document.getElementById("rmb-search-results");
+	if (searchResults != null) {
+		$(searchResults).attr("style", "display: none;");
+	}
+	//Show RMB posts
+	$('.rmbtable2:last').attr("style", "display: block;");
+}
+
+function isSearchFormVisible() {
+	return ($("#searchbox").attr("style") == "");
+}
+
+function isSearchResultsVisible() {
+	var results = document.getElementById("rmb-search-results");
+	if (results != null) {
+		return $(results).attr("style") != "display: none;";
+	}
+	return false;
 }
 
 function toggleSearchForm() {
@@ -123,6 +288,12 @@ function toggleSearchForm() {
 		$("#searchbox").attr("style", "");
 	}
 	$("#rmb-post-form").attr("style", "display: none;");
+	var searchResults = document.getElementById("rmb-search-results");
+	if (searchResults != null && lastSearchSuccessful) {
+		$(searchResults).attr("style", "display: block;");
+		$('.rmbtable2:last').attr("style", "display: none;");
+	}
+	$("#rmb-search-input").focus();
 }
 
 function toTitleCase(str) {
@@ -135,50 +306,74 @@ function handleInfiniteScroll() {
 	if (atEarliestMessage) {
 		return;
 	}
-	setTimeout(function() {
-		if (isInRange($(window).scrollTop() - 5, $(document).height() - $(window).height(), $(window).scrollTop() + 5)) {
-			$.get('/page=ajax/a=rmb/region=' + region + '/offset=' + rmboffset, function(data) {
-				if (data.length > 1) {
-					//Format HTML
-					var html = "";
-					$($(data).get().reverse()).each( function() {
-						html += parseRMBPost($(this).html(), quote, $(this).attr('class'));
-					});
-					$(html).insertAfter('.rmbrow:last').hide().show('slow');
-				} else if (!atEarliestMessage) {
-					atEarliestMessage = true;
-					$("<div class='rmbolder'>At Earliest Message</div>").insertAfter('.rmbrow:last').hide().show('slow');
-				}
-			});
-			rmboffset += 10;
+	//Infinite search Scroll
+	if (isSearchResultsVisible()) {
+		if (isInRange($(window).scrollTop() - 5, $(document).height() - $(window).height(), $(window).scrollTop() + (screen.height / 2.5))) {
+			var searchPaused = document.getElementById("search-paused");
+			if (searchPaused != null) {
+				maxResults += 10;
+				$(searchPaused).remove();
+				searchOlderRMBPosts();
+			}
 		}
-	}, 25);
-}
-
-nationstatesPlusPlus();
-
-checkForRMBUpdates();
-function checkForRMBUpdates(){
-	setTimeout(function() {
-		$.get('/page=ajax/a=rmb/region=' + region + '/offset=0', function(data) {
-			if (data.length > 1) {
-				var html = "";
-				//Check for new posts
-				$($(data).get().reverse()).each( function() {
-					var postId = getRMBPostId($(this).html());
-					if (document.getElementById("rmb-post-" + postId) === null) {
-						console.log("no post for id: " + postId);
-						html += parseRMBPost($(this).html(), quote, $(this).attr('class'));
+	} else {
+	//Infinite RMB post scroll
+		setTimeout(function() {
+			if (isInRange($(window).scrollTop() - 5, $(document).height() - $(window).height(), $(window).scrollTop() + 5)) {
+				getRMBPosts(rmboffset, function(data) {
+					if (data.length > 1) {
+						//Format HTML
+						var html = "";
+						$($(data).get().reverse()).each( function() {
+							html += parseRMBPost($(this).html(), quote, $(this).attr('class'));
+						});
+						$(html).insertAfter('.rmbrow:last').hide().show('slow');
+					} else if (!atEarliestMessage) {
+						atEarliestMessage = true;
+						$("<div class='rmbolder'>At Earliest Message</div>").insertAfter('.rmbrow:last').hide().show('slow');
 					}
 				});
-				//Insert new posts
-				if (html.length > 0) {
-					$(html).insertBefore('.rmbrow:first').hide().show('slow');
-				}
+				rmboffset += 10;
 			}
-		});
+		}, 25);
+	}
+}
+
+function checkForRMBUpdates(){
+	setTimeout(function() {
+		if (!isSearchResultsVisible()) {
+			$.get('/page=ajax/a=rmb/region=' + region + '/offset=0', function(data) {
+				if (data.length > 1 && !isSearchResultsVisible()) {
+					var html = "";
+					//Check for new posts
+					$($(data).get().reverse()).each( function() {
+						var postId = getRMBPostId($(this).html());
+						if (document.getElementById("rmb-post-" + postId) === null) {
+							console.log("no post for id: " + postId);
+							html += parseRMBPost($(this).html(), quote, $(this).attr('class'));
+						}
+					});
+					//Insert new posts
+					if (html.length > 0) {
+						$(html).insertBefore('.rmbrow:first').hide().show('slow');
+					}
+				}
+			});
+		}
 		checkForRMBUpdates();
 	}, 10000);
+}
+
+var rmbCache = {};
+function getRMBPosts(offset, callback) {
+	if (offset in rmbCache) {
+		callback(rmbCache[offset]);
+	} else {
+		$.get('/page=ajax/a=rmb/region=' + region + '/offset=' + offset, function(data) {
+			rmbCache[offset] = data;
+			callback(rmbCache[offset]);
+		});
+	}
 }
 
 //Extra Functions
@@ -197,12 +392,14 @@ function getRMBPostId(html) {
 }
 
 function parseRMBPost(innerHTML, quoteHTML, className) {
-	var postId = getRMBPostId(innerHTML);
+	return parseRMBPostWithId(innerHTML, quoteHTML, className, getRMBPostId(innerHTML));
+}
 
-	if (innerHTML.indexOf("rmbsuppressed") > -1) {
+function parseRMBPostWithId(innerHTML, quoteHTML, className, postId) {
+	if (innerHTML.indexOf("rmbsuppressed") > -1 || innerHTML.indexOf(quoteHTML) > -1) {
 		quoteHTML = "";
 	}
-	
+
 	//TODO: finish name highlighting
 	if (nation.length > 0) {
 		var nameIndex = innerHTML.indexOf(nation)
@@ -339,13 +536,16 @@ function quotePost(post) {
 	});
 }
 
+nationstatesPlusPlus();
+checkForRMBUpdates();
+
 var _gaq = _gaq || [];
 update(1);
 function update(delay){
 	setTimeout(function() {
 		_gaq.push(['_setAccount', 'UA-41267101-1']);
 		_gaq.push(['_trackPageview']);
-		_gaq.push(['_setCustomVar', 1, 'Version', 'v1.3', 2]);
+		_gaq.push(['_setCustomVar', 1, 'Version', 'v1.4', 2]);
 		update(60000);
 	}, delay);
 }
