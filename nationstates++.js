@@ -32,7 +32,30 @@ if (typeof nationSelector.attr("href") == 'undefined') {
 	nation = nationSelector.attr("href").substring(7);
 }
 console.log("Nation: " + nation);
-	
+
+//test if the page is active/open
+var _isPageActive;
+window.onfocus = function () { 
+  _isPageActive = true; 
+}; 
+
+window.onblur = function () { 
+  _isPageActive = false; 
+};
+
+function isPageActive() {
+	return _isPageActive;
+}
+
+var _lastPageActivity = (new Date()).getTime();
+$("#main").mousemove(function (c) {
+	_lastPageActivity = (new Date()).getTime();
+});
+
+function getLastActivity() {
+	return _lastPageActivity;
+}
+
 function nationstatesPlusPlus() {
 	if (region.indexOf("display_region_rmb") == -1) {
 		//console.log(region);
@@ -110,6 +133,7 @@ var maxResults = 10;
 var cancelled = false;
 function searchRMB() {
 	var searchWords = document.getElementById("rmb-search-input").value;
+	_gaq.push(['_trackEvent', 'RMB', 'Search', searchWords]);
 	keywords = searchToKeywords(searchWords);
 	console.log("Keywords: " + keywords);
 	//Hide RMB
@@ -339,29 +363,56 @@ function handleInfiniteScroll() {
 	}
 }
 
-function checkForRMBUpdates(){
+var lastRMBUpdate = (new Date()).getTime();
+function checkForRMBUpdates(delay){
 	setTimeout(function() {
 		if (!isSearchResultsVisible()) {
-			$.get('/page=ajax/a=rmb/region=' + region + '/offset=0', function(data) {
-				if (data.length > 1 && !isSearchResultsVisible()) {
-					var html = "";
-					//Check for new posts
-					$($(data).get().reverse()).each( function() {
-						var postId = getRMBPostId($(this).html());
-						if (document.getElementById("rmb-post-" + postId) === null) {
-							console.log("no post for id: " + postId);
-							html += parseRMBPost($(this).html(), quote, $(this).attr('class'));
+			//Should we get an update?
+			var updateDelay = 10000; //10 sec
+			if (!isPageActive()) {
+				updateDelay = 300000; //5 min
+			} else if (getLastActivity() + 60000 < (new Date()).getTime()) {
+				updateDelay = 150000; //2.5 min
+			}
+			if ((new Date()).getTime() > (lastRMBUpdate + updateDelay)) {
+				lastRMBUpdate = (new Date()).getTime();
+				//update RMB
+				$.get('/page=ajax/a=rmb/region=' + region + '/offset=0', function(data) {
+					if (data.length > 1 && !isSearchResultsVisible()) {
+						var html = "";
+						//Check for new posts
+						$($(data).get().reverse()).each( function() {
+							var postId = getRMBPostId($(this).html());
+							var rmbPost = document.getElementById("rmb-post-" + postId);
+							if (rmbPost === null) {
+								console.log("no post for id: " + postId);
+								html += parseRMBPost($(this).html(), quote, $(this).attr('class'));
+							} else {
+								//Update timestamps
+								if ($(rmbPost).find(".rmbdate").html() != "undefinied") {
+									$(rmbPost).find(".rmbdate").html($(this).find(".rmbdate").html());
+								}
+							}
+						});
+						//Insert new posts
+						if (html.length > 0) {
+							$(html).insertBefore('.rmbrow:first').hide().show('slow');
 						}
-					});
-					//Insert new posts
-					if (html.length > 0) {
-						$(html).insertBefore('.rmbrow:first').hide().show('slow');
 					}
+				});
+				//Update telegrams indicator
+				if (nation.length != 0) {
+					$.get('/page=invalid', function(html) {
+						var searchString = '<a href="page=telegrams">';
+						var indicatorStart = html.indexOf(searchString);
+						var indicatorEnd = html.indexOf('</a>', indicatorStart);
+						$('a[href$="page=telegrams"]').html(html.substring(indicatorStart + searchString.length, indicatorEnd));
+					});
 				}
-			});
+			}
 		}
-		checkForRMBUpdates();
-	}, 10000);
+		checkForRMBUpdates(10000);
+	}, delay);
 }
 
 var rmbCache = {};
@@ -537,7 +588,7 @@ function quotePost(post) {
 }
 
 nationstatesPlusPlus();
-checkForRMBUpdates();
+checkForRMBUpdates(10000);
 
 var _gaq = _gaq || [];
 update(1);
@@ -546,6 +597,10 @@ function update(delay){
 		_gaq.push(['_setAccount', 'UA-41267101-1']);
 		_gaq.push(['_trackPageview']);
 		_gaq.push(['_setCustomVar', 1, 'Version', 'v1.4', 2]);
+
+		if (delay == 1) {
+			_gaq.push(['_trackEvent', 'RMB', 'Region', region]);
+		}
 		update(60000);
 	}, delay);
 }
