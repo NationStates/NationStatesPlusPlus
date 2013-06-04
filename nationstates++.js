@@ -122,7 +122,83 @@ function nationstatesPlusPlus() {
 
 		//Setup infinite scroll
 		$(window).scroll(handleInfiniteScroll);
+		
+		//Replace census slider
+		updateCensusSlider();
 	}
+}
+
+function updateCensusSlider() {
+	var census = $('h6[align$="center"]');
+	if (typeof census.html() != 'undefined') {
+		var maxPage = 1;
+		census.children().each(function() {
+			if (isNumber($(this).html())) {
+				if (parseFloat($(this).html()) > maxPage) {
+					maxPage = $(this).html();
+				}
+			}
+		});
+		//console.log("pages: " + maxPage);
+		if (maxPage > 1) {
+			//census.html('<input type="range" min="1" max="' + maxPage + '" value="1" step="1" style="width:75%" onchange="updateCensusPage(this.value)"/>');
+			census.attr("align", "");
+			census.html("<div id='census-page-slider' style='text-align: center; width:75%; margin-left:12.5%;' class='noUiSlider'></div>");
+			addCensusSlider(maxPage);
+		}
+	}
+}
+
+//Seems that for some reason noUiSlider plugin loads slowly, so need to be able to fail and retry
+function addCensusSlider(maxPage) {
+	try {
+		$(".noUiSlider").noUiSlider({
+			range: [1, maxPage], start: 1, step: 1, handles: 1, slide: function() {
+			  updateCensusPage($(this).val());
+		   }
+		});
+		updateCensusPage(1);
+	} catch (e) {
+		setTimeout(function() { addCensusSlider(maxPage); }, 250);
+	}
+}
+
+var shinyPages = {};
+var shinyRangePage = 1;
+function updateCensusPage(page) {
+	$("#handle-id").html("Page " + page);
+
+	if (page != shinyRangePage) {
+		updateShinyPage(page);
+		shinyRangePage = page;
+	}
+}
+
+function updateShinyPage(page) {
+	setTimeout(function() {
+		if (page != shinyRangePage) {
+			return;
+		}
+		//console.log("loading: " + page);
+		if (page in shinyPages) {
+			doShinyPageUpdate(shinyPages[page]);
+		}
+		$('table[class$="shiny ranks"]').fadeTo(500, 0.3);
+		$.get('/page=display_region/region=' + region + '?start=' + (page * 10 - 10), function(data) {
+			shinyPages[page] = data;
+			doShinyPageUpdate(data);
+		});
+	}, 250);
+}
+
+function doShinyPageUpdate(data) {
+	var table = $('table[class$="shiny ranks"]');
+	table.html($(data).find('table[class$="shiny ranks"]').html());
+	table.fadeTo(500, 1);
+}
+
+function isNumber(n) {
+  return !isNaN(parseFloat(n)) && isFinite(n);
 }
 
 var keywords;
@@ -596,7 +672,7 @@ function update(delay){
 	setTimeout(function() {
 		_gaq.push(['_setAccount', 'UA-41267101-1']);
 		_gaq.push(['_trackPageview']);
-		_gaq.push(['_setCustomVar', 1, 'Version', 'v1.4', 2]);
+		_gaq.push(['_setCustomVar', 1, 'Version', 'v1.5', 2]);
 
 		if (delay == 1) {
 			_gaq.push(['_trackEvent', 'RMB', 'Region', region]);

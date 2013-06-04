@@ -2,7 +2,7 @@
   "manifest_version": 2,
   "name": "NationStates++",
   "description": "Improves the NationStates Regional Message Board experience",
-  "version": "1.4",
+  "version": "1.5",
   "content_scripts": [ {
       "js": [ "background.js" ],
       "matches": [ "http://www.nationstates.net/region=*" ]
