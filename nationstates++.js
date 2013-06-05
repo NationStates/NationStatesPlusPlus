@@ -165,18 +165,19 @@ function addCensusSlider(maxPage) {
 
 var shinyPages = {};
 var shinyRangePage = 1;
+var requestNum = 1;
 function updateCensusPage(page) {
 	$("#handle-id").html("Page " + page);
-
+	requestNum += 1;
 	if (page != shinyRangePage) {
-		updateShinyPage(page);
+		updateShinyPage(page, requestNum);
 		shinyRangePage = page;
 	}
 }
 
-function updateShinyPage(page) {
+function updateShinyPage(page, request) {
 	setTimeout(function() {
-		if (page != shinyRangePage) {
+		if (request != requestNum) {
 			return;
 		}
 		//console.log("loading: " + page);
