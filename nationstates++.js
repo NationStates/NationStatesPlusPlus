@@ -31,7 +31,6 @@ if (typeof nationSelector.attr("href") == 'undefined') {
 } else {
 	nation = nationSelector.attr("href").substring(7);
 }
-console.log("Nation: " + nation);
 
 //test if the page is active/open
 var _isPageActive;
@@ -58,7 +57,6 @@ function getLastActivity() {
 
 function nationstatesPlusPlus() {
 	if (region.indexOf("display_region_rmb") == -1) {
-		//console.log(region);
 		var elems = document.getElementsByTagName('*'), i;
 
 		for (i in elems) {
@@ -115,7 +113,7 @@ function nationstatesPlusPlus() {
 		$("<p class='rmbview'>" + forumViewHTML + "</p>").insertBefore(".rmbrow:first");
 	
 		//Add search box
-		widebox.prepend("<div id='searchbox' style='display: none;'><div style='margin-top:6px; text-align:center;'><input id='rmb-search-input' placeholder='Search' type='search' style='width:35%; height:25px;' name='googlesearch' onkeydown='if (event.keyCode == 13) { searchRMB(); } else { cancelSearch(); }'></div></div>");
+		widebox.prepend("<div id='searchbox' style='display: none;'><div style='margin-top:6px; text-align:center;'><input id='rmb-search-input' placeholder='Search' type='search' style='width:35%; height:25px;' name='googlesearch' onkeydown='if (event.keyCode == 13) { searchRMB(); } else { updateSearchText(); }'></div></div>");
 
 		//Add rmb menu area
 		widebox.prepend("<div id='rmb-menu' style='text-align: center;'><div class='transparentoid QuoteMenu'><a href='javascript:void(0);' onclick='toggleRMBPostForm();'>Leave a message</a></div> - <div class='transparentoid QuoteMenu'><a href='javascript:void(0);' onclick='toggleSearchForm();'>Search messages</a></div></div");
@@ -139,9 +137,7 @@ function updateCensusSlider() {
 				}
 			}
 		});
-		//console.log("pages: " + maxPage);
 		if (maxPage > 1) {
-			//census.html('<input type="range" min="1" max="' + maxPage + '" value="1" step="1" style="width:75%" onchange="updateCensusPage(this.value)"/>');
 			census.attr("align", "");
 			census.html("<div id='census-page-slider' style='text-align: center; width:75%; margin-left:12.5%;' class='noUiSlider'></div>");
 			addCensusSlider(maxPage);
@@ -180,7 +176,6 @@ function updateShinyPage(page, request) {
 		if (request != requestNum) {
 			return;
 		}
-		//console.log("loading: " + page);
 		if (page in shinyPages) {
 			doShinyPageUpdate(shinyPages[page]);
 		}
@@ -205,32 +200,27 @@ function isNumber(n) {
 var keywords;
 var lastSearchSuccessful = false;
 var searchOffset = 0;
-var results = 0;
-var maxResults = 10;
 var cancelled = false;
 function searchRMB() {
 	var searchWords = document.getElementById("rmb-search-input").value;
 	_gaq.push(['_trackEvent', 'RMB', 'Search', searchWords]);
 	keywords = searchToKeywords(searchWords);
-	console.log("Keywords: " + keywords);
 	//Hide RMB
 	var rmb = $('.rmbtable2:last');
-	rmb.attr("style", "display: none;");
 	var searchResults = document.getElementById("rmb-search-results");
 	if (searchResults === null) {
 		$("<div id='rmb-search-results' style='display: block;' class='rmbtable2'></div>").insertBefore(rmb);
 		searchResults = document.getElementById("rmb-search-results");
 		$(searchResults).html("<p></p>");
+		$(searchResults).attr("style", "display: block; height: " + rmb.height() + "px;");
 	} else {
-		$(searchResults).attr("style", "display: block;");
+		$(searchResults).attr("style", "display: block; height: " + rmb.height() + "px;");
 		$(searchResults).html("<p></p>");
 	}
+	rmb.attr("style", "display: none;");
 	cancelled = false;
-	results = 0;
-	maxResults = 10;
-	searchOffset = rmboffset;
-	rmb.children().each(searchRMBPost);
-	searchOlderRMBPosts();
+	searchOffset = 0;
+	doRMBSearch();
 }
 
 /**
@@ -270,84 +260,55 @@ function searchToKeywords(search) {
 	return keys;
 }
 
-function cancelSearch() {
+function updateSearchText() {
 	cancelled = true;
-	var wantToCancel = document.getElementById("want-to-cancel-search");
-	if (wantToCancel != null) {
-		$(wantToCancel).remove();
+	var tooltip = false;
+	var searchBox = $("#rmb-search-input");
+	var words = searchToKeywords(searchBox.val());
+	for (var i in words) {
+		var keyword = words[i];
+		if (keyword != null && keyword.length <= 3) {
+			$("#rmb-search-input").attr("title", "Words shorter than 4 letters long are ignored");
+			tooltip = true;
+			break;
+		}
+	}
+	if (!tooltip) {
+		$("#rmb-search-input").removeAttr("title");
 	}
 }
 
-function searchOlderRMBPosts() {
-	getRMBPosts(searchOffset, function(data) {
+function doRMBSearch() {
+	cancelled = false;
+	$.get('/page=ajax/a=rmbsearch/rmbsearch-text=' + document.getElementById("rmb-search-input").value + '/rmbsearch-region=' + region + '/rmbsearch-offset=' + searchOffset, function(data) {
 		if (cancelled) {
 			return;
 		}
+		
 		var searchResults = document.getElementById("rmb-search-results");
-		if (data.length > 1) {
+		if (data.length > 14) {
 			//Process RMB posts
-			$($(data).get().reverse()).each(searchRMBPost);
-			searchOffset += 10;
-
-			//User is scrolling near bottom, keep adding more results!
-			if (isInRange($(window).scrollTop() - 5, $(document).height() - $(window).height(), $(window).scrollTop() + (screen.height / 2.5))) {
-				if (results + 5 >= maxResults) {
-					maxResults += 10;
-				}
-			}
-			
-			var wantToCancel = document.getElementById("want-to-cancel-search");
-			if (results < maxResults) {
-				//We haven't found results, did user give us a useless query?
-				if (results == 0) {
-					if (wantToCancel === null) {
-						$(searchResults).append("<div id='want-to-cancel-search' class='rmbolder'>Searched <div style='display:inline;' id='searched-count'>" + searchOffset + "</div> posts so far... Want to start over?  <button id='cancel-search' class='btn' onclick='cancelSearch()'>Cancel</button></div>");
-						$('body,html').animate({scrollTop: $(document).height()});
-					} else {
-						$("#searched-count").html(searchOffset);
+			$($(data).children()).each( function() {
+				var searchResult = $(searchResults).append(parseRMBPostWithId($(this).html(), quote, $(this).attr('class'), getRMBPostId($(this).html()) + "-search"));
+				for (var i in keywords) {
+					var keyword = keywords[i];
+					if (keyword != null && keyword.length > 3) {
+						$(searchResult).highlight(keyword);
 					}
-					wantToCancel = null; //set to null so it is not removed later
 				}
-				//Keep searching!
-				searchOlderRMBPosts();
-			} else {
-				$(searchResults).append("<div id='search-paused' class='rmbolder'>Load More Results</div>");
-			}
-			
-			//Remove want to cancel
-			if (wantToCancel != null) {
-				$(wantToCancel).remove();
-			}
+			});
+			$(searchResults).attr("style", "display: block;");
+			searchOffset += 20;
+			lastSearchSuccessful = true;
+			$(searchResults).append("<div id='end-of-search-results' class='rmbolder'>End of Search Results</div>");
+		} else if (searchOffset > 0) {
+			$(searchResults).append("<div class='rmbolder'>End of Search Results</div>");
+			lastSearchSuccessful = true;
 		} else {
-			if (results == 0) {
-				$(searchResults).append("<div class='rmbolder'>No Search Results</div>");
-				rmb.attr("style", "display: block;");
-				lastSearchSuccessful = false;
-			} else {
-				lastSearchSuccessful = true;
-				$(searchResults).append("<div class='rmbolder'>End of Search Results</div>");
-			}
+			$(searchResults).append("<div class='rmbolder'>No Search Results</div>");
+			lastSearchSuccessful = false;
 		}
 	});
-}
-
-function searchRMBPost() {
-	var result = null;
-	var lowercaseHtml = $(this).html().toLowerCase();
-	for (i in keywords) {
-		var keyword = keywords[i];
-		if (keyword === null || keyword.length == 0) {
-			continue;
-		}
-		if (lowercaseHtml.indexOf(keyword.toLowerCase()) > -1) {
-			if (result === null) {
-				var postId = getRMBPostId($(this).html()) + "-search";
-				result = $(document.getElementById("rmb-search-results")).append(parseRMBPostWithId($(this).html(), quote, $(this).attr('class'), postId));
-				results++;
-			}
-			$(result).highlight(keyword);
-		}
-	}
 }
 
 function isRMBPostFormVisible() {
@@ -410,11 +371,10 @@ function handleInfiniteScroll() {
 	//Infinite search Scroll
 	if (isSearchResultsVisible()) {
 		if (isInRange($(window).scrollTop() - 5, $(document).height() - $(window).height(), $(window).scrollTop() + (screen.height / 2.5))) {
-			var searchPaused = document.getElementById("search-paused");
+			var searchPaused = document.getElementById("end-of-search-results");
 			if (searchPaused != null) {
-				maxResults += 10;
 				$(searchPaused).remove();
-				searchOlderRMBPosts();
+				doRMBSearch();
 			}
 		}
 	} else {
@@ -462,7 +422,6 @@ function checkForRMBUpdates(delay){
 							var postId = getRMBPostId($(this).html());
 							var rmbPost = document.getElementById("rmb-post-" + postId);
 							if (rmbPost === null) {
-								console.log("no post for id: " + postId);
 								html += parseRMBPost($(this).html(), quote, $(this).attr('class'));
 							} else {
 								//Update timestamps
@@ -535,63 +494,32 @@ function parseRMBPostWithId(innerHTML, quoteHTML, className, postId) {
 		//	innerHTML = innerHTML.
 		//}
 	}
-
-	//Parse for HTTP links
-	var urlIndex = innerHTML.indexOf("http://");
-	var aLinkUrl = innerHTML.indexOf('href="http://');
-	while(urlIndex > -1) {
-		if (aLinkUrl + 6 == urlIndex) {
-			urlIndex = innerHTML.indexOf("http://", urlIndex + 10);
-			aLinkUrl = innerHTML.indexOf('href="http://', urlIndex + 10);
-		} else {
-			var endSpaceIndex = innerHTML.indexOf(" ", urlIndex + 1);
-			var endParagraphIndex = innerHTML.indexOf("</p>", urlIndex + 1);
-			var endDivIndex = innerHTML.indexOf("</div>", urlIndex + 1);
-			var endIndex = Math.min(endSpaceIndex, endParagraphIndex, endDivIndex);
-			var link = innerHTML.substring(urlIndex, endIndex);
-
-			var href = parseLink(link);
-			innerHTML = innerHTML.substring(0, urlIndex) + href + innerHTML.substring(endIndex);
-			
-			urlIndex = innerHTML.indexOf("http://", urlIndex + href.length);
-			aLinkUrl = innerHTML.indexOf('href="http://', urlIndex + href.length);
-		}
-	}
-
-	//Parse for https links
-	urlIndex = innerHTML.indexOf("https://");
-	while(urlIndex > -1) {
-		var endSpaceIndex = innerHTML.indexOf(" ", urlIndex + 1);
-		var endParagraphIndex = innerHTML.indexOf("</p>", urlIndex + 1);
-		var endDivIndex = innerHTML.indexOf("</div>", urlIndex + 1);
-		var endIndex = Math.min(endSpaceIndex, endParagraphIndex, endDivIndex);
-		var link = innerHTML.substring(urlIndex, endIndex);
-
-		var href = parseLink(link);
-		innerHTML = innerHTML.substring(0, urlIndex) + href + innerHTML.substring(endIndex);
-		
-		urlIndex = innerHTML.indexOf("https://", urlIndex + href.length);
-	}
-
-	//Parse for www links
-	urlIndex = innerHTML.indexOf("www.");
-	while(urlIndex > -1) {
-		if (innerHTML.substring(urlIndex - 8, urlIndex).indexOf("http") == -1) {
-			var endSpaceIndex = innerHTML.indexOf(" ", urlIndex + 1);
-			var endParagraphIndex = innerHTML.indexOf("</p>", urlIndex + 1);
-			var endDivIndex = innerHTML.indexOf("</div>", urlIndex + 1);
-			var endIndex = Math.min(endSpaceIndex, endParagraphIndex, endDivIndex);
-			var link = innerHTML.substring(urlIndex, endIndex);
-
-			var href = parseLink("http://" + link);
-			innerHTML = innerHTML.substring(0, urlIndex) + href + innerHTML.substring(endIndex);
-			
-			urlIndex = innerHTML.indexOf("www.", urlIndex + href.length);
-		} else {
-			urlIndex = innerHTML.indexOf("www.", urlIndex + 10);
-		}
-	}
+	
+	innerHTML = linkify(innerHTML);
+	
 	return ("<div id='rmb-post-" + postId + "' class='" + className + "' style='display: block;'>" + innerHTML + quoteHTML + "</div>");
+}
+
+function linkify(inputText) {
+    var replacedText, replacePattern1, replacePattern2, replacePattern3;
+	
+	if (inputText.indexOf("nationstates.net/") > -1) {
+		return inputText;
+	}
+
+    //URLs starting with http://, https://, or ftp://
+    replacePattern1 = /(\b(https?|ftp):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/gim;
+    replacedText = inputText.replace(replacePattern1, '<a href="$1" target="_blank">$1</a>');
+
+    //URLs starting with "www." (without // before it, or it'd re-link the ones done above).
+    replacePattern2 = /(^|[^\/])(www\.[\S]+(\b|$))/gim;
+    replacedText = replacedText.replace(replacePattern2, '$1<a href="http://$2" target="_blank">$2</a>');
+
+    //Change email addresses to mailto:: links.
+    replacePattern3 = /(\w+@[a-zA-Z_]+?\.[a-zA-Z]{2,6})/gim;
+    replacedText = replacedText.replace(replacePattern3, '<a href="mailto:$1">$1</a>');
+
+    return replacedText;
 }
 
 function parseLink(link) {
@@ -623,7 +551,6 @@ function quotePost(post) {
 			}
 		}
 	});
-	//console.log("nation: " + nation);
 	$(post.parentNode.parentNode).children().each(function() {
 		if ($(this).attr('class') == "rmbmsg2") {
 			var text = "";
@@ -643,7 +570,6 @@ function quotePost(post) {
 			});
 			var form = document.forms["rmb"];
 			$(form).children().each(function() {
-				//console.log("class: " + $(this).attr('class'));
 				if ($(this).attr('class') == "widebox") {
 					$(this).attr("id","widebox-form");
 					var textArea = $(this).find("textarea");
@@ -654,7 +580,6 @@ function quotePost(post) {
 					value += "[b]>[/b] " + nation + " said:\n";
 					value += "[i]" + text + "[/i]";
 					$(textArea).val(value + "\n\n");
-					//$("#html,body").animate({scrollTop: $("#widebox-form").offset().top - 100});
 					$('body,html').animate({scrollTop: $("#widebox-form").offset().top - 100});
 					$(textArea).focus();
 					$(textArea).caretToEnd()
