@@ -1,9 +1,9 @@
-var quote = '<div class="transparentoid QuoteLink"><a href="javascript:void(0);" onclick="quotePost(this);">Quote</a></div>';
+var quote = '<button class="btn QuoteButton" onclick="quotePost(this);"><div style="margin-top: -2px;">Quote</div></button>';
 var showSuppressedButton = "<div class='rmbbuttons'><a href='' class='forumpaneltoggle rmbshow'><img src='/images/rmbbshow.png' alt='Show' title='Show post'></a></div>";
 
 //Add custom css
-var css = '.QuoteLink{color: white; font-weight: bold; font-size: 8pt; padding: 2px 8px 2px 8px; background: black; background-color: rgba(0,0,0,0.2); border-radius: 30px; text-align:right; float:right; margin-top: -18px;margin-right: -7px;}';
-css += '.QuoteMenu{color: white; font-weight: bold; font-size: 12pt; padding: 2px 8px 2px 8px; background: black; background-color: rgba(0,0,0,0.2); border-radius: 14px; display: inline-block;}';
+var css = '.QuoteButton{font-weight: bold; font-size: 8pt; padding: 2px 8px 2px 8px; border-radius: 30px;height: 20px; text-align:right; float:right; margin-top: -19px;margin-right: -9px;}';
+css += '.RoundedButton{font-weight: bold; font-size: 12pt; padding: 2px 8px 2px 8px; border-radius: 14px; display: inline-block;}';
 css += '.highlight {background: #FFFF00;}';
 var style = document.createElement('style');
 style.type = 'text/css';
@@ -116,7 +116,7 @@ function nationstatesPlusPlus() {
 		widebox.prepend("<div id='searchbox' style='display: none;'><div style='margin-top:6px; text-align:center;'><input id='rmb-search-input' placeholder='Search' type='search' style='width:35%; height:25px;' name='googlesearch' onkeydown='if (event.keyCode == 13) { searchRMB(); } else { updateSearchText(); }'></div></div>");
 
 		//Add rmb menu area
-		widebox.prepend("<div id='rmb-menu' style='text-align: center;'><div class='transparentoid QuoteMenu'><a href='javascript:void(0);' onclick='toggleRMBPostForm();'>Leave a message</a></div> - <div class='transparentoid QuoteMenu'><a href='javascript:void(0);' onclick='toggleSearchForm();'>Search messages</a></div></div");
+		widebox.prepend("<div id='rmb-menu' style='text-align: center;'><button class='btn RoundedButton' onclick='toggleRMBPostForm();'>Leave a message</button> - <button class='btn RoundedButton' onclick='toggleSearchForm();'>Search messages</button></div");
 
 		//Setup infinite scroll
 		$(window).scroll(handleInfiniteScroll);
@@ -539,7 +539,7 @@ function quotePost(post) {
 	}
 
 	var nation = "";
-	$(post.parentNode.parentNode).children().each(function() {
+	$(post.parentNode).children().each(function() {
 		if ($(this).attr('class') == "rmbauthor2") {
 			var fullName = $(this).find("a").attr("href");
 			if (fullName.indexOf("page=help") > -1) {
@@ -551,7 +551,7 @@ function quotePost(post) {
 			}
 		}
 	});
-	$(post.parentNode.parentNode).children().each(function() {
+	$(post.parentNode).children().each(function() {
 		if ($(this).attr('class') == "rmbmsg2") {
 			var text = "";
 			$(this).children().each(function() {
@@ -598,7 +598,7 @@ function update(delay){
 	setTimeout(function() {
 		_gaq.push(['_setAccount', 'UA-41267101-1']);
 		_gaq.push(['_trackPageview']);
-		_gaq.push(['_setCustomVar', 1, 'Version', 'v1.5', 2]);
+		_gaq.push(['_setCustomVar', 1, 'Version', 'v1.52', 2]);
 
 		if (delay == 1) {
 			_gaq.push(['_trackEvent', 'RMB', 'Region', region]);
