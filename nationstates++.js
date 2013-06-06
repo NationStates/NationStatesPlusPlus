@@ -100,7 +100,7 @@ function nationstatesPlusPlus() {
 			});
 
 			//Move the post form to the top
-			var formHtml = "<div id='rmb-post-form' style='display: none;'><form method='post' action='/page=lodgermbpost/region=" + region + "' id='rmb'>" + rmbPost.innerHTML + "</form></div>";
+			var formHtml = "<div id='rmb-post-form' style='display: none;'><form onsubmit='rmbpost(); return false;' id='rmb'>" + rmbPost.innerHTML + "</form></div>";
 			rmbPost.parentNode.removeChild(rmbPost);
 		}
 		var widebox = $('.widebox:last');
@@ -124,6 +124,24 @@ function nationstatesPlusPlus() {
 		//Replace census slider
 		updateCensusSlider();
 	}
+}
+
+function rmbpost() {
+	var $form = $( this ),
+		chkValue = $('input[name="chk"]').val(),
+		messageValue = $('textarea[name="message"]').val(),
+		url = "/page=lodgermbpost/region=" + region;
+
+	var posting = $.post( url, { chk: chkValue, message: messageValue } );
+
+	$("#rmb-post-form").animate({ height: '0px' }, 1200, function() { $(this).hide(); });
+	posting.done(function( data ) {
+		$.get('/region=' + region, function(data) {
+			$("#rmb").html($(data).find("#rmb").html());
+			$('textarea[name="message"]').val("");
+			updateRMB();
+		});
+	});
 }
 
 function updateCensusSlider() {
