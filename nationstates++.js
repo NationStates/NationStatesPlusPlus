@@ -86,6 +86,8 @@ function nationstatesPlusPlus() {
 			   elems[i].innerHTML = html;
 			} else if ((" " + elems[i].className + " ").indexOf(" small ") > -1) {
 				$(elems[i]).attr("class", "btn");
+			} else if ((" " + elems[i].className + " ").indexOf(" hilite ") > -1) {
+				$(elems[i]).attr("class", "btn");
 			}
 		}
 
