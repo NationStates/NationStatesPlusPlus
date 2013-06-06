@@ -433,42 +433,46 @@ function checkForRMBUpdates(delay){
 			}
 			if ((new Date()).getTime() > (lastRMBUpdate + updateDelay)) {
 				lastRMBUpdate = (new Date()).getTime();
-				//update RMB
-				$.get('/page=ajax/a=rmb/region=' + region + '/offset=0', function(data) {
-					if (data.length > 1 && !isSearchResultsVisible()) {
-						var html = "";
-						//Check for new posts
-						$($(data).get().reverse()).each( function() {
-							var postId = getRMBPostId($(this).html());
-							var rmbPost = document.getElementById("rmb-post-" + postId);
-							if (rmbPost === null) {
-								html += parseRMBPost($(this).html(), quote, $(this).attr('class'));
-							} else {
-								//Update timestamps
-								if ($(rmbPost).find(".rmbdate").html() != "undefinied") {
-									$(rmbPost).find(".rmbdate").html($(this).find(".rmbdate").html());
-								}
-							}
-						});
-						//Insert new posts
-						if (html.length > 0) {
-							$(html).insertBefore('.rmbrow:first').hide().show('slow');
-						}
-					}
-				});
-				//Update telegrams indicator
-				if (nation.length != 0) {
-					$.get('/page=invalid', function(html) {
-						var searchString = '<a href="page=telegrams">';
-						var indicatorStart = html.indexOf(searchString);
-						var indicatorEnd = html.indexOf('</a>', indicatorStart);
-						$('a[href$="page=telegrams"]').html(html.substring(indicatorStart + searchString.length, indicatorEnd));
-					});
-				}
+				updateRMB();
 			}
 		}
 		checkForRMBUpdates(10000);
 	}, delay);
+}
+
+function updateRMB() {
+	//update RMB
+	$.get('/page=ajax/a=rmb/region=' + region + '/offset=0', function(data) {
+		if (data.length > 1 && !isSearchResultsVisible()) {
+			var html = "";
+			//Check for new posts
+			$($(data).get().reverse()).each( function() {
+				var postId = getRMBPostId($(this).html());
+				var rmbPost = document.getElementById("rmb-post-" + postId);
+				if (rmbPost === null) {
+					html += parseRMBPost($(this).html(), quote, $(this).attr('class'));
+				} else {
+					//Update timestamps
+					if ($(rmbPost).find(".rmbdate").html() != "undefinied") {
+						$(rmbPost).find(".rmbdate").html($(this).find(".rmbdate").html());
+					}
+				}
+			});
+			//Insert new posts
+			if (html.length > 0) {
+				$(html).insertBefore('.rmbrow:first').hide().show('slow');
+			}
+		}
+	});
+	//Update telegrams indicator
+	if (nation.length != 0) {
+		$.get('/page=invalid', function(html) {
+			var searchString = '<a href="page=telegrams">';
+			var indicatorStart = html.indexOf(searchString);
+			var indicatorEnd = html.indexOf('</a>', indicatorStart);
+			$('a[href$="page=telegrams"]').html(html.substring(indicatorStart + searchString.length, indicatorEnd));
+		});
+	}
 }
 
 var rmbCache = {};
@@ -557,7 +561,6 @@ function quotePost(post) {
 	if (!isRMBPostFormVisible()) {
 		toggleRMBPostForm();
 	}
-
 	var nation = "";
 	$(post.parentNode).children().each(function() {
 		if ($(this).attr('class') == "rmbauthor2") {
