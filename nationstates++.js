@@ -138,6 +138,12 @@ function rmbpost() {
 
 	$("#rmb-post-form").animate({ height: '0px' }, 1200, function() { $(this).hide(); });
 	posting.done(function( data ) {
+		var error = ($(data).find("p[class='error']")).text();
+		if (typeof error != 'undefined' && error.length > 0) {
+			console.log("Error: " + error);
+			alert(error);
+		}
+		
 		$.get('/region=' + region, function(data) {
 			$("#rmb").html($(data).find("#rmb").html());
 			$('textarea[name="message"]').val("");
@@ -586,7 +592,30 @@ function quotePost(post) {
 						text += $(this).html();
 					} else {
 						$(this).contents().each(function() {
-							text += $(this).text();
+							if (typeof $(this).attr("href") != 'undefined') {
+								if ($(this).attr("href").indexOf("nation=") > -1) {
+									var nationName = $(this).attr("href").substring(7);
+									text += "[nation";
+									var shortName = $(this).html().toLowerCase().indexOf("<span>" + nationName.split("_").join(" ") + "</span>") > -1;
+									var noFlag = (typeof $(this).parent().find("img[class='miniflag']").html() == 'undefined');
+									console.log("Short Name: " + shortName + " no flag: " + noFlag);
+									if (shortName && noFlag) {
+										text += "=short+noflag]";
+									} else if (shortName) {
+										text += "=short]";
+									} else if (noFlag) {
+										text += "=noflag]";
+									} else {
+										text += "]";
+									}
+									text += nationName + "[/nation]\n"
+								} else if ($(this).attr("href").indexOf("region=") > -1) {
+									var regionName = $(this).attr("href").substring(8);
+									text += "[region]" + toTitleCase(regionName.split("_").join(" ")) + "[/region]\n";
+								}
+							} else {
+								text += $(this).text();
+							}
 						});
 					}
 				}
@@ -621,7 +650,7 @@ function update(delay){
 	setTimeout(function() {
 		_gaq.push(['_setAccount', 'UA-41267101-1']);
 		_gaq.push(['_trackPageview']);
-		_gaq.push(['_setCustomVar', 1, 'Version', 'v1.52', 2]);
+		_gaq.push(['_setCustomVar', 1, 'Version', 'v1.53', 2]);
 
 		if (delay == 1) {
 			_gaq.push(['_trackEvent', 'RMB', 'Region', region]);
