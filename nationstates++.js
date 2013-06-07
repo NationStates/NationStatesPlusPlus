@@ -608,10 +608,10 @@ function quotePost(post) {
 									} else {
 										text += "]";
 									}
-									text += nationName + "[/nation]\n"
+									text += nationName + "[/nation]"
 								} else if ($(this).attr("href").indexOf("region=") > -1) {
 									var regionName = $(this).attr("href").substring(8);
-									text += "[region]" + toTitleCase(regionName.split("_").join(" ")) + "[/region]\n";
+									text += "[region]" + toTitleCase(regionName.split("_").join(" ")) + "[/region]";
 								}
 							} else {
 								text += $(this).text();
