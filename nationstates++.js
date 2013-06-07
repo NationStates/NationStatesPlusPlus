@@ -56,7 +56,7 @@ function getLastActivity() {
 }
 
 function nationstatesPlusPlus() {
-	if (region.indexOf("display_region_rmb") == -1) {
+	if (region.indexOf("display_region_rmb") == -1 && region.indexOf("/page=") == -1) {
 		var elems = document.getElementsByTagName('*'), i;
 
 		for (i in elems) {
