@@ -1,4 +1,4 @@
-var quote = '<button class="btn QuoteButton" onclick="quotePost(this);"><div style="margin-top: -2px;">Quote</div></button>';
+var quote = '<button id="quote-btn-${id}" class="btn QuoteButton" onclick="quotePost(this);"><div style="margin-top: -2px;">Quote</div></button>';
 var showSuppressedButton = "<div class='rmbbuttons'><a href='' class='forumpaneltoggle rmbshow'><img src='/images/rmbbshow.png' alt='Show' title='Show post'></a></div>";
 
 //Add custom css
@@ -125,6 +125,99 @@ function nationstatesPlusPlus() {
 		
 		//Replace census slider
 		updateCensusSlider();
+		
+		var wfe = $("fieldset[class='wfe']");
+		var embassies = $('p:contains("Embassies:")');
+		if (typeof embassies.html() != 'undefined') {
+			wfe.wrap("<div class='colmask rightmenu'\><div id='wfe-main-content' class='colleft'\><div id='world_factbook_entry' class='col1'\>");
+			$("#wfe-main-content").append("<div id='embassy_flags' class='col2' style='display:none'><fieldset class='wfe'><legend>Embassies</legend><div id='embassy-inner' style='height: " + (wfe.height() - 15) + "px; overflow:hidden; position:relative;'></div></fieldset></div>");
+			$("#embassy_flags").attr("style", "height: " + $("#wfe-main-content").height() + "px;");
+			var embassyFlags = $("fieldset[class='wfe']:last");
+			embassyFlags.attr("style", "height: " + wfe.height() + "px;");
+			$(embassies).children().each(recurseEmbassies);
+			var amazonURL = "http://ec2-54-244-210-176.us-west-2.compute.amazonaws.com";
+			embassyArr = embassyList.split(",");
+			for (var i = 0; i < Math.min(5, embassyArr.length / 10); i++) {
+				var list = "";
+				var start = i * 10;
+				var end = Math.min(start + 10, embassyArr.length);
+				for (var j = start; j < end; j++) {
+					if (j > start) 	list += ",";
+					list += embassyArr[j]
+				}
+				$.getJSON(amazonURL + "/regionflag/?region=" + list, function(jsonData) {
+					var maxTop = -106;
+					$(".animate-flags").each(function() {
+						if ($(this).position().top > maxTop) {
+							maxTop = $(this).position().top;
+						}
+					});
+					for (var regionName in jsonData) {
+						if (jsonData.hasOwnProperty(regionName)) {
+							var flag = jsonData[regionName];
+							if (flag != null && flag.length > 0) {
+								maxTop += 106;
+								$("#embassy-inner").append("<div class='animate-flags' style='position:absolute; left:6px; top:" + maxTop + "px; padding: 2px 2px 2px 2px;'><a href='http://nationstates.net/region=" + regionName + "' target='_blank'><img src='" + flag + "' class='rflag' style='width:140px; height:100px;' alt='' title='Regional Flag of " + regionName.split("_").join(" ") + "'></a></div>");
+							}
+						}
+					}
+				});
+			}
+			setTimeout(function() {
+				var count = 0;
+				$(".animate-flags").each(function() {
+					count += 1;
+				});
+				console.log("count: " + count);
+				if (count > 0) {
+					$("#embassy_flags").removeAttr("style");
+					console.log("wfe: " + wfe.height());
+					if (count * 106 >= wfe.height() + 100) {
+						animateEmbassyFlags();
+					}
+				}
+			}, 500);
+		}
+	}
+}
+
+function animateEmbassyFlags() {
+	setTimeout(function() {
+		if (!document.hidden) {
+			var maxTop = -10000000;
+			$(".animate-flags").each(function() {
+				if ($(this).position().top > maxTop) {
+					maxTop = $(this).position().top;
+				}
+			});
+			$(".animate-flags").each(function() {
+				if ($(this).position().top < -106) {
+					maxTop += 106;
+					$(this).stop();
+					$(this).clearQueue();
+					$(this).css({ top: maxTop + 'px' });
+				}
+			});
+			$(".animate-flags").animate({ "top": "-=1"}, 75);
+		}
+		animateEmbassyFlags();
+	}, 75);
+}
+
+var embassyList = "";
+function recurseEmbassies() {
+	if ($(this).html().indexOf("Embassies:") != -1) {
+		return; //Ignore
+	}
+	if ($(this).html().indexOf('<a href="">') == -1) {
+		if ($(this).children().length != 0) {
+			$(this).children().each(recurseEmbassies);
+		} else {
+			if (embassyList.length > 0) {
+				embassyList += ",";
+			}
+			embassyList += $(this).html().replace(new RegExp(' ', 'g'), "_");
+		}
 	}
 }
 
@@ -134,7 +227,16 @@ function rmbpost() {
 		messageValue = $('textarea[name="message"]').val(),
 		url = "/page=lodgermbpost/region=" + region;
 
-	var posting = $.post( url, { chk: chkValue, message: messageValue } );
+	var posting = jQuery.ajax({
+		type: "POST",
+		url: url,
+		data: $(document.forms["rmb"]).serialize(),
+		dataType: "html",
+		contentType: "application/x-www-form-urlencoded;",
+		beforeSend: function(jqXHR) {
+			jqXHR.overrideMimeType('text/html;');
+		}
+	});
 
 	$("#rmb-post-form").animate({ height: '0px' }, 1200, function() { $(this).hide(); });
 	posting.done(function( data ) {
@@ -142,8 +244,8 @@ function rmbpost() {
 		if (typeof error != 'undefined' && error.length > 0) {
 			console.log("Error: " + error);
 			alert(error);
+			return;
 		}
-		
 		$.get('/region=' + region, function(data) {
 			$("#rmb").html($(data).find("#rmb").html());
 			$('textarea[name="message"]').val("");
@@ -385,7 +487,7 @@ function toggleSearchForm() {
 }
 
 function toTitleCase(str) {
-    return str.replace(/\w\S*/g, function(txt){return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();});
+	return str.replace(/\w\S*/g, function(txt){return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();});
 }
 
 var atEarliestMessage = false;
@@ -515,6 +617,8 @@ function parseRMBPost(innerHTML, quoteHTML, className) {
 function parseRMBPostWithId(innerHTML, quoteHTML, className, postId) {
 	if (innerHTML.indexOf("rmbsuppressed") > -1 || innerHTML.indexOf(quoteHTML) > -1) {
 		quoteHTML = "";
+	} else {
+		quoteHTML = quoteHTML.replace("${id}", postId);
 	}
 
 	//TODO: finish name highlighting
@@ -524,30 +628,67 @@ function parseRMBPostWithId(innerHTML, quoteHTML, className, postId) {
 		//	innerHTML = innerHTML.
 		//}
 	}
-	
+
 	innerHTML = linkify(innerHTML);
+
+	//Add inner body div
+	var innerBody = innerHTML.indexOf('<div class="rmbspacer"></div>');
+	if (getLocalStorage("ignored-post-" + postId) == "true") {
+		innerHTML = "<div id='rmb-inner-body-" + postId + "' style='display:none;'>" + innerHTML.substring(0, innerBody) + "</div>" + innerHTML.substring(innerBody);
+	} else {
+		innerHTML = "<div id='rmb-inner-body-" + postId + "'>" + innerHTML.substring(0, innerBody) + "</div>" + innerHTML.substring(innerBody);
+	}
+
+	//Add ignore button
+	if (postId.indexOf("-search") == -1 && innerHTML.indexOf('div class="rmbbuttons">') == -1 && innerHTML.indexOf('class="rmbsuppressed"') == -1) {
+			innerHTML = '<div style="margin-top:6px;" class="rmbbuttons"><a href="" class="forumpaneltoggle rmbignore"><img src="http://capitalistparadise.com/nationstates/static/rmb_ignore.png" alt="Ignore" title="Ignore Post"></a></div>' + innerHTML;
+	}
 	
+	if (getLocalStorage("ignored-post-" + postId) == "true") {
+		innerHTML += "<div id='rmb-ignored-body-" + postId + "' class='rmbsuppressed' style='margin-top:-16px; padding-bottom:6px;'>Ignored post.</div>";
+		quoteHTML = "";
+	}
+
 	return ("<div id='rmb-post-" + postId + "' class='" + className + "' style='display: block;'>" + innerHTML + quoteHTML + "</div>");
 }
 
+//Ignore post click handler
+$('body').on('click', 'a.rmbignore', function(event) {
+	event.preventDefault();
+	var postId = $(this).parents('.rmbrow').attr('class').split('post-')[1];
+	
+	$('#quote-btn-' + postId).animate({width: 'toggle'}, 250);
+	$('#rmb-inner-body-' + postId).animate({height: 'toggle'}, 500);
+	if (typeof $("#rmb-ignored-body-" + postId).html() == 'undefined') {
+		$(this).parents('.rmbrow').append("<div id='rmb-ignored-body-" + postId + "' class='rmbsuppressed' style='margin-top:-16px; padding-bottom:6px;'>Ignored post.</div>");
+		setLocalStorage("ignored-post-" + postId, "true");
+	} else {
+		$("#rmb-ignored-body-" + postId).remove();
+		removeLocalStorage("ignored-post-" + postId);
+		if (typeof $('#quote-btn-' + postId).html() == 'undefined') {
+			$(this).parents('.rmbrow').append(quote.replace("${id}", postId));
+		}
+	}
+});
+
 function linkify(inputText) {
-    var replacedText, replacePattern1, replacePattern2, replacePattern3;
+	var replacedText, replacePattern1, replacePattern2, replacePattern3;
 	
 	if (inputText.indexOf("nationstates.net/") > -1) {
 		return inputText;
 	}
 
-    //URLs starting with http://, https://, or ftp://
-    replacePattern1 = /(\b(https?|ftp):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/gim;
-    replacedText = inputText.replace(replacePattern1, '<a href="$1" target="_blank">$1</a>');
+	//URLs starting with http://, https://, or ftp://
+	replacePattern1 = /(\b(https?|ftp):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/gim;
+	replacedText = inputText.replace(replacePattern1, '<a href="$1" target="_blank">$1</a>');
 
-    //URLs starting with "www." (without // before it, or it'd re-link the ones done above).
-    replacePattern2 = /(^|[^\/])(www\.[\S]+(\b|$))/gim;
-    replacedText = replacedText.replace(replacePattern2, '$1<a href="http://$2" target="_blank">$2</a>');
+	//URLs starting with "www." (without // before it, or it'd re-link the ones done above).
+	replacePattern2 = /(^|[^\/])(www\.[\S]+(\b|$))/gim;
+	replacedText = replacedText.replace(replacePattern2, '$1<a href="http://$2" target="_blank">$2</a>');
 
-    //Change email addresses to mailto:: links.
-    replacePattern3 = /(\w+@[a-zA-Z_]+?\.[a-zA-Z]{2,6})/gim;
-    replacedText = replacedText.replace(replacePattern3, '<a href="mailto:$1">$1</a>');
+	//Change email addresses to mailto:: links.
+	replacePattern3 = /(\w+@[a-zA-Z_]+?\.[a-zA-Z]{2,6})/gim;
+	replacedText = replacedText.replace(replacePattern3, '<a href="mailto:$1">$1</a>');
 
     return replacedText;
 }
@@ -567,8 +708,9 @@ function quotePost(post) {
 	if (!isRMBPostFormVisible()) {
 		toggleRMBPostForm();
 	}
+	var postId = $(post).attr("id").split("quote-btn-")[1];
 	var nation = "";
-	$(post.parentNode).children().each(function() {
+	$("#rmb-inner-body-" + postId).children().each(function() {
 		if ($(this).attr('class') == "rmbauthor2") {
 			var fullName = $(this).find("a").attr("href");
 			if (fullName.indexOf("page=help") > -1) {
@@ -580,7 +722,7 @@ function quotePost(post) {
 			}
 		}
 	});
-	$(post.parentNode).children().each(function() {
+	$("#rmb-inner-body-" + postId).children().each(function() {
 		if ($(this).attr('class') == "rmbmsg2") {
 			var text = "";
 			$(this).children().each(function() {
@@ -634,15 +776,22 @@ function quotePost(post) {
 					$(textArea).val(value + "\n\n");
 					$('body,html').animate({scrollTop: $("#widebox-form").offset().top - 100});
 					$(textArea).focus();
-					$(textArea).caretToEnd()
+					$(textArea).caretToEnd();
 				}
 			});
 		}
 	});
 }
 
-nationstatesPlusPlus();
-checkForRMBUpdates(10000);
+function doSetup() {
+	if (typeof getLocalStorage == 'undefined') {
+		setTimeout(doSetup, 100);
+	} else {
+		nationstatesPlusPlus();
+		checkForRMBUpdates(10000);
+	}
+}
+doSetup();
 
 var _gaq = _gaq || [];
 update(1);

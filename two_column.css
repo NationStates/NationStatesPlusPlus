@@ -1,0 +1,32 @@
+.colmask {
+    position:relative;
+    clear:both;
+    float:left;
+    width:100%;
+    overflow:hidden;
+}
+.colleft {
+    float:left;
+    width:100%;
+    position:relative;
+}
+.col1, .col2, .col3 {
+    float:left;
+    position:relative;
+    padding:0 0 0 0;
+    overflow:hidden;
+}
+.colleft {
+    right:25%;
+}
+.col1 {
+    width:calc(100% - 220px);
+    left:25%;
+	z-index: 2;
+}
+.col2 {
+    width:200px;
+    display:inline;
+	margin-right:-25%;
+	float:right;
+}

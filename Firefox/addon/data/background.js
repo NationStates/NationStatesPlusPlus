@@ -2,43 +2,42 @@ function _nationstatesSetup() {
 	if (window.location.href.indexOf('http://www.nationstates.net/region=') > -1) {
 		console.log('[NationStates++] Detected Region Page. Loading...');
 		//Add commons js
-		loadFile('http://capitalistparadise.com/nationstates/v1_6/nationstates++_common.js', true);
+		loadFile('https://dl.dropboxusercontent.com/u/49805/nationstates%2B%2B_common.js', true);
 
 		// Add jquery.caret script
-		loadFile('http://capitalistparadise.com/nationstates/v1_6/jquery.caret.js', true);
+		loadFile('http://capitalistparadise.com/nationstates/v1_5/jquery.caret.js', true);
 
 		// Add jquery.highlight script
-		loadFile('http://capitalistparadise.com/nationstates/v1_6/jquery.highlight.js', true);
+		loadFile('http://capitalistparadise.com/nationstates/v1_5/jquery.highlight.js', true);
 
 		// Add css stylesheet
-		loadFile('http://capitalistparadise.com/nationstates/v1_6/bootstrap-button.css', false);
+		loadFile('http://capitalistparadise.com/nationstates/v1_5/bootstrap-button.css', false);
 
 		// Add jquery no ui slider css
-		loadFile('http://capitalistparadise.com/nationstates/v1_6/nouislider.fox.css', false);
+		loadFile('http://capitalistparadise.com/nationstates/v1_5/nouislider.fox.css', false);
 
 		// Add jquery no ui slider
-		loadFile('http://capitalistparadise.com/nationstates/v1_6/jquery.nouislider.min.js', true);
+		loadFile('http://capitalistparadise.com/nationstates/v1_5/jquery.nouislider.min.js', true);
 
 		// Add css stylesheet
-		loadFile('http://capitalistparadise.com/nationstates/v1_6/two_column.css', false);
+		loadFile('https://dl.dropboxusercontent.com/u/49805/two_column.css', false);
 
 		// Add NationStates++ script
-		loadFile('http://capitalistparadise.com/nationstates/v1_6/nationstates++.js', true);
+		loadFile('https://dl.dropboxusercontent.com/u/49805/nationstates%2B%2B_dev.js', true, 500);
 
 		console.log('[NationStates++] Loading Completed Successfully.');
 	} else if (window.location.href.indexOf('http://forum.nationstates.net/') > -1) {
 		console.log('[NationStates++] Detected Forum Page. Loading...');
 		//Add commons js
-		loadFile('http://capitalistparadise.com/nationstates/v1_6/nationstates++_common.js', true);
+		loadFile('https://dl.dropboxusercontent.com/u/49805/nationstates%2B%2B_common.js', true);
 
-		//Forums do not have Jquery
-		loadFile('http://capitalistparadise.com/nationstates/v1_6/jquery-1.9.0.min.js', true);
+		//Forums do not have Jquery, use the same exact CDN the main site uses so it is cached
+		addJavascript('//ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js');
 
 		// Add css stylesheet
-		loadFile('http://capitalistparadise.com/nationstates/v1_6/bootstrap-button.css', false);
+		loadFile('http://capitalistparadise.com/nationstates/v1_5/bootstrap-button.css', false);
 
-		//Add the NationStates++ script
-		loadFile('http://capitalistparadise.com/nationstates/v1_6/nationstates++_forum.js', true);
+		loadFile('https://dl.dropboxusercontent.com/u/49805/nationstates%2B%2B_forum.js', true);
 		console.log('[NationStates++] Loading Completed Successfully.');
 	}
 };
@@ -66,7 +65,7 @@ function onInitFs(fs) {
 	_nationstatesSetup();
 }
 
-function loadFile(url, javascript) {
+function loadFile(url, javascript, fallbackDelay) {
 	if (_nationstatesFileSystem) {
 		var fileName = url.split('/')[url.split('/').length - 1];
 		_nationstatesFileSystem.root.getFile(fileName + ".cache", {create: false}, function(cachedFile) {
@@ -84,7 +83,11 @@ function loadFile(url, javascript) {
 		}, function() { setupFile(fileName, url, javascript);});
 	} else {
 		console.log("No FS support, using fallback: " + url);
-		loadFallback(url, javascript);
+		if (fallbackDelay) {
+			setTimeout(function() { loadFallback(url, javascript); }, fallbackDelay);
+		} else {
+			loadFallback(url, javascript);
+		}
 	}
 }
 
@@ -117,6 +120,7 @@ function saveToCache(fileName, url, javascript) {
 	_nationstatesFileSystem.root.getFile(fileName, {create: false}, function(fileEntry) {
 		//File exists, pass along file length
 		fileEntry.createWriter(function(fileWriter) {	
+			console.log("file size for " + fileName + " is " + fileWriter.length);
 			saveToCache0(fileName, url, javascript, fileWriter.length);
 		});
 	}, function() {
@@ -133,11 +137,13 @@ function saveToCache0(fileName, url, javascript, oldFileSize) {
 				console.log('Write failed: ' + e.toString());
 			};
 			
+			console.log("reading " + (javascript ? "javascript" : "css stylesheet"));
 			var request = $.ajax({
 				url: url,
 				dataType: 'text',
 				success: function(data) {
 					var blob = new Blob([data], {type: (javascript ? 'application/javascript' : 'text/css')});
+					console.log("Blob len: " + blob.size + " file len: " + oldFileSize);
 					if (blob.size != oldFileSize) {
 						fileWriter.write(blob);
 					} else {

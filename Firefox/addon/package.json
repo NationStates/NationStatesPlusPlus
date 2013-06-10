@@ -1,0 +1,9 @@
+{
+  "name": "addon",
+  "fullName": "addon",
+  "id": "afforess@gmail.com",
+  "description": "Enhances the NationStates.net experience",
+  "author": "Afforess",
+  "license": "MIT",
+  "version": "1.6"
+}
