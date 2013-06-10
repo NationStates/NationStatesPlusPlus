@@ -4,6 +4,13 @@ var pageMod = require("sdk/page-mod");
 var self = require("sdk/self");
  
 pageMod.PageMod({
-  include: ["http://www.nationstates.net/region=*", "http://forum.nationstates.net/*"],
+  include: ["http://forum.nationstates.net/*"],
+  contentScriptWhen: "start",
+  contentScriptFile: self.data.url("background.js")
+});
+
+pageMod.PageMod({
+  include: ["http://www.nationstates.net/region=*"],
+  contentScriptWhen: "ready",
   contentScriptFile: self.data.url("background.js")
 });

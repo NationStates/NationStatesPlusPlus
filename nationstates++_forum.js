@@ -36,7 +36,7 @@ if (document.readyState == "loading") {
 function setupForums() {
 	$("div.post").each(function() {
 		var marginLeft = 11 + (8 - $(this).attr("id").substring(1).length) * 4.4;
-		$(this).find(".profile-icons").prepend("<li class='post-id-icon'><a href=" + pageUrl + "#" + $(this).attr("id") + "><span class='post-id-text' style='margin-left:" + marginLeft + "px;'>" + $(this).attr("id").substring(1) + "</span></a></li>");
+		$(this).find(".profile-icons").prepend("<li class='post-id-icon'><a href=" + pageUrl + "#" + $(this).attr("id") + " title='Post Number' target='_blank'><span class='post-id-text' style='margin-left:" + marginLeft + "px;'>" + $(this).attr("id").substring(1) + "</span></a></li>");
 	});
 
 	//Search page
@@ -66,4 +66,19 @@ function showAllEgoPosts() {
 		var postName = $(this).parent().parent().find(".topictitle").html();
 		removeLocalStorage(postName);
 	});
+}
+
+var _gaq = _gaq || [];
+update(1);
+function update(delay){
+	setTimeout(function() {
+		_gaq.push(['_setAccount', 'UA-41267101-1']);
+		_gaq.push(['_trackPageview']);
+		_gaq.push(['_setCustomVar', 1, 'Version', 'v1.6', 2]);
+
+		if (delay == 1) {
+			_gaq.push(['_trackEvent', 'Forum', 'Page', pageUrl]);
+		}
+		update(60000);
+	}, delay);
 }
