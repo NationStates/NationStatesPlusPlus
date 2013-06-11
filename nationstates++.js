@@ -550,7 +550,11 @@ function handleInfiniteScroll() {
 						//Format HTML
 						var html = "";
 						$($(data).get().reverse()).each( function() {
-							html += parseRMBPost($(this).html(), quote, $(this).attr('class'));
+							var postId = getRMBPostId($(this).html());
+							var rmbPost = document.getElementById("rmb-post-" + postId);
+							if (rmbPost === null) {
+								html += parseRMBPost($(this).html(), quote, $(this).attr('class'));
+							}
 						});
 						$(html).insertAfter('.rmbrow:last').hide().show('slow');
 					} else if (!atEarliestMessage) {
@@ -834,7 +838,7 @@ function update(delay){
 	setTimeout(function() {
 		_gaq.push(['_setAccount', 'UA-41267101-1']);
 		_gaq.push(['_trackPageview']);
-		_gaq.push(['_setCustomVar', 1, 'Version', 'v1.6', 2]);
+		_gaq.push(['_setCustomVar', 1, 'Version', 'v1.61', 2]);
 
 		if (delay == 1) {
 			_gaq.push(['_trackEvent', 'RMB', 'Region', region]);
