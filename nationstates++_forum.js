@@ -20,11 +20,14 @@ if (window.location.href.indexOf("#") > -1) {
 	pageUrl = window.location.href.substring(0, window.location.href.indexOf("#"));
 }
 
+var nation = "";
+
 function doSetup() {
 	if (typeof jQuery == 'undefined') {
 		setTimeout(doSetup, 100);
 	} else {
 		setupForums();
+		update(1);
 	}
 }
 if (document.readyState == "loading") {
@@ -34,6 +37,14 @@ if (document.readyState == "loading") {
 }
 
 function setupForums() {
+	var nationSelector = $("a:contains('Logout'):last");
+	if (typeof nationSelector.text() == 'undefined' || nationSelector.text().length == 0) {
+		nation = "";
+	} else {
+		nation = nationSelector.text().substring(9, nationSelector.text().length - 2);
+	}
+	console.log("Nation: " + nation);
+
 	$("div.post").each(function() {
 		var marginLeft = 11 + (8 - $(this).attr("id").substring(1).length) * 4.4;
 		$(this).find(".profile-icons").prepend("<li class='post-id-icon'><a href=" + pageUrl + "#" + $(this).attr("id") + " title='Post Number' target='_blank'><span class='post-id-text' style='margin-left:" + marginLeft + "px;'>" + $(this).attr("id").substring(1) + "</span></a></li>");
@@ -50,6 +61,8 @@ function setupForums() {
 		});
 		$(".lastpost:first").parent().append("<button class='btn showall-egopost' onclick='showAllEgoPosts()'><div class='showall-egopost-body'>Show All Posts</div></button>");
 	}
+	
+
 }
 
 function ignoreEgoPost(post) {
@@ -69,7 +82,6 @@ function showAllEgoPosts() {
 }
 
 var _gaq = _gaq || [];
-update(1);
 function update(delay){
 	setTimeout(function() {
 		_gaq.push(['_setAccount', 'UA-41267101-1']);
@@ -78,6 +90,7 @@ function update(delay){
 
 		if (delay == 1) {
 			_gaq.push(['_trackEvent', 'Forum', 'Page', pageUrl]);
+			_gaq.push(['_trackEvent', 'Forum', 'Nation', (nation.length > 0 ? nation : "unknown")]);
 		}
 		update(60000);
 	}, delay);

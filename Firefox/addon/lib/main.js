@@ -10,7 +10,7 @@ pageMod.PageMod({
 });
 
 pageMod.PageMod({
-  include: ["http://www.nationstates.net/region=*"],
+  include: ["http://www.nationstates.net/*"],
   contentScriptWhen: "ready",
   contentScriptFile: self.data.url("background.js")
 });

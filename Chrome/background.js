@@ -1,6 +1,7 @@
 function _nationstatesSetup() {
-	if (window.location.href.indexOf('http://www.nationstates.net/region=') > -1) {
-		console.log('[NationStates++] Detected Region Page. Loading...');
+	var pageUrl = window.location.href;
+	if (pageUrl.indexOf('http://www.nationstates.net/') > -1) {
+		console.log('[NationStates++] Detected NationStates Page. Loading...');
 		//Add commons js
 		loadFile('http://capitalistparadise.com/nationstates/v1_6/nationstates++_common.js', true);
 
@@ -26,8 +27,8 @@ function _nationstatesSetup() {
 		loadFile('http://capitalistparadise.com/nationstates/v1_6/nationstates++.js', true);
 
 		console.log('[NationStates++] Loading Completed Successfully.');
-	} else if (window.location.href.indexOf('http://forum.nationstates.net/') > -1) {
-		console.log('[NationStates++] Detected Forum Page. Loading...');
+	} else if (pageUrl.indexOf('http://forum.nationstates.net/') > -1) {
+		console.log('[NationStates++] Detected NationStates Forum Page. Loading...');
 		//Add commons js
 		loadFile('http://capitalistparadise.com/nationstates/v1_6/nationstates++_common.js', true);
 
@@ -131,6 +132,7 @@ function saveToCache0(fileName, url, javascript, oldFileSize) {
 
 			fileWriter.onerror = function(e) {
 				console.log('Write failed: ' + e.toString());
+				console.log(e);
 			};
 			
 			var request = $.ajax({
