@@ -1,20 +1,3 @@
-var css = '.post-id-icon, .post-id-icon a		{width:85px; height:20px; background-image: url("http://capitalistparadise.com/nationstates/static/post_id.gif"); }';
-css += '.post-id-icon a		{ color: black; text-decoration: none; }';
-css += '.post-id-text {font-weight:bold; letter-spacing: 1px; color:#BC2A4C; text-align:center; margin-left:11px; margin-top:3px; display:inline-block !important;}';
-css += '.ignore-egopost {float:right; margin-top:6px; margin-right:5px; width:50px; height:20px;}';
-css += '.ignore-egopost-body {font-size:10px; font-weight:bold; margin-left:-3px; margin-top:-5px;}';
-css += '.showall-egopost {float:right; margin-bottom:4px; width:110px; height:20px;}';
-css += '.showall-egopost-body {font-size:10px; font-weight:bold; margin-left:-3px; margin-top:-5px;}';
-
-var style = document.createElement('style');
-style.type = 'text/css';
-if (style.styleSheet){
-  style.styleSheet.cssText = css;
-} else {
-  style.appendChild(document.createTextNode(css));
-}
-document.head.appendChild(style);
-
 var pageUrl = window.location.href;
 if (window.location.href.indexOf("#") > -1) {
 	pageUrl = window.location.href.substring(0, window.location.href.indexOf("#"));
@@ -52,14 +35,14 @@ function setupForums() {
 
 	//Search page
 	if (pageUrl.indexOf("/search.php?") > -1) {
-		$(".lastpost:not(:first)").parent().append("<button class='btn ignore-egopost' onclick='ignoreEgoPost(this)'><div class='ignore-egopost-body'>Ignore</div></button>");
+		$(".lastpost:not(:first)").parent().append("<button class='ignore-egopost btn' onclick='ignoreEgoPost(this)'><div class='ignore-egopost-body'>Ignore</div></button>");
 		$(".lastpost:not(:first)").each(function() {
 			var postName = $(this).parent().parent().find(".topictitle").html();
 			if (getLocalStorage(postName) == "true") {
 				$(this).parent().parent().hide();
 			}
 		});
-		$(".lastpost:first").parent().append("<button class='btn showall-egopost' onclick='showAllEgoPosts()'><div class='showall-egopost-body'>Show All Posts</div></button>");
+		$(".lastpost:first").parent().append("<button class='showall-egopost btn' onclick='showAllEgoPosts()'><div class='showall-egopost-body'>Show All Posts</div></button>");
 	}
 	
 
@@ -86,7 +69,7 @@ function update(delay){
 	setTimeout(function() {
 		_gaq.push(['_setAccount', 'UA-41267101-1']);
 		_gaq.push(['_trackPageview']);
-		_gaq.push(['_setCustomVar', 1, 'Version', 'v1.6', 2]);
+		_gaq.push(['_setCustomVar', 1, 'Version', 'v1.66', 2]);
 
 		if (delay == 1) {
 			_gaq.push(['_trackEvent', 'Forum', 'Page', pageUrl]);

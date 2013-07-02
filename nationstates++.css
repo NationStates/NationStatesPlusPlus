@@ -1,0 +1,89 @@
+.QuoteButton {
+	font-weight: bold;
+	font-size: 8pt;
+	padding: 2px 8px 2px 8px;
+	border-radius: 30px;
+	height: 20px;
+	text-align:right;
+	float:right;
+	margin-top: -19px;
+	margin-right: -9px;
+}
+
+.RoundedButton {
+	font-weight: bold;
+	font-size: 12pt;
+	padding: 2px 8px 2px 8px;
+	border-radius: 14px;
+	display: inline-block;
+}
+
+.highlight {
+	background: #FFFF00;
+}
+
+.ns-settings  a{
+	position:absolute;
+	top:0px;
+	right: 78px;
+	margin:6px 60px 0px 0px;
+	z-index:98;
+	font-weight:bold;
+	color: white;
+	font-weight: bold;
+	font-size: 8pt;
+	padding: 2px 8px 2px 8px;
+	background: black;
+	background-color: rgba(0,0,0,0.2);
+	border-radius: 8px
+}
+
+.post-id-icon, .post-id-icon a {
+	width:85px;
+	height:20px;
+	background-image: url("http://capitalistparadise.com/nationstates/static/post_id.gif");
+}
+
+.post-id-icon a {
+	color: black;
+	text-decoration: none;
+}
+
+.post-id-text {
+	font-weight:bold;
+	letter-spacing: 1px;
+	color:#BC2A4C;
+	text-align:center;
+	margin-left:11px;
+	margin-top:3px;
+	display:inline-block !important;
+}
+
+.ignore-egopost {
+	float:right;
+	margin-top:6px;
+	margin-right:5px;
+	width:50px;
+	height:20px;
+}
+
+.ignore-egopost-body {
+	font-size:10px;
+	font-weight:bold;
+	margin-left:-3px;
+	margin-top:-5px;
+}
+
+.showall-egopost {
+	float:right;
+	margin-bottom:4px !important;
+	width:110px;
+	height:20px;
+}
+
+.showall-egopost-body {
+	font-size:10px;
+	font-weight:bold;
+	margin-left:-3px;
+	margin-top:-5px;
+}
