@@ -36,6 +36,38 @@
 	}
 })();
 
+//$("#banner").append("<div class='ns-settings'><img id='signin-button' src='https://dl.dropboxusercontent.com/u/49805/dropbox.png'>Sync with Dropbox</img></div>");
+$("#banner, #nsbanner").append("<div class='ns-settings'><a href='http://nationstates.net/page=ns++'>NS++ Settings</a></div>");
+
+/*
+var client = new Dropbox.Client({ key: "sh+9UCcI8gA=|5UEwz9yvpb2/NF8lwYZa1+1/4YDgyTxjylfbkuHvPQ==", sandbox: true});
+console.log(client);
+client.authDriver( new Dropbox.Drivers.Redirect({ rememberUser: true }) );
+
+// Try to use cached credentials.
+client.authenticate({interactive: false}, function(error, client) {
+  if (error) {
+    console.log(error);
+  }
+  if (client.isAuthenticated()) {
+    // Cached credentials are available, make Dropbox API calls.
+    console.log("Cached authentication");
+  } else {
+    // show and set up the "Sign into Dropbox" button
+    var button = document.querySelector("#signin-button");
+    button.setAttribute("class", "visible");
+    button.addEventListener("click", function() {
+      // The user will have to click an 'Authorize' button.
+      client.authenticate(function(error, client) {
+        if (error) {
+          console.log(error);
+        }
+         console.log("authentication");
+      });
+    });
+  }
+});*/
+
 //$("#banner").append("<div class='ns-settings'><a href='javascript:void(0)' onclick='return toggleStickyLoginBox()'>Settings</a></div>");
 
 function setLocalStorage(key, value) {
@@ -102,6 +134,7 @@ function getVisibleNation() {
 var _visibleRegion = "";
 var _visiblePage = "";
 var _visibleSorting = "";
+var _visibleDilemma = "";
 (function() {
 	if (window.location.href.contains("region=") != -1) {
 		var split = window.location.href.split(/[/#/?]/);
@@ -112,10 +145,19 @@ var _visibleSorting = "";
 				_visiblePage = split[i].substring(5);
 			} else if (split[i].startsWith("sort=")) {
 				_visibleSorting = split[i].substring(5);
+			} else if (split[i].startsWith("dilemma=")) {
+				_visibleDilemma = split[i].substring(8);
 			}
 		}
 	}
 })();
+
+/*
+	Returns the dilemma id number on the page, if any
+*/
+function getVisibleDilemma() {
+	return _visibleDilemma;
+}
 
 /*
 	Returns the sorting parameter on the page, if any

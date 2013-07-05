@@ -22,20 +22,24 @@
 	background: #FFFF00;
 }
 
-.ns-settings  a{
+.ns-settings  a, .ns-settings img{
 	position:absolute;
 	top:0px;
 	right: 78px;
 	margin:6px 60px 0px 0px;
 	z-index:98;
 	font-weight:bold;
-	color: white;
+	color: white !important;
 	font-weight: bold;
 	font-size: 8pt;
 	padding: 2px 8px 2px 8px;
 	background: black;
 	background-color: rgba(0,0,0,0.2);
-	border-radius: 8px
+	border-radius: 8px;
+}
+
+.ns-settings  img{
+	right: 120px;
 }
 
 .post-id-icon, .post-id-icon a {
