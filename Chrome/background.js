@@ -1,7 +1,7 @@
 function _nationstatesSetup() {
 	var pageUrl = window.location.href;
 	if (pageUrl.indexOf('http://www.nationstates.net/') > -1) {
-		console.log('[NationStates++] Detected NationStates Page. Loading...');
+		debugConsole('[NationStates++] Detected NationStates Page. Loading...');
 		//Add commons js
 		loadFile('http://capitalistparadise.com/nationstates/v1_65/nationstates++_common.js', true);
 
@@ -32,9 +32,9 @@ function _nationstatesSetup() {
 		// Add NationStates++ script
 		loadFile('http://capitalistparadise.com/nationstates/v1_65/nationstates++.js', true);
 
-		console.log('[NationStates++] Loading Completed Successfully.');
+		debugConsole('[NationStates++] Loading Completed Successfully.');
 	} else if (pageUrl.indexOf('http://forum.nationstates.net/') > -1) {
-		console.log('[NationStates++] Detected NationStates Forum Page. Loading...');
+		debugConsole('[NationStates++] Detected NationStates Forum Page. Loading...');
 		//Add commons js
 		loadFile('http://capitalistparadise.com/nationstates/v1_65/nationstates++_common.js', true);
 
@@ -49,7 +49,7 @@ function _nationstatesSetup() {
 		//Add the NationStates++ script
 		loadFile('http://capitalistparadise.com/nationstates/v1_65/nationstates++_forum.js', true);
 		
-		console.log('[NationStates++] Loading Completed Successfully.');
+		debugConsole('[NationStates++] Loading Completed Successfully.');
 	}
 };
 
@@ -57,7 +57,7 @@ window.addEventListener("message", function(event) {
 	// We only accept messages from ourselves
 	if (event.source != window)
 		return;
-	console.log("Content script received: " + event.data.method);
+	debugConsole("Content script received: " + event.data.method);
 }, false);
 
 //Chrome is strange
@@ -76,31 +76,45 @@ function onInitFs(fs) {
 	_nationstatesSetup();
 }
 
+var _debugMode = false;
+function debugConsole(message) {
+	if (_debugMode) console.log(message);
+}
+
 function loadFile(url, javascript) {
 	if (_nationstatesFileSystem) {
 		var fileName = url.split('/')[url.split('/').length - 1];
 		_nationstatesFileSystem.root.getFile(fileName + ".cache", {create: false}, function(cachedFile) {
-			_nationstatesFileSystem.root.getFile(fileName, {create: false}, function(fileEntry) {
-				//Remove old file, Move cache file
-				fileEntry.remove(function() {
-					console.log("Removed old file. Moving " + fileName + ".cache to " + fileName);
-					cachedFile.moveTo(_nationstatesFileSystem.root, fileName, function() { setupFile(fileName, url, javascript);});
-				});
-			}, function() {
-				//There was no old file, move new file
-				console.log("Moving " + fileName + ".cache to " + fileName);
-				cachedFile.moveTo(_nationstatesFileSystem.root, fileName, function() { setupFile(fileName, url, javascript);});
+			//Check to make sure cache is valid (non-zero file)
+			cachedFile.createWriter(function(fileWriter) {	
+				if (fileWriter.length != 0) {
+					_nationstatesFileSystem.root.getFile(fileName, {create: false}, function(fileEntry) {
+					//Remove old file, Move cache file
+					fileEntry.remove(function() {
+						debugConsole("Removed old file. Moving " + fileName + ".cache to " + fileName);
+						cachedFile.moveTo(_nationstatesFileSystem.root, fileName, function() { setupFile(fileName, url, javascript);});
+					});
+					}, function() {
+						//There was no old file, move new file
+						debugConsole("Moving " + fileName + ".cache to " + fileName);
+						cachedFile.moveTo(_nationstatesFileSystem.root, fileName, function() { setupFile(fileName, url, javascript);});
+					});
+				} else {
+					setupFile(fileName, url, javascript);
+					cachedFile.remove(function() { debugConsole("Invalid cache, ignoring"); });
+				}
 			});
+			
 		}, function() { setupFile(fileName, url, javascript);});
 	} else {
-		console.log("No FS support, using fallback: " + url);
+		debugConsole("No FS support, using fallback: " + url);
 		loadFallback(url, javascript);
 	}
 }
 
 function setupFile(fileName, url, javascript) {
 	_nationstatesFileSystem.root.getFile(fileName, {create: false}, function(fileEntry) {
-		console.log("Using cache: " + fileEntry.toURL());
+		debugConsole("Using cache: " + fileEntry.toURL());
 		if (javascript) {
 			addJavascript(fileEntry.toURL());
 		} else {
@@ -109,7 +123,7 @@ function setupFile(fileName, url, javascript) {
 		saveToCache(fileName, url, javascript);
 	},
 	function() {
-		console.log("Using fallback: " + url);
+		debugConsole("Using fallback: " + url);
 		loadFallback(url, javascript);
 		saveToCache(fileName, url, javascript);
 	});
@@ -136,12 +150,13 @@ function saveToCache(fileName, url, javascript) {
 }
 
 function saveToCache0(fileName, url, javascript, oldFileSize) {
+	debugConsole("saving: " + fileName + " to cache. Previous File Size: " + oldFileSize);
 	_nationstatesFileSystem.root.getFile(fileName + ".cache", {create: true}, function(fileEntry) {
 		fileEntry.createWriter(function(fileWriter) {
 
 			fileWriter.onerror = function(e) {
-				console.log('Write failed: ' + e.toString());
-				console.log(e);
+				debugConsole('Write failed: ' + e.toString());
+				debugConsole(e);
 			};
 			
 			var request = $.ajax({
@@ -149,13 +164,16 @@ function saveToCache0(fileName, url, javascript, oldFileSize) {
 				dataType: 'text',
 				success: function(data) {
 					var blob = new Blob([data], {type: (javascript ? 'application/javascript' : 'text/css')});
+					debugConsole("Checking if cache is fresh");
 					if (blob.size != oldFileSize) {
+						debugConsole("Cache is stale, previous: " + oldFileSize + " new: " + blob.size);
 						fileWriter.write(blob);
 					} else {
+						debugConsole("Cache is fresh");
 						fileEntry.remove(function() { });
 					}
 				},
-				error: function (request, status, error) { console.log(request); console.log(status); console.log(error);}
+				error: function (request, status, error) { debugConsole(request); debugConsole(status); debugConsole(error);}
 			});
 		}, errorHandler);
 	}, errorHandler);
@@ -189,8 +207,8 @@ function errorHandler(e) {
 			msg = 'Unknown Error';
 			break;
 	};
-	console.log(e);
-	console.log('Error: ' + msg);
+	debugConsole(e);
+	debugConsole('Error: ' + msg);
 }
 
 function addStylesheet(url) {

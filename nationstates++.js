@@ -301,7 +301,7 @@ function addPageSlider(maxPage) {
 		});
 		updatePageSlider(1);
 	} catch (e) {
-		setTimeout(function() { addPageSlider(maxPage, allNationsPage, sortByResidency); }, 25);
+		setTimeout(function() { addPageSlider(maxPage); }, 25);
 	}
 }
 
