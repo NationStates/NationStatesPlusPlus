@@ -1,9 +1,9 @@
 function _nationstatesSetup() {
-	loadFile('http://capitalistparadise.com/nationstates/v1_7/nationstates++_common.js', true);
 	var pageUrl = window.location.href;
-
 	if (pageUrl.indexOf('http://www.nationstates.net/') > -1) {
 		debugConsole('[NationStates++] Detected NationStates Page. Loading...');
+
+		loadFile('http://capitalistparadise.com/nationstates/v1_7/nationstates++_common.js', true);
 
 		// Add jquery.caret script
 		loadFile('http://capitalistparadise.com/nationstates/v1_7/jquery.caret.js', true);
@@ -44,8 +44,11 @@ function _nationstatesSetup() {
 		loadFile('http://capitalistparadise.com/nationstates/v1_7/nationstates++.css', false);
 
 		//Add the NationStates++ script
-		loadFile('http://capitalistparadise.com/nationstates/v1_7/nationstates++_forum.js', true);
-		
+		$(document).ready(function(){
+			loadFile('http://capitalistparadise.com/nationstates/v1_7/nationstates++_common.js', true);
+			loadFile('http://capitalistparadise.com/nationstates/v1_7/nationstates++_forum.js', true);
+		});
+
 		debugConsole('[NationStates++] Loading Completed Successfully.');
 	}
 };
@@ -73,7 +76,7 @@ function onInitFs(fs) {
 	_nationstatesSetup();
 }
 
-var _debugMode = true;
+var _debugMode = false;
 function debugConsole(message) {
 	if (_debugMode) console.log(message);
 }
