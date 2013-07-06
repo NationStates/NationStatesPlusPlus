@@ -13,9 +13,14 @@ function nationstatesPlusPlus() {
 }
 
 function setupRegionPage(forumViewPage) {
-	checkForRMBUpdates(10000);
+	if (isSettingEnabled("auto_update")) {
+		checkForRMBUpdates(10000);
+	}
+	
 	if (!forumViewPage) {
-		$(".rmbolder").remove();
+		if (isSettingEnabled("infinite_scroll")) {
+			$(".rmbolder").remove();
+		}
 	} else {
 		$("h6[align='center']").remove();
 		$("#toplink").remove();
@@ -28,13 +33,25 @@ function setupRegionPage(forumViewPage) {
 	
 	if (isAntiquityTheme()) {
 		var html = "<tr>" + $("tbody:last").children(":first").html() + "</tr>";
-		$($("tbody:last").children(":not(:first)").get().reverse()).each( function() {
+		var children;
+		if (isSettingEnabled("infinite_scroll")) {
+			children = $("tbody:last").children(":not(:first)").get().reverse();
+		} else {
+			children = $("tbody:last").children(":not(:first)").get();
+		}
+		$(children).each( function() {
 			html += parseRMBPost($(this).html(), quote, $(this).attr('class'));
 		});
 		$("tbody:last").html(html);
 	} else {
 		var html = "";
-		$($(".rmbtable2").children().get().reverse()).each( function() {
+		var children;
+		if (isSettingEnabled("infinite_scroll")) {
+			children = $(".rmbtable2").children().get().reverse();
+		} else {
+			children = $(".rmbtable2").children().get();
+		}
+		$(children).each( function() {
 			html += parseRMBPost($(this).html(), quote, $(this).attr('class'));
 		});
 		$(".rmbtable2").html(html);
@@ -43,22 +60,49 @@ function setupRegionPage(forumViewPage) {
 		$(".hilite").attr("class", "button");
 	}
 
-	var formHtml = "<div id='rmb-post-form' style='display: none;'><div style='text-align:center;'><p>You need to " + (getUserNation().length > 0 ?  "move to the region" : "login to NationStates") + " first!</p></div></div>";
-	//Move the RMB reply area to the top
-	if (typeof rmbPost != 'undefined') {
-		//Remove the "From:" line
-		$(rmbPost).children().each( function() {
-			if ($(this).html().indexOf("From:") > -1) {
-				$(this).remove();
-			}
-		});
+	if (isSettingEnabled("infinite_scroll") || isSettingEnabled("search_rmb")) {
+		var formHtml = "<div id='rmb-post-form' style='display: none;'><div style='text-align:center;'><p>You need to " + (getUserNation().length > 0 ?  "move to the region" : "login to NationStates") + " first!</p></div></div>";
+		//Move the RMB reply area to the top
+		if (typeof rmbPost != 'undefined') {
+			//Remove the "From:" line
+			$(rmbPost).children().each( function() {
+				if ($(this).html().indexOf("From:") > -1) {
+					$(this).remove();
+				}
+			});
 
-		//Move the post form to the top
-		var formHtml = "<div id='rmb-post-form' " + (forumViewPage ? "" : "style='display: none;'") + "><form onsubmit='rmbpost(); return false;' id='rmb'>" + rmbPost.innerHTML + "</form></div>";
-		$(rmbPost).remove();
+			//Move the post form to the top
+			var formHtml = "<div id='rmb-post-form' " + (forumViewPage || !isSettingEnabled("search_rmb") ? "" : "style='display: none;'") + "><form onsubmit='rmbpost(); return false;' id='rmb'>" + rmbPost.innerHTML + "</form></div>";
+			$(rmbPost).remove();
+		}
+		var widebox = $('.widebox:last');
+		widebox.prepend(formHtml);
+	} else {
+		//Override older rmb click
+		$('#olderrmb').unbind("click").click(function(event){
+			event.preventDefault();
+			$('.rmbolder .notloading').hide();
+			$('.rmbolder .loading').show();
+			$.get('/page=ajax/a=rmb/region=' + getVisibleRegion() + '/offset=' + rmboffset, function(data) {
+				rmboffset += 10;
+				if (data.length > 1) {
+					var html = "";
+					$(data).each( function() {
+						var postId = getRMBPostId($(this).html());
+						var rmbPost = document.getElementById("rmb-post-" + postId);
+						if (rmbPost === null) {
+							html += parseRMBPost($(this).html(), quote, $(this).attr('class'));
+						}
+					});
+					$(html).insertBefore('.rmbrow:first').hide().show('slow');
+				} else {
+					$('.rmbolder').text("At Earliest Message");
+				}
+				$('.rmbolder .loading').hide();
+				$('.rmbolder .notloading').show();
+			});
+        });
 	}
-	var widebox = $('.widebox:last');
-	widebox.prepend(formHtml);
 	
 	//Forum view has old/bad buttons, have to fix them
 	if (forumViewPage && typeof rmbPost != 'undefined') {
@@ -73,16 +117,20 @@ function setupRegionPage(forumViewPage) {
 	}
 
 	//Move "Switch to Forum View" to top of RMB posts
-	if (isAntiquityTheme()) {
-		var forumView = $('.rmbview');
-		var forumViewHTML = forumView.html();
-		forumView.remove();
-		$("<p class='rmbview'>" + forumViewHTML + "</p>").insertBefore(".shiny.rmbtable");
-	} else {
-		var forumView = $('#content').find('.rmbview');
-		var forumViewHTML = forumView.html();
-		forumView.remove();
-		$("<p class='rmbview'>" + forumViewHTML + "</p>").insertBefore(".rmbtable2:first");
+	if (isSettingEnabled("infinite_scroll")) {
+		if (isAntiquityTheme()) {
+			var forumView = $('.rmbview');
+			var forumViewHTML = forumView.html();
+			forumView.remove();
+			$("<p class='rmbview'>" + forumViewHTML + "</p>").insertBefore(".shiny.rmbtable");
+		} else {
+			var forumView = $('#content').find('.rmbview');
+			var forumViewHTML = forumView.html();
+			forumView.remove();
+			$("<p class='rmbview'>" + forumViewHTML + "</p>").insertBefore(".rmbtable2:first");
+		}
+	} else if (isSettingEnabled("search_rmb")) {
+		$('.rmbolder').css("margin-top", "20px");
 	}
 
 	//Setup infinite scroll
@@ -92,112 +140,21 @@ function setupRegionPage(forumViewPage) {
 		return;
 	}
 
-	//Add search box
-	widebox.prepend("<div id='searchbox' style='display: none;'><div style='margin-top:6px; text-align:center;'><input id='rmb-search-input' placeholder='Search' type='search' style='width:35%; height:25px;' name='googlesearch' onkeydown='if (event.keyCode == 13) { searchRMB(); } else { updateSearchText(); }'></div></div>");
+	if (isSettingEnabled("search_rmb")) {
+		//Add search box
+		widebox.prepend("<div id='searchbox' style='display: none;'><div style='margin-top:6px; text-align:center;'><input id='rmb-search-input' placeholder='Search' type='search' style='width:35%; height:25px;' name='googlesearch' onkeydown='if (event.keyCode == 13) { searchRMB(); } else { updateSearchText(); }'></div></div>");
 
-	//Add rmb menu area
-	widebox.prepend("<div id='rmb-menu' style='text-align: center;'><button class='button RoundedButton' onclick='toggleRMBPostForm();'>Leave a message</button> - <button class='button RoundedButton' onclick='toggleSearchForm();'>Search messages</button></div");
-	
-	if (isAntiquityTheme()) {
-		$("#rmb-menu").css("margin-bottom", "20px");
-		$("#rmb-search-input").css("margin-bottom", "20px");
+		//Add rmb menu area
+		widebox.prepend("<div id='rmb-menu' style='text-align: center;'><button class='button RoundedButton' onclick='toggleRMBPostForm();'>Leave a message</button> <button class='button RoundedButton' onclick='toggleSearchForm();'>Search messages</button></div");
+		
+		if (isAntiquityTheme()) {
+			$("#rmb-menu").css("margin-bottom", "20px");
+			$("#rmb-search-input").css("margin-bottom", "20px");
+		}
 	}
-	
+
 	//Replace census slider
 	setupPageSlider();
-	
-	var wfe = $("fieldset[class='wfe']");
-	var embassies = $('p:contains("Embassies:")');
-	if (typeof embassies.html() != 'undefined') {
-		wfe.wrap("<div class='colmask rightmenu'\><div id='wfe-main-content' class='colleft'\><div id='world_factbook_entry' class='col1'\>");
-		$("#wfe-main-content").append("<div id='embassy_flags' class='col2' style='display:none'><fieldset class='wfe'><legend>Embassies</legend><div id='embassy-inner' style='height: " + (wfe.height() - 15) + "px; overflow:hidden; position:relative;'></div></fieldset></div>");
-		$("#embassy_flags").attr("style", "height: " + $("#wfe-main-content").height() + "px;");
-		var embassyFlags = $("fieldset[class='wfe']:last");
-		embassyFlags.attr("style", "height: " + wfe.height() + "px;");
-		$(embassies).children().each(recurseEmbassies);
-		var amazonURL = "http://ec2-54-244-210-176.us-west-2.compute.amazonaws.com";
-		embassyArr = embassyList.split(",");
-		for (var i = 0; i < Math.min(5, embassyArr.length / 10); i++) {
-			var list = "";
-			var start = i * 10;
-			var end = Math.min(start + 10, embassyArr.length);
-			for (var j = start; j < end; j++) {
-				if (j > start) 	list += ",";
-				list += embassyArr[j]
-			}
-			$.getJSON(amazonURL + "/regionflag/?region=" + list, function(jsonData) {
-				var maxTop = -106;
-				$(".animate-flags").each(function() {
-					if ($(this).position().top > maxTop) {
-						maxTop = $(this).position().top;
-					}
-				});
-				for (var regionName in jsonData) {
-					if (jsonData.hasOwnProperty(regionName)) {
-						var flag = jsonData[regionName];
-						if (flag != null && flag.length > 0) {
-							maxTop += 106;
-							$("#embassy-inner").append("<div class='animate-flags' style='position:absolute; left:6px; top:" + maxTop + "px; padding: 2px 2px 2px 2px;'><a href='http://nationstates.net/region=" + regionName + "' target='_blank'><img src='" + flag + "' class='rflag' style='width:140px; height:100px;' alt='' title='Regional Flag of " + regionName.split("_").join(" ") + "'></a></div>");
-						}
-					}
-				}
-			});
-		}
-		setTimeout(function() {
-			var count = 0;
-			$(".animate-flags").each(function() {
-				count += 1;
-			});
-			if (count > 0) {
-				$("#embassy_flags").removeAttr("style");
-				if (count * 106 >= wfe.height() + 100) {
-					_embassyFlags = $("#embassy_flags").get();
-					animateEmbassyFlags();
-				}
-			}
-		}, 500);
-	}
-}
-
-var _embassyFlags;
-function animateEmbassyFlags() {
-	setTimeout(function() {
-		if (!document.hidden && isScrolledIntoView(_embassyFlags)) {
-			var maxTop = -10000000;
-			$(".animate-flags").each(function() {
-				if ($(this).position().top > maxTop) {
-					maxTop = $(this).position().top;
-				}
-			});
-			$(".animate-flags").each(function() {
-				if ($(this).position().top < -106) {
-					maxTop += 106;
-					$(this).stop();
-					$(this).clearQueue();
-					$(this).css({ top: maxTop + 'px' });
-				}
-			});
-			$(".animate-flags").animate({ "top": "-=1"}, 75);
-		}
-		animateEmbassyFlags();
-	}, 75);
-}
-
-var embassyList = "";
-function recurseEmbassies() {
-	if ($(this).html().indexOf("Embassies:") != -1) {
-		return; //Ignore
-	}
-	if ($(this).html().indexOf('<a href="">') == -1) {
-		if ($(this).children().length != 0) {
-			$(this).children().each(recurseEmbassies);
-		} else {
-			if (embassyList.length > 0) {
-				embassyList += ",";
-			}
-			embassyList += $(this).html().replace(new RegExp(' ', 'g'), "_");
-		}
-	}
 }
 
 function isForumView() {
@@ -296,8 +253,6 @@ function addPageSlider(maxPage) {
 					}
 				}
 			}
-			
-			
 		});
 		updatePageSlider(1);
 	} catch (e) {
@@ -543,43 +498,45 @@ function isAtBottomOfPage() {
 
 var atEarliestMessage = false;
 var rmboffset = 10;
+var lastRMBScroll = (new Date()).getTime();
 function handleInfiniteScroll() {
 	if (atEarliestMessage) {
 		return;
 	}
+	if (!isAtBottomOfPage()) {
+		return;
+	}
+	if (lastRMBScroll + 100 > (new Date()).getTime()) {
+		return;
+	}
 	//Infinite search Scroll
 	if (isSearchResultsVisible()) {
-		if (isAtBottomOfPage()) {
-			var searchPaused = document.getElementById("end-of-search-results");
-			if (searchPaused != null) {
-				$(searchPaused).remove();
-				doRMBSearch();
-			}
+		var searchPaused = document.getElementById("end-of-search-results");
+		if (searchPaused != null) {
+			$(searchPaused).remove();
+			doRMBSearch();
 		}
-	} else {
-	//Infinite RMB post scroll
-		setTimeout(function() {
-			if (isAtBottomOfPage()) {
-				getRMBPosts(rmboffset, function(data) {
-					if (data.length > 1) {
-						//Format HTML
-						var html = "";
-						$($(data).get().reverse()).each( function() {
-							var postId = getRMBPostId($(this).html());
-							var rmbPost = document.getElementById("rmb-post-" + postId);
-							if (rmbPost === null) {
-								html += parseRMBPost($(this).html(), quote, $(this).attr('class'));
-							}
-						});
-						$(html).insertAfter('.rmbrow:last').hide().show('slow');
-					} else if (!atEarliestMessage) {
-						atEarliestMessage = true;
-						$("<div class='rmbolder'>At Earliest Message</div>").insertAfter('.rmbrow:last').hide().show('slow');
+	} else if (isSettingEnabled("infinite_scroll")) {
+		//Infinite RMB post scroll
+		getRMBPosts(rmboffset, function(data) {
+			if (data.length > 1) {
+				//Format HTML
+				var html = "";
+				$($(data).get().reverse()).each( function() {
+					var postId = getRMBPostId($(this).html());
+					var rmbPost = document.getElementById("rmb-post-" + postId);
+					if (rmbPost === null) {
+						html += parseRMBPost($(this).html(), quote, $(this).attr('class'));
 					}
 				});
-				rmboffset += 10;
+				$(html).insertAfter('.rmbrow:last').hide().show('slow');
+			} else if (!atEarliestMessage) {
+				atEarliestMessage = true;
+				$("<div class='rmbolder'>At Earliest Message</div>").insertAfter('.rmbrow:last').hide().show('slow');
 			}
-		}, 25);
+		});
+		rmboffset += 10;
+		lastRMBScroll = (new Date()).getTime();
 	}
 }
 
@@ -623,7 +580,11 @@ function updateRMB() {
 			});
 			//Insert new posts
 			if (html.length > 0) {
-				$(html).insertBefore('.rmbrow:first').hide().show('slow');
+				if (isSettingEnabled("infinite_scroll") || isSettingEnabled("search_rmb")) {
+					$(html).insertBefore('.rmbrow:first').hide().show('slow');
+				} else {
+					$(html).insertAfter('.rmbrow:last').hide().show('slow');
+				}
 			}
 		}
 	});
@@ -662,13 +623,15 @@ function parseRMBPost(innerHTML, quoteHTML, className) {
 }
 
 function parseRMBPostWithId(innerHTML, quoteHTML, className, postId) {
-	if (innerHTML.indexOf("rmbsuppressed") > -1 || innerHTML.indexOf(quoteHTML) > -1) {
+	if (innerHTML.indexOf("rmbsuppressed") > -1 || innerHTML.indexOf(quoteHTML) > -1 || !isSettingEnabled("show_quote")) {
 		quoteHTML = "";
 	} else {
 		quoteHTML = quoteHTML.replace("${id}", postId);
 	}
 
-	innerHTML = linkify(innerHTML);
+	if (isSettingEnabled("clickable_links")) {
+		innerHTML = linkify(innerHTML);
+	}
 
 	//Add inner body div
 	var innerBody = innerHTML.indexOf('<div class="rmbspacer"></div>');
@@ -679,13 +642,15 @@ function parseRMBPostWithId(innerHTML, quoteHTML, className, postId) {
 	}
 
 	//Add ignore button
-	if (postId.indexOf("-search") == -1 && innerHTML.indexOf('div class="rmbbuttons">') == -1 && innerHTML.indexOf('class="rmbsuppressed"') == -1) {
-			innerHTML = '<div style="margin-top:6px;" class="rmbbuttons"><a href="" class="forumpaneltoggle rmbignore"><img src="http://capitalistparadise.com/nationstates/static/rmb_ignore.png" alt="Ignore" title="Ignore Post"></a></div>' + innerHTML;
-	}
-	
-	if (getLocalStorage("ignored-post-" + postId) == "true") {
-		innerHTML += "<div id='rmb-ignored-body-" + postId + "' class='rmbsuppressed' style='margin-top:-16px; padding-bottom:6px;'>Ignored post.</div>";
-		quoteHTML = "";
+	if (isSettingEnabled("show_ignore")) {
+		if (postId.indexOf("-search") == -1 && innerHTML.indexOf('div class="rmbbuttons">') == -1 && innerHTML.indexOf('class="rmbsuppressed"') == -1) {
+				innerHTML = '<div style="margin-top:6px;" class="rmbbuttons"><a href="" class="forumpaneltoggle rmbignore"><img src="http://capitalistparadise.com/nationstates/static/rmb_ignore.png" alt="Ignore" title="Ignore Post"></a></div>' + innerHTML;
+		}
+		
+		if (getLocalStorage("ignored-post-" + postId) == "true") {
+			innerHTML += "<div id='rmb-ignored-body-" + postId + "' class='rmbsuppressed' style='margin-top:-16px; padding-bottom:6px;'>Ignored post.</div>";
+			quoteHTML = "";
+		}
 	}
 	
 	if (isAntiquityTheme()) {
@@ -857,14 +822,31 @@ function displaySoftPowerScore() {
 }
 
 function doSetup() {
-	if (typeof _commonsLoaded == 'undefined') {
-		setTimeout(doSetup, 100);
+	if (typeof _commonsLoaded == 'undefined' || settings_data == null) {
+		setTimeout(doSetup, 25);
 	} else {
 		update(1);
 		nationstatesPlusPlus();
 	}
 }
 doSetup();
+
+var settings_data = null;
+function isSettingEnabled(setting) {
+	if (settings_data != null && settings_data.hasOwnProperty(setting)) {
+		return settings_data[setting];
+	}
+	return true;
+}
+
+window.addEventListener("message", function(event) {
+	if (event.source != window)
+		return;
+	if (event.data.method == "all_settings") {
+		settings_data = event.data;
+	}
+}, false);
+window.postMessage({ method: "send_all_settings"}, "*");
 
 var _gaq = _gaq || [];
 function update(delay){

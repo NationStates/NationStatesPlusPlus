@@ -16,28 +16,33 @@
 
 	//Add string.startsWith
 	if (typeof String.prototype.startsWith != 'function') {
-	  String.prototype.startsWith = function (str){
-		return this.slice(0, str.length) == str;
-	  };
+		String.prototype.startsWith = function (str){
+			return this.slice(0, str.length) == str;
+		};
 	}
 
 	//Add string.contains
 	if (typeof String.prototype.contains != 'function') {
-	  String.prototype.contains = function (str){
-		return this.indexOf(str) != -1;
-	  };
+		String.prototype.contains = function (str){
+			return this.indexOf(str) != -1;
+		};
 	}
 
 	//Add string.toTitleCase
 	if (typeof String.prototype.toTitleCase != 'function') {
-	  String.prototype.toTitleCase = function (){
-		return this.replace(/\w\S*/g, function(txt){return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();});
-	  };
+		String.prototype.toTitleCase = function (){
+			return this.replace(/\w\S*/g, function(txt){return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();});
+		};
 	}
 })();
 
 //$("#banner").append("<div class='ns-settings'><img id='signin-button' src='https://dl.dropboxusercontent.com/u/49805/dropbox.png'>Sync with Dropbox</img></div>");
-$("#banner, #nsbanner").append("<div class='ns-settings'><a href='http://nationstates.net/page=ns++'>NS++ Settings</a></div>");
+var banner = $("#banner, #nsbanner");
+if (banner.children().length == 2) {
+	$(banner).append("<div class='ns-settings'><a href='http://www.nationstates.net/page=ns++' style='right: 10px;'>NS++ Settings</a></div>");
+} else {
+	$(banner).append("<div class='ns-settings'><a href='http://www.nationstates.net/page=ns++'>NS++ Settings</a></div>");
+}
 
 /*
 var client = new Dropbox.Client({ key: "sh+9UCcI8gA=|5UEwz9yvpb2/NF8lwYZa1+1/4YDgyTxjylfbkuHvPQ==", sandbox: true});

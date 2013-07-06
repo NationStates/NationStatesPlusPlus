@@ -1,6 +1,6 @@
 {
   "manifest_version": 2,
-  "name": "NationStates++",
+  "name": "NationStates++ Alpha Testing",
   "minimum_chrome_version": "22",
   "description": "Improves the NationStates Regional Message Board experience",
   "version": "1.7",
@@ -9,7 +9,7 @@
       "js": [ "background.js", "jquery-2.0.2.min.js"],
       "matches": [ "http://forum.nationstates.net/*" ]
 	}, {
-	  "run_at": "document_end",
+	  "run_at": "document_start",
       "js": [ "background.js", "jquery-2.0.2.min.js"],
       "matches": [ "http://www.nationstates.net/*"]
 	} ],

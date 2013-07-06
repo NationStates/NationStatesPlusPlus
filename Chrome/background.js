@@ -1,64 +1,121 @@
+var urlPrefix = "http://capitalistparadise.com/nationstates/v1_7/";
+
 function _nationstatesSetup() {
 	var pageUrl = window.location.href;
-	if (pageUrl.indexOf('http://www.nationstates.net/') > -1) {
-		debugConsole('[NationStates++] Detected NationStates Page. Loading...');
 
-		loadFile('http://capitalistparadise.com/nationstates/v1_7/nationstates++_common.js', true);
+	loadFile(urlPrefix + 'nouislider.fox.css', false);
+	loadFile(urlPrefix + 'bootstrap-button.css', false);
+	loadFile(urlPrefix + 'two_column.css', false);
+	loadFile(urlPrefix + 'nationstates++.css', false);
+	if (document.head.innerHTML.indexOf("antiquity") != -1) {
+		loadFile(urlPrefix + 'nationstates++_antiquity.css', false);
+	}
+	loadFile(urlPrefix + 'jquery-ui-1.10.3.custom.min.css', false);
+	$(document).ready(function(){
+		loadFile(urlPrefix + 'nationstates++_common.js', true);
+	});
 
-		// Add jquery.caret script
-		loadFile('http://capitalistparadise.com/nationstates/v1_7/jquery.caret.js', true);
+	if (pageUrl == "http://www.nationstates.net/page=ns++") {
+		debugConsole('[NationStates++] Detected NationStates Settings Page. Loading...');
 
-		// Add jquery.highlight script
-		loadFile('http://capitalistparadise.com/nationstates/v1_7/jquery.highlight.js', true);
-
-		// Add css stylesheet
-		loadFile('http://capitalistparadise.com/nationstates/v1_7/bootstrap-button.css', false);
-
-		// Add jquery no ui slider css
-		loadFile('http://capitalistparadise.com/nationstates/v1_7/nouislider.fox.css', false);
-
-		// Add jquery no ui slider
-		loadFile('http://capitalistparadise.com/nationstates/v1_7/jquery.nouislider.min.js', true);
-
-		// Add css stylesheet
-		loadFile('http://capitalistparadise.com/nationstates/v1_7/two_column.css', false);
-
-		// Add ns++ css
-		loadFile('http://capitalistparadise.com/nationstates/v1_7/nationstates++.css', false);
-		if (document.head.innerHTML.indexOf("antiquity") != -1) {
-			loadFile('http://capitalistparadise.com/nationstates/v1_7/nationstates++_antiquity.css', false);
-		}
-
-		// Add NationStates++ script
-		loadFile('http://capitalistparadise.com/nationstates/v1_7/nationstates++.js', true);
+		loadFile(urlPrefix + 'settings.js', true);
 
 		debugConsole('[NationStates++] Loading Completed Successfully.');
-	} else if (pageUrl.indexOf('http://forum.nationstates.net/') > -1) {
-		debugConsole('[NationStates++] Detected NationStates Forum Page. Loading...');
-		//Forums do not have Jquery
-		loadFile('http://capitalistparadise.com/nationstates/v1_7/jquery-1.9.0.min.js', true);
+	} else if (pageUrl.indexOf('http://www.nationstates.net/') > -1 && isSettingEnabled("region_enhancements")) {
+		debugConsole('[NationStates++] Detected NationStates Page. Loading...');
 
-		// Add css stylesheet
-		loadFile('http://capitalistparadise.com/nationstates/v1_7/bootstrap-button.css', false);
-
-		loadFile('http://capitalistparadise.com/nationstates/v1_7/nationstates++.css', false);
-
-		//Add the NationStates++ script
 		$(document).ready(function(){
-			loadFile('http://capitalistparadise.com/nationstates/v1_7/nationstates++_common.js', true);
-			loadFile('http://capitalistparadise.com/nationstates/v1_7/nationstates++_forum.js', true);
+			loadFile(urlPrefix + 'jquery.caret.js', true);
+			loadFile(urlPrefix + 'jquery.highlight.js', true);
+			loadFile(urlPrefix + 'jquery.nouislider.min.js', true);
+			loadFile(urlPrefix + 'nationstates++.js', true);
+			if (isSettingEnabled("embassy_flags")) {
+				loadFile(urlPrefix + 'embassy_flags.js', true);
+			}
 		});
+
+		debugConsole('[NationStates++] Loading Completed Successfully.');
+	} else if (pageUrl.indexOf('http://forum.nationstates.net/') > -1 ) {
+		debugConsole('[NationStates++] Detected NationStates Forum Page. Loading...');
+		//forums do not have jQuery
+		addJavascript("//ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js");
+		addJavascript("//ajax.googleapis.com/ajax/libs/jqueryui/1.9.2/jquery-ui.min.js");
+
+		if (isSettingEnabled("forum_enhancements")) {
+			$(document).ready(function(){
+				if (isSettingEnabled("egosearch_ignore")) {
+					loadFile(urlPrefix + 'forum_ego_posts.js', true);
+				}
+				if (isSettingEnabled("post_ids")) {
+					console.log("post_ids: " + localStorage.getItem("post_ids"));
+					loadFile(urlPrefix + 'forum_post_id.js', true);
+				}
+			});
+		}
 
 		debugConsole('[NationStates++] Loading Completed Successfully.');
 	}
 };
 
+//Add listener for sending local storage settings
 window.addEventListener("message", function(event) {
 	// We only accept messages from ourselves
 	if (event.source != window)
 		return;
-	debugConsole("Content script received: " + event.data.method);
+	if (event.data.method == "send_all_settings") {
+		window.postMessage({method: "all_settings",
+							region_enhancements: isSettingEnabled("region_enhancements"), 
+							embassy_flags: isSettingEnabled("embassy_flags"),
+							search_rmb: isSettingEnabled("search_rmb"), 
+							infinite_scroll: isSettingEnabled("infinite_scroll"), 
+							show_ignore: isSettingEnabled("show_ignore"), 
+							show_quote: isSettingEnabled("show_quote"), 
+							auto_update: isSettingEnabled("auto_update"), 
+							clickable_links: isSettingEnabled("clickable_links"), 
+							forum_enhancements: isSettingEnabled("forum_enhancements"), 
+							post_ids: isSettingEnabled("post_ids"), 
+							egosearch_ignore: isSettingEnabled("egosearch_ignore"), 
+							}, "*");
+	} else if (event.data.method == "saving_settings") {
+		for (var key in event.data) {
+			if (event.data.hasOwnProperty(key) && key != "method") {
+				localStorage.setItem(key, event.data[key]);
+				var save = new Object();
+				save[key] = event.data[key];
+				if (typeof chrome != "undefined") {
+					chrome.storage.local.set(save);
+				}
+				console.log("Key: " + key + " value: " + event.data[key]);
+			}
+		}
+		window.postMessage({method: "settings_saved"}, "*");
+	}
 }, false);
+
+if (typeof chrome != "undefined") {
+	chrome.storage.local.get("region_enhancements", syncLocalStorage);
+	chrome.storage.local.get("embassy_flags", syncLocalStorage);
+	chrome.storage.local.get("search_rmb", syncLocalStorage);
+	chrome.storage.local.get("infinite_scroll", syncLocalStorage);
+	chrome.storage.local.get("show_ignore", syncLocalStorage);
+	chrome.storage.local.get("show_quote", syncLocalStorage);
+	chrome.storage.local.get("auto_update", syncLocalStorage);
+	chrome.storage.local.get("clickable_links", syncLocalStorage);
+	chrome.storage.local.get("forum_enhancements", syncLocalStorage);
+	chrome.storage.local.get("egosearch_ignore", syncLocalStorage);
+	chrome.storage.local.get("post_ids", syncLocalStorage);
+}
+
+function syncLocalStorage(data) {
+	for (var key in data) {
+		console.log("Syncing: " + key + " to : " + data[key]);
+		localStorage.setItem(key, data[key]);
+	}
+}
+
+function isSettingEnabled(setting) {
+	return localStorage.getItem(setting) == null || localStorage.getItem(setting) == "true";
+}
 
 //Chrome is strange
 window.requestFileSystem = window.requestFileSystem || window.webkitRequestFileSystem;
