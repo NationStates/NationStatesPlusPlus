@@ -43,27 +43,38 @@ function initialize() {
 		if ($('#region_enhancements').prop('checked') == false) {
 			$("#region_enhancements_form").find('input').toggleDisabled();
 		}
-		$("#save_button").on("click", function() {
-			if (settings_data != null) {
-				for (var key in settings_data) {
-					if (settings_data.hasOwnProperty(key) && key != "method") {
-						settings_data[key] = document.getElementById(key).checked;
-						//console.log("Key: " + key + " value: " + settings_data[key]);
-					}
-				}
-			}
-			settings_data.method = "saving_settings";
-			window.postMessage(settings_data, "*");
-			$('#settings').fadeTo(1000, 0.2);
-			$("#saving_modal").dialog({
-				title: "Saving Settings",
-				height: 140,
-				modal: true
-			});
+		$("#save_button").on("click", saveSettings);
+		$("#reset_button").on("click", function() {
+			$("#content").find('input').prop("checked", true);
+			showModal = false;
+			saveSettings();
 		});
 	});
 }
 initialize();
+
+var showModal = true;
+
+function saveSettings() {
+	if (settings_data != null) {
+		for (var key in settings_data) {
+			if (settings_data.hasOwnProperty(key) && key != "method") {
+				settings_data[key] = document.getElementById(key).checked;
+				//console.log("Key: " + key + " value: " + settings_data[key]);
+			}
+		}
+	}
+	settings_data.method = "saving_settings";
+	window.postMessage(settings_data, "*");
+	if (showModal) {
+		$('#settings').fadeTo(1000, 0.2);
+		$("#saving_modal").dialog({
+			title: "Saving Settings",
+			height: 140,
+			modal: true
+		});
+	}
+}
 
 var settings_data = null;
 
@@ -73,15 +84,19 @@ window.addEventListener("message", function(event) {
 	if (event.data.method == "all_settings") {
 		settings_data = event.data;
 	} else if (event.data.method == "settings_saved") {
-		setTimeout(function() {
-			$('#settings').fadeTo(1000, 1);
-			var oldHtml = $('#saving_modal').html();
-			$('#saving_modal').html("<p>Saved Successfully!</p>");
+		if (showModal) {
 			setTimeout(function() {
-				$("#saving_modal").dialog( "destroy" );
-				$('#saving_modal').html(oldHtml);
-			}, 1000);
-		}, 2000);
+				$('#settings').fadeTo(1000, 1);
+				var oldHtml = $('#saving_modal').html();
+				$('#saving_modal').html("<p>Saved Successfully!</p>");
+				setTimeout(function() {
+					$("#saving_modal").dialog( "destroy" );
+					$('#saving_modal').html(oldHtml);
+				}, 1000);
+			}, 2000);
+		} else {
+			showModal = true;
+		}
 	}
 }, false);
 window.postMessage({ method: "send_all_settings"}, "*");
