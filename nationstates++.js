@@ -635,7 +635,7 @@ function parseRMBPostWithId(innerHTML, quoteHTML, className, postId) {
 
 	//Add inner body div
 	var innerBody = innerHTML.indexOf('<div class="rmbspacer"></div>');
-	if (getLocalStorage("ignored-post-" + postId) == "true") {
+	if (localStorage.getItem("ignored-post-" + postId) == "true") {
 		innerHTML = "<div id='rmb-inner-body-" + postId + "' style='display:none;'>" + innerHTML.substring(0, innerBody) + "</div>" + innerHTML.substring(innerBody);
 	} else {
 		innerHTML = "<div id='rmb-inner-body-" + postId + "'>" + innerHTML.substring(0, innerBody) + "</div>" + innerHTML.substring(innerBody);
@@ -647,7 +647,7 @@ function parseRMBPostWithId(innerHTML, quoteHTML, className, postId) {
 				innerHTML = '<div style="margin-top:6px;" class="rmbbuttons"><a href="" class="forumpaneltoggle rmbignore"><img src="http://capitalistparadise.com/nationstates/static/rmb_ignore.png" alt="Ignore" title="Ignore Post"></a></div>' + innerHTML;
 		}
 		
-		if (getLocalStorage("ignored-post-" + postId) == "true") {
+		if (localStorage.getItem("ignored-post-" + postId) == "true") {
 			innerHTML += "<div id='rmb-ignored-body-" + postId + "' class='rmbsuppressed' style='margin-top:-16px; padding-bottom:6px;'>Ignored post.</div>";
 			quoteHTML = "";
 		}
@@ -670,10 +670,10 @@ $('body').on('click', 'a.rmbignore', function(event) {
 	$('#rmb-inner-body-' + postId).animate({height: 'toggle'}, 500);
 	if (typeof $("#rmb-ignored-body-" + postId).html() == 'undefined') {
 		$(this).parents('.rmbrow').append("<div id='rmb-ignored-body-" + postId + "' class='rmbsuppressed' style='margin-top:-16px; padding-bottom:6px;'>Ignored post.</div>");
-		setLocalStorage("ignored-post-" + postId, "true");
+		localStorage.setItem("ignored-post-" + postId, "true");
 	} else {
 		$("#rmb-ignored-body-" + postId).remove();
-		removeLocalStorage("ignored-post-" + postId);
+		localStorage.removeItem("ignored-post-" + postId);
 		if (typeof $('#quote-btn-' + postId).html() == 'undefined') {
 			$(this).parents('.rmbrow').append(quote.replace("${id}", postId));
 		}
@@ -822,7 +822,7 @@ function displaySoftPowerScore() {
 }
 
 function doSetup() {
-	if (typeof _commonsLoaded == 'undefined' || settings_data == null) {
+	if (typeof _commonsLoaded == 'undefined') {
 		setTimeout(doSetup, 25);
 	} else {
 		update(1);
@@ -831,22 +831,9 @@ function doSetup() {
 }
 doSetup();
 
-var settings_data = null;
 function isSettingEnabled(setting) {
-	if (settings_data != null && settings_data.hasOwnProperty(setting)) {
-		return settings_data[setting];
-	}
-	return true;
+	return localStorage.getItem(setting) == null || localStorage.getItem(setting) == "true";
 }
-
-window.addEventListener("message", function(event) {
-	if (event.source != window)
-		return;
-	if (event.data.method == "all_settings") {
-		settings_data = event.data;
-	}
-}, false);
-window.postMessage({ method: "send_all_settings"}, "*");
 
 var _gaq = _gaq || [];
 function update(delay){

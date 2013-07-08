@@ -1,11 +1,11 @@
-function doSetup() {
+function doEmbassySetup() {
 	if (typeof _commonsLoaded == 'undefined') {
 		setTimeout(doSetup, 50);
 	} else {
 		addEmbassyFlags();
 	}
 }
-doSetup();
+doEmbassySetup();
 
 function addEmbassyFlags() {
 	var wfe = $("fieldset[class='wfe']");
@@ -46,19 +46,28 @@ function addEmbassyFlags() {
 				}
 			});
 		}
-		setTimeout(function() {
-			var count = 0;
-			$(".animate-flags").each(function() {
-				count += 1;
-			});
-			if (count > 0) {
-				$("#embassy_flags").removeAttr("style");
-				if (count * 106 >= wfe.height() + 100) {
-					_embassyFlags = $("#embassy_flags").get();
-					animateEmbassyFlags();
-				}
-			}
-		}, 500);
+		animationTests = 0;
+		setTimeout(testForAnimation, 100);
+	}
+}
+
+var animationTests = 0;
+function testForAnimation() {
+	var count = 0;
+	$(".animate-flags").each(function() {
+		count += 1;
+	});
+	if (count > 0) {
+		$("#embassy_flags").removeAttr("style");
+		if (count * 106 >= $("fieldset[class='wfe']").height() + 100) {
+			_embassyFlags = $("#embassy_flags").get();
+			animateEmbassyFlags();
+			return true;
+		}
+	}
+	if (animationTests < 10) {
+		animationTests += 1;
+		setTimeout(testForAnimation, 100);
 	}
 }
 

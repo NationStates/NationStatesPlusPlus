@@ -5,12 +5,12 @@ var self = require("sdk/self");
  
 pageMod.PageMod({
   include: ["http://forum.nationstates.net/*"],
-  contentScriptWhen: "start",
-  contentScriptFile: self.data.url("background.js")
+  contentScriptWhen: "end",
+  contentScriptFile: [self.data.url("jquery-2.0.2.min.js"), self.data.url("background.js")]
 });
 
 pageMod.PageMod({
   include: ["http://www.nationstates.net/*"],
-  contentScriptWhen: "ready",
-  contentScriptFile: self.data.url("background.js")
+  contentScriptWhen: "end",
+  contentScriptFile: [self.data.url("jquery-2.0.2.min.js"), self.data.url("background.js")]
 });

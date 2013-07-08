@@ -42,6 +42,39 @@
 	right: 120px;
 }
 
+#nationstates_settings {
+	margin-left: 194px;
+	padding: 1px 10px 1px 16px;
+	background-color: white;
+}
+
+#nationstates_settings div {
+	font-size: 12px;
+	margin: 3px 3px 3px 4px;
+}
+
+#nationstates_settings h1 {
+	font-size: 3.0em;
+	font-family: Impact,Garamond;
+	font-weight: normal;
+	margin-top: 0.4em;
+	margin-bottom: 0.4em;
+	text-shadow: 2px 2px 1px #CCC;
+	color: black;
+}
+
+#nationstates_settings  fieldset {
+	margin-left: 1%;
+	margin-right: 20%;
+	border: 1px solid #CCC;
+	background-color: #F9F9F9;
+	padding-left: 1em;
+	padding-right: 1em;
+	padding-bottom: 1em;
+	color: #333;
+	border-radius: 1em;
+}
+
 .post-id-icon, .post-id-icon a {
 	width:85px;
 	height:20px;

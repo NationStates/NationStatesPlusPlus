@@ -9,18 +9,6 @@
 	}
 </style>
 <script type="text/javascript">
-	(function($) {
-		$.fn.toggleDisabled = function(){
-			return this.each(function(){
-				this.disabled = !this.disabled;
-			});
-		};
-	})(jQuery);
-
-	$("#forum_enhancements").on('click', function() {
-		$("#forum_enhancements_form").find('input').toggleDisabled();
-	});
-
 	$("#region_enhancements").on('click', function() {
 		$("#region_enhancements_form").find('input').toggleDisabled();
 	});
@@ -60,25 +48,9 @@
             <label for='clickable_links'>Linkify URLs</label>
         </div>
     </fieldset>
-	<div>
-		<input id='forum_enhancements' type="checkbox" style='vertical-align: middle;'/>
-		<label for='forum_enhancements'>Forum Enhancements</label>
-	</div>
-    <fieldset id='forum_enhancements_form'>
-        <div>
-            <input id='post_ids' class='indent' type="checkbox"/>
-            <label for='post_ids'>Show Post Ids</label>
-        </div>
-        <div>
-            <input id='egosearch_ignore' class='indent' type="checkbox"/>
-            <label for='egosearch_ignore'>Show Hide Topic Button in 'view your posts'</label>
-        </div>
-    </fieldset>
 </form>
 <div>
 	<button id='save_button' class='button' style='margin:4px; font-size: 12px; font-weight: bold;'>Save</button>
 	<button id='reset_button' class='button' style='margin:4px; font-size: 12px; font-weight: bold;'>Reset</button>
-</div>
-<div id='saving_modal' style="display: none; text-align: center;">
-	<p>Saving...</p>
+	<button id='cancel_button' class='button' style='margin:4px; font-size: 12px; font-weight: bold;'>Cancel</button>
 </div>

@@ -14,6 +14,14 @@
 		};
 	})(jQuery);
 
+	(function($) {
+		$.fn.toggleDisabled = function(){
+			return this.each(function(){
+				this.disabled = !this.disabled;
+			});
+		};
+	})(jQuery);
+
 	//Add string.startsWith
 	if (typeof String.prototype.startsWith != 'function') {
 		String.prototype.startsWith = function (str){
@@ -39,9 +47,66 @@
 //$("#banner").append("<div class='ns-settings'><img id='signin-button' src='https://dl.dropboxusercontent.com/u/49805/dropbox.png'>Sync with Dropbox</img></div>");
 var banner = $("#banner, #nsbanner");
 if (banner.children().length == 2) {
-	$(banner).append("<div class='ns-settings'><a href='http://www.nationstates.net/page=ns++' style='right: 10px;'>NS++ Settings</a></div>");
+	$(banner).append("<div class='ns-settings'><a href='javascript:void(0)' onclick='return showSettings();' style='right: 10px;'>NS++ Settings</a></div>");
 } else {
-	$(banner).append("<div class='ns-settings'><a href='http://www.nationstates.net/page=ns++'>NS++ Settings</a></div>");
+	$(banner).append("<div class='ns-settings'><a href='javascript:void(0)' onclick='return showSettings();'>NS++ Settings</a></div>");
+}
+
+function showSettings() {
+	console.log("Show settings");
+	if ($("#nationstates_settings").length == 0) {
+		var forums = $("#wrap").length == 1;
+		$.get("http://capitalistparadise.com/nationstates/v1_7/" + (forums ? "forum_" : "region_") + "settings.html", function(data) {
+			if (forums) {
+				var html = $("#wrap").html();
+				$("#wrap").remove();
+				$("<div id='main'><div id='wrap' class='beside_nssidebar_1'>" + html + "</div></div>").insertAfter("#nssidebar");
+			}
+			$("#main").html($("#main").html() + "<div id='nationstates_settings'><div>");
+			$("#nationstates_settings").html(data);
+			$("#nationstates_settings").hide();
+			$("#nationstates_settings").find('input').each(function() {
+				var setting = localStorage.getItem($(this).prop("id"));
+				$(this).prop("checked", (setting == null || setting == "true"));
+			});
+			if (!$("#forum_enhancements").prop("checked")) {
+				$("#forum_enhancements").toggleDisabled();
+			}
+			if (!$("#region_enhancements").prop("checked")) {
+				$("#region_enhancements").toggleDisabled();
+			}
+			$("#region_enhancements").on('click', function() {
+				$("#region_enhancements_form").find('input').toggleDisabled();
+			});
+			$("#forum_enhancements").on('click', function() {
+				$("#forum_enhancements_form").find('input').toggleDisabled();
+			});
+			$("#save_button").on("click", function() {
+				$("#nationstates_settings").find('input').each(function() {
+					localStorage.setItem($(this).prop("id"), $(this).prop("checked"));
+				});
+				$("#nationstates_settings").hide();
+				$("#content, #wrap").show();
+				location.reload();
+			});
+			$("#reset_button").on("click", function() {
+				$("#nationstates_settings").find('input').prop("checked", true);
+			});
+			$("#cancel_button").on("click", function() {
+				$("#nationstates_settings").find('input').each(function() {
+					var setting = localStorage.getItem($(this).prop("id"));
+					$(this).prop("checked", (setting == null || setting == "true"));
+				});
+				$("#nationstates_settings").hide();
+				$("#content, #wrap").show();
+			});
+			showSettings();
+		});
+	} else {
+		$("#content, #wrap").hide();
+		$("#nationstates_settings").show();
+	}
+	return false;
 }
 
 /*
@@ -74,25 +139,6 @@ client.authenticate({interactive: false}, function(error, client) {
 });*/
 
 //$("#banner").append("<div class='ns-settings'><a href='javascript:void(0)' onclick='return toggleStickyLoginBox()'>Settings</a></div>");
-
-function setLocalStorage(key, value) {
-	localStorage.setItem(key, value);
-}
-
-function getLocalStorage(key) {
-	return localStorage.getItem(key);
-}
-
-function removeLocalStorage(key) {
-	return localStorage.removeItem(key);
-}
-
-window.addEventListener("message", function(event) {
-	if (event.source != window)
-		return;
-	
-}, false);
-window.postMessage({ method: "send_all_keys"}, "*");
 
 var _nation = "";
 (function() {
