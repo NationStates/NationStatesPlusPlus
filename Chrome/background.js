@@ -1,9 +1,13 @@
+//versioned files are checked for modifications each page hit (slow)
 var urlPrefix = "http://capitalistparadise.com/nationstates/v1_7/";
+//static files are cached by browser for 1 week, not checked for modifications (fast)
+var staticUrlPrefix = "http://capitalistparadise.com/nationstates/static/";
+
 var pageUrl = window.location.href;
 
-addStylesheet(urlPrefix + 'nouislider.fox.css');
-addStylesheet(urlPrefix + 'bootstrap-button.css');
-addStylesheet(urlPrefix + 'two_column.css');
+addStylesheet(staticUrlPrefix + 'nouislider.fox.css');
+addStylesheet(staticUrlPrefix + 'bootstrap-button.css');
+addStylesheet(staticUrlPrefix + 'two_column.css');
 addStylesheet(urlPrefix + 'nationstates++.css');
 if (document.head.innerHTML.indexOf("antiquity") != -1) {
 	addStylesheet(urlPrefix + 'nationstates++_antiquity.css');
@@ -13,9 +17,9 @@ addJavascript(urlPrefix + 'nationstates++_common.js');
 if (pageUrl.indexOf('http://www.nationstates.net/') > -1 && isSettingEnabled("region_enhancements")) {
 	console.log('[NationStates++] Detected NationStates Page. Loading...');
 
-	addJavascript(urlPrefix + 'jquery.caret.js');
-	addJavascript(urlPrefix + 'jquery.highlight.js');
-	addJavascript(urlPrefix + 'jquery.nouislider.min.js');
+	addJavascript(staticUrlPrefix + 'jquery.caret.js');
+	addJavascript(staticUrlPrefix + 'jquery.highlight.js');
+	addJavascript(staticUrlPrefix + 'jquery.nouislider.min.js');
 	addJavascript(urlPrefix + 'nationstates++.js');
 	if (isSettingEnabled("embassy_flags")) {
 		addJavascript(urlPrefix + 'embassy_flags.js');
