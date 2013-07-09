@@ -12,7 +12,9 @@ doTelegramSetup();
 function linkifyTelegrams() {
 	if (getVisiblePage() == "telegrams" || getVisiblePage() == "tg") {
 		$(".tgcontent").children("p").each(function() {
-			$(this).html(linkify($(this).html()));
+			if ($(this).attr('class') != "replyline") {
+				$(this).html(linkify($(this).html()));
+			}
 		});
 	}
 }

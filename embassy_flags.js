@@ -1,6 +1,6 @@
 function doEmbassySetup() {
 	if (typeof _commonsLoaded == 'undefined') {
-		setTimeout(doSetup, 50);
+		setTimeout(doEmbassySetup, 50);
 	} else {
 		addEmbassyFlags();
 	}
