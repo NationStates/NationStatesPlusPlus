@@ -142,7 +142,7 @@ function setupRegionPage(forumViewPage) {
 
 	if (isSettingEnabled("search_rmb")) {
 		//Add search box
-		widebox.prepend("<div id='searchbox' style='display: none;'><div style='margin-top:6px; text-align:center;'><input id='rmb-search-input' placeholder='Search' type='search' style='width:35%; height:25px;' name='googlesearch' onkeydown='if (event.keyCode == 13) { searchRMB(); } else { updateSearchText(); }'></div></div>");
+		widebox.prepend("<div id='searchbox' style='display: none;'><div style='margin-top:6px; text-align:center;'><input id='rmb-search-input' placeholder='Search' type='search' style='width:35%; height:25px;' name='googlesearch' onkeydown='if (event.keyCode == 13) { searchRMB(); } else { updateSearchText(); }'><p><input id='rmb-search-input-region' placeholder='Region' type='search' style='width:16.5%; margin-right: 2%; height:25px;' name='googlesearch' onkeydown='if (event.keyCode == 13) { searchRMB(); }'><input id='rmb-search-input-author' placeholder='Author' type='search' style='width:16.5%; height:25px;' name='googlesearch' onkeydown='if (event.keyCode == 13) { searchRMB(); }'><p></div></div>");
 
 		//Add rmb menu area
 		widebox.prepend("<div id='rmb-menu' style='text-align: center;'><button class='button RoundedButton' onclick='toggleRMBPostForm();'>Leave a message</button> <button class='button RoundedButton' onclick='toggleSearchForm();'>Search messages</button></div");
@@ -411,12 +411,21 @@ function updateSearchText() {
 
 function doRMBSearch() {
 	cancelled = false;
-	$.get('/page=ajax/a=rmbsearch/rmbsearch-text=' + encodeURIComponent(document.getElementById("rmb-search-input").value) + '/rmbsearch-region=' + getVisibleRegion() + '/rmbsearch-offset=' + searchOffset, function(data) {
+	var input = $("#rmb-search-input").val();
+	var region = getVisibleRegion();
+	var author = "*";
+	if ($("#rmb-search-input-region").val() != "") {
+		region = $("#rmb-search-input-region").val();
+	}
+	if ($("#rmb-search-input-author").val() != "") {
+		author = $("#rmb-search-input-author").val();
+	}
+	$.get('/page=ajax/a=rmbsearch/rmbsearch-text=' + encodeURIComponent(input) + (region == "*" ? "" : '/rmbsearch-region=' + region) + (author == "*" ? "" : '/rmbsearch-author=' + author) + '/rmbsearch-offset=' + searchOffset, function(data) {
 		if (cancelled) {
 			return;
 		}
 		
-		var searchResults = document.getElementById("rmb-search-results");
+		var searchResults = $("#rmb-search-results");
 		if (data.length > 14) {
 			//Process RMB posts
 			$($(data).children()).each( function() {
