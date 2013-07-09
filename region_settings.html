@@ -8,11 +8,6 @@
 		vertical-align: middle;
 	}
 </style>
-<script type="text/javascript">
-	$("#region_enhancements").on('click', function() {
-		$("#region_enhancements_form").find('input').toggleDisabled();
-	});
-</script>
 <form id='settings'>
 	<div>
 		<input id='region_enhancements' type="checkbox" style='vertical-align: middle;'/>
@@ -46,6 +41,16 @@
         <div>
             <input id='clickable_links' class='indent' type="checkbox"/>
             <label for='clickable_links'>Linkify URLs</label>
+        </div>
+    </fieldset>
+	<div>
+		<input id='telegram_enhancements' type="checkbox" style='vertical-align: middle;'/>
+		<label for='telegram_enhancements'>Telegram Enhancements</label>
+	</div>
+	<fieldset id='telegram_enhancements_form'>
+        <div>
+            <input id='clickable_telegram_links' class='indent' type="checkbox"/>
+            <label for='clickable_telegram_links'>Linkify URLs</label>
         </div>
     </fieldset>
 </form>

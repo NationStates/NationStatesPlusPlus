@@ -70,16 +70,22 @@ function showSettings() {
 				$(this).prop("checked", (setting == null || setting == "true"));
 			});
 			if (!$("#forum_enhancements").prop("checked")) {
-				$("#forum_enhancements").toggleDisabled();
+				$("#forum_enhancements_form").find('input').toggleDisabled();
 			}
 			if (!$("#region_enhancements").prop("checked")) {
-				$("#region_enhancements").toggleDisabled();
+				$("#region_enhancements_form").find('input').toggleDisabled();
+			}
+			if (!$("#telegram_enhancements").prop("checked")) {
+				$("#telegram_enhancements_form").find('input').toggleDisabled();
 			}
 			$("#region_enhancements").on('click', function() {
 				$("#region_enhancements_form").find('input').toggleDisabled();
 			});
 			$("#forum_enhancements").on('click', function() {
 				$("#forum_enhancements_form").find('input').toggleDisabled();
+			});
+			$("#telegram_enhancements").on('click', function() {
+				$("#telegram_enhancements_form").find('input').toggleDisabled();
 			});
 			$("#save_button").on("click", function() {
 				$("#nationstates_settings").find('input').each(function() {

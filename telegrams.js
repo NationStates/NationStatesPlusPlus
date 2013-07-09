@@ -2,7 +2,9 @@ function doTelegramSetup() {
 	if (typeof _commonsLoaded == 'undefined') {
 		setTimeout(doTelegramSetup, 50);
 	} else {
-		linkifyTelegrams();
+		if (isSettingEnabled("clickable_telegram_links")) {
+			linkifyTelegrams();
+		}
 	}
 }
 doTelegramSetup();
