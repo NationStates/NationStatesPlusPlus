@@ -61,9 +61,16 @@ function showSettings() {
 				var html = $("#wrap").html();
 				$("#wrap").remove();
 				$("<div id='main'><div id='wrap' class='beside_nssidebar_1'>" + html + "</div></div>").insertAfter("#nssidebar");
+			} else if (isAntiquityTheme()) {
+				var html = $("#main").html();
+				$("#main").remove();
+				$("<div id='main'><div id='wrap'>" + html + "</div></div>").insertAfter("#banner");
 			}
 			$("#main").html($("#main").html() + "<div id='nationstates_settings'><div>");
 			$("#nationstates_settings").html(data);
+			if (isAntiquityTheme()) {
+				$("#nationstates_settings").css("margin-left", "0");
+			}
 			$("#nationstates_settings").hide();
 			$("#nationstates_settings").find('input').each(function() {
 				var setting = localStorage.getItem($(this).prop("id"));
@@ -310,6 +317,7 @@ function isScrolledIntoView(elem) {
 
     var elemTop = $(elem).offset().top;
     var elemBottom = elemTop + $(elem).height();
+
     return ((docViewTop <= elemBottom) && (docViewBottom >= elemTop));
 }
 
