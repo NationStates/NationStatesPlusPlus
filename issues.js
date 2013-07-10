@@ -1,5 +1,5 @@
 if (document.readyState == "complete") {
-	doTelegramSetup();
+	doIssueSetup();
 } else {
 	$(document).ready(function() {setTimeout(doIssueSetup, 100);});
 }

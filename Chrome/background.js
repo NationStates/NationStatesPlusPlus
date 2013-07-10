@@ -35,6 +35,7 @@ if (pageUrl.indexOf('http://www.nationstates.net/') > -1 && isSettingEnabled("re
 		addJavascript(urlPrefix + 'telegrams.js');
 	}
 	addJavascript(urlPrefix + 'issues.js');
+	addJavascript(urlPrefix + 'help.js');
 
 	console.log('[NationStates++] Loading Completed Successfully.');
 } else if (pageUrl.indexOf('http://forum.nationstates.net/') > -1 ) {
