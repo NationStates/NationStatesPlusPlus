@@ -6,11 +6,11 @@
   "version": "1.701",
   "content_scripts": [ {
 	  "run_at": "document_end",
-      "js": [ "background.js", "jquery-2.0.2.min.js"],
+      "js": [ "jquery-2.0.2.min.js", "background.js"],
       "matches": [ "http://forum.nationstates.net/*" ]
 	}, {
 	  "run_at": "document_end",
-      "js": [ "background.js", "jquery-2.0.2.min.js"],
+      "js": [ "jquery-2.0.2.min.js", "background.js"],
       "matches": [ "http://www.nationstates.net/*"]
 	} ],
   "background": {

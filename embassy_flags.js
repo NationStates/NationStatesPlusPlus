@@ -1,14 +1,12 @@
-function doEmbassySetup() {
-	if (typeof _commonsLoaded == 'undefined') {
-		setTimeout(doEmbassySetup, 50);
-	} else {
-		addEmbassyFlags();
-	}
+if (document.readyState == "complete") {
+	addEmbassyFlags();
+} else {
+	$(document).ready(function() {setTimeout(addEmbassyFlags, 100);});
 }
-doEmbassySetup();
 
 function addEmbassyFlags() {
 	var wfe = $("fieldset[class='wfe']");
+	wfe.css("min-height", "135px");
 	var embassies = $('p:contains("Embassies:")');
 	if (typeof embassies.html() != 'undefined') {
 		wfe.wrap("<div class='colmask rightmenu'\><div id='wfe-main-content' class='colleft'\><div id='world_factbook_entry' class='col1'\>");

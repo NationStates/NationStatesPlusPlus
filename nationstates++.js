@@ -798,18 +798,10 @@ function displaySoftPowerScore() {
 	});
 }
 
-function doSetup() {
-	if (typeof _commonsLoaded == 'undefined') {
-		setTimeout(doSetup, 25);
-	} else {
-		update(1);
-		nationstatesPlusPlus();
-	}
-}
-doSetup();
-
-function isSettingEnabled(setting) {
-	return localStorage.getItem(setting) == null || localStorage.getItem(setting) == "true";
+if (document.readyState == "complete") {
+	nationstatesPlusPlus();
+} else {
+	$(document).ready(function() {setTimeout(nationstatesPlusPlus, 100);});
 }
 
 var _gaq = _gaq || [];

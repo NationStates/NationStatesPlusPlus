@@ -45,12 +45,6 @@
 })();
 
 //$("#banner").append("<div class='ns-settings'><img id='signin-button' src='https://dl.dropboxusercontent.com/u/49805/dropbox.png'>Sync with Dropbox</img></div>");
-var banner = $("#banner, #nsbanner");
-if (banner.children().length == 2) {
-	$(banner).append("<div class='ns-settings'><a href='javascript:void(0)' onclick='return showSettings();' style='right: 10px;'>NS++ Settings</a></div>");
-} else {
-	$(banner).append("<div class='ns-settings'><a href='javascript:void(0)' onclick='return showSettings();'>NS++ Settings</a></div>");
-}
 
 function showSettings() {
 	console.log("Show settings");
@@ -309,6 +303,10 @@ function isInRange(min, value, max) {
 		return true;
 	}
 	return false;
+}
+
+function isSettingEnabled(setting) {
+	return localStorage.getItem(setting) == null || localStorage.getItem(setting) == "true";
 }
 
 function isScrolledIntoView(elem) {

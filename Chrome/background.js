@@ -5,6 +5,13 @@ var staticUrlPrefix = "http://capitalistparadise.com/nationstates/static/";
 
 var pageUrl = window.location.href;
 
+var banner = $("#banner, #nsbanner");
+if (banner.children().length == 2) {
+	$(banner).append("<div class='ns-settings'><a href='javascript:void(0)' onclick='return showSettings();' style='right: 10px;'>NS++ Settings</a></div>");
+} else {
+	$(banner).append("<div class='ns-settings'><a href='javascript:void(0)' onclick='return showSettings();'>NS++ Settings</a></div>");
+}
+
 addStylesheet(staticUrlPrefix + 'nouislider.fox.css');
 addStylesheet(staticUrlPrefix + 'bootstrap-button.css');
 addStylesheet(staticUrlPrefix + 'two_column.css');
@@ -69,6 +76,8 @@ function addStylesheet(url) {
 function addJavascript(url) {
 	var script = document.createElement('script');
 	script.src = url;
+	var split = url.split("/");
+	script.id = split[split.length - 1];
 	script.addEventListener('load', function() { });
 	document.head.appendChild(script);
 }

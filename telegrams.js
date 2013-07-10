@@ -1,13 +1,14 @@
+if (document.readyState == "complete") {
+	doTelegramSetup();
+} else {
+	$(document).ready(function() {setTimeout(doTelegramSetup, 100);});
+}
+
 function doTelegramSetup() {
-	if (typeof _commonsLoaded == 'undefined') {
-		setTimeout(doTelegramSetup, 50);
-	} else {
-		if (isSettingEnabled("clickable_telegram_links")) {
-			linkifyTelegrams();
-		}
+	if (isSettingEnabled("clickable_telegram_links")) {
+		linkifyTelegrams();
 	}
 }
-doTelegramSetup();
 
 function linkifyTelegrams() {
 	if (getVisiblePage() == "telegrams" || getVisiblePage() == "tg") {
