@@ -284,12 +284,20 @@ function addPageSlider(maxPage) {
 				}
 			}
 		});
+		if (getVisibleRegion() == getUserRegion()) {
+			var html = "";
+			$(getShinyTableSelector()).children().children(':last-child').prev('tr').andSelf().each(function() {
+				html += "<tr>" + $(this).html() + "</tr>"
+			});
+			shinyTableBottomRows = html;
+		}
 		updatePageSlider(1);
 	} catch (e) {
 		setTimeout(function() { addPageSlider(maxPage); }, 25);
 	}
 }
 
+var shinyTableBottomRows;
 var shinyPages = {};
 var shinyRangePage = 1;
 var requestNum = 1;
@@ -351,6 +359,11 @@ function doShinyPageUpdate(data) {
 	var search = getShinyTableSelector();
 	var table = $(search);
 	table.html($(data).find(search).html());
+	if (getVisibleRegion() == getUserRegion()) {
+		if (shinyRangePage != 1) {
+			$(shinyTableBottomRows).insertAfter($(search).children().children(':last-child'));
+		}
+	}
 	table.fadeTo(500, 1);
 }
 

@@ -124,3 +124,16 @@
 	margin-left:-3px;
 	margin-top:-5px;
 }
+
+.shiny td {
+	min-height: 28px;
+}
+
+.shiny  td:first-child {
+	width: 42px;
+}
+
+table img.smallflag {
+	height: 26px;
+	width: 40px;
+}
