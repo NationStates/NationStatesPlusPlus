@@ -1,6 +1,7 @@
 var quote = '<button id="quote-btn-${id}" class="button QuoteButton" onclick="quotePost(this);">Quote</button>';
 
 function nationstatesPlusPlus() {
+	_setupVariables();
 	if (getVisiblePage() == "list_nations" || getVisiblePage() == "list_regions" || getVisiblePage() == "world") {
 		setupPageSlider();
 	} else if (getVisiblePage() == "region") {

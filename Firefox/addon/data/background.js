@@ -1,9 +1,20 @@
+//versioned files are checked for modifications each page hit (slow)
 var urlPrefix = "http://capitalistparadise.com/nationstates/v1_7/";
+//static files are cached by browser for 1 week, not checked for modifications (fast)
+var staticUrlPrefix = "http://capitalistparadise.com/nationstates/static/";
+
 var pageUrl = window.location.href;
 
-addStylesheet(urlPrefix + 'nouislider.fox.css');
-addStylesheet(urlPrefix + 'bootstrap-button.css');
-addStylesheet(urlPrefix + 'two_column.css');
+var banner = $("#banner, #nsbanner");
+if (banner.children().length == 2) {
+	$(banner).append("<div class='ns-settings'><a href='javascript:void(0)' onclick='return showSettings();' style='right: 10px;'>NS++ Settings</a></div>");
+} else {
+	$(banner).append("<div class='ns-settings'><a href='javascript:void(0)' onclick='return showSettings();'>NS++ Settings</a></div>");
+}
+
+addStylesheet(staticUrlPrefix + 'nouislider.fox.css');
+addStylesheet(staticUrlPrefix + 'bootstrap-button.css');
+addStylesheet(staticUrlPrefix + 'two_column.css');
 addStylesheet(urlPrefix + 'nationstates++.css');
 if (document.head.innerHTML.indexOf("antiquity") != -1) {
 	addStylesheet(urlPrefix + 'nationstates++_antiquity.css');
@@ -13,13 +24,18 @@ addJavascript(urlPrefix + 'nationstates++_common.js');
 if (pageUrl.indexOf('http://www.nationstates.net/') > -1 && isSettingEnabled("region_enhancements")) {
 	console.log('[NationStates++] Detected NationStates Page. Loading...');
 
-	addJavascript(urlPrefix + 'jquery.caret.js');
-	addJavascript(urlPrefix + 'jquery.highlight.js');
-	addJavascript(urlPrefix + 'jquery.nouislider.min.js');
+	addJavascript(staticUrlPrefix + 'jquery.caret.js');
+	addJavascript(staticUrlPrefix + 'jquery.highlight.js');
+	addJavascript(staticUrlPrefix + 'jquery.nouislider.min.js');
 	addJavascript(urlPrefix + 'nationstates++.js');
 	if (isSettingEnabled("embassy_flags")) {
 		addJavascript(urlPrefix + 'embassy_flags.js');
 	}
+	if (isSettingEnabled("telegram_enhancements")) {
+		addJavascript(urlPrefix + 'telegrams.js');
+	}
+	addJavascript(urlPrefix + 'issues.js');
+	addJavascript(urlPrefix + 'help.js');
 
 	console.log('[NationStates++] Loading Completed Successfully.');
 } else if (pageUrl.indexOf('http://forum.nationstates.net/') > -1 ) {
@@ -62,6 +78,8 @@ function addStylesheet(url) {
 function addJavascript(url) {
 	var script = document.createElement('script');
 	script.src = url;
+	var split = url.split("/");
+	script.id = split[split.length - 1];
 	script.addEventListener('load', function() { });
 	document.head.appendChild(script);
 }

@@ -1,4 +1,4 @@
-(function() {
+function _commonsSetup() {
 	//Add $.changeElementType
 	(function($) {
 		$.fn.changeElementType = function(newType) {
@@ -69,9 +69,20 @@
 	}
 //*** END OF LICENSED CODE BY GAVEN KISTNER ***//
 
-})();
-
-//$("#banner").append("<div class='ns-settings'><img id='signin-button' src='https://dl.dropboxusercontent.com/u/49805/dropbox.png'>Sync with Dropbox</img></div>");
+	_setupVariables();
+	_commonsLoaded = true;
+	if (window.location.href.indexOf("?open_settings") != -1) {
+		showSettings();
+	}
+}
+var _commonsLoaded;
+if (window.location.href.indexOf("forum.nationstates") == -1) {
+	_commonsSetup();
+	console.log("immediate setup");
+} else {
+	setTimeout(_commonsSetup, 250);
+	console.log("delayed setup");
+}
 
 function showSettings() {
 	console.log("Show settings");
@@ -143,43 +154,7 @@ function showSettings() {
 	return false;
 }
 
-/*
-var client = new Dropbox.Client({ key: "sh+9UCcI8gA=|5UEwz9yvpb2/NF8lwYZa1+1/4YDgyTxjylfbkuHvPQ==", sandbox: true});
-console.log(client);
-client.authDriver( new Dropbox.Drivers.Redirect({ rememberUser: true }) );
-
-// Try to use cached credentials.
-client.authenticate({interactive: false}, function(error, client) {
-  if (error) {
-    console.log(error);
-  }
-  if (client.isAuthenticated()) {
-    // Cached credentials are available, make Dropbox API calls.
-    console.log("Cached authentication");
-  } else {
-    // show and set up the "Sign into Dropbox" button
-    var button = document.querySelector("#signin-button");
-    button.setAttribute("class", "visible");
-    button.addEventListener("click", function() {
-      // The user will have to click an 'Authorize' button.
-      client.authenticate(function(error, client) {
-        if (error) {
-          console.log(error);
-        }
-         console.log("authentication");
-      });
-    });
-  }
-});*/
-
-//$("#banner").append("<div class='ns-settings'><a href='javascript:void(0)' onclick='return toggleStickyLoginBox()'>Settings</a></div>");
-
 var _nation = "";
-(function() {
-	if ($(".STANDOUT:first").attr("href")) {
-		_nation = $(".STANDOUT:first").attr("href").substring(7);
-	}
-})();
 
 /*
 	Returns the nation name of the active user, or empty string if no active user.
@@ -189,11 +164,6 @@ function getUserNation() {
 }
 
 var _region = "";
-(function() {
-	if ($(".STANDOUT:eq(1)").attr("href")) {
-		_region = $(".STANDOUT:eq(1)").attr("href").substring(7);
-	}
-})();
 
 /*
 	Returns the region name of the active user, or empty string if no active user.
@@ -203,11 +173,6 @@ function getUserRegion() {
 }
 
 var _visibleNation = "";
-(function() {
-	if ($(".nationname > a").attr("href")) {
-		_visibleNation = $(".nationname > a").attr("href").trim().substring(8);
-	}
-})();
 
 /*
 	Returns the name of the nation the user is currently viewing, or empty string if none.
@@ -220,8 +185,8 @@ var _visibleRegion = "";
 var _visiblePage = "";
 var _visibleSorting = "";
 var _visibleDilemma = "";
-(function() {
-	if (window.location.href.contains("region=") != -1) {
+function _setupVariables() {
+	if (window.location.href.contains("region=")) {
 		var split = window.location.href.split(/[/#/?]/);
 		for (var i = 0; i < split.length; i++) {
 			if (split[i].startsWith("region=")) {
@@ -235,7 +200,19 @@ var _visibleDilemma = "";
 			}
 		}
 	}
-})();
+	if ($(".STANDOUT:first").attr("href")) {
+		_nation = $(".STANDOUT:first").attr("href").substring(7);
+	}
+	if ($(".STANDOUT:eq(1)").attr("href")) {
+		_region = $(".STANDOUT:eq(1)").attr("href").substring(7);
+	}
+	if ($(".nationname > a").attr("href")) {
+		_visibleNation = $(".nationname > a").attr("href").trim().substring(8);
+	}
+	$("#main").mousemove(function (c) {
+		_lastPageActivity = (new Date()).getTime();
+	});
+};
 
 /*
 	Returns the dilemma id number on the page, if any
@@ -274,8 +251,6 @@ function getVisiblePage() {
 	return _visiblePage;
 }
 
-//console.log("User: " + getUserNation() + ", Region: " + getUserRegion() + ", viewing: " + getVisiblePage() + ", visible nation: " + getVisibleNation() + ", visible region: " + getVisibleRegion());
-
 var _isPageActive;
 window.onfocus = function () { 
   _isPageActive = true; 
@@ -290,9 +265,6 @@ function isPageActive() {
 }
 
 var _lastPageActivity = (new Date()).getTime();
-$("#main").mousemove(function (c) {
-	_lastPageActivity = (new Date()).getTime();
-});
 
 function getLastActivity() {
 	return _lastPageActivity;
@@ -345,5 +317,3 @@ function isScrolledIntoView(elem) {
 
     return ((docViewTop <= elemBottom) && (docViewBottom >= elemTop));
 }
-
-var _commonsLoaded = true;
