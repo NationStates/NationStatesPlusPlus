@@ -67,7 +67,7 @@ function selectOption(choice, issueNumber) {
 			}
 			//Remove now, will be set once as clicking a button forces a navigation and thus a resync
 			try {
-				(new Firebase("https://nationstatesplusplus.firebaseio.com/nation/" + getUserNation() + "/")).child("issues").child(issueNumber).child(i).remove();
+				(new Firebase("https://nationstatesplusplus.firebaseio.com/nation/" + getUserNation() + "/")).child("issues").child(issueNumber).child("choice-" + i).remove();
 			} catch (error) {
 				console.log(error);
 			}

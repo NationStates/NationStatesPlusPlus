@@ -162,6 +162,9 @@ function showSettings() {
 
 var _progress_label
 function setupSyncing() {
+	if (getUserNation().toLowerCase() == "nationstatesplusplus") {
+		return;
+	}
 	var banner = $("#banner, #nsbanner");
 	var progressStyle = "right: 250px; position: absolute; top: 6px; width: 150px; height: 16px; background: rgba(255, 255, 255, 0.65);";
 	if (banner.children().length == 3) {
@@ -200,20 +203,29 @@ function setupSyncing() {
 }
 
 function requestAuthToken() {
-	$.get("http://www.nationstates.net/page=compose_telegram", function(data) {
-		var check = $(data).find("input[name=chk]").val();
-		$.post("/page=telegrams", 'chk=' + check + '&tgto=NationStatesPlusPlus&message=Verify+Nation.&send=1', function(data) {
-			if (data.indexOf("To prevent spam") != -1) {
-				console.log("Not Sent, re-sending");
-				setTimeout(requestAuthToken, 2500);
-			} else {
-				console.log("sent auth tg");
-				localStorage.setItem("auth-" + getUserNation() + "-time", Date.now());
-				$("#firebase_progress_bar").progressbar({value: 25});
-				checkTelegrams();
-			}
+	//Check to see if we already requested a telegram in the last 60s
+	var sentPreviousTelegram = localStorage.getItem("auth-" + getUserNation() + "-time");
+	if (sentPreviousTelegram == null || ((parseInt(sentPreviousTelegram) + 60 * 1000) < Date.now())) {
+		console.log("composing auth request");
+		$.get("http://www.nationstates.net/page=compose_telegram", function(data) {
+			var check = $(data).find("input[name=chk]").val();
+			$.post("/page=telegrams", 'chk=' + check + '&tgto=NationStatesPlusPlus&message=Verify+Nation.&send=1', function(data) {
+				if (data.indexOf("To prevent spam") != -1) {
+					console.log("Not Sent, re-sending");
+					setTimeout(requestAuthToken, 2500);
+				} else {
+					console.log("sent auth tg");
+					localStorage.setItem("auth-" + getUserNation() + "-time", Date.now());
+					$("#firebase_progress_bar").progressbar({value: 25});
+					checkTelegrams();
+				}
+			});
 		});
-	});
+	} else {
+		console.log("sent telegram too recently");
+		$("#firebase_progress_bar").progressbar({value: 25});
+		checkTelegrams();
+	}
 }
 
 var stopCheck = false;
@@ -324,19 +336,32 @@ function syncFirebase() {
 			updateFirebaseIssue(key);
 		}
 	}
+	(new Firebase("https://nationstatesplusplus.firebaseio.com/nation/" + getUserNation() + "/")).child("issues").once('value', function(snapshot) {
+		json = snapshot.val();
+		for (var key in json) {
+			console.log("key: " + key + " value: " + json[key]);
+			for (var choice in json[key]) {
+				console.log("choice: " + choice + " val: " + json[key][choice]);
+				var localKey = "issue-" + key + "-" + getUserNation() + "-" + choice;
+				if (localStorage.getItem(localKey) == null) {
+					localStorage.setItem(localKey, json[key][choice]);
+				}
+			}
+		}
+	});
 }
 
 function updateFirebaseIssue(issueKey) {
 	var split = issueKey.split("-");
-	var choice = issueKey.substring(issueKey.indexOf("choice-") + "choice-".length);
+	var choice = issueKey.substring(issueKey.indexOf("choice-"));
 	var issueRef = (new Firebase("https://nationstatesplusplus.firebaseio.com/nation/" + getUserNation() + "/")).child("issues").child(split[1]).child(choice);
-	issueRef.on('value', function(snapshot) {
+	issueRef.once('value', function(snapshot) {
 		console.log("issue/" + split[1] + "/" + choice + " | " + issueKey + " : " + localStorage.getItem(issueKey));
 		var timestamps = snapshot.val();
 		if (timestamps != null) {
-			if (localStorage.getItem(issueKey) != timestamps) {
-				var remoteTimestamps = timestamps.split(",");
-				var localTimestamps = localStorage.getItem(issueKey).split(",");
+			if (String(localStorage.getItem(issueKey)) != String(timestamps)) {
+				var remoteTimestamps = String(timestamps).split(",");
+				var localTimestamps = String(localStorage.getItem(issueKey)).split(",");
 				var mergedTimestamps = "";
 				var json = new Object();
 				for (var j = 0; j < remoteTimestamps.length; j++) {
@@ -361,10 +386,10 @@ function updateFirebaseIssue(issueKey) {
 				console.log("Remote: " + remoteTimestamps);
 				console.log("Local: " + localTimestamps);
 				console.log("Merged: " + mergedTimestamps);
-				localStorage.setItem(issueKey, mergedTimestamps);
+				localStorage.setItem(issueKey, String(mergedTimestamps));
 			}
 		}
-		issueRef.set(localStorage.getItem(issueKey));
+		issueRef.set(String(localStorage.getItem(issueKey)));
 	});
 }
 
