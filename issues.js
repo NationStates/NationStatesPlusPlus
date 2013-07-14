@@ -6,6 +6,8 @@ if (document.readyState == "complete") {
 
 var recommendation = "The government has indicated its intention to follow the recommendations of Option ";
 function doIssueSetup() {
+	_setupVariables();
+	console.log("issue setup: " + getVisiblePage());
 	if (getVisiblePage() == "dilemmas") {
 		$("button").on('click', function() {
 			$(".dilemmalist").find("a").each(function() {
@@ -34,8 +36,10 @@ function doIssueSetup() {
 			}
 		}
 		$("button").on('click', function() {
+			console.log("clicking issue");
 			selectOption($(this).prop('name'), getVisibleDilemma());
 		});
+		console.log($("button"));
 	}
 }
 
@@ -61,6 +65,12 @@ function selectOption(choice, issueNumber) {
 			} else {
 				localStorage.removeItem(key);
 			}
+			//Remove now, will be set once as clicking a button forces a navigation and thus a resync
+			try {
+				(new Firebase("https://nationstatesplusplus.firebaseio.com/nation/" + getUserNation() + "/")).child("issues").child(issueNumber).child(i).remove();
+			} catch (error) {
+				console.log(error);
+			}
 		}
 	}
 	var key = "issue-" + issueNumber + "-" + getUserNation() + "-" + choice;
@@ -70,5 +80,6 @@ function selectOption(choice, issueNumber) {
 	} else {
 		previous = now;
 	}
+	console.log("Setting issue: " + key + " to : " + previous);
 	localStorage.setItem(key, previous);
 }

@@ -368,10 +368,6 @@ function doShinyPageUpdate(data) {
 	table.fadeTo(500, 1);
 }
 
-function isNumber(n) {
-  return !isNaN(parseFloat(n)) && isFinite(n);
-}
-
 var keywords;
 var lastSearchSuccessful = false;
 var searchOffset = 0;
@@ -846,18 +842,4 @@ if (document.readyState == "complete") {
 	nationstatesPlusPlus();
 } else {
 	$(document).ready(function() {setTimeout(nationstatesPlusPlus, 100);});
-}
-
-var _gaq = _gaq || [];
-function update(delay){
-	setTimeout(function() {
-		_gaq.push(['_setAccount', 'UA-41267101-1']);
-		_gaq.push(['_trackPageview']);
-		_gaq.push(['_setCustomVar', 1, 'Version', 'v1.66', 2]);
-
-		if (delay == 1) {
-			if (getVisibleRegion() != "") _gaq.push(['_trackEvent', 'RMB', 'Region', getVisibleRegion()]);
-		}
-		update(60000);
-	}, delay);
 }

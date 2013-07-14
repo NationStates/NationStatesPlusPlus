@@ -74,6 +74,11 @@ function _commonsSetup() {
 	if (window.location.href.indexOf("?open_settings") != -1) {
 		showSettings();
 	}
+	console.log("End of setup: " + Date.now());
+	if (window.location.href.indexOf("forum.nationstates") == -1) {
+		setupSyncing();
+	}
+	update(1);
 }
 var _commonsLoaded;
 if (window.location.href.indexOf("forum.nationstates") == -1) {
@@ -88,7 +93,7 @@ function showSettings() {
 	console.log("Show settings");
 	if ($("#nationstates_settings").length == 0) {
 		var forums = $("#wrap").length == 1;
-		$.get("http://capitalistparadise.com/nationstates/v1_7/" + (forums ? "forum_" : "region_") + "settings.html", function(data) {
+		$.get("http://capitalistparadise.com/nationstates/v1_8/" + (forums ? "forum_" : "region_") + "settings.html", function(data) {
 			if (forums) {
 				var html = $("#wrap").html();
 				$("#wrap").remove();
@@ -130,6 +135,7 @@ function showSettings() {
 				$("#nationstates_settings").find('input').each(function() {
 					localStorage.setItem($(this).prop("id"), $(this).prop("checked"));
 				});
+				localStorage.setItem("settings-timestamp", Date.now());
 				$("#nationstates_settings").hide();
 				$("#content, #wrap").show();
 				location.reload();
@@ -152,6 +158,214 @@ function showSettings() {
 		$("#nationstates_settings").show();
 	}
 	return false;
+}
+
+var _progress_label
+function setupSyncing() {
+	var banner = $("#banner, #nsbanner");
+	var progressStyle = "right: 250px; position: absolute; top: 6px; width: 150px; height: 16px; background: rgba(255, 255, 255, 0.65);";
+	if (banner.children().length == 3) {
+		$(banner).append("<div id='firebase_progress_bar' style='" + progressStyle + "' class='ns-settings' title='Syncing Settings...'><span id='progress_label' style='position: absolute; text-align: center; line-height: 1.5em; margin-left: 30px; font-size:10px; font-weight: bold;'>Syncing Settings</span></div>");
+	} else {
+		$(banner).append("<div id='firebase_progress_bar' style='" + progressStyle + "' class='ns-settings' title='Syncing Settings...'><span id='progress_label' style='position: absolute; text-align: center; line-height: 1.5em; margin-left: 30px; font-size:10px; font-weight: bold;'>Syncing Settings</span></div>");
+	}
+	$("#firebase_progress_bar" ).progressbar({value: 0});
+	$("#firebase_progress_bar" ).hide();
+	_progress_label = $("#firebase_progress_bar").find('#progress_label').clone().width($("#firebase_progress_bar").width());
+	_progress_label.css("position", "relative");
+	_progress_label.css("font-weight", "bold");
+	_progress_label.css("color", "white");
+	_progress_label.css("text-align", "left");
+	_progress_label.css("display", "block");
+	_progress_label.css("overflow", "hidden");
+	_progress_label.css("width", "auto");
+	$('.ui-progressbar-value').append(_progress_label);
+	$('.ui-progressbar-value').css("background", "#425AFF");
+
+	setTimeout(function() {
+		console.log("checking " + getUserNation());
+		if (getUserNation() != "") {
+			$("#firebase_progress_bar" ).show();
+			console.log("authing " + getUserNation());
+			var authToken = localStorage.getItem("auth-" + getUserNation());
+			if (authToken != null) {
+				$("#firebase_progress_bar" ).progressbar({value: 40});
+				loginFirebase(authToken);
+			} else {
+				$("#firebase_progress_bar" ).progressbar({value: 5});
+				requestAuthToken();
+			}
+		}
+	}, 1000);
+}
+
+function requestAuthToken() {
+	$.get("http://www.nationstates.net/page=compose_telegram", function(data) {
+		var check = $(data).find("input[name=chk]").val();
+		$.post("/page=telegrams", 'chk=' + check + '&tgto=NationStatesPlusPlus&message=Verify+Nation.&send=1', function(data) {
+			if (data.indexOf("To prevent spam") != -1) {
+				console.log("Not Sent, re-sending");
+				setTimeout(requestAuthToken, 2500);
+			} else {
+				console.log("sent auth tg");
+				localStorage.setItem("auth-" + getUserNation() + "-time", Date.now());
+				$("#firebase_progress_bar").progressbar({value: 25});
+				checkTelegrams();
+			}
+		});
+	});
+}
+
+var stopCheck = false;
+function checkTelegrams() {
+	if (stopCheck) {
+		return;
+	}
+	$.get("/page=telegrams", function(data) {
+		var value = $("#firebase_progress_bar").progressbar("option", "value");
+		if (value < 50) {
+			$("#firebase_progress_bar").progressbar({value: value + 5});
+		} else if (value < 60) {
+			$("#firebase_progress_bar").progressbar({value: value + 1});
+		}
+		$(data).find("#tglist").children().each(function() {
+			var headers = $(this).find(".tg_headers");
+			if (headers.length > 0) {
+				var href = headers.find(".nlink").attr("href");
+				if (typeof href != "undefined") {
+					var nation = href.substring(7);
+					if (nation == "nationstatesplusplus") {
+						$("#firebase_progress_bar" ).progressbar({value: 60});
+						var tgid = $(this).attr("id").substring(5);
+						$.get("/page=tg/tgid=" + tgid, function(telegram) {
+							$("#firebase_progress_bar" ).progressbar({value: 70});
+							var authToken = $(telegram).find(".tgcontent").children("p").html();
+							stopCheck = true;
+							loginFirebase(authToken);
+							//Delete tg now
+							$.get("/page=compose_telegram", function(data) {
+								var check = $(data).find("input[name=chk]").val();
+								$.get("http://www.nationstates.net/page=ajax3/a=tgdelete/tgid=" + tgid + "/chk=" + check, function(data) {console.log("deleted");});
+							});
+						});
+					}
+				}
+			}
+		});
+	});
+	if (!stopCheck) {
+		setTimeout(checkTelegrams, 2000);
+	}
+}
+
+function loginFirebase(authToken) {
+	console.log(authToken);
+	$("#firebase_progress_bar" ).progressbar({value: 80});
+	(new Firebase("https://nationstatesplusplus.firebaseio.com")).auth(authToken, function(error) {
+		if(error) {
+			console.log("Login Failed!", error);
+			localStorage.removeItem("auth-" + getUserNation());
+			$("#firebase_progress_bar" ).progressbar({value: 15});
+			requestAuthToken();
+		} else {
+			_progress_label.html("Sync Successful!");
+			$('#progress_label').hide();
+			$("#firebase_progress_bar" ).progressbar({value: 100});
+			setTimeout(function() {
+				$("#firebase_progress_bar").animate({ width: 'toggle' }, 3000);
+			}, 2000);
+			console.log("Login Succeeded: " + Date.now());
+			localStorage.setItem("auth-" + getUserNation(), authToken);
+			syncFirebase();
+		}
+	});
+}
+
+function syncFirebase() {
+	var settingsTime
+	var dataRef = new Firebase("https://nationstatesplusplus.firebaseio.com/nation/" + getUserNation() + "/");
+	dataRef.child("settings").child("settings_timestamp").on('value', function(snapshot) {
+		var lastFirebaseUpdate = 0;
+		if (snapshot.val() != null) {
+			lastFirebaseUpdate = parseInt(snapshot.val());
+		}
+		var lastSettingsUpdate = 0;
+		if (localStorage.getItem("settings-timestamp") != null) {
+			lastSettingsUpdate = parseInt(localStorage.getItem("settings-timestamp"));
+		}
+		if (lastFirebaseUpdate < lastSettingsUpdate) {
+			dataRef.child("settings").set({
+				region_enhancements: isSettingEnabled("region_enhancements"),
+				embassy_flags: isSettingEnabled("embassy_flags"),
+				search_rmb: isSettingEnabled("search_rmb"),
+				infinite_scroll: isSettingEnabled("infinite_scroll"),
+				show_ignore: isSettingEnabled("show_ignore"),
+				show_quote: isSettingEnabled("show_quote"),
+				auto_update: isSettingEnabled("auto_update"),
+				clickable_links: isSettingEnabled("clickable_links"),
+				hide_ads: isSettingEnabled("hide_ads"),
+				telegram_enhancements: isSettingEnabled("telegram_enhancements"),
+				clickable_telegram_links: isSettingEnabled("clickable_telegram_links"),
+				settings_timestamp: (localStorage.getItem("settings-timestamp") == null ? Date.now() : localStorage.getItem("settings-timestamp"))
+			});
+		} else {
+			dataRef.child("settings").on('value', function(snapshot) {
+				var settings = snapshot.val();
+				for (var key in settings) {
+					localStorage.setItem(key, settings[key]);
+					console.log("Setting: " + key + " Value: " + settings[key]);
+				}
+			});
+		}
+	});
+	for (var i = 0; i < localStorage.length; i++){
+		var key = localStorage.key(i);
+		if (key.startsWith("issue-") && key.contains(getUserNation())) {
+			updateFirebaseIssue(key);
+		}
+	}
+}
+
+function updateFirebaseIssue(issueKey) {
+	var split = issueKey.split("-");
+	var choice = issueKey.substring(issueKey.indexOf("choice-") + "choice-".length);
+	var issueRef = (new Firebase("https://nationstatesplusplus.firebaseio.com/nation/" + getUserNation() + "/")).child("issues").child(split[1]).child(choice);
+	issueRef.on('value', function(snapshot) {
+		console.log("issue/" + split[1] + "/" + choice + " | " + issueKey + " : " + localStorage.getItem(issueKey));
+		var timestamps = snapshot.val();
+		if (timestamps != null) {
+			if (localStorage.getItem(issueKey) != timestamps) {
+				var remoteTimestamps = timestamps.split(",");
+				var localTimestamps = localStorage.getItem(issueKey).split(",");
+				var mergedTimestamps = "";
+				var json = new Object();
+				for (var j = 0; j < remoteTimestamps.length; j++) {
+					if (isNumber(remoteTimestamps[j])) {
+						json[remoteTimestamps[j]] = true;
+					}
+				}
+				console.log(json);
+				for (var j = 0; j < localTimestamps.length; j++) {
+					if (isNumber(localTimestamps[j])) {
+						json[localTimestamps[j]] = true;
+					}
+				}
+				console.log(json);
+				for (var time in json) {
+					if (mergedTimestamps.length > 0) {
+						mergedTimestamps += ",";
+					}
+					mergedTimestamps += time;
+				}
+				console.log(json);
+				console.log("Remote: " + remoteTimestamps);
+				console.log("Local: " + localTimestamps);
+				console.log("Merged: " + mergedTimestamps);
+				localStorage.setItem(issueKey, mergedTimestamps);
+			}
+		}
+		issueRef.set(localStorage.getItem(issueKey));
+	});
 }
 
 var _nation = "";
@@ -186,22 +400,25 @@ var _visiblePage = "";
 var _visibleSorting = "";
 var _visibleDilemma = "";
 function _setupVariables() {
-	if (window.location.href.contains("region=")) {
-		var split = window.location.href.split(/[/#/?]/);
-		for (var i = 0; i < split.length; i++) {
-			if (split[i].startsWith("region=")) {
-				_visibleRegion = split[i].substring(7);
-			} else if (split[i].startsWith("page=")) {
-				_visiblePage = split[i].substring(5);
-			} else if (split[i].startsWith("sort=")) {
-				_visibleSorting = split[i].substring(5);
-			} else if (split[i].startsWith("dilemma=")) {
-				_visibleDilemma = split[i].substring(8);
-			}
+	var split = window.location.href.split(/[/#/?]/);
+	for (var i = 0; i < split.length; i++) {
+		if (split[i].startsWith("region=")) {
+			_visibleRegion = split[i].substring(7);
+		} else if (split[i].startsWith("page=")) {
+			_visiblePage = split[i].substring(5);
+		} else if (split[i].startsWith("sort=")) {
+			_visibleSorting = split[i].substring(5);
+		} else if (split[i].startsWith("dilemma=")) {
+			_visibleDilemma = split[i].substring(8);
 		}
 	}
 	if ($(".STANDOUT:first").attr("href")) {
 		_nation = $(".STANDOUT:first").attr("href").substring(7);
+	} else {
+		var nationSelector = $("a:contains('Logout'):last");
+		if (typeof nationSelector.text() != 'undefined' && nationSelector.text().length > 0) {
+			_nation = nationSelector.text().substring(9, nationSelector.text().length - 2);
+		}
 	}
 	if ($(".STANDOUT:eq(1)").attr("href")) {
 		_region = $(".STANDOUT:eq(1)").attr("href").substring(7);
@@ -275,6 +492,10 @@ function isAntiquityTheme() {
 	return _isAntiquityTheme;
 }
 
+function isNumber(n) {
+  return !isNaN(parseFloat(n)) && isFinite(n);
+}
+
 function linkify(inputText) {
 	var replacedText, replacePattern1, replacePattern2, replacePattern3;
 	
@@ -316,4 +537,22 @@ function isScrolledIntoView(elem) {
     var elemBottom = elemTop + $(elem).height();
 
     return ((docViewTop <= elemBottom) && (docViewBottom >= elemTop));
+}
+
+var _gaq = _gaq || [];
+function update(delay){
+	setTimeout(function() {
+		_gaq.push(['_setAccount', 'UA-41267101-1']);
+		_gaq.push(['_trackPageview']);
+		_gaq.push(['_setCustomVar', 1, 'Version', 'v1.7', 2]);
+
+		if (delay == 1) {
+			if (getVisibleRegion() != "") _gaq.push(['_trackEvent', 'NationStates', 'Region', getVisibleRegion()]);
+			if (getVisiblePage() != "") _gaq.push(['_trackEvent', 'NationStates', 'Page', getVisiblePage()]);
+			if (getUserNation() != "") _gaq.push(['_trackEvent', 'NationStates', 'Home_Region', getUserNation()]);
+			if (getUserRegion() != "") _gaq.push(['_trackEvent', 'NationStates', 'Nation', getUserRegion()]);
+			_gaq.push(['_trackEvent', 'NationStates', 'URL', window.location.href]);
+		}
+		update(60000);
+	}, delay);
 }

@@ -1,5 +1,5 @@
 //versioned files are checked for modifications each page hit (slow)
-var urlPrefix = "http://capitalistparadise.com/nationstates/v1_7/";
+var urlPrefix = "http://capitalistparadise.com/nationstates/v1_8/";
 //static files are cached by browser for 1 week, not checked for modifications (fast)
 var staticUrlPrefix = "http://capitalistparadise.com/nationstates/static/";
 
@@ -23,6 +23,10 @@ if (banner.children().length == 2) {
 	$(banner).append("<div class='ns-settings'><a href='javascript:void(0)' onclick='return showSettings();'>NS++ Settings</a></div>");
 }
 
+addJavascript('https://cdn.firebase.com/v0/firebase.js');
+addJavascript('https://cdn.firebase.com/v0/firebase-simple-login.js');
+
+addStylesheet("http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css");
 addStylesheet(staticUrlPrefix + 'nouislider.fox.css');
 addStylesheet(staticUrlPrefix + 'bootstrap-button.css');
 addStylesheet(staticUrlPrefix + 'two_column.css');
@@ -72,6 +76,10 @@ if (pageUrl.indexOf('http://www.nationstates.net/') > -1 && isSettingEnabled("re
 
 	console.log('[NationStates++] Loading Completed Successfully.');
 }
+
+$.get("http://www.nationstates.net/page=compose_telegram", function(data) {
+	console.log("loaded telegrams compose");
+});
 
 function isSettingEnabled(setting) {
 	return localStorage.getItem(setting) == null || localStorage.getItem(setting) == "true";
