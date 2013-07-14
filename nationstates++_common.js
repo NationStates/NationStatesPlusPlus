@@ -100,7 +100,7 @@ function showSettings() {
 			}
 			$("#main").html($("#main").html() + "<div id='nationstates_settings'><div>");
 			$("#nationstates_settings").html(data);
-			if (isAntiquityTheme()) {
+			if (isAntiquityTheme() && !forums) {
 				$("#nationstates_settings").css("margin-left", "0");
 			}
 			$("#nationstates_settings").hide();
