@@ -5,6 +5,17 @@ var staticUrlPrefix = "http://capitalistparadise.com/nationstates/static/";
 
 var pageUrl = window.location.href;
 
+//Have to remove this one
+$("#banneradbox").remove();
+
+if (isSettingEnabled("hide_ads")) {
+	$("#paneladbox").remove();
+	$("#sidebaradbox").remove();
+	$("#footeradbox").remove();
+	$("#removead").remove();
+	$("#maxad").remove();
+}
+
 var banner = $("#banner, #nsbanner");
 if (banner.children().length == 2) {
 	$(banner).append("<div class='ns-settings'><a href='javascript:void(0)' onclick='return showSettings();' style='right: 10px;'>NS++ Settings</a></div>");
@@ -23,6 +34,10 @@ addJavascript(urlPrefix + 'nationstates++_common.js');
 
 if (pageUrl.indexOf('http://www.nationstates.net/') > -1 && isSettingEnabled("region_enhancements")) {
 	console.log('[NationStates++] Detected NationStates Page. Loading...');
+
+	if (document.head.innerHTML.indexOf("antiquity") != -1) {
+		addStylesheet(staticUrlPrefix + "prefix-ghbuttons_v2.css");
+	}
 
 	addJavascript(staticUrlPrefix + 'jquery.caret.js');
 	addJavascript(staticUrlPrefix + 'jquery.highlight.js');
