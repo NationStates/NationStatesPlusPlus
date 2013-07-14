@@ -16,7 +16,7 @@ function addEmbassyFlags() {
 		embassyFlags.attr("style", "height: " + wfe.height() + "px;");
 		_embassyList = "";
 		$(embassies).children().each(recurseEmbassies);
-		var amazonURL = "http://ec2-54-244-210-176.us-west-2.compute.amazonaws.com";
+		var apiUrl = "http://capitalistparadise.com/api";
 		embassyArr = _embassyList.split(",");
 		for (var i = 0; i < Math.min(5, embassyArr.length / 10); i++) {
 			var list = "";
@@ -26,7 +26,7 @@ function addEmbassyFlags() {
 				if (j > start) 	list += ",";
 				list += embassyArr[j]
 			}
-			$.getJSON(amazonURL + "/regionflag/?region=" + list, function(jsonData) {
+			$.getJSON(apiUrl + "/regionflag/?region=" + list, function(jsonData) {
 				var maxTop = -106;
 				$(".animate-flags").each(function() {
 					if ($(this).position().top > maxTop) {
