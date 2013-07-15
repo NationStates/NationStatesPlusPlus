@@ -417,6 +417,7 @@ function syncFirebase() {
 			}
 		}
 	});
+	(new Firebase("https://nationstatesplusplus.firebaseio.com/nation/" + getUserNation() + "/")).child("last-login").set(Date.now());
 	setTimeout(function() {try { var dataRef = new Firebase("https://nationstatesplusplus.firebaseio.com"); dataRef.u.o.vb.Cb.close(); } catch (error) { console.log(error); } }, 10000);
 }
 
