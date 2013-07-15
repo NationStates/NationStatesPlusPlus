@@ -173,8 +173,9 @@ function showSettings() {
 		$.get("http://capitalistparadise.com/nationstates/v1_8/" + (forums ? "forum_" : "region_") + "settings.html", function(data) {
 			if (forums) {
 				var html = $("#wrap").html();
+				var classes = $("#wrap").attr('class');
 				$("#wrap").remove();
-				$("<div id='main'><div id='wrap' class='beside_nssidebar_1'>" + html + "</div></div>").insertAfter("#nssidebar");
+				$("<div id='main'><div id='wrap' class='" + classes + "'>" + html + "</div></div>").insertAfter("#nssidebar, #nstopbar");
 			} else if (isAntiquityTheme()) {
 				var html = $("#main").html();
 				$("#main").remove();
@@ -630,7 +631,7 @@ function update(delay){
 	setTimeout(function() {
 		_gaq.push(['_setAccount', 'UA-41267101-1']);
 		_gaq.push(['_trackPageview']);
-		_gaq.push(['_setCustomVar', 1, 'Version', 'v1.7', 2]);
+		_gaq.push(['_setCustomVar', 1, 'Version', 'v1.8', 2]);
 
 		if (delay == 1) {
 			if (getVisibleRegion() != "") _gaq.push(['_trackEvent', 'NationStates', 'Region', getVisibleRegion()]);

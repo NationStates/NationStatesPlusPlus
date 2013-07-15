@@ -121,11 +121,11 @@
 	margin-top:-5px;
 }
 
-.shiny td {
+.shiny.ranks td {
 	min-height: 28px;
 }
 
-.shiny  td:first-child {
+.shiny.ranks  td:first-child {
 	width: 42px;
 }
 
