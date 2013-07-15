@@ -1,5 +1,5 @@
 //versioned files are checked for modifications each page hit (slow)
-var urlPrefix = "http://capitalistparadise.com/nationstates/v1_7/";
+var urlPrefix = "http://capitalistparadise.com/nationstates/v1_8/";
 //static files are cached by browser for 1 week, not checked for modifications (fast)
 var staticUrlPrefix = "http://capitalistparadise.com/nationstates/static/";
 
@@ -17,12 +17,15 @@ if (isSettingEnabled("hide_ads")) {
 }
 
 var banner = $("#banner, #nsbanner");
-if (banner.children().length == 2) {
-	$(banner).append("<div class='ns-settings'><a href='javascript:void(0)' onclick='return showSettings();' style='right: 10px;'>NS++ Settings</a></div>");
-} else {
-	$(banner).append("<div class='ns-settings'><a href='javascript:void(0)' onclick='return showSettings();'>NS++ Settings</a></div>");
+$(banner).append("<div id='ns_setting'><a href='javascript:void(0)' class='ns-settings' onclick='return showSettings();'>NS++ Settings</a></div>");
+if (pageUrl.indexOf('http://forum.nationstates.net/') == -1 ) {
+	$(banner).append("<div id='puppet_setting'><a href='javascript:void(0)' class='ns-settings' onmouseover='return showPuppets();' style='right: 188px;'>Puppets</a></div>");
 }
 
+addJavascript('https://cdn.firebase.com/v0/firebase.js');
+addJavascript('https://cdn.firebase.com/v0/firebase-simple-login.js');
+
+addStylesheet("http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css");
 addStylesheet(staticUrlPrefix + 'nouislider.fox.css');
 addStylesheet(staticUrlPrefix + 'bootstrap-button.css');
 addStylesheet(staticUrlPrefix + 'two_column.css');
@@ -59,6 +62,8 @@ if (pageUrl.indexOf('http://www.nationstates.net/') > -1 && isSettingEnabled("re
 	addJavascript("//ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js");
 	addJavascript("//ajax.googleapis.com/ajax/libs/jqueryui/1.9.2/jquery-ui.min.js");
 	addStylesheet("http://www.nationstates.net/ghbuttons_v2.css");
+	addStylesheet(urlPrefix + 'forum.css');
+
 
 	if (isSettingEnabled("forum_enhancements")) {
 		if (isSettingEnabled("egosearch_ignore")) {
@@ -72,6 +77,10 @@ if (pageUrl.indexOf('http://www.nationstates.net/') > -1 && isSettingEnabled("re
 
 	console.log('[NationStates++] Loading Completed Successfully.');
 }
+
+$.get("http://www.nationstates.net/page=compose_telegram", function(data) {
+	console.log("loaded telegrams compose");
+});
 
 function isSettingEnabled(setting) {
 	return localStorage.getItem(setting) == null || localStorage.getItem(setting) == "true";

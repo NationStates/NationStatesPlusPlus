@@ -22,7 +22,7 @@
 	background: #FFFF00;
 }
 
-.ns-settings  a, .ns-settings img{
+.ns-settings  {
 	position:absolute;
 	top:0px;
 	right: 78px;
@@ -36,10 +36,6 @@
 	background: black;
 	background-color: rgba(0,0,0,0.2);
 	border-radius: 8px;
-}
-
-.ns-settings  img{
-	right: 120px;
 }
 
 #nationstates_settings {
@@ -136,4 +132,51 @@
 table img.smallflag {
 	height: 26px;
 	width: 40px;
+}
+
+.puppet-form {
+	width: 180px;
+	right: 245px;
+	position: absolute;
+	top: 25px;
+	padding: 1px 10px 1px 10px;
+	text-align: center;
+	font-size: 7pt;
+	border-radius: 8px;
+	background: black;
+	color: white;
+	font-size: 12px;
+	font-family: Arial;
+}
+
+.puppet-form h3 {
+	text-align: left;
+	margin-top: 2px;
+}
+
+.puppet-form ul {
+	position: relative;
+	left: -10px;
+	top: -14px;
+}
+
+.puppet-form li {
+	position: relative;
+	left: -10px;
+	text-align:left;
+}
+
+.puppet-form-inner {
+	width: 160px;
+	overflow:hidden;
+}
+
+.puppet-form-remove {
+	margin: 0 !important;
+	padding: 0;
+	width: 14px;
+	height: 14px;
+	position: absolute;
+	right: -20px;
+	top: 0px;
 }

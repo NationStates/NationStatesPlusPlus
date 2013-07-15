@@ -17,10 +17,9 @@ if (isSettingEnabled("hide_ads")) {
 }
 
 var banner = $("#banner, #nsbanner");
-if (banner.children().length == 2) {
-	$(banner).append("<div class='ns-settings'><a href='javascript:void(0)' onclick='return showSettings();' style='right: 10px;'>NS++ Settings</a></div>");
-} else {
-	$(banner).append("<div class='ns-settings'><a href='javascript:void(0)' onclick='return showSettings();'>NS++ Settings</a></div>");
+$(banner).append("<div id='ns_setting'><a href='javascript:void(0)' class='ns-settings' onclick='return showSettings();'>NS++ Settings</a></div>");
+if (pageUrl.indexOf('http://forum.nationstates.net/') == -1 ) {
+	$(banner).append("<div id='puppet_setting'><a href='javascript:void(0)' class='ns-settings' onmouseover='return showPuppets();' style='right: 188px;'>Puppets</a></div>");
 }
 
 addJavascript('https://cdn.firebase.com/v0/firebase.js');
@@ -63,6 +62,8 @@ if (pageUrl.indexOf('http://www.nationstates.net/') > -1 && isSettingEnabled("re
 	addJavascript("//ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js");
 	addJavascript("//ajax.googleapis.com/ajax/libs/jqueryui/1.9.2/jquery-ui.min.js");
 	addStylesheet("http://www.nationstates.net/ghbuttons_v2.css");
+	addStylesheet(urlPrefix + 'forum.css');
+
 
 	if (isSettingEnabled("forum_enhancements")) {
 		if (isSettingEnabled("egosearch_ignore")) {

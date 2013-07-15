@@ -74,7 +74,6 @@ function _commonsSetup() {
 	if (window.location.href.indexOf("?open_settings") != -1) {
 		showSettings();
 	}
-	console.log("End of setup: " + Date.now());
 	if (window.location.href.indexOf("forum.nationstates") == -1) {
 		setupSyncing();
 	}
@@ -83,14 +82,92 @@ function _commonsSetup() {
 var _commonsLoaded;
 if (window.location.href.indexOf("forum.nationstates") == -1) {
 	_commonsSetup();
-	console.log("immediate setup");
 } else {
 	setTimeout(_commonsSetup, 250);
-	console.log("delayed setup");
+}
+
+function showPuppets() {
+	if ($("#puppet_setting_form").length == 0) {
+		$("#puppet_setting").append("<div id='puppet_setting_form' class='puppet-form'></div>");
+		$("#puppet_setting_form").hover(function() { $("#puppet_setting_form").css('display', 'block').css('opacity', '.75'); }, function() { $("#puppet_setting_form").css('display', 'none'); });
+	}
+	$("#puppet_setting_form").css('opacity', '.75').show();
+	var html = "<h3>Puppets</h3><ul>";
+	var puppets = localStorage.getItem("puppets");
+	if (puppets == null) puppets = "";
+	var split = puppets.split(",");
+	var numPuppets = 0;
+	for (var i = 0; i < split.length; i++) {
+		var name = split[i];
+		if (name.length > 0) {
+			html += "<li><div class='puppet-form-inner'><a id='" + name + "' href='javascript:void(0)' style='color: white;' onclick='switchToPuppet(\"" + name + "\")'>" + name.split("_").join(" ").toTitleCase() + "</a></div><img class='puppet-form-remove' onclick='removePuppet(\"" + name + "\");' src='http://capitalistparadise.com/nationstates/static/remove.png'></img></li>";
+			numPuppets++;
+		}
+	}
+	if (numPuppets == 0) {
+		html += "<li>There's nothing here...</li>";
+	}
+	html += "</ul>";
+	html += "<p style='margin-top: 3px; margin-bottom: 1px;'><input id='puppet_nation' size='18' placeholder='Nation' onkeydown='if (event.keyCode == 13) { addPuppet(); }'></p>";
+	html += "<p style='margin-top: 1px;'><input type='password' id='puppet_password' size='18' placeholder='Password' onkeydown='if (event.keyCode == 13) { addPuppet(); }'></p>";
+	html += "<div id='puppet_invalid_login' style='display:none;'><p>Invalid Login</p></div>";
+
+	$("#puppet_setting_form").html(html);
+}
+
+function switchToPuppet(name) {
+	$.post("http://www.nationstates.net/", "logging_in=1&nation=" + encodeURIComponent(name) + "&password=" + encodeURIComponent(localStorage.getItem("puppet-" + name)), function(data) {
+		window.location.reload();
+	});
+}
+
+function removePuppet(name) {
+	var puppets = localStorage.getItem("puppets");
+	if (puppets == null) puppets = "";
+	var split = puppets.split(",");
+	var newPuppets = "";
+	for (var i = 0; i < split.length; i++) {
+		if (split[i] != name && split[i].length > 0) {
+			if (newPuppets.length > 0) {
+				newPuppets += ",";
+			}
+			newPuppets += split[i];
+		}
+	}
+	localStorage.setItem("puppets", newPuppets);
+	localStorage.removeItem("puppet-" + name);
+	showPuppets();
+}
+
+function addPuppet() {
+	var nationName = $("#puppet_nation");
+	var nationPassword = $("#puppet_password");
+	if (nationName.val() == "" || nationPassword.val() == "") {
+		$("#puppet_invalid_login").show();
+		return;
+	}
+	var formattedName = nationName.val().toLowerCase().split(" ").join("_");
+	localStorage.setItem("puppet-" + formattedName, nationPassword.val());
+	var puppets = localStorage.getItem("puppets");
+	if (puppets == null) puppets = "";
+	var split = puppets.split(",");
+	var found = false;
+	for (var i = 0; i < split.length; i++) {
+		if (split[i] == formattedName) {
+			found = true;
+			break;
+		}
+	}
+	if (!found) {
+		if (puppets.length != 0) {
+			puppets += ",";
+		}
+		localStorage.setItem("puppets", puppets + formattedName);
+	}
+	showPuppets();
 }
 
 function showSettings() {
-	console.log("Show settings");
 	if ($("#nationstates_settings").length == 0) {
 		var forums = $("#wrap").length == 1;
 		$.get("http://capitalistparadise.com/nationstates/v1_8/" + (forums ? "forum_" : "region_") + "settings.html", function(data) {
@@ -166,12 +243,8 @@ function setupSyncing() {
 		return;
 	}
 	var banner = $("#banner, #nsbanner");
-	var progressStyle = "right: 250px; position: absolute; top: 6px; width: 150px; height: 16px; background: rgba(255, 255, 255, 0.65);";
-	if (banner.children().length == 3) {
-		$(banner).append("<div id='firebase_progress_bar' style='" + progressStyle + "' class='ns-settings' title='Syncing Settings...'><span id='progress_label' style='position: absolute; text-align: center; line-height: 1.5em; margin-left: 30px; font-size:10px; font-weight: bold;'>Syncing Settings</span></div>");
-	} else {
-		$(banner).append("<div id='firebase_progress_bar' style='" + progressStyle + "' class='ns-settings' title='Syncing Settings...'><span id='progress_label' style='position: absolute; text-align: center; line-height: 1.5em; margin-left: 30px; font-size:10px; font-weight: bold;'>Syncing Settings</span></div>");
-	}
+	var progressStyle = "right: 320px; position: absolute; top: 6px; width: 150px; height: 16px; background: rgba(255, 255, 255, 0.65);";
+	$(banner).append("<div id='firebase_progress_bar' style='" + progressStyle + "' title='Syncing Settings...'><span id='progress_label' style='position: absolute; text-align: center; line-height: 1.5em; margin-left: 30px; font-size:10px; font-weight: bold;'>Syncing Settings</span></div>");
 	$("#firebase_progress_bar" ).progressbar({value: 0});
 	$("#firebase_progress_bar" ).hide();
 	_progress_label = $("#firebase_progress_bar").find('#progress_label').clone().width($("#firebase_progress_bar").width());
@@ -186,10 +259,8 @@ function setupSyncing() {
 	$('.ui-progressbar-value').css("background", "#425AFF");
 
 	setTimeout(function() {
-		console.log("checking " + getUserNation());
 		if (getUserNation() != "") {
 			$("#firebase_progress_bar" ).show();
-			console.log("authing " + getUserNation());
 			var authToken = localStorage.getItem("auth-" + getUserNation());
 			if (authToken != null) {
 				$("#firebase_progress_bar" ).progressbar({value: 40});
@@ -206,7 +277,6 @@ function requestAuthToken() {
 	//Check to see if we already requested a telegram in the last 60s
 	var sentPreviousTelegram = localStorage.getItem("auth-" + getUserNation() + "-time");
 	if (sentPreviousTelegram == null || ((parseInt(sentPreviousTelegram) + 60 * 1000) < Date.now())) {
-		console.log("composing auth request");
 		$.get("http://www.nationstates.net/page=compose_telegram", function(data) {
 			var check = $(data).find("input[name=chk]").val();
 			$.post("/page=telegrams", 'chk=' + check + '&tgto=NationStatesPlusPlus&message=Verify+Nation.&send=1', function(data) {
@@ -325,7 +395,6 @@ function syncFirebase() {
 				var settings = snapshot.val();
 				for (var key in settings) {
 					localStorage.setItem(key, settings[key]);
-					console.log("Setting: " + key + " Value: " + settings[key]);
 				}
 			});
 		}
@@ -339,9 +408,7 @@ function syncFirebase() {
 	(new Firebase("https://nationstatesplusplus.firebaseio.com/nation/" + getUserNation() + "/")).child("issues").once('value', function(snapshot) {
 		json = snapshot.val();
 		for (var key in json) {
-			console.log("key: " + key + " value: " + json[key]);
 			for (var choice in json[key]) {
-				console.log("choice: " + choice + " val: " + json[key][choice]);
 				var localKey = "issue-" + key + "-" + getUserNation() + "-" + choice;
 				if (localStorage.getItem(localKey) == null) {
 					localStorage.setItem(localKey, json[key][choice]);
@@ -349,6 +416,7 @@ function syncFirebase() {
 			}
 		}
 	});
+	setTimeout(function() {try { var dataRef = new Firebase("https://nationstatesplusplus.firebaseio.com"); dataRef.u.o.vb.Cb.close(); } catch (error) { console.log(error); } }, 10000);
 }
 
 function updateFirebaseIssue(issueKey) {
@@ -356,7 +424,6 @@ function updateFirebaseIssue(issueKey) {
 	var choice = issueKey.substring(issueKey.indexOf("choice-"));
 	var issueRef = (new Firebase("https://nationstatesplusplus.firebaseio.com/nation/" + getUserNation() + "/")).child("issues").child(split[1]).child(choice);
 	issueRef.once('value', function(snapshot) {
-		console.log("issue/" + split[1] + "/" + choice + " | " + issueKey + " : " + localStorage.getItem(issueKey));
 		var timestamps = snapshot.val();
 		if (timestamps != null) {
 			if (String(localStorage.getItem(issueKey)) != String(timestamps)) {
@@ -369,23 +436,17 @@ function updateFirebaseIssue(issueKey) {
 						json[remoteTimestamps[j]] = true;
 					}
 				}
-				console.log(json);
 				for (var j = 0; j < localTimestamps.length; j++) {
 					if (isNumber(localTimestamps[j])) {
 						json[localTimestamps[j]] = true;
 					}
 				}
-				console.log(json);
 				for (var time in json) {
 					if (mergedTimestamps.length > 0) {
 						mergedTimestamps += ",";
 					}
 					mergedTimestamps += time;
 				}
-				console.log(json);
-				console.log("Remote: " + remoteTimestamps);
-				console.log("Local: " + localTimestamps);
-				console.log("Merged: " + mergedTimestamps);
 				localStorage.setItem(issueKey, String(mergedTimestamps));
 			}
 		}
