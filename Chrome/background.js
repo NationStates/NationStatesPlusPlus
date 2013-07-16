@@ -14,6 +14,7 @@ if (isSettingEnabled("hide_ads")) {
 	$("#footeradbox").remove();
 	$("#removead").remove();
 	$("#maxad").remove();
+	$("#regionadbox").remove();
 }
 
 var banner = $("#banner, #nsbanner");
