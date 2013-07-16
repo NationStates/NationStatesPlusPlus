@@ -147,6 +147,7 @@ table img.smallflag {
 	color: white;
 	font-size: 12px;
 	font-family: Arial;
+	z-index: 99;
 }
 
 .puppet-form h3 {
