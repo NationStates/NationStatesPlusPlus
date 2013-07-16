@@ -156,8 +156,9 @@ table img.smallflag {
 
 .puppet-form ul {
 	position: relative;
-	left: -10px;
+	left: -25px;
 	top: -14px;
+	width: 155px;
 }
 
 .puppet-form li {
@@ -169,6 +170,10 @@ table img.smallflag {
 .puppet-form-inner {
 	width: 160px;
 	overflow:hidden;
+}
+
+#puppet_password, #puppet_nation {
+	width: 170px;
 }
 
 .puppet-form-remove {

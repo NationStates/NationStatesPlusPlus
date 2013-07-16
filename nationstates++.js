@@ -239,6 +239,10 @@ function getShinyTableSelector() {
 }
 
 function setupPageSlider() {
+	if (!isSettingEnabled("scroll_nation_lists")) {
+		console.log("nation list disabled");
+		return;
+	}
 	var census = $('h6[align$="center"]');
 	if (typeof census.html() != 'undefined') {
 		var maxPage = 1;
