@@ -1,0 +1,28 @@
+.ns-settings  {
+	background: #2A2A2A;
+	border: 1px solid #383838;
+}
+
+#puppet_password {
+	background: white !important;
+	border: 2px inset !important;
+	border-radius: 0 !important;
+	padding: 1px 0px !important;
+	color: black !important;
+}
+
+#nationstates_settings h1 {
+	color: #D0D0D0 !important;
+}
+
+#nationstates_settings {
+	background: #000 !important;
+	color: #D0D0D0 !important;
+}
+
+#nationstates_settings fieldset{
+	background: #2A2A2A !important;
+	border: 1px solid #383838 !important;
+	color: #D0D0D0 !important;
+}
+

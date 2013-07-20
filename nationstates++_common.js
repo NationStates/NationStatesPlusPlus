@@ -77,6 +77,10 @@ function _commonsSetup() {
 	if (window.location.href.indexOf("forum.nationstates") == -1) {
 		setupSyncing();
 	}
+	console.log("puppets: " + isSettingEnabled("show_puppet_switcher"));
+	if (isSettingEnabled("show_puppet_switcher")) {
+		$("#puppet_setting").show();
+	}
 	update(1);
 }
 var _commonsLoaded;
@@ -87,6 +91,9 @@ if (window.location.href.indexOf("forum.nationstates") == -1) {
 }
 
 function showPuppets() {
+	if (!isSettingEnabled("show_puppet_switcher")) {
+		return;
+	}
 	if ($("#puppet_setting_form").length == 0) {
 		$("#puppet_setting").append("<div id='puppet_setting_form' class='puppet-form'></div>");
 		$("#puppet_setting_form").hover(function() { $("#puppet_setting_form").css('display', 'block').css('opacity', '.75'); }, function() { $("#puppet_setting_form").css('display', 'none'); });
@@ -114,7 +121,7 @@ function showPuppets() {
 	
 	var labelStyle = "style='font-size: 13px; line-height: 13px; vertical-align: text-top;'";
 	html += "<div style='margin-left: -27px; margin-top: -10px;'><input id='redirect-puppet-page' title='When you login, you will be redirected to the nation page of the puppet' class='indent' type='checkbox'><label title='When you login, you will be redirected to the nation page of the puppet' " + labelStyle + " for='redirect-puppet-page'>Redirect to Nation Page</label></div>"
-	html += "<div style='margin-left: -31px; padding-bottom: 5px;'><input id='show-region-on-hover' title='Hovering over the name of a puppet reveals which region it is in' class='indent' type='checkbox'><label title='Hovering over the name of a puppet reveals which region it is in' " + labelStyle + " for='show-region-on-hover'>Show regions on hover</label></div>"
+	html += "<div style='margin-left: -34px; padding-bottom: 5px;'><input id='show-region-on-hover' title='Hovering over the name of a puppet reveals which region it is in' class='indent' type='checkbox'><label title='Hovering over the name of a puppet reveals which region it is in' " + labelStyle + " for='show-region-on-hover'>Show regions on hover</label></div>"
 	html += "<div id='puppet_invalid_login' style='display:none;'><p>Invalid Login</p></div>";
 
 	$("#puppet_setting_form").html(html);
@@ -168,7 +175,7 @@ function switchToPuppet(name) {
 		if (localStorage.getItem("redirect-puppet-page") == "true") {
 			window.location.href = "/nation=" + name;
 		} else {
-			window.location.reload();
+			window.location.reload(false);
 		}
 	});
 }
@@ -366,7 +373,7 @@ function checkTelegrams() {
 	}
 	$.get("/page=telegrams", function(data) {
 		var value = $("#firebase_progress_bar").progressbar("option", "value");
-		if (value < 50) {
+		if (value < 45) {
 			$("#firebase_progress_bar").progressbar({value: value + 5});
 		} else if (value < 60) {
 			$("#firebase_progress_bar").progressbar({value: value + 1});
@@ -429,7 +436,6 @@ function loginFirebase(authToken) {
 					$("#firebase_progress_bar").animate({ width: 'toggle' }, 3000);
 				}, 2000);
 			}
-			console.log("Login Succeeded: " + Date.now());
 			localStorage.setItem("auth-" + getUserNation(), authToken);
 			syncFirebase();
 		}
@@ -462,6 +468,7 @@ function syncFirebase() {
 				scroll_nation_lists: isSettingEnabled("scroll_nation_lists"),
 				telegram_enhancements: isSettingEnabled("telegram_enhancements"),
 				clickable_telegram_links: isSettingEnabled("clickable_telegram_links"),
+				show_puppet_switcher: isSettingEnabled("show_puppet_switcher"),
 				settings_timestamp: (localStorage.getItem("settings-timestamp") == null ? Date.now() : localStorage.getItem("settings-timestamp"))
 			});
 		} else {
@@ -491,7 +498,7 @@ function syncFirebase() {
 		}
 	});
 	(new Firebase("https://nationstatesplusplus.firebaseio.com/nation/" + getUserNation() + "/")).child("last-login").set(Date.now());
-	setTimeout(function() {try { var dataRef = new Firebase("https://nationstatesplusplus.firebaseio.com"); dataRef.u.o.vb.Cb.close(); } catch (error) { console.log(error); } }, 10000);
+	setTimeout(function() {try { var dataRef = new Firebase("https://nationstatesplusplus.firebaseio.com"); dataRef.u.o.ba.L.Ib(); } catch (error) { console.log(error); } }, 10000);
 }
 
 function updateFirebaseIssue(issueKey) {
@@ -665,11 +672,11 @@ function linkify(inputText) {
 	}
 
 	//URLs starting with http://, https://, or ftp://
-	replacePattern1 = /(\b(https?|ftp):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/gim;
+	replacePattern1 = /(\b(https|http|ftp):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/gim;
 	replacedText = inputText.replace(replacePattern1, '<a href="$1" target="_blank">$1</a>');
 
 	//URLs starting with "www." (without // before it, or it'd re-link the ones done above).
-	replacePattern2 = /(^|[^\/])(www\.[\S]+(\b|$))/gim;
+	replacePattern2 = /(^|[^\/])(www\.[-A-Za-z0-9+&@#\/%?=~_()|!:,.;]*[-A-Za-z0-9+&@#\/%=~_()|])/gim;
 	replacedText = replacedText.replace(replacePattern2, '$1<a href="http://$2" target="_blank">$2</a>');
 
 	//Change email addresses to mailto:: links.

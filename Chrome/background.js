@@ -20,19 +20,22 @@ if (isSettingEnabled("hide_ads")) {
 var banner = $("#banner, #nsbanner");
 $(banner).append("<div id='ns_setting'><a href='javascript:void(0)' class='ns-settings' onclick='return showSettings();'>NS++ Settings</a></div>");
 if (pageUrl.indexOf('http://forum.nationstates.net/') == -1 ) {
-	$(banner).append("<div id='puppet_setting'><a href='javascript:void(0)' class='ns-settings' onmouseover='return showPuppets();' style='right: 188px;'>Puppets</a></div>");
+	$(banner).append("<div id='puppet_setting' style='display:none;'><a href='javascript:void(0)' class='ns-settings' onmouseover='return showPuppets();' style='right: 188px;'>Puppets</a></div>");
 }
 
+addJavascript("//d3nslu0hdya83q.cloudfront.net/dist/1.0/raven.min.js");
 addJavascript('https://cdn.firebase.com/v0/firebase.js');
 addJavascript('https://cdn.firebase.com/v0/firebase-simple-login.js');
 
-addStylesheet("http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css");
+//addStylesheet("http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css");
 addStylesheet(staticUrlPrefix + 'nouislider.fox.css');
 addStylesheet(staticUrlPrefix + 'bootstrap-button.css');
 addStylesheet(staticUrlPrefix + 'two_column.css');
 addStylesheet(urlPrefix + 'nationstates++.css');
 if (document.head.innerHTML.indexOf("antiquity") != -1) {
 	addStylesheet(urlPrefix + 'nationstates++_antiquity.css');
+} else if (document.head.innerHTML.indexOf("ns.dark") != -1) {
+	addStylesheet(urlPrefix + 'nationstates++_dark.css');
 }
 addJavascript(urlPrefix + 'nationstates++_common.js');
 
@@ -65,7 +68,6 @@ if (pageUrl.indexOf('http://www.nationstates.net/') > -1 && isSettingEnabled("re
 	addStylesheet("http://www.nationstates.net/ghbuttons_v2.css");
 	addStylesheet(urlPrefix + 'forum.css');
 
-
 	if (isSettingEnabled("forum_enhancements")) {
 		if (isSettingEnabled("egosearch_ignore")) {
 			addJavascript(urlPrefix + 'forum_ego_posts.js');
@@ -78,6 +80,30 @@ if (pageUrl.indexOf('http://www.nationstates.net/') > -1 && isSettingEnabled("re
 
 	console.log('[NationStates++] Loading Completed Successfully.');
 }
+
+window.addEventListener("message", function(event) {
+	if (event.data.method == "unread_forum_posts") {
+		/*$.get("http://forum.nationstates.net/search.php?search_id=egosearch", function(data) {
+			var unread = 0;
+			$(data).find(".forumbg").find("a").each(function() {
+				if ($(this).attr("href") != null && $(this).attr("href").indexOf("#unread") != -1) {
+					var postName = "post-" + $(this).parent().parent().find(".topictitle").html();
+					var lastDate = localStorage.getItem("post-" + postName);
+					if (lastDate == null) {
+						localStorage.setItem("post-" + postName, Date.now());
+						lastDate = Date.now();
+					} else {
+						lastDate = parseInt(lastDate);
+					}
+					if (lastDate + 24 * 60 * 60 * 1000) {
+						unread++;
+					}
+				}
+			});
+			window.postMessage({ method: "unread_forum_posts_amt", amt: unread}, "*");
+		});*/
+	}
+});
 
 $.get("http://www.nationstates.net/page=compose_telegram", function(data) {
 	console.log("loaded telegrams compose");
