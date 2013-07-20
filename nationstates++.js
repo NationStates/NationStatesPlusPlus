@@ -62,7 +62,7 @@ function updatePanelAlerts() {
 	var unread = 0;
 	if (getUserNation() != "") {
 		window.postMessage({ method: "unread_forum_posts"}, "*");
-		$.get('/page=world', function(html) {
+		$.get('/page=panel/template-overall=none', function(html) {
 			var searchString = '<a href="page=telegrams">';
 			var indicatorStart = html.indexOf(searchString);
 			var indicatorEnd = html.indexOf('</a>', indicatorStart);
