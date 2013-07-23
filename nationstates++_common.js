@@ -342,90 +342,24 @@ function setupSyncing() {
 
 function requestAuthToken() {
 	$("#firebase_progress_bar" ).show();
-	//Check to see if we already requested a telegram in the last 5min
-	var sentPreviousTelegram = localStorage.getItem("auth-" + getUserNation() + "-time");
-	if (sentPreviousTelegram == null || ((parseInt(sentPreviousTelegram) + 300 * 1000) < Date.now())) {
-		$.get("http://www.nationstates.net/page=compose_telegram", function(data) {
-			var check = $(data).find("input[name=chk]").val();
-			$.post("/page=telegrams", 'chk=' + check + '&tgto=NationStatesPlusPlus&message=Verify+Nation.&send=1', function(data) {
-				if (data.indexOf("To prevent spam") != -1) {
-					console.log("Not Sent, re-sending");
-					setTimeout(requestAuthToken, 2500);
-				} else {
-					console.log("sent auth tg");
-					localStorage.setItem("auth-" + getUserNation() + "-time", Date.now());
-					$("#firebase_progress_bar").progressbar({value: 25});
-					checkTelegrams();
-				}
-			});
-		});
-	} else {
-		console.log("sent telegram too recently");
-		$("#firebase_progress_bar").progressbar({value: 25});
-		checkTelegrams();
-	}
-}
-
-var stopCheck = false;
-function checkTelegrams() {
-	if (stopCheck) {
-		return;
-	}
-	$.get("/page=telegrams", function(data) {
-		var value = $("#firebase_progress_bar").progressbar("option", "value");
-		if (value < 45) {
-			$("#firebase_progress_bar").progressbar({value: value + 5});
-		} else if (value < 60) {
-			$("#firebase_progress_bar").progressbar({value: value + 1});
-		} else {
-			$('.ui-progressbar-value').css("background", "red");
-			$('#firebase_progress_bar').attr('title', 'Uh oh, something has gone wrong! Try refreshing.');
-		}
-		$(data).find("#tglist").children().each(function() {
-			var headers = $(this).find(".tg_headers");
-			if (headers.length > 0) {
-				var href = headers.find(".nlink").attr("href");
-				if (typeof href != "undefined") {
-					var nation = href.substring(7);
-					if (nation == "nationstatesplusplus") {
-						$("#firebase_progress_bar" ).progressbar({value: 60});
-						var tgid = $(this).attr("id").substring(5);
-						$.get("/page=tg/tgid=" + tgid, function(telegram) {
-							$("#firebase_progress_bar" ).progressbar({value: 70});
-							try {
-								console.log("searching for auth token");
-								var authToken = $(telegram).find(".tgcontent").children("p:first").text().split('\n')[1];
-								console.log("found auth token: " + authToken);
-								stopCheck = true;
-								$('.ui-progressbar-value').css("background", "#425AFF");
-								loginFirebase(authToken);
-								//Delete tg now
-								$.get("/page=compose_telegram", function(data) {
-									var check = $(data).find("input[name=chk]").val();
-									$.get("http://www.nationstates.net/page=ajax3/a=tgdelete/tgid=" + tgid + "/chk=" + check, function(data) {console.log("deleted");});
-								});
-							} catch (error) {
-								console.log(error);
-							}
-						});
-					}
-				}
-			}
+	$.get("/page=verify_login", function(data) {
+		$("#firebase_progress_bar" ).progressbar({value: 25});
+		var authCode = $(data).find("#proof_of_login_checksum").html();
+		$.post("http://capitalistparadise.com/api/firebase/", "nation=" + getUserNation() + "&auth=" + authCode, function(response) {
+			console.log("auth token: " + response['token']);
+			$("#firebase_progress_bar" ).progressbar({value: 50});
+			loginFirebase(response['token']);
 		});
 	});
-	if (!stopCheck) {
-		setTimeout(checkTelegrams, 2000);
-	}
 }
 
 function loginFirebase(authToken) {
-	console.log("attempting login");
-	$("#firebase_progress_bar" ).progressbar({value: 80});
+	$("#firebase_progress_bar" ).progressbar({value: 75});
 	(new Firebase("https://nationstatesplusplus.firebaseio.com")).auth(authToken, function(error) {
-		if(error) {
+		if (error) {
 			console.log("Login Failed!", error);
 			localStorage.removeItem("auth-" + getUserNation());
-			$("#firebase_progress_bar" ).progressbar({value: 15});
+			$("#firebase_progress_bar" ).progressbar({value: 0});
 			requestAuthToken();
 		} else {
 			_progress_label.html("Sync Successful!");
