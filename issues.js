@@ -1,13 +1,4 @@
-if (document.readyState == "complete") {
-	doIssueSetup();
-} else {
-	$(document).ready(function() {setTimeout(doIssueSetup, 100);});
-}
-
-var recommendation = "The government has indicated its intention to follow the recommendations of Option ";
-function doIssueSetup() {
-	_setupVariables();
-	console.log("issue setup: " + getVisiblePage());
+(function() {
 	if (getVisiblePage() == "dilemmas") {
 		$("button").on('click', function() {
 			$(".dilemmalist").find("a").each(function() {
@@ -41,7 +32,7 @@ function doIssueSetup() {
 		});
 		console.log($("button"));
 	}
-}
+})();
 
 function selectOption(choice, issueNumber) {
 	var now = Math.floor(Date.now() / 1000);

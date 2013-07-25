@@ -1,10 +1,4 @@
-if (document.readyState == "complete") {
-	doHelpSetup();
-} else {
-	$(document).ready(function() {setTimeout(doHelpSetup, 250);});
-}
-
-function doHelpSetup() {
+(function() {
 	if (getVisiblePage() == "help") {
 		var previousRequests = localStorage.getItem("previous-problems-" + getUserNation());
 		if (previousRequests != null) {
@@ -38,8 +32,8 @@ function doHelpSetup() {
 			localStorage.setItem("previous-problems-" + getUserNation(), JSON.stringify(previousRequests));
 		});
 	}
-}
 
+})();
 function showItem(item) {
 	$("#" + item).animate({ height: 'toggle' });
 }

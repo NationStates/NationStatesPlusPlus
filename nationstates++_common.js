@@ -1,4 +1,4 @@
-function _commonsSetup() {
+(function() {
 	//Add $.changeElementType
 	(function($) {
 		$.fn.changeElementType = function(newType) {
@@ -68,27 +68,18 @@ function _commonsSetup() {
 		};
 	}
 //*** END OF LICENSED CODE BY GAVEN KISTNER ***//
-
-	_setupVariables();
-	_commonsLoaded = true;
 	if (window.location.href.indexOf("?open_settings") != -1) {
 		showSettings();
 	}
 	if (window.location.href.indexOf("forum.nationstates") == -1) {
 		setupSyncing();
 	}
-	console.log("puppets: " + isSettingEnabled("show_puppet_switcher"));
 	if (isSettingEnabled("show_puppet_switcher")) {
 		$("#puppet_setting").show();
 	}
 	update(1);
-}
-var _commonsLoaded;
-if (window.location.href.indexOf("forum.nationstates") == -1) {
-	_commonsSetup();
-} else {
-	setTimeout(_commonsSetup, 250);
-}
+})();
+
 
 function showPuppets() {
 	if (!isSettingEnabled("show_puppet_switcher")) {
@@ -470,104 +461,96 @@ function updateFirebaseIssue(issueKey) {
 	});
 }
 
-var _nation = "";
-
 /*
 	Returns the nation name of the active user, or empty string if no active user.
 */
 function getUserNation() {
-	return _nation;
+	if ($(".STANDOUT:first").attr("href")) {
+		return $(".STANDOUT:first").attr("href").substring(7);
+	} else {
+		var nationSelector = $("a:contains('Logout'):last");
+		if (typeof nationSelector.text() != 'undefined' && nationSelector.text().length > 0) {
+			return nationSelector.text().substring(9, nationSelector.text().length - 2);
+		}
+	}
+	return "";
 }
-
-var _region = "";
 
 /*
 	Returns the region name of the active user, or empty string if no active user.
 */
 function getUserRegion() {
-	return _region;
+	if ($(".STANDOUT:eq(1)").attr("href")) {
+		return $(".STANDOUT:eq(1)").attr("href").substring(7);
+	}
+	return "";
 }
-
-var _visibleNation = "";
 
 /*
 	Returns the name of the nation the user is currently viewing, or empty string if none.
 */
 function getVisibleNation() {
-	return _visibleNation;
-}
-
-var _visibleRegion = "";
-var _visiblePage = "";
-var _visibleSorting = "";
-var _visibleDilemma = "";
-function _setupVariables() {
-	var split = window.location.href.split(/[/#/?]/);
-	for (var i = 0; i < split.length; i++) {
-		if (split[i].startsWith("region=")) {
-			_visibleRegion = split[i].substring(7);
-		} else if (split[i].startsWith("page=")) {
-			_visiblePage = split[i].substring(5);
-		} else if (split[i].startsWith("sort=")) {
-			_visibleSorting = split[i].substring(5);
-		} else if (split[i].startsWith("dilemma=")) {
-			_visibleDilemma = split[i].substring(8);
-		}
-	}
-	if ($(".STANDOUT:first").attr("href")) {
-		_nation = $(".STANDOUT:first").attr("href").substring(7);
-	} else {
-		var nationSelector = $("a:contains('Logout'):last");
-		if (typeof nationSelector.text() != 'undefined' && nationSelector.text().length > 0) {
-			_nation = nationSelector.text().substring(9, nationSelector.text().length - 2);
-		}
-	}
-	if ($(".STANDOUT:eq(1)").attr("href")) {
-		_region = $(".STANDOUT:eq(1)").attr("href").substring(7);
-	}
 	if ($(".nationname > a").attr("href")) {
-		_visibleNation = $(".nationname > a").attr("href").trim().substring(8);
+		return $(".nationname > a").attr("href").trim().substring(8);
 	}
-	$("#main").mousemove(function (c) {
-		_lastPageActivity = (new Date()).getTime();
-	});
-};
+	return "";
+}
 
 /*
 	Returns the dilemma id number on the page, if any
 */
 function getVisibleDilemma() {
-	return _visibleDilemma;
+	var split = window.location.href.split(/[/#/?]/);
+	for (var i = 0; i < split.length; i++) {
+		if (split[i].startsWith("dilemma=")) {
+			return split[i].substring(8);
+		}
+	}
+	return "";
 }
 
 /*
 	Returns the sorting parameter on the page, if any
 */
 function getVisibleSorting() {
-	return _visibleSorting;
+	var split = window.location.href.split(/[/#/?]/);
+	for (var i = 0; i < split.length; i++) {
+		if (split[i].startsWith("sort=")) {
+			return split[i].substring(5);
+		}
+	}
+	return "";
 }
 
 /*
 	Returns the region the user is currently viewing, or empty string if no region is visible.
 */
 function getVisibleRegion() {
-	return _visibleRegion;
-}
+	var split = window.location.href.split(/[/#/?]/);
+	for (var i = 0; i < split.length; i++) {
+		if (split[i].startsWith("region=")) {
+			return split[i].substring(7);
+		}
+	}
+	return "";}
 
 /*
 	Returns the visible page the user is viewing.
 */
 function getVisiblePage() {
-	//We are on the main region page of some region
-	if (_visiblePage == "") {
-		if (_visibleRegion != "") {
-			return "region"
-		} else if (_visibleNation != "") {
-			return "nation";
+	var split = window.location.href.split(/[/#/?]/);
+	for (var i = 0; i < split.length; i++) {
+		if (split[i].startsWith("page=")) {
+			return split[i].substring(5);
 		}
-		return "unknown";
 	}
-	return _visiblePage;
+	if (window.location.href.contains("/nation=")) {
+		return "nation";
+	}
+	if (window.location.href.contains("/region=")) {
+		return "region";
+	}
+	return "unknown";
 }
 
 var _isPageActive;
@@ -583,9 +566,14 @@ function isPageActive() {
 	return _isPageActive;
 }
 
-var _lastPageActivity = (new Date()).getTime();
-
+var _lastPageActivity;
 function getLastActivity() {
+	if (!_lastPageActivity) {
+		$("#main").mousemove(function (c) {
+			_lastPageActivity = Date.now();
+		});
+		_lastPageActivity = Date.now()
+	}
 	return _lastPageActivity;
 }
 

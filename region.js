@@ -1,117 +1,29 @@
 var quote = '<button id="quote-btn-${id}" class="button QuoteButton" onclick="quotePost(this);">Quote</button>';
-
-function nationstatesPlusPlus() {
-	_setupVariables();
-	window.postMessage({ method: "unread_forum_posts"}, "*");
-	checkPanelAlerts();
-	addCustomAlerts();
+(function() {
 	if (getVisiblePage() == "list_nations" || getVisiblePage() == "list_regions" || getVisiblePage() == "world") {
 		setupPageSlider();
 	} else if (getVisiblePage() == "region") {
 		setupRegionPage(false);
+		if (getUserNation() != "" && getUserRegion() == "capitalist_paradise") {
+			$("<h2 style='display: inline-block; margin-bottom: 0;'>Regional IRC</h2><div style='display: inline; margin-left: 10px;'><a id='irc-link' href='javascript:void(0)' onclick=toggleIRC(this)>(Hide)</a></div><iframe id='irc-frame' src='http://kiwiirc.com/client/irc.esper.net/?nick=" + getUserNation().split("_").join(" ").toTitleCase() + "&#capitalistparadise' style='border:0; width:100%; height:500px;'></iframe><div class='hzln'></div>").insertBefore("h2");
+			if (localStorage.getItem("show_irc") == "false") {
+				toggleIRC($("#irc-link"));
+			}
+		}
 	} else if (getVisiblePage() == "display_region_rmb") {
 		setupRegionPage(true);
-	} else if (getVisiblePage() == "nation") {
-		displaySoftPowerScore();
-		fixFactbookLinks();
 	}
-}
+})();
 
-function addCustomAlerts() {
-	if (localStorage.getItem("show_admin_area") == "true") {
-		$(".menu").append("<li><a id='nationbot' href='http://capitalistparadise.com/api/nationbot/'>NATIONBOT ONLINE</a></li>");
-	}
-}
-
-var _lastPanelUpdate = 0;
-function checkPanelAlerts() {
-	//console.log("Checking Panel Alerts: " + Date.now());
-	setTimeout(function() {
-		var updateDelay = 10000; //10 sec
-		if (!isPageActive()) {
-			updateDelay = 300000; //5 min
-		} else if (getLastActivity() + 60000 < Date.now()) {
-			updateDelay = 150000; //2.5 min
-		}
-		if (Date.now() > (_lastPanelUpdate + updateDelay)) {
-			_lastPanelUpdate = Date.now();
-			updatePanelAlerts();
-		}
-		checkPanelAlerts();
-	}, 10000);
-}
-
-window.addEventListener("message", function(event) {
-	if (event.data.method == "unread_forum_posts_amt") {
-		console.log("Unread forum posts: " + event.data.amt);
-		if (event.data.amt != _unreadForumPosts) {
-			_unreadForumPosts = event.data.amt;
-			$("#panel").find("a").each(function() {
-				if ($(this).html().indexOf("FORUM") != -1) {
-					$(this).html("FORUM (" + _unreadForumPosts + ")");
-					return false;
-				}
-			});
-		}
-	}
-}, false);
-
-var _panelForumLink = null;
-var _unreadForumPosts = 0;
-function updatePanelAlerts() {
-	var unread = 0;
-	if (getUserNation() != "") {
-		window.postMessage({ method: "unread_forum_posts"}, "*");
-		$.get('/page=panel/template-overall=none', function(html) {
-			var searchString = '<a href="page=telegrams">';
-			var indicatorStart = html.indexOf(searchString);
-			var indicatorEnd = html.indexOf('</a>', indicatorStart);
-			$('a[href$="page=telegrams"]').html(html.substring(indicatorStart + searchString.length, indicatorEnd));
-		});
-		if ($("#nationbot").length != 0) {
-			var request = $.get("http://capitalistparadise.com/api/nationbot/", function(data) {
-				updateNationbotStatus(data.status);
-			});
-			request.fail(function() {
-				updateNationbotStatus("bad");
-			});
-		}
-	}
-}
-
-function updateNationbotStatus(status) {
-	$("#nationbot").html("NATIONBOT " + (status == "ok" ? "ONLINE" : "OFFLINE"));
-	if (status != "ok") {
-		$("#nationbot").css("color", "red");
-	}
-}
-
-function fixFactbookLinks() {
-	var factbooks = new Array();
-	$(".newsbox").find("ul").children().each(function() {
-		var search = "published the Factbook";
-		var index = $(this).html().indexOf(search);
-		if (index != -1) {
-			var factbookName = $(this).html().substring(index + search.length + 2, $(this).html().length - 2);
-			var fb = new Object();
-			fb['name'] = factbookName;
-			fb['element'] = $(this).get();
-			fb['start'] = index + search.length + 2;
-			fb['end'] = $(this).html().length - 2;
-			factbooks.push(fb);
-		}
-	});
-	if (factbooks.length > 0) {
-		$.get("/nation=" + getVisibleNation() + "/detail=factbook/", function(data) {
-			$(data).find('ul[class=factbooklist]').find("a").each(function() {
-				for (var i = 0; i < factbooks.length; i += 1) {
-					var factbook = factbooks[i];
-					if ($(this).html() == factbook['name']) {
-						$(factbook['element']).html($(factbook['element']).html().substring(0, factbook['start']) + "<a href='" + $(this).attr("href") + "'>" + factbook['name'] + "</a>" + $(factbook['element']).html().substring(factbook['end']));
-					}
-				}
-			});
-		});
+function toggleIRC(irc) {
+	if ($(irc).html() == "(Hide)") {
+		$(irc).html("(Show)");
+		$("#irc-frame").hide();
+		localStorage.setItem("show_irc", false);
+	} else {
+		$(irc).html("(Hide)");
+		$("#irc-frame").show();
+		localStorage.setItem("show_irc", true);
 	}
 }
 
@@ -884,29 +796,4 @@ function quotePost(post) {
 	$('body,html').animate({scrollTop: $("#widebox-form").offset().top - 100});
 	$(textArea).focus();
 	$(textArea).caretToEnd();
-}
-
-function displaySoftPowerScore() {
-	$.get("/page=compare/nations=" + getVisibleNation() + "?censusid=65", function(data) {
-		var start = data.indexOf("backgroundColor:'rgba(255, 255, 255, 0.1)");
-		var search = 'y: ';
-		var index = data.indexOf(search, start) + search.length;
-		
-		//Comparing 2 nations, use 2nd compare
-		var other = data.indexOf(search, index + 10);
-		if (other > index && other < index + 100) {
-			index = other + search.length;
-		}
-		
-		var end = data.indexOf('}', index);
-		var score = data.substring(index, end).trim();
-		var html = $("#rinf").html();
-		$("#rinf").html(html.substring(0, html.length - 4) + " (<a href='/page=compare/nations=" + getVisibleNation() + "?censusid=65'>" + score + "</a>)</p>");
-	});
-}
-
-if (document.readyState == "complete") {
-	nationstatesPlusPlus();
-} else {
-	$(document).ready(function() {setTimeout(nationstatesPlusPlus, 100);});
 }

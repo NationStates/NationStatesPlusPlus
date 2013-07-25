@@ -1,10 +1,4 @@
-if (document.readyState == "complete") {
-	addEmbassyFlags();
-} else {
-	$(document).ready(function() {setTimeout(addEmbassyFlags, 100);});
-}
-
-function addEmbassyFlags() {
+(function() {
 	var wfe = $("fieldset[class='wfe']");
 	wfe.css("min-height", "135px");
 	var embassies = $('p:contains("Embassies:")');
@@ -47,65 +41,65 @@ function addEmbassyFlags() {
 		animationTests = 0;
 		setTimeout(testForAnimation, 100);
 	}
-}
 
-var animationTests = 0;
-function testForAnimation() {
-	var count = 0;
-	$(".animate-flags").each(function() {
-		count += 1;
-	});
-	if (count > 0) {
-		$("#embassy_flags").removeAttr("style");
-		if (count * 106 >= $("fieldset[class='wfe']").height() + 100) {
-			_embassyFlags = $("#embassy_flags").get();
-			animateEmbassyFlags();
-			return true;
-		}
-	}
-	if (animationTests < 10) {
-		animationTests += 1;
-		setTimeout(testForAnimation, 100);
-	}
-}
-
-var _embassyFlags;
-function animateEmbassyFlags() {
-	setTimeout(function() {
-		if (!document.hidden && isScrolledIntoView(_embassyFlags)) {
-			var maxTop = -10000000;
-			$(".animate-flags").each(function() {
-				if ($(this).position().top > maxTop) {
-					maxTop = $(this).position().top;
-				}
-			});
-			$(".animate-flags").each(function() {
-				if ($(this).position().top < -106) {
-					maxTop += 106;
-					$(this).stop();
-					$(this).clearQueue();
-					$(this).css({ top: maxTop + 'px' });
-				}
-			});
-			$(".animate-flags").animate({ "top": "-=1"}, 75);
-		}
-		animateEmbassyFlags();
-	}, 75);
-}
-
-var _embassyList = "";
-function recurseEmbassies() {
-	if ($(this).html().indexOf("Embassies:") != -1) {
-		return; //Ignore
-	}
-	if ($(this).html().indexOf('<a href="">') == -1) {
-		if ($(this).children().length != 0) {
-			$(this).children().each(recurseEmbassies);
-		} else {
-			if (_embassyList.length > 0) {
-				_embassyList += ",";
+	var animationTests = 0;
+	function testForAnimation() {
+		var count = 0;
+		$(".animate-flags").each(function() {
+			count += 1;
+		});
+		if (count > 0) {
+			$("#embassy_flags").removeAttr("style");
+			if (count * 106 >= $("fieldset[class='wfe']").height() + 100) {
+				_embassyFlags = $("#embassy_flags").get();
+				animateEmbassyFlags();
+				return true;
 			}
-			_embassyList += $(this).html().replace(new RegExp(' ', 'g'), "_");
+		}
+		if (animationTests < 10) {
+			animationTests += 1;
+			setTimeout(testForAnimation, 100);
 		}
 	}
-}
+
+	var _embassyFlags;
+	function animateEmbassyFlags() {
+		setTimeout(function() {
+			if (!document.hidden && isScrolledIntoView(_embassyFlags)) {
+				var maxTop = -10000000;
+				$(".animate-flags").each(function() {
+					if ($(this).position().top > maxTop) {
+						maxTop = $(this).position().top;
+					}
+				});
+				$(".animate-flags").each(function() {
+					if ($(this).position().top < -106) {
+						maxTop += 106;
+						$(this).stop();
+						$(this).clearQueue();
+						$(this).css({ top: maxTop + 'px' });
+					}
+				});
+				$(".animate-flags").animate({ "top": "-=1"}, 75);
+			}
+			animateEmbassyFlags();
+		}, 75);
+	}
+
+	var _embassyList = "";
+	function recurseEmbassies() {
+		if ($(this).html().indexOf("Embassies:") != -1) {
+			return; //Ignore
+		}
+		if ($(this).html().indexOf('<a href="">') == -1) {
+			if ($(this).children().length != 0) {
+				$(this).children().each(recurseEmbassies);
+			} else {
+				if (_embassyList.length > 0) {
+					_embassyList += ",";
+				}
+				_embassyList += $(this).html().replace(new RegExp(' ', 'g'), "_");
+			}
+		}
+	}
+})();
