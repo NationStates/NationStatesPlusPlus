@@ -370,6 +370,13 @@ function loginFirebase(authToken) {
 function syncFirebase() {
 	var settingsTime
 	var dataRef = new Firebase("https://nationstatesplusplus.firebaseio.com/nation/" + getUserNation() + "/");
+	
+	if (localStorage.getItem("remove-issue") != null) {
+		var issue = localStorage.getItem("remove-issue");
+		dataRef.child("issues").child(issue.split(":")[0]).child(issue.split(":")[1]).remove();
+		localStorage.removeItem("remove-issue");
+	}
+	
 	dataRef.child("settings").child("settings_timestamp").on('value', function(snapshot) {
 		var lastFirebaseUpdate = 0;
 		if (snapshot.val() != null) {
@@ -407,7 +414,7 @@ function syncFirebase() {
 	});
 	for (var i = 0; i < localStorage.length; i++){
 		var key = localStorage.key(i);
-		if (key.startsWith("issue-") && key.contains(getUserNation())) {
+		if (key.startsWith("issue-") && key.contains("-" + getUserNation() + "-")) {
 			updateFirebaseIssue(key);
 		}
 	}

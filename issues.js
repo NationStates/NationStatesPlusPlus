@@ -58,8 +58,11 @@ function selectOption(choice, issueNumber) {
 			}
 			//Remove now, will be set once as clicking a button forces a navigation and thus a resync
 			try {
+				console.log("Removing issue choice from firebase: " + issueNumber + "choice-" + i);
 				(new Firebase("https://nationstatesplusplus.firebaseio.com/nation/" + getUserNation() + "/")).child("issues").child(issueNumber).child("choice-" + i).remove();
+				console.log("Removed issue choice from firebase: " + issueNumber + "choice-" + i);
 			} catch (error) {
+				localStorage.setItem("remove-issue", issueNumber + ":" + "choice-" + i);
 				console.log(error);
 			}
 		}
