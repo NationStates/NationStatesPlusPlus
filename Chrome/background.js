@@ -72,6 +72,7 @@ function loadJavascript() {
 			}
 			addJavascript(urlPrefix + 'issues.js');
 			addJavascript(urlPrefix + 'help.js');
+			addJavascript(urlPrefix + 'irc.js');
 
 			console.log('[NationStates++] Loading Completed Successfully.');
 		} else if (pageUrl.indexOf('http://forum.nationstates.net/') > -1 ) {

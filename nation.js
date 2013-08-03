@@ -2,7 +2,21 @@
 	if (getVisiblePage() == "nation") {
 		displaySoftPowerScore();
 		fixFactbookLinks();
+		//Shh, hush now child
+		if (getVisibleNation() == "afforess") {
+			$(".slogan").html("Farewell, I give you the light of Afforess, our most beloved nation. May it be a light for you in dark places, when all other lights go out...");
+		}
+		showNationChallenge();
 	}
+
+	function showNationChallenge() {
+		if (getUserNation() != getVisibleNation()) {
+			$(".smalltext").html($(".smalltext").html() + $('<div/>').html(" &#8226; ").text() + "<a href='/page=challenge?entity_name=" + getVisibleNation() + "'>Challenge</a>");
+		} else {
+			$(".smalltext").html($(".smalltext").html() + $('<div/>').html(" &#8226; ").text() + "<a href='/page=challenge'>Challenge</a>");
+		}
+	}
+
 	function displaySoftPowerScore() {
 		$.get("/page=compare/nations=" + getVisibleNation() + "?censusid=65", function(data) {
 			var start = data.indexOf("backgroundColor:'rgba(255, 255, 255, 0.1)");

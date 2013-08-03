@@ -219,6 +219,7 @@ function addPuppet() {
 }
 
 function showSettings() {
+	localStorage.removeItem("next_sync" + getUserNation());
 	if ($("#nationstates_settings").length == 0) {
 		var forums = $("#wrap").length == 1;
 		$.get("http://capitalistparadise.com/nationstates/v1_8/" + (forums ? "forum_" : "region_") + "settings.html", function(data) {
@@ -291,34 +292,36 @@ function showSettings() {
 
 var _progress_label
 function setupSyncing() {
-	if (getUserNation().toLowerCase() == "nationstatesplusplus") {
+	if (getUserNation() == "") {
 		return;
 	}
-	if (typeof Firebase == "undefined") {
-		console.log("waiting for firebase...");
-		setTimeout(setupSyncing, 250);
-		return;
-	} else {
-		console.log("Firebase ready!");
-	}
-	var banner = $("#banner, #nsbanner");
-	var progressStyle = "right: 320px; position: absolute; top: 6px; width: 150px; height: 16px; background: rgba(255, 255, 255, 0.65);";
-	$(banner).append("<div id='firebase_progress_bar' style='" + progressStyle + "' title='Syncing Settings...'><span id='progress_label' style='position: absolute; text-align: center; line-height: 1.5em; margin-left: 30px; font-size:10px; font-weight: bold;'>Syncing Settings</span></div>");
-	$("#firebase_progress_bar" ).progressbar({value: 0});
-	$("#firebase_progress_bar" ).hide();
-	_progress_label = $("#firebase_progress_bar").find('#progress_label').clone().width($("#firebase_progress_bar").width());
-	_progress_label.css("position", "relative");
-	_progress_label.css("font-weight", "bold");
-	_progress_label.css("color", "white");
-	_progress_label.css("text-align", "left");
-	_progress_label.css("display", "block");
-	_progress_label.css("overflow", "hidden");
-	_progress_label.css("width", "auto");
-	$('.ui-progressbar-value').append(_progress_label);
-	$('.ui-progressbar-value').css("background", "#425AFF");
+	var nextSync = localStorage.getItem("next_sync" + getUserNation());
+	if (nextSync == null || nextSync < Date.now()) {
+		localStorage.setItem("next_sync" + getUserNation(), Date.now() + 60 * 1000);
+		if (typeof Firebase == "undefined") {
+			console.log("waiting for firebase...");
+			setTimeout(setupSyncing, 250);
+			return;
+		} else {
+			console.log("Firebase ready!");
+		}
+		var banner = $("#banner, #nsbanner");
+		var progressStyle = "right: 320px; position: absolute; top: 6px; width: 150px; height: 16px; background: rgba(255, 255, 255, 0.65);";
+		$(banner).append("<div id='firebase_progress_bar' style='" + progressStyle + "' title='Syncing Settings...'><span id='progress_label' style='position: absolute; text-align: center; line-height: 1.5em; margin-left: 30px; font-size:10px; font-weight: bold;'>Syncing Settings</span></div>");
+		$("#firebase_progress_bar" ).progressbar({value: 0});
+		$("#firebase_progress_bar" ).hide();
+		_progress_label = $("#firebase_progress_bar").find('#progress_label').clone().width($("#firebase_progress_bar").width());
+		_progress_label.css("position", "relative");
+		_progress_label.css("font-weight", "bold");
+		_progress_label.css("color", "white");
+		_progress_label.css("text-align", "left");
+		_progress_label.css("display", "block");
+		_progress_label.css("overflow", "hidden");
+		_progress_label.css("width", "auto");
+		$('.ui-progressbar-value').append(_progress_label);
+		$('.ui-progressbar-value').css("background", "#425AFF");
 
-	setTimeout(function() {
-		if (getUserNation() != "") {
+		setTimeout(function() {
 			var authToken = localStorage.getItem("auth-" + getUserNation());
 			if (authToken != null) {
 				$("#firebase_progress_bar" ).progressbar({value: 40});
@@ -327,8 +330,10 @@ function setupSyncing() {
 				$("#firebase_progress_bar" ).progressbar({value: 5});
 				requestAuthToken();
 			}
-		}
-	}, 1000);
+		}, 1000);
+	} else {
+		console.log("Last sync < 60s ago, no update");
+	}
 }
 
 function requestAuthToken() {
@@ -336,6 +341,24 @@ function requestAuthToken() {
 	$.get("/page=verify_login", function(data) {
 		$("#firebase_progress_bar" ).progressbar({value: 25});
 		var authCode = $(data).find("#proof_of_login_checksum").html();
+		//Regenerate localid if nessecary
+		if ($("input[name='localid']").length > 0) {
+			setTimeout(function () {
+				$.ajax({
+					cache: false,
+					url: window.location.href.substring(window.location.href.indexOf("/", 10)),
+					success: function(html) {
+						var localid = $(html).find("input[name='localid']").val();
+						console.log("new localid: " + localid);
+						if (typeof localid != "undefined" && localid != "") {
+							console.log("Updating localid from " + $("input[name='localid']").val() + " to " + localid);
+							$("input[name='localid']").val(localid);
+						}
+					},
+				});
+			}, 2000);
+		}
+		//Verify code
 		$.post("http://capitalistparadise.com/api/firebase/", "nation=" + getUserNation() + "&auth=" + authCode, function(response) {
 			console.log("auth token: " + response['token']);
 			$("#firebase_progress_bar" ).progressbar({value: 50});
@@ -377,6 +400,24 @@ function syncFirebase() {
 		localStorage.removeItem("remove-issue");
 	}
 	
+	dataRef.child('resync-issues').once('value', function(snapshot) {
+		if (snapshot.val()) {
+			console.log("DEBUG: RESYNCING ISSUES!!!");
+			var toRemove = new Array();
+			for (var i = 0; i < localStorage.length; i++){
+				var key = localStorage.key(i);
+				if (key.startsWith("issue-") && key.contains("-" + getUserNation() + "-")) {
+					toRemove.push(key)
+				}
+			}
+			for (var i = 0; i < toRemove.length; i++) {
+				var key = toRemove[i];
+				localStorage.removeItem(key);
+			}
+			dataRef.child('resync-issues').remove();
+		}
+	});
+	
 	dataRef.child("settings").child("settings_timestamp").on('value', function(snapshot) {
 		var lastFirebaseUpdate = 0;
 		if (snapshot.val() != null) {
@@ -401,6 +442,7 @@ function syncFirebase() {
 				telegram_enhancements: isSettingEnabled("telegram_enhancements"),
 				clickable_telegram_links: isSettingEnabled("clickable_telegram_links"),
 				show_puppet_switcher: isSettingEnabled("show_puppet_switcher"),
+				autologin_to_regional_irc: isSettingEnabled("autologin_to_regional_irc"),
 				settings_timestamp: (localStorage.getItem("settings-timestamp") == null ? Date.now() : localStorage.getItem("settings-timestamp"))
 			});
 		} else {
@@ -423,9 +465,7 @@ function syncFirebase() {
 		for (var key in json) {
 			for (var choice in json[key]) {
 				var localKey = "issue-" + key + "-" + getUserNation() + "-" + choice;
-				if (localStorage.getItem(localKey) == null) {
-					localStorage.setItem(localKey, json[key][choice]);
-				}
+				localStorage.setItem(localKey, json[key][choice]);
 			}
 		}
 	});
@@ -623,7 +663,14 @@ function isInRange(min, value, max) {
 }
 
 function isSettingEnabled(setting) {
-	return localStorage.getItem(setting) == null || localStorage.getItem(setting) == "true";
+	var val = localStorage.getItem(setting);
+	if (val == null) {
+		if (setting == "autologin_to_regional_irc") {
+			return false;
+		}
+		return true;
+	}
+	return val == "true";
 }
 
 function isScrolledIntoView(elem) {
@@ -641,7 +688,7 @@ function update(delay){
 	setTimeout(function() {
 		_gaq.push(['_setAccount', 'UA-41267101-1']);
 		_gaq.push(['_trackPageview']);
-		_gaq.push(['_setCustomVar', 1, 'Version', 'v1.8', 2]);
+		_gaq.push(['_setCustomVar', 1, 'Version', 'v1.85', 2]);
 
 		if (delay == 1) {
 			if (getVisibleRegion() != "") _gaq.push(['_trackEvent', 'NationStates', 'Region', getVisibleRegion()]);

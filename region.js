@@ -4,12 +4,6 @@ var quote = '<button id="quote-btn-${id}" class="button QuoteButton" onclick="qu
 		setupPageSlider();
 	} else if (getVisiblePage() == "region") {
 		setupRegionPage(false);
-		if (getUserNation() != "" && getUserRegion() == "capitalist_paradise") {
-			$("<h2 style='display: inline-block; margin-bottom: 0;'>Regional IRC</h2><div style='display: inline; margin-left: 10px;'><a id='irc-link' href='javascript:void(0)' onclick=toggleIRC(this)>(Hide)</a></div><iframe id='irc-frame' src='http://kiwiirc.com/client/irc.esper.net/?nick=" + getUserNation().split("_").join(" ").toTitleCase() + "&#capitalistparadise' style='border:0; width:100%; height:500px;'></iframe><div class='hzln'></div>").insertBefore("h2");
-			if (localStorage.getItem("show_irc") == "false") {
-				toggleIRC($("#irc-link"));
-			}
-		}
 	} else if (getVisiblePage() == "display_region_rmb") {
 		setupRegionPage(true);
 	}
