@@ -734,7 +734,7 @@ function quotePost(post) {
 	} else if (fullName.indexOf("page=rmb") > -1) {
 		nation = "[b]" + $(author).find("p").html() + "[/b]";
 	} else {
-		nation = "[nation]" + fullName.substring(7) + "[/nation]";
+		nation = "[nation=short]" + fullName.substring(7) + "[/nation]";
 	}
 	
 	var message;
@@ -796,7 +796,7 @@ function quotePost(post) {
 	}
 	value += "[b]>[/b] " + nation + " said:\n";
 	value += "[i]" + text + "[/i]";
-	$(textArea).val(value + "\n\n");
+	$(textArea).val(value + "\n----------------------------------\n\n");
 	$('body,html').animate({scrollTop: $("#widebox-form").offset().top - 100});
 	$(textArea).focus();
 	$(textArea).caretToEnd();

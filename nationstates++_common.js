@@ -240,8 +240,7 @@ function showSettings() {
 			}
 			$("#nationstates_settings").hide();
 			$("#nationstates_settings").find('input').each(function() {
-				var setting = localStorage.getItem($(this).prop("id"));
-				$(this).prop("checked", (setting == null || setting == "true"));
+				$(this).prop("checked", isSettingEnabled($(this).prop("id")));
 			});
 			if (!$("#forum_enhancements").prop("checked")) {
 				$("#forum_enhancements_form").find('input').toggleDisabled();
@@ -272,12 +271,11 @@ function showSettings() {
 			});
 			$("#reset_button").on("click", function() {
 				$("#nationstates_settings").find('input').prop("checked", true);
-				$("#autologin_to_regional_irc").find('input').prop("checked", false);
+				$("#autologin_to_regional_irc").prop("checked", false);
 			});
 			$("#cancel_button").on("click", function() {
 				$("#nationstates_settings").find('input').each(function() {
-					var setting = localStorage.getItem($(this).prop("id"));
-					$(this).prop("checked", (setting == null || setting == "true"));
+					$(this).prop("checked", isSettingEnabled($(this).prop("id")));
 				});
 				$("#nationstates_settings").hide();
 				$("#content, #wrap").show();

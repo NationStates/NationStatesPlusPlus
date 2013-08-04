@@ -18,6 +18,9 @@ if (isSettingEnabled("hide_ads")) {
 }
 
 var bannerStyle = "position:absolute; top:0px; margin:6px 60px 0px 0px; z-index:98; font-weight:bold; color: white !important; font-weight: bold; font-size: 8pt; padding: 2px 8px 2px 8px; background: black; 	background-color: rgba(0,0,0,0.2); 	border-radius: 8px;";
+if (document.head.innerHTML.indexOf("ns.dark") != -1) {
+	bannerStyle += "background: #2A2A2A; border: 1px solid #383838;"
+}
 
 var banner = $("#banner, #nsbanner");
 $(banner).append("<div id='ns_setting'><a href='javascript:void(0)' style='" + bannerStyle + " right: 78px; ' onclick='return showSettings();'>NS++ Settings</a></div>");

@@ -2,10 +2,6 @@
 	if (getVisiblePage() == "nation") {
 		displaySoftPowerScore();
 		fixFactbookLinks();
-		//Shh, hush now child
-		if (getVisibleNation() == "afforess") {
-			$(".slogan").html("Farewell, I give you the light of Afforess, our most beloved nation. May it be a light for you in dark places, when all other lights go out...");
-		}
 		showNationChallenge();
 	}
 
