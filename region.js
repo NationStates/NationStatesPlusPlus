@@ -9,18 +9,6 @@ var quote = '<button id="quote-btn-${id}" class="button QuoteButton" onclick="qu
 	}
 })();
 
-function toggleIRC(irc) {
-	if ($(irc).html() == "(Hide)") {
-		$(irc).html("(Show)");
-		$("#irc-frame").hide();
-		localStorage.setItem("show_irc", false);
-	} else {
-		$(irc).html("(Hide)");
-		$("#irc-frame").show();
-		localStorage.setItem("show_irc", true);
-	}
-}
-
 function setupRegionPage(forumViewPage) {
 	if (isSettingEnabled("auto_update")) {
 		checkForRMBUpdates(10000);
@@ -110,9 +98,9 @@ function setupRegionPage(forumViewPage) {
 				$('.rmbolder .loading').hide();
 				$('.rmbolder .notloading').show();
 			});
-        });
+		});
 	}
-	
+
 	//Forum view has old/bad buttons, have to fix them
 	if (forumViewPage && typeof rmbPost != 'undefined') {
 		$('[name="lodge_message"]').attr("class", "button icon approve primary");
@@ -144,7 +132,7 @@ function setupRegionPage(forumViewPage) {
 
 	//Setup infinite scroll
 	$(window).scroll(handleInfiniteScroll);
-	
+
 	if (forumViewPage) {
 		return;
 	}
@@ -585,10 +573,32 @@ function checkForRMBUpdates(delay){
 			if (Date.now() > (lastRMBUpdate + updateDelay)) {
 				lastRMBUpdate = (new Date()).getTime();
 				updateRMB();
+				updateRegionalHappenings();
 			}
 		}
 		checkForRMBUpdates(10000);
 	}, delay);
+}
+
+function updateRegionalHappenings() {
+	$.get(window.location.href, function(data) {
+		$($(data).find("h3:contains('Regional Happenings')").next().children().get().reverse()).each(function() {
+			var html = $(this).html();
+			var split = html.split(":");
+			var found = false;
+			var happenings = $("h3:contains('Regional Happenings')").next();
+			happenings.children().each(function() {
+				if ($(this).html().contains(split[1])) {
+					$(this).html(html);
+					found = true;
+					return false;
+				}
+			});
+			if (!found) {
+				happenings.prepend("<li>" + html + "</li>");
+			}
+		});
+	});
 }
 
 function updateRMB() {

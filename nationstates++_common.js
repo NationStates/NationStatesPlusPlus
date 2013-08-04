@@ -222,7 +222,7 @@ function showSettings() {
 	localStorage.removeItem("next_sync" + getUserNation());
 	if ($("#nationstates_settings").length == 0) {
 		var forums = $("#wrap").length == 1;
-		$.get("http://capitalistparadise.com/nationstates/v1_8/" + (forums ? "forum_" : "region_") + "settings.html", function(data) {
+		$.get("http://capitalistparadise.com/nationstates/v1_85/" + (forums ? "forum_" : "region_") + "settings.html", function(data) {
 			if (forums) {
 				var html = $("#wrap").html();
 				var classes = $("#wrap").attr('class');
@@ -272,6 +272,7 @@ function showSettings() {
 			});
 			$("#reset_button").on("click", function() {
 				$("#nationstates_settings").find('input').prop("checked", true);
+				$("#autologin_to_regional_irc").find('input').prop("checked", false);
 			});
 			$("#cancel_button").on("click", function() {
 				$("#nationstates_settings").find('input').each(function() {

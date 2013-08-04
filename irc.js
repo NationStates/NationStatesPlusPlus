@@ -47,9 +47,13 @@
 					toggleIRC($("#irc-link"));
 				}
 				var contentWindow = $("#irc-frame")[0].contentWindow;
-				if (isSettingEnabled("autologin_to_regional_irc")) {
-					contentWindow.postMessage({ method: "login"}, "*");
-				}
+				setTimeout(function() {
+					console.log("IRC Autologin: " + isSettingEnabled("autologin_to_regional_irc"));
+					if (isSettingEnabled("autologin_to_regional_irc")) {
+						contentWindow.postMessage({ method: "login"}, "*");
+						console.log("Attempting irc autologin");
+					}
+				}, 2500);
 				window.onbeforeunload = function(event) {
 					console.log("Logging off IRC: "  + contentWindow);
 					contentWindow.postMessage({ method: "logout"}, "*");
@@ -59,3 +63,15 @@
 		}
 	}
 })();
+
+function toggleIRC(irc) {
+	if ($(irc).html() == "(Hide)") {
+		$(irc).html("(Show)");
+		$("#irc-frame").hide();
+		localStorage.setItem("show_irc", false);
+	} else {
+		$(irc).html("(Hide)");
+		$("#irc-frame").show();
+		localStorage.setItem("show_irc", true);
+	}
+}
