@@ -1,5 +1,5 @@
 //versioned files are checked for modifications each page hit (slow)
-var urlPrefix = "http://capitalistparadise.com/nationstates/v1_8/";
+var urlPrefix = "http://capitalistparadise.com/nationstates/v1_85/";
 //static files are cached by browser for 1 week, not checked for modifications (fast)
 var staticUrlPrefix = "http://capitalistparadise.com/nationstates/static/";
 
@@ -17,17 +17,18 @@ if (isSettingEnabled("hide_ads")) {
 	$("#regionadbox").remove();
 }
 
+var bannerStyle = "position:absolute; top:0px; margin:6px 60px 0px 0px; z-index:98; font-weight:bold; color: white !important; font-weight: bold; font-size: 8pt; padding: 2px 8px 2px 8px; background: black; 	background-color: rgba(0,0,0,0.2); 	border-radius: 8px;";
+
 var banner = $("#banner, #nsbanner");
-$(banner).append("<div id='ns_setting'><a href='javascript:void(0)' class='ns-settings' onclick='return showSettings();'>NS++ Settings</a></div>");
+$(banner).append("<div id='ns_setting'><a href='javascript:void(0)' style='" + bannerStyle + " right: 78px; ' onclick='return showSettings();'>NS++ Settings</a></div>");
 if (pageUrl.indexOf('http://forum.nationstates.net/') == -1 ) {
-	$(banner).append("<div id='puppet_setting' style='display:none;'><a href='javascript:void(0)' class='ns-settings' onmouseover='return showPuppets();' style='right: 188px;'>Puppets</a></div>");
+	$(banner).append("<div id='puppet_setting' style='display:none;'><a href='javascript:void(0)' style='" + bannerStyle + " right: 188px;' onmouseover='return showPuppets();'>Puppets</a></div>");
 }
 
 addJavascript("//d3nslu0hdya83q.cloudfront.net/dist/1.0/raven.min.js");
 addJavascript('https://cdn.firebase.com/v0/firebase.js');
 addJavascript('https://cdn.firebase.com/v0/firebase-simple-login.js');
 
-//addStylesheet("http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css");
 addStylesheet(staticUrlPrefix + 'nouislider.fox.css');
 addStylesheet(staticUrlPrefix + 'bootstrap-button.css');
 addStylesheet(staticUrlPrefix + 'two_column.css');
@@ -37,48 +38,60 @@ if (document.head.innerHTML.indexOf("antiquity") != -1) {
 } else if (document.head.innerHTML.indexOf("ns.dark") != -1) {
 	addStylesheet(urlPrefix + 'nationstates++_dark.css');
 }
-addJavascript(urlPrefix + 'nationstates++_common.js');
 
-if (pageUrl.indexOf('http://www.nationstates.net/') > -1 && isSettingEnabled("region_enhancements")) {
-	console.log('[NationStates++] Detected NationStates Page. Loading...');
+if (document.head.innerHTML.indexOf("//ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js") == -1) {
+	addJavascript("//ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js", function() {
+		addJavascript("//ajax.googleapis.com/ajax/libs/jqueryui/1.9.2/jquery-ui.min.js", loadJavascript);
+	});
+} else {
+	loadJavascript();
+}
 
-	if (document.head.innerHTML.indexOf("antiquity") != -1) {
-		addStylesheet(staticUrlPrefix + "prefix-ghbuttons_v2.css");
-	}
-
+function loadJavascript() {
 	addJavascript(staticUrlPrefix + 'jquery.caret.js');
 	addJavascript(staticUrlPrefix + 'jquery.highlight.js');
 	addJavascript(staticUrlPrefix + 'jquery.nouislider.min.js');
-	addJavascript(urlPrefix + 'nationstates++.js');
-	if (isSettingEnabled("embassy_flags")) {
-		addJavascript(urlPrefix + 'embassy_flags.js');
-	}
-	if (isSettingEnabled("telegram_enhancements")) {
-		addJavascript(urlPrefix + 'telegrams.js');
-	}
-	addJavascript(urlPrefix + 'issues.js');
-	addJavascript(urlPrefix + 'help.js');
 
-	console.log('[NationStates++] Loading Completed Successfully.');
-} else if (pageUrl.indexOf('http://forum.nationstates.net/') > -1 ) {
-	console.log('[NationStates++] Detected NationStates Forum Page. Loading...');
-	//forums do not have jQuery
-	addJavascript("//ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js");
-	addJavascript("//ajax.googleapis.com/ajax/libs/jqueryui/1.9.2/jquery-ui.min.js");
-	addStylesheet("http://www.nationstates.net/ghbuttons_v2.css");
-	addStylesheet(urlPrefix + 'forum.css');
+	addJavascript(urlPrefix + 'nationstates++_common.js', function() {
+		if (pageUrl.indexOf('http://www.nationstates.net/') > -1 && isSettingEnabled("region_enhancements")) {
+			console.log('[NationStates++] Detected NationStates Page. Loading...');
 
-	if (isSettingEnabled("forum_enhancements")) {
-		if (isSettingEnabled("egosearch_ignore")) {
-			addJavascript(urlPrefix + 'forum_ego_posts.js');
+			if (document.head.innerHTML.indexOf("antiquity") != -1) {
+				addStylesheet(staticUrlPrefix + "prefix-ghbuttons_v2.css");
+			}
+
+			addJavascript(urlPrefix + 'nationstates.js');
+			addJavascript(urlPrefix + 'region.js');
+			addJavascript(urlPrefix + 'nation.js');
+			
+			if (isSettingEnabled("embassy_flags")) {
+				addJavascript(urlPrefix + 'embassy_flags.js');
+			}
+			if (isSettingEnabled("telegram_enhancements")) {
+				addJavascript(urlPrefix + 'telegrams.js');
+			}
+			addJavascript(urlPrefix + 'issues.js');
+			addJavascript(urlPrefix + 'help.js');
+			addJavascript(urlPrefix + 'irc.js');
+
+			console.log('[NationStates++] Loading Completed Successfully.');
+		} else if (pageUrl.indexOf('http://forum.nationstates.net/') > -1 ) {
+			console.log('[NationStates++] Detected NationStates Forum Page. Loading...');
+			addStylesheet("http://www.nationstates.net/ghbuttons_v2.css");
+			addStylesheet(urlPrefix + 'forum.css');
+
+			if (isSettingEnabled("forum_enhancements")) {
+				if (isSettingEnabled("egosearch_ignore")) {
+					addJavascript(urlPrefix + 'forum_ego_posts.js');
+				}
+				if (isSettingEnabled("post_ids")) {
+					addJavascript(urlPrefix + 'forum_post_id.js');
+				}
+			}
+
+			console.log('[NationStates++] Loading Completed Successfully.');
 		}
-		if (isSettingEnabled("post_ids")) {
-			console.log("post_ids: " + localStorage.getItem("post_ids"));
-			addJavascript(urlPrefix + 'forum_post_id.js');
-		}
-	}
-
-	console.log('[NationStates++] Loading Completed Successfully.');
+	});
 }
 
 window.addEventListener("message", function(event) {
@@ -105,10 +118,6 @@ window.addEventListener("message", function(event) {
 	}
 });
 
-$.get("http://www.nationstates.net/page=compose_telegram", function(data) {
-	console.log("loaded telegrams compose");
-});
-
 function isSettingEnabled(setting) {
 	return localStorage.getItem(setting) == null || localStorage.getItem(setting) == "true";
 }
@@ -126,11 +135,14 @@ function addStylesheet(url) {
 	document.head.appendChild(style);
 }
 
-function addJavascript(url) {
+function addJavascript(url, onLoad) {
 	var script = document.createElement('script');
 	script.src = url;
 	var split = url.split("/");
 	script.id = split[split.length - 1];
-	script.addEventListener('load', function() { });
+	if (onLoad) {
+		script.addEventListener('load', onLoad);
+	}
+	console.log("Loading [" + script.id + "]");
 	document.head.appendChild(script);
 }
