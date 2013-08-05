@@ -6,7 +6,6 @@
 				var index = $(this).attr('href').indexOf(search);
 				if (index > -1) {
 					var dilemma = $(this).attr('href').substring(index + search.length);
-					console.log("Dilemma: " + dilemma);
 					selectOption("choice--1", dilemma);
 				}
 			});
@@ -27,14 +26,13 @@
 			}
 		}
 		$("button").on('click', function() {
-			console.log("clicking issue");
 			selectOption($(this).prop('name'), getVisibleDilemma());
 		});
-		console.log($("button"));
 	}
 })();
 
 function selectOption(choice, issueNumber) {
+	localStorage.removeItem("next_sync" + getUserNation());
 	var now = Math.floor(Date.now() / 1000);
 	for (var i = -1; i <= 9; i++) {
 		var key = "issue-" + issueNumber + "-" + getUserNation() + "-choice-" + i;
@@ -45,7 +43,7 @@ function selectOption(choice, issueNumber) {
 			for (var j = 0; j < split.length; j++) {
 				var time = parseInt(split[j]);
 				if (now < (time + 12 * 60 * 60)) {
-					console.log("cur time: " + now + " is within 12 hours of old answer, discarding: " + time);
+					//console.log("cur time: " + now + " is within 12 hours of old answer, discarding: " + time);
 				} else {
 					if (rebuilt.length != 0) rebuilt += ",";
 					rebuilt += split[j];
@@ -74,6 +72,5 @@ function selectOption(choice, issueNumber) {
 	} else {
 		previous = now;
 	}
-	console.log("Setting issue: " + key + " to : " + previous);
 	localStorage.setItem(key, previous);
 }

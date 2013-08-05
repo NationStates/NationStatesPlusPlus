@@ -125,11 +125,6 @@ function isSettingEnabled(setting) {
 	return localStorage.getItem(setting) == null || localStorage.getItem(setting) == "true";
 }
 
-var _debugMode = false;
-function debugConsole(message) {
-	if (_debugMode) console.log(message);
-}
-
 function addStylesheet(url) {
 	var style = document.createElement('link');
 	style.setAttribute('rel', 'stylesheet');

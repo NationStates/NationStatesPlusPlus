@@ -206,7 +206,6 @@ function getShinyTableSelector() {
 
 function setupPageSlider() {
 	if (!isSettingEnabled("scroll_nation_lists")) {
-		console.log("nation list disabled");
 		return;
 	}
 	var census = $('h6[align$="center"]');
@@ -608,14 +607,16 @@ function updateRMB() {
 			var html = "";
 			//Check for new posts
 			$($(data).get().reverse()).each( function() {
-				var postId = getRMBPostId($(this).html());
-				var rmbPost = document.getElementById("rmb-post-" + postId);
-				if (rmbPost === null) {
-					html += parseRMBPost($(this).html(), quote, $(this).attr('class'));
-				} else {
-					//Update timestamps
-					if ($(rmbPost).find(".rmbdate").html() != "undefinied") {
-						$(rmbPost).find(".rmbdate").html($(this).find(".rmbdate").html());
+				if ($(this).find(".rmbsuppressed").length == 0) {
+					var postId = getRMBPostId($(this).html());
+					var rmbPost = document.getElementById("rmb-post-" + postId);
+					if (rmbPost === null) {
+						html += parseRMBPost($(this).html(), quote, $(this).attr('class'));
+					} else {
+						//Update timestamps
+						if ($(rmbPost).find(".rmbdate").html() != "undefinied") {
+							$(rmbPost).find(".rmbdate").html($(this).find(".rmbdate").html());
+						}
 					}
 				}
 			});

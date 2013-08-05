@@ -1,5 +1,5 @@
 //versioned files are checked for modifications each page hit (slow)
-var urlPrefix = "http://capitalistparadise.com/nationstates/v1_85/";
+var urlPrefix = "http://capitalistparadise.com/nationstates/v1_9/";
 //static files are cached by browser for 1 week, not checked for modifications (fast)
 var staticUrlPrefix = "http://capitalistparadise.com/nationstates/static/";
 
@@ -123,11 +123,6 @@ window.addEventListener("message", function(event) {
 
 function isSettingEnabled(setting) {
 	return localStorage.getItem(setting) == null || localStorage.getItem(setting) == "true";
-}
-
-var _debugMode = false;
-function debugConsole(message) {
-	if (_debugMode) console.log(message);
 }
 
 function addStylesheet(url) {

@@ -296,7 +296,7 @@ function setupSyncing() {
 	}
 	var nextSync = localStorage.getItem("next_sync" + getUserNation());
 	if (nextSync == null || nextSync < Date.now()) {
-		localStorage.setItem("next_sync" + getUserNation(), Date.now() + 60 * 1000);
+		localStorage.setItem("next_sync" + getUserNation(), Date.now() + 300 * 1000);
 		if (typeof Firebase == "undefined") {
 			console.log("waiting for firebase...");
 			setTimeout(setupSyncing, 250);
@@ -330,8 +330,6 @@ function setupSyncing() {
 				requestAuthToken();
 			}
 		}, 1000);
-	} else {
-		console.log("Last sync < 60s ago, no update");
 	}
 }
 
@@ -348,7 +346,6 @@ function requestAuthToken() {
 					url: window.location.href.substring(window.location.href.indexOf("/", 10)),
 					success: function(html) {
 						var localid = $(html).find("input[name='localid']").val();
-						console.log("new localid: " + localid);
 						if (typeof localid != "undefined" && localid != "") {
 							console.log("Updating localid from " + $("input[name='localid']").val() + " to " + localid);
 							$("input[name='localid']").val(localid);

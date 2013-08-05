@@ -48,14 +48,11 @@
 				}
 				var contentWindow = $("#irc-frame")[0].contentWindow;
 				setTimeout(function() {
-					console.log("IRC Autologin: " + isSettingEnabled("autologin_to_regional_irc"));
 					if (isSettingEnabled("autologin_to_regional_irc")) {
 						contentWindow.postMessage({ method: "login"}, "*");
-						console.log("Attempting irc autologin");
 					}
 				}, 2500);
 				window.onbeforeunload = function(event) {
-					console.log("Logging off IRC: "  + contentWindow);
 					contentWindow.postMessage({ method: "logout"}, "*");
 				}
 				break;

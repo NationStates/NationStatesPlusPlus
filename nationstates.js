@@ -3,7 +3,6 @@ var quote = '<button id="quote-btn-${id}" class="button QuoteButton" onclick="qu
 	window.postMessage({ method: "unread_forum_posts"}, "*");
 	checkPanelAlerts();
 	addCustomAlerts();
-	console.log("Visible Page: " + getVisiblePage());
 })();
 
 function addCustomAlerts() {
