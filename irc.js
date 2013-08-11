@@ -25,13 +25,14 @@
 		{region: "taijitu", network: "irc.esper.net", channel: "#Taijitu"},
 		{region: "the_black_hawks", network: "irc.esper.net", channel: "#tbh"},
 		{region: "the_south", network: "irc.esper.net", channel: "#The_South"},
-		{region: "unknown", network: "irc.esper.net", channel: "#incognita"}
+		{region: "unknown", network: "irc.esper.net", channel: "#incognita"},
+		{region: "new_warsaw_pact", network: "irc.esper.net", channel: "#NWP"}
 	];
 	if (getVisiblePage() == "region" && getUserNation() != "") {
 		for (var i = 0; i < ircEnabledRegions.length; i++) {
 			var region = ircEnabledRegions[i];
 			if (region["region"] == getVisibleRegion()) {
-				var ircUrl = "http://direct.capitalistparadise.com/kiwi/" + region["network"];
+				var ircUrl = "https://kiwiirc.com/client/" + region["network"];
 				if (document.head.innerHTML.indexOf("ns.dark") != -1) {
 					ircUrl += "/?theme=cli&nick=";
 				} else {

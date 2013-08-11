@@ -1,65 +1,71 @@
 (function() {
-	var wfe = $("fieldset[class='wfe']");
-	wfe.css("min-height", "135px");
-	var embassies = $('p:contains("Embassies:")');
-	if (typeof embassies.html() != 'undefined') {
-		wfe.wrap("<div class='colmask rightmenu'\><div id='wfe-main-content' class='colleft'\><div id='world_factbook_entry' class='col1'\>");
-		$("#wfe-main-content").append("<div id='embassy_flags' class='col2' style='display:none'><fieldset class='wfe'><legend>Embassies</legend><div id='embassy-inner' style='height: " + (wfe.height() - 15) + "px; overflow:hidden; position:relative;'></div></fieldset></div>");
-		$("#embassy_flags").attr("style", "height: " + $("#wfe-main-content").height() + "px;");
-		var embassyFlags = $("fieldset[class='wfe']:last");
-		embassyFlags.attr("style", "height: " + wfe.height() + "px;");
-		_embassyList = "";
-		$(embassies).children().each(recurseEmbassies);
-		var apiUrl = "http://capitalistparadise.com/api";
-		embassyArr = _embassyList.split(",");
-		for (var i = 0; i < Math.min(5, embassyArr.length / 10); i++) {
-			var list = "";
-			var start = i * 10;
-			var end = Math.min(start + 10, embassyArr.length);
-			for (var j = start; j < end; j++) {
-				if (j > start) 	list += ",";
-				list += embassyArr[j]
+	(function() {
+		var wfe = $("fieldset[class='wfe']");
+		wfe.css("min-height", "135px");
+		if ($('p:contains("Embassies:")').length > 0) {
+			wfe.wrap("<div class='colmask rightmenu'\><div id='wfe-main-content' class='colleft'\><div id='world_factbook_entry' class='col1'\>");
+			$("#wfe-main-content").append("<div id='embassy_flags' class='col2' style='display:none'><fieldset class='wfe'><legend>Embassies</legend><div id='embassy-inner' style='height: " + (wfe.height() - 15) + "px; overflow:hidden; position:relative;'></div></fieldset></div>");
+			$("#embassy_flags").attr("style", "height: " + $("#wfe-main-content").height() + "px;");
+			$("fieldset[class='wfe']:last").attr("style", "height: " + wfe.height() + "px;");
+			var regions = [];
+			$('p:contains("Embassies:")').find(".rlink").each(function() {
+				regions.push($(this).html().replace(new RegExp(' ', 'g'), "_"));
+			});
+			//Safari does not support calc css :(
+			if ((navigator.userAgent.toLowerCase().indexOf('safari') !== -1 && navigator.userAgent.toLowerCase().indexOf('chrome') === -1) && typeof window.ontouchstart === 'undefined') {
+				updateSize = function() {
+					$(".col1").css("width", "100%").css("width", "-=220px");
+				}
+				window.onresize = updateSize;
+				updateSize();
 			}
-			$.getJSON(apiUrl + "/regionflag/?region=" + list, function(jsonData) {
-				var maxTop = -106;
-				$(".animate-flags").each(function() {
-					if ($(this).position().top > maxTop) {
-						maxTop = $(this).position().top;
-					}
-				});
-				for (var regionName in jsonData) {
-					if (jsonData.hasOwnProperty(regionName)) {
-						var flag = jsonData[regionName];
-						if (flag != null && flag.length > 0) {
-							maxTop += 106;
-							$("#embassy-inner").append("<div class='animate-flags' style='position:absolute; left:6px; top:" + maxTop + "px; padding: 2px 2px 2px 2px;'><a href='http://nationstates.net/region=" + regionName + "' target='_blank'><img src='" + flag + "' class='rflag' style='width:140px; height:100px;' alt='' title='Regional Flag of " + regionName.split("_").join(" ") + "'></a></div>");
+			var step = 5;
+			var maxFlags = 75;
+			for (var i = 0; i < Math.min(maxFlags / step, regions.length / step); i++) {
+				var list = "";
+				var start = i * step;
+				for (var j = start; j < Math.min(start + step, regions.length); j++) {
+					if (j > start) 	list += ",";
+					list += regions[j]
+				}
+				$.getJSON("http://capitalistparadise.com/api/regionflag/?region=" + list, function(jsonData) {
+					var maxTop = -106;
+					$(".animate-flags").each(function() {
+						if ($(this).position().top > maxTop) {
+							maxTop = $(this).position().top;
+						}
+					});
+					for (var regionName in jsonData) {
+						if (jsonData.hasOwnProperty(regionName)) {
+							var flag = jsonData[regionName];
+							if (flag != null && flag.length > 0) {
+								maxTop += 106;
+								$("#embassy-inner").append("<div class='animate-flags' style='position:absolute; left:6px; top:" + maxTop + "px; padding: 2px 2px 2px 2px;'><a href='http://nationstates.net/region=" + regionName + "' target='_blank'><img id='" + regionName + "' src='" + flag + "' class='rflag' style='width:140px; height:100px;' alt='' title='Regional Flag of " + regionName.split("_").join(" ") + "'></a></div>");
+								$("#" + regionName).error(function() {
+									$(this).attr('src', "http://www.nationstates.net/images/flags/Default.png");
+									return true;
+								});
+							}
 						}
 					}
-				}
-			});
-		}
-		animationTests = 0;
-		setTimeout(testForAnimation, 100);
-	}
-
-	var animationTests = 0;
-	function testForAnimation() {
-		var count = 0;
-		$(".animate-flags").each(function() {
-			count += 1;
-		});
-		if (count > 0) {
-			$("#embassy_flags").removeAttr("style");
-			if (count * 106 >= $("fieldset[class='wfe']").height() + 100) {
-				_embassyFlags = $("#embassy_flags").get();
-				animateEmbassyFlags();
-				return true;
+					updateFlags();
+				});
 			}
 		}
-		if (animationTests < 10) {
-			animationTests += 1;
-			setTimeout(testForAnimation, 100);
+	})();
+
+	var animate = null;
+	function updateFlags() {
+		if (animate != null) {
+			clearTimeout(animate);
 		}
+		animate = setTimeout(function() {
+			$("#embassy_flags").removeAttr("style");
+			if ($(".animate-flags").length * 106 >= $("fieldset[class='wfe']").height() + 100) {
+				_embassyFlags = $("#embassy_flags").get();
+				animateEmbassyFlags();
+			}
+		}, 1000);
 	}
 
 	var _embassyFlags;
@@ -84,22 +90,5 @@
 			}
 			animateEmbassyFlags();
 		}, 75);
-	}
-
-	var _embassyList = "";
-	function recurseEmbassies() {
-		if ($(this).html().indexOf("Embassies:") != -1) {
-			return; //Ignore
-		}
-		if ($(this).html().indexOf('<a href="">') == -1) {
-			if ($(this).children().length != 0) {
-				$(this).children().each(recurseEmbassies);
-			} else {
-				if (_embassyList.length > 0) {
-					_embassyList += ",";
-				}
-				_embassyList += $(this).html().replace(new RegExp(' ', 'g'), "_");
-			}
-		}
 	}
 })();

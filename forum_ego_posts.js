@@ -23,6 +23,7 @@
 		});
 		$(".lastpost:first").parent().append("<button class='showall-egopost btn' onclick='showAllEgoPosts()'><div class='showall-egopost-body'>Show All Posts</div></button>");
 	}
+})();
 
 	function ignoreEgoPost(post) {
 		$(post).parent().parent().animate({ height: 'toggle' }, 500);
@@ -38,5 +39,4 @@
 			var postName = $(this).parent().parent().find(".topictitle").html();
 			localStorage.removeItem(postName);
 		});
-	}
-})();
+}

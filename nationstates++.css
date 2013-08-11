@@ -104,7 +104,7 @@
 	font-size:10px;
 	font-weight:bold;
 	margin-left:-3px;
-	margin-top:-5px;
+	line-height:10px;
 }
 
 .showall-egopost {
@@ -117,8 +117,7 @@
 .showall-egopost-body {
 	font-size:10px;
 	font-weight:bold;
-	margin-left:-3px;
-	margin-top:-5px;
+	line-height:10px;
 }
 
 .shiny.ranks td {
