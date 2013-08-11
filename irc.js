@@ -26,7 +26,8 @@
 		{region: "the_black_hawks", network: "irc.esper.net", channel: "#tbh"},
 		{region: "the_south", network: "irc.esper.net", channel: "#The_South"},
 		{region: "unknown", network: "irc.esper.net", channel: "#incognita"},
-		{region: "new_warsaw_pact", network: "irc.esper.net", channel: "#NWP"}
+		{region: "new_warsaw_pact", network: "irc.esper.net", channel: "#NWP"},
+		{region: "new_odessa", network: "irc.uk.mibbit.net", channel: "#NewOdessa"}
 	];
 	if (getVisiblePage() == "region" && getUserNation() != "") {
 		for (var i = 0; i < ircEnabledRegions.length; i++) {
