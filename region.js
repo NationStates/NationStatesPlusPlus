@@ -363,43 +363,6 @@ function searchRMB() {
 	doRMBSearch();
 }
 
-/**
-	Converts a search input into an array of keywords to search for.
-	Each word separated by one or more spaces is considered a keyword,
-	Unless the text is inside a pair of ""'s.
-*/
-function searchToKeywords(search) {
-	var keys = new Array();
-	var start = 0;
-	var foundQuote = false;
-	for (var i = 0, len = search.length; i < len; i++) {
-		if (search[i] == '"') {
-			if (!foundQuote) {
-				foundQuote = true;
-			} else {
-				foundQuote = false;
-				keys.push(search.substring(start + 1, i).trim());
-				start = i + 1;
-			}
-		} else if (search[i] == " " && !foundQuote) {
-			if (i != start) {
-				keys.push(search.substring(start, i).trim());
-			}
-			start = i + 1;
-		}
-	}
-	var lastKey;
-	if (foundQuote) {
-		lastKey = search.substring(start + 1).trim();
-	} else {
-		lastKey = search.substring(start).trim();
-	}
-	if (lastKey.length > 0) {
-		keys.push(lastKey);
-	}
-	return keys;
-}
-
 function updateSearchText() {
 	cancelled = true;
 	var tooltip = false;

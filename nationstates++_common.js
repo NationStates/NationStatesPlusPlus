@@ -80,6 +80,42 @@
 	update(1);
 })();
 
+/**
+	Converts a search input into an array of keywords to search for.
+	Each word separated by one or more spaces is considered a keyword,
+	Unless the text is inside a pair of ""'s.
+*/
+function searchToKeywords(search) {
+	var keys = new Array();
+	var start = 0;
+	var foundQuote = false;
+	for (var i = 0, len = search.length; i < len; i++) {
+		if (search[i] == '"') {
+			if (!foundQuote) {
+				foundQuote = true;
+			} else {
+				foundQuote = false;
+				keys.push(search.substring(start + 1, i).trim());
+				start = i + 1;
+			}
+		} else if (search[i] == " " && !foundQuote) {
+			if (i != start) {
+				keys.push(search.substring(start, i).trim());
+			}
+			start = i + 1;
+		}
+	}
+	var lastKey;
+	if (foundQuote) {
+		lastKey = search.substring(start + 1).trim();
+	} else {
+		lastKey = search.substring(start).trim();
+	}
+	if (lastKey.length > 0) {
+		keys.push(lastKey);
+	}
+	return keys;
+}
 
 function showPuppets() {
 	if (!isSettingEnabled("show_puppet_switcher")) {
@@ -594,6 +630,26 @@ function getVisiblePage() {
 		return "region";
 	}
 	return "unknown";
+}
+
+function getTelegramFolder() {
+	var split = window.location.href.split(/[/#/?]/);
+	for (var i = 0; i < split.length; i++) {
+		if (split[i].startsWith("folder=")) {
+			return split[i].substring(7);
+		}
+	}
+	return "inbox";
+}
+
+function getTelegramStart() {
+	var split = window.location.href.split(/[/#/?]/);
+	for (var i = 0; i < split.length; i++) {
+		if (split[i].startsWith("start=")) {
+			return split[i].substring(6);
+		}
+	}
+	return "0";
 }
 
 var _isPageActive;
