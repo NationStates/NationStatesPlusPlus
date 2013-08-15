@@ -3,15 +3,17 @@
   "name": "NationStates++",
   "minimum_chrome_version": "22",
   "description": "Improves the NationStates Regional Message Board experience",
-  "version": "1.900",
+  "version": "1.853",
   "content_scripts": [ {
 	  "run_at": "document_end",
       "js": [ "jquery-2.0.2.min.js", "background.js"],
-      "matches": [ "http://forum.nationstates.net/*" ]
+      "matches": [ "http://forum.nationstates.net/*" ],
+	  "all_frames": true
 	}, {
 	  "run_at": "document_end",
       "js": [ "jquery-2.0.2.min.js", "background.js"],
-      "matches": [ "http://www.nationstates.net/*"]
+      "matches": [ "http://www.nationstates.net/*"],
+	  "all_frames": true
 	} ],
   "background": {
     "scripts": ["background.js"],

@@ -254,7 +254,7 @@ function addPageSlider(maxPage) {
 				}
 			}
 		});
-		if (getVisibleRegion() == getUserRegion()) {
+		if (getVisibleRegion() == getUserRegion() && getVisiblePage() == "region") {
 			var html = "";
 			$(getShinyTableSelector()).children().children(':last-child').prev('tr').andSelf().each(function() {
 				html += "<tr>" + $(this).html() + "</tr>"

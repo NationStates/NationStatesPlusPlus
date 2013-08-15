@@ -1,5 +1,5 @@
 //versioned files are checked for modifications each page hit (slow)
-var urlPrefix = "http://capitalistparadise.com/nationstates/v1_9/";
+var urlPrefix = "http://capitalistparadise.com/nationstates/v1_85/";
 //static files are cached by browser for 1 week, not checked for modifications (fast)
 var staticUrlPrefix = "http://capitalistparadise.com/nationstates/static/";
 
