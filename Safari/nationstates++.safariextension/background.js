@@ -5,55 +5,64 @@ var staticUrlPrefix = "http://capitalistparadise.com/nationstates/static/";
 
 var pageUrl = window.location.href;
 
-if (pageUrl.indexOf("template-overall=minimal") == -1) {
-	setupNationStates();
+//Have to remove this one
+$("#banneradbox").remove();
+
+if (isSettingEnabled("hide_ads")) {
+	$("#paneladbox").remove();
+	$("#sidebaradbox").remove();
+	$("#footeradbox").remove();
+	$("#removead").remove();
+	$("#maxad").remove();
+	$("#regionadbox").remove();
 }
 
-function setupNationStates() {
-	//Have to remove this one
-	$("#banneradbox").remove();
+var bannerStyle = "position:absolute; top:0px; margin:6px 60px 0px 0px; z-index:98; font-weight:bold; color: white !important; font-weight: bold; font-size: 8pt; padding: 2px 8px 2px 8px; background: black; 	background-color: rgba(0,0,0,0.2); 	border-radius: 8px;";
+if (document.head.innerHTML.indexOf("ns.dark") != -1) {
+	bannerStyle += "background: #2A2A2A; border: 1px solid #383838;"
+}
 
-	if (isSettingEnabled("hide_ads")) {
-		$("#paneladbox").remove();
-		$("#sidebaradbox").remove();
-		$("#footeradbox").remove();
-		$("#removead").remove();
-		$("#maxad").remove();
-		$("#regionadbox").remove();
-	}
-
-	var bannerStyle = "position:absolute; top:0px; margin:6px 60px 0px 0px; z-index:98; font-weight:bold; color: white !important; font-weight: bold; font-size: 8pt; padding: 2px 8px 2px 8px; background: black; 	background-color: rgba(0,0,0,0.2); 	border-radius: 8px;";
-	if (document.head.innerHTML.indexOf("ns.dark") != -1) {
-		bannerStyle += "background: #2A2A2A; border: 1px solid #383838;"
-	}
-
+if (pageUrl.indexOf("hideBanner=true") != -1) {
+	$("#banner").hide();
+} else {
 	var banner = $("#banner, #nsbanner");
 	$(banner).append("<div id='ns_setting'><a href='javascript:void(0)' style='" + bannerStyle + " right: 78px; ' onclick='return showSettings();'>NS++ Settings</a></div>");
 	if (pageUrl.indexOf('http://forum.nationstates.net/') == -1 ) {
 		$(banner).append("<div id='puppet_setting' style='display:none;'><a href='javascript:void(0)' style='" + bannerStyle + " right: 188px;' onmouseover='return showPuppets();'>Puppets</a></div>");
 	}
+}
 
-	addJavascript("//d3nslu0hdya83q.cloudfront.net/dist/1.0/raven.min.js");
-	addJavascript('https://cdn.firebase.com/v0/firebase.js');
-	addJavascript('https://cdn.firebase.com/v0/firebase-simple-login.js');
+if (pageUrl.indexOf("hidePanel=true") != -1) {
+	$("#panel").hide();
+	$("#content").css("margin-left", "0");
+}
+if (pageUrl.indexOf("hideFooter=true") != -1) {
+	$("#foot").remove();
+}
+if (pageUrl.indexOf("hideFlag=true") != -1) {
+	$(".bigflag").remove();
+}
 
-	addStylesheet(staticUrlPrefix + 'nouislider.fox.css');
-	addStylesheet(staticUrlPrefix + 'bootstrap-button.css');
-	addStylesheet(staticUrlPrefix + 'two_column.css');
-	addStylesheet(urlPrefix + 'nationstates++.css');
-	if (document.head.innerHTML.indexOf("antiquity") != -1) {
-		addStylesheet(urlPrefix + 'nationstates++_antiquity.css');
-	} else if (document.head.innerHTML.indexOf("ns.dark") != -1) {
-		addStylesheet(urlPrefix + 'nationstates++_dark.css');
-	}
+addJavascript("//d3nslu0hdya83q.cloudfront.net/dist/1.0/raven.min.js");
+addJavascript('https://cdn.firebase.com/v0/firebase.js');
+addJavascript('https://cdn.firebase.com/v0/firebase-simple-login.js');
 
-	if (document.head.innerHTML.indexOf("//ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js") == -1) {
-		addJavascript("//ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js", function() {
-			addJavascript("//ajax.googleapis.com/ajax/libs/jqueryui/1.9.2/jquery-ui.min.js", loadJavascript);
-		});
-	} else {
-		loadJavascript();
-	}
+addStylesheet(staticUrlPrefix + 'nouislider.fox.css');
+addStylesheet(staticUrlPrefix + 'bootstrap-button.css');
+addStylesheet(staticUrlPrefix + 'two_column.css');
+addStylesheet(urlPrefix + 'nationstates++.css');
+if (document.head.innerHTML.indexOf("antiquity") != -1) {
+	addStylesheet(urlPrefix + 'nationstates++_antiquity.css');
+} else if (document.head.innerHTML.indexOf("ns.dark") != -1) {
+	addStylesheet(urlPrefix + 'nationstates++_dark.css');
+}
+
+if (document.head.innerHTML.indexOf("//ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js") == -1) {
+	addJavascript("//ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js", function() {
+		addJavascript("//ajax.googleapis.com/ajax/libs/jqueryui/1.9.2/jquery-ui.min.js", loadJavascript);
+	});
+} else {
+	loadJavascript();
 }
 
 function loadJavascript() {
@@ -82,6 +91,7 @@ function loadJavascript() {
 			addJavascript(urlPrefix + 'issues.js');
 			addJavascript(urlPrefix + 'help.js');
 			addJavascript(urlPrefix + 'irc.js');
+			addJavascript(urlPrefix + 'dossier.js');
 
 			console.log('[NationStates++] Loading Completed Successfully.');
 		} else if (pageUrl.indexOf('http://forum.nationstates.net/') > -1 ) {

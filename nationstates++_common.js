@@ -332,7 +332,7 @@ function setupSyncing() {
 	}
 	var nextSync = localStorage.getItem("next_sync" + getUserNation());
 	if (nextSync == null || nextSync < Date.now()) {
-		localStorage.setItem("next_sync" + getUserNation(), Date.now() + 300 * 1000);
+		localStorage.setItem("next_sync" + getUserNation(), Date.now() + 900 * 1000);
 		if (typeof Firebase == "undefined") {
 			console.log("waiting for firebase...");
 			setTimeout(setupSyncing, 250);

@@ -2,7 +2,7 @@ var quote = '<button id="quote-btn-${id}" class="button QuoteButton" onclick="qu
 (function() {
 	if (getVisiblePage() == "list_nations" || getVisiblePage() == "list_regions" || getVisiblePage() == "world") {
 		setupPageSlider();
-	} else if (getVisiblePage() == "region") {
+	} else if (getVisiblePage() == "region" || getVisiblePage() == "display_region") {
 		setupRegionPage(false);
 	} else if (getVisiblePage() == "display_region_rmb") {
 		setupRegionPage(true);
