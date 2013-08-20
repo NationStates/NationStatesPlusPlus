@@ -275,3 +275,25 @@
 fieldset .preview {
 	width: 97.4%;
 }
+
+.dossier_element {
+	padding: 2px 0 4px 32px;
+	margin: 0;
+	border: 6px solid #EAEAE2;
+	box-shadow: 2px 2px 6px #666;
+	border-radius: 6px;
+	position: relative;
+	background-color: #EAEAE2;
+	margin-top: 12px;
+	margin-bottom: 12px;
+}
+
+.last_activity {
+	display: inline;
+	margin-left: 30px;
+	font-style: italic;
+}
+
+.region_activity {
+	float: right;
+}
