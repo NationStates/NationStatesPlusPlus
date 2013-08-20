@@ -271,3 +271,7 @@
 	filter:Alpha(Opacity=35);
 	background-image: none;
 }
+
+fieldset .preview {
+	width: 97.4%;
+}

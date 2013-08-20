@@ -158,6 +158,53 @@ function isForumView() {
 	return window.location.href.indexOf("/page=display_region_rmb") != -1;
 }
 
+function toWindows1252(string, replacement) {
+    var ret = new Array(string.length);    
+    var i, ch;
+
+    replacement = typeof replacement === "string" && replacement.length > 0 ? replacement.charCodeAt(0) : 0;
+
+    for (i = 0; i < string.length; i++) {
+		ch = string.charCodeAt(i);
+        if (ch <= 0x7F || (ch >= 0xA0 && ch <= 0xFF)) {
+            ret[i] = ch;
+        } else {
+            ret[i] = toWindows1252.table[string[i]];
+            if (typeof ret[i] === "undefined") {
+                ret[i] = replacement;
+            }
+        }
+    }
+
+    return ret;
+}
+
+toWindows1252.table = {
+    '\x81': 129, '\x8d': 141, '\x8f': 143, '\x90': 144, 
+    '\x9d': 157, '\u0152': 140, '\u0153': 156, '\u0160': 138, 
+    '\u0161': 154, '\u0178': 159, '\u017d': 142, '\u017e': 158, 
+    '\u0192': 131, '\u02c6': 136, '\u02dc': 152, '\u2013': 150, 
+    '\u2014': 151, '\u2018': 145, '\u2019': 146, '\u201a': 130, 
+    '\u201c': 147, '\u201d': 148, '\u201e': 132, '\u2020': 134, 
+    '\u2021': 135, '\u2022': 149, '\u2026': 133, '\u2030': 137, 
+    '\u2039': 139, '\u203a': 155, '\u20ac': 128, '\u2122': 153
+};
+
+function d2h(d) {return d.toString(16);}
+
+function encodeRMBPost(message) {
+	var chars = toWindows1252(message);
+	var result = "";
+	for (var i = 0; i < chars.length; i++) {
+		if (chars[i] > 16) {
+			result += "%" + d2h(chars[i]);
+		} else {
+			result += String.fromCharCode(chars[i]);
+		}
+	}
+	return result;
+}
+
 function rmbpost() {
 	var $form = $( this ),
 		chkValue = $('input[name="chk"]').val(),
@@ -167,7 +214,7 @@ function rmbpost() {
 	var posting = jQuery.ajax({
 		type: "POST",
 		url: url,
-		data: $(document.forms["rmb"]).serialize(),
+		data: "chk=" + chkValue + "&message=" + encodeRMBPost(messageValue) + "&lodge_message=1",
 		dataType: "html",
 		contentType: "application/x-www-form-urlencoded;",
 		beforeSend: function(jqXHR) {

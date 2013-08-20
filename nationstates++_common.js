@@ -43,6 +43,16 @@
 		};
 	}
 
+	//Add escape
+	RegExp.escape = function(text) {
+		return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
+	}
+
+	//Add replaceAll
+	String.prototype.replaceAll = function(search, replace) {
+		return this.replace(new RegExp(RegExp.escape(search),'g'), replace);
+	};
+
 //*** This code is copyright 2002-2003 by Gavin Kistner, !@phrogz.net
 //*** It is covered under the license viewable at http://phrogz.net/JS/_ReuseLicense.txt
 	if (typeof Date.prototype.customFormat != 'function') {

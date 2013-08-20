@@ -25,18 +25,18 @@
 	}
 })();
 
-	function ignoreEgoPost(post) {
-		$(post).parent().parent().animate({ height: 'toggle' }, 500);
-		var postName = $(post).parent().parent().find(".topictitle").html();
-		localStorage.setItem(postName, "true");
-	}
+function ignoreEgoPost(post) {
+	$(post).parent().parent().animate({ height: 'toggle' }, 500);
+	var postName = $(post).parent().parent().find(".topictitle").html();
+	localStorage.setItem(postName, "true");
+}
 
-	function showAllEgoPosts() {
-		$(".lastpost").each(function() {
-			if ($(this).parent().parent().is(':hidden')) {
-				$(this).parent().parent().animate({ height: 'toggle' }, 500);
-			}
-			var postName = $(this).parent().parent().find(".topictitle").html();
-			localStorage.removeItem(postName);
-		});
+function showAllEgoPosts() {
+	$(".lastpost").each(function() {
+		if ($(this).parent().parent().is(':hidden')) {
+			$(this).parent().parent().animate({ height: 'toggle' }, 500);
+		}
+		var postName = $(this).parent().parent().find(".topictitle").html();
+		localStorage.removeItem(postName);
+	});
 }

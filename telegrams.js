@@ -17,7 +17,7 @@
 
 	function addReplyToAll() {
 		$(".tg").each(function() {
-			if ($(this).find(".tg_headers").find("a").length > 2 && $(this).find(".tgreplybutton").length > 0) {
+			if ($(this).find(".tg_headers").find("a.nlink").length > 2 && $(this).find(".tgreplybutton").length > 0) {
 				var replyLine = $(this).find(".replyline");
 				var replyTo = replyLine.find(".tgreplybutton").attr("href").split("=");
 				replyTo = replyTo[replyTo.length - 1];
