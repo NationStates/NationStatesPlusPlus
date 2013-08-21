@@ -117,7 +117,9 @@
 			cancelSearch = !cancelSearch;
 			if (cancelSearch) {
 				$("#cancelsearch").html("Resume Searching");
+				NProgress.done();
 			} else {
+				NProgress.start();
 				$("#cancelsearch").html("Searching Page " + page + "...");
 				searchNextPage(searchToKeywords($("#tgsearch").val().toLowerCase()));
 			}
@@ -158,7 +160,17 @@
 		}
 		console.log("Page: " + page);
 		searchTelegramContents(keywords, $(document.body));
+		
+		$("p").each(function() {
+			if ($(this).html().startsWith("Viewing telegrams")) {
+				var numTelegrams = $(this).html().substring($(this).html().lastIndexOf(" "), $(this).html().length - 2);
+				NProgress.configure({trickleRate: (1 / (numTelegrams / 20 + 1)), trickleSpeed: 425});
+				console.log("Num telegrams: " + numTelegrams);
+				return true;
+			}
+		});
 
+		NProgress.start();
 		searchNextPage(keywords);
 	}
 
@@ -176,6 +188,7 @@
 					if (!resultFound) {
 						$("#tgsearchresults").html("<div class='rmbolder'>No Search Results</div>");
 					}
+					NProgress.done();
 				}
 			});
 		}

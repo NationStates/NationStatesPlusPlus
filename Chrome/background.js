@@ -50,7 +50,9 @@ addJavascript('https://cdn.firebase.com/v0/firebase-simple-login.js');
 addStylesheet(staticUrlPrefix + 'nouislider.fox.css');
 addStylesheet(staticUrlPrefix + 'bootstrap-button.css');
 addStylesheet(staticUrlPrefix + 'two_column.css');
+addStylesheet(staticUrlPrefix + 'nprogress.css');
 addStylesheet(urlPrefix + 'nationstates++.css');
+
 if (document.head.innerHTML.indexOf("antiquity") != -1) {
 	addStylesheet(urlPrefix + 'nationstates++_antiquity.css');
 } else if (document.head.innerHTML.indexOf("ns.dark") != -1) {
@@ -69,6 +71,7 @@ function loadJavascript() {
 	addJavascript(staticUrlPrefix + 'jquery.caret.js');
 	addJavascript(staticUrlPrefix + 'jquery.highlight.js');
 	addJavascript(staticUrlPrefix + 'jquery.nouislider.min.js');
+	addJavascript(staticUrlPrefix + 'nprogress.js');
 
 	addJavascript(urlPrefix + 'nationstates++_common.js', function() {
 		if (pageUrl.indexOf('http://www.nationstates.net/') > -1 && isSettingEnabled("region_enhancements")) {

@@ -272,7 +272,7 @@
 	background-image: none;
 }
 
-fieldset .preview {
+fieldset.preview {
 	width: 97.4%;
 }
 
