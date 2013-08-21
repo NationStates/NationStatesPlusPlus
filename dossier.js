@@ -2,7 +2,7 @@
 	if (getVisiblePage() == "dossier") {
 		$("#content").html("<h1>" + getUserNation().replaceAll("_", " ").toTitleCase() + "'s Dossier</h1>");
 		
-		$("#content").html("<div id='nation_dossier'><h2>National Dossier</h2></div><div id='region_dossier'><h2>Regional Dossier</h2></div>");
+		$("#content").html("<div id='nation_dossier'><h1>National Dossier</h1></div><div id='region_dossier'><h1>Regional Dossier</h1></div>");
 		$("#region_dossier").hide();
 
 		$(document.body).click(function(event) {
@@ -31,23 +31,38 @@
 			$.get("page=dossier?start=" + (currentPage * 15), function(html) {
 				var nationsHtml = "";
 				$(html).find("table:first").find("tbody").find("tr").each(function() {
-					var nation = $(this).find(".nlink").attr("href").substring(7);
+					var nation;
+					var flag;
+					var waMember = $(this).html().contains("WA Delegate") || $(this).html().contains("WA Member");
+					if ($(this).children().length == 3) {
+						nation = $($(this).children()[2]).html();
+						flag = "http://www.nationstates.net/images/flags/exnation.png";
+					} else {
+						nation = $(this).find(".nlink").attr("href").substring(7);
+						flag = $(this).find(".smallflag").attr("src");
+					}
 					nations.push(nation);
-					var flag = $(this).find(".smallflag").attr("src");
-					var activityHtml = $($(this).children()[4]).html();
-					var lastActivity = activityHtml.substring(0, activityHtml.indexOf("<br>"));
-					var region = $($($(this).children()[4]).children()[1]).attr("href").substring(7);
-					var formattedRegion = region.replaceAll(" ", "_").toLowerCase();
-					nationsHtml += "<div id='" + nation + "' class='dossier_element'" + (animate ? "style='display:none;'" : "") + "><div><img class='smallflag' src='" + flag + "'><a style='font-weight:bold' target='_blank' href='http://nationstates.net/nation=" + nation + "'>" + nation.replaceAll("_", " ").toTitleCase() + "</a><div class='last_activity'>" + lastActivity + "</div><div class='region_activity'><a target='_blank' href='/region=" + formattedRegion + "'>" + region + "</a></div></div></div>";
-					$.get("http://capitalistparadise.com/api/regionflag/?region=" + formattedRegion, function(json) {
-						for (var regionName in json) {
-							var flag = json[regionName];
-							if (flag != null && flag.length > 0) {
-								var regionDiv = $("#" + nation).find(".region_activity");
-								regionDiv.html("<img class='smallflag' src='" + flag + "'/>" + regionDiv.html());
+					nationsHtml += "<div id='" + nation + "' class='dossier_element'" + (animate ? "style='display:none;'" : "") + "><div><img class='smallflag' src='" + flag + "'><a style='font-weight:bold' target='_blank' href='http://nationstates.net/nation=" + nation + "'>" + nation.replaceAll("_", " ").toTitleCase() + "</a>"
+					if (waMember) {
+						nationsHtml += "<div class='wa_status' style='height:25px;padding-left:19px; border:none;margin-bottom: -8px;margin-left: 20px;'></div>";
+					}
+					if ($(this).children().length == 5) {
+						var activityHtml = $($(this).children()[4]).html();
+						var lastActivity = activityHtml.substring(0, activityHtml.indexOf("<br>"));
+						var region = $($($(this).children()[4]).children()[1]).attr("href").substring(7);
+						var formattedRegion = region.replaceAll(" ", "_").toLowerCase();
+						nationsHtml += "<div class='last_activity'>" + lastActivity + "</div><div class='region_activity'><a target='_blank' href='/region=" + formattedRegion + "'>" + region + "</a></div>";
+						$.get("http://capitalistparadise.com/api/regionflag/?region=" + formattedRegion, function(json) {
+							for (var regionName in json) {
+								var flag = json[regionName];
+								if (flag != null && flag.length > 0) {
+									var regionDiv = $("#" + nation).find(".region_activity");
+									regionDiv.html("<img class='smallflag' src='" + flag + "'/>" + regionDiv.html());
+								}
 							}
-						}
-					});
+						});
+					}
+					nationsHtml += "</div></div>";
 				});
 				if (nationsHtml.length == 0) {
 					nationsHtml = "<div id='last_nation_element' style='text-align: center;font-weight: bold;' class='dossier_element'>End of Dossier</div>";
