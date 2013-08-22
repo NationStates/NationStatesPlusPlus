@@ -2,6 +2,9 @@
 	if (getVisiblePage() == "dossier_advanced") {
 		$("input[type='submit']").attr("class", "button").css("font-size", "12px");
 	} else if (getVisiblePage() == "dossier" && isSettingEnabled("fancy_dossier_theme")) {
+		if (isAntiquityTheme()) {
+			$("#main").html("<div id='content'>" + $("#main").html() + "</div>");
+		}
 		$("#content").html("<h1>" + getUserNation().replaceAll("_", " ").toTitleCase() + "'s Dossier</h1>");
 		
 		var advanced = "<i style='position: absolute; top: 135px; left: 500px;'><a href='page=dossier_advanced'>(Advanced)</a></i>";
@@ -68,6 +71,7 @@
 			if (target && target != "last_nation_element") {
 				if ($("#nation_dossier:visible").length == 1) {
 					if (typeof $(event.target).attr("id") != "undefined" && $(event.target).attr("id").startsWith("remove-")) {
+						console.log("Removing: " + target);
 						$.post("page=dossier", "nation=" + target + "&action=remove", function() { });
 						$("#nation_dossier").find("#" + target).animate({ height: 'toggle', 'min-height': 'toggle' }, 800);
 					} else {
@@ -152,10 +156,10 @@
 						var flag;
 						var waMember = $(this).html().contains("WA Delegate") || $(this).html().contains("WA Member");
 						if ($(this).children().length == 3) {
-							nation = $($(this).children()[2]).html();
+							nation = $($(this).children()[2]).html().replaceAll(" ", "_").toLowerCase();
 							flag = "http://www.nationstates.net/images/flags/exnation.png";
 						} else {
-							nation = $(this).find(".nlink").attr("href").substring(7);
+							nation = $(this).find(".nlink").attr("href").substring(7)
 							flag = $(this).find(".smallflag").attr("src");
 						}
 						if ($("#nation_dossier").find("#" + nation).length == 0) {

@@ -1,5 +1,5 @@
 (function() {
-	if (getVisiblePage() == "telegrams" || getVisiblePage() == "tg") {
+	if ((getVisiblePage() == "telegrams" || getVisiblePage() == "tg") && !isAntiquityTheme()) {
 		if (isSettingEnabled("clickable_telegram_links")) {
 			linkifyTelegrams();
 		}
