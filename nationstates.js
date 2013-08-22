@@ -3,7 +3,7 @@ var quote = '<button id="quote-btn-${id}" class="button QuoteButton" onclick="qu
 	window.postMessage({ method: "unread_forum_posts"}, "*");
 	checkPanelAlerts();
 	addCustomAlerts();
-	checkWorldHappenings()
+	checkPageHappenings()
 })();
 
 function addCustomAlerts() {
@@ -12,16 +12,22 @@ function addCustomAlerts() {
 	}
 }
 
-function checkWorldHappenings() {
-	if (getVisiblePage() == "un") {
-		$.get("page=un", function(page) {
-			$($(page).find("h3:contains('Recent Events')").next().children().get().reverse()).each(function() {
+function checkPageHappenings() {
+	if (getVisiblePage() == "un" || getVisiblePage() == "nation") {
+		$.get(window.location.href, function(page) {
+			var happeningSelector;
+			if (getVisiblePage() == "un") {
+				happeningSelector = $(page).find("h3:contains('Recent Events')").next();
+			} else {
+				happeningSelector = $(page).find(".newsbox").find("ul");
+			}
+			$(happeningSelector.children().get().reverse()).each(function() {
 				var html = $(this).html();
-				var split = html.split(":");
+				var split = $(this).text().split(":");
 				var found = false;
-				var happenings = $("h3:contains('Recent Events')").next();
-				happenings.children().each(function() {
-					if ($(this).html().contains(split[1])) {
+				var happenings = (getVisiblePage() == "un" ? $("h3:contains('Recent Events')").next() : $(".newsbox").find("ul"));
+				$(happenings.children()).each(function() {
+					if ($(this).text().contains(split[1])) {
 						$(this).html(html);
 						found = true;
 						return false;
@@ -32,7 +38,7 @@ function checkWorldHappenings() {
 				}
 			});
 		});
-		setTimeout(checkWorldHappenings, isPageActive() ? 6000 : 20000);
+		setTimeout(checkPageHappenings, isPageActive() ? 6000 : 30000);
 	}
 }
 
