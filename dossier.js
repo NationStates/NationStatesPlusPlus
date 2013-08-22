@@ -1,7 +1,7 @@
 (function() {
 	if (getVisiblePage() == "dossier_advanced") {
 		$("input[type='submit']").attr("class", "button").css("font-size", "12px");
-	} else if (getVisiblePage() == "dossier") {
+	} else if (getVisiblePage() == "dossier" && isSettingEnabled("fancy_dossier_theme")) {
 		$("#content").html("<h1>" + getUserNation().replaceAll("_", " ").toTitleCase() + "'s Dossier</h1>");
 		
 		var advanced = "<i style='position: absolute; top: 135px; left: 500px;'><a href='page=dossier_advanced'>(Advanced)</a></i>";
