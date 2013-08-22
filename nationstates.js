@@ -3,11 +3,36 @@ var quote = '<button id="quote-btn-${id}" class="button QuoteButton" onclick="qu
 	window.postMessage({ method: "unread_forum_posts"}, "*");
 	checkPanelAlerts();
 	addCustomAlerts();
+	checkWorldHappenings()
 })();
 
 function addCustomAlerts() {
 	if (localStorage.getItem("show_admin_area") == "true") {
 	//	$(".menu").append("<li><a id='nationbot' href='http://capitalistparadise.com/api/nationbot/'>NATIONBOT ONLINE</a></li>");
+	}
+}
+
+function checkWorldHappenings() {
+	if (getVisiblePage() == "un") {
+		$.get("page=un", function(page) {
+			$($(page).find("h3:contains('Recent Events')").next().children().get().reverse()).each(function() {
+				var html = $(this).html();
+				var split = html.split(":");
+				var found = false;
+				var happenings = $("h3:contains('Recent Events')").next();
+				happenings.children().each(function() {
+					if ($(this).html().contains(split[1])) {
+						$(this).html(html);
+						found = true;
+						return false;
+					}
+				});
+				if (!found) {
+					happenings.prepend("<li>" + html + "</li>");
+				}
+			});
+		});
+		setTimeout(checkWorldHappenings, isPageActive() ? 6000 : 20000);
 	}
 }
 
