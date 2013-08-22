@@ -298,3 +298,36 @@ fieldset.preview {
 .region_activity {
 	float: right;
 }
+
+.clear-dossier {
+	font-size: 15px;
+	font-weight: bold;
+	margin-right:20px;
+	position: absolute;
+	top: 125px;
+	right: 0;
+}
+
+.nation-frame {
+	margin-top:5px;
+	height: 500px;
+	border: 2px solid black;
+	display: block;
+	background: white;
+	margin-left: -32px;
+	border-radius: 6px;
+}
+
+.remove-dossier {
+	padding-right: 8px;
+	margin-left: -24px;
+	margin-bottom: -8px;
+}
+
+.dossier-wa {
+	height:25px;
+	padding-left:19px;
+	border:none;
+	margin-bottom: -8px;
+	margin-left: 20px;
+}
