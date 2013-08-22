@@ -173,7 +173,7 @@
 								var lastActivity = activityHtml.substring(0, activityHtml.indexOf("<br>"));
 								var region = $($($(this).children()[4]).children()[1]).attr("href").substring(7);
 								var formattedRegion = region.replaceAll(" ", "_").toLowerCase();
-								dossierHtml += "<div class='last_activity'>" + lastActivity + "</div><div class='region_activity'><a target='_blank' href='/region=" + formattedRegion + "'>" + region + "</a></div>";
+								dossierHtml += "<div class='last_activity'>" + lastActivity + "<pre style='display: inline;'>&#9;&#9;</pre>(" + $($(this).children()[3]).text() + ") </div><div class='region_activity'><a target='_blank' href='/region=" + formattedRegion + "'>" + region + "</a></div>";
 								$.get("http://capitalistparadise.com/api/regionflag/?region=" + formattedRegion, function(json) {
 									for (var regionName in json) {
 										var flag = json[regionName];
