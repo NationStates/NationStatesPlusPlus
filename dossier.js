@@ -74,6 +74,40 @@
 						console.log("Removing: " + target);
 						$.post("page=dossier", "nation=" + target + "&action=remove", function() { });
 						$("#nation_dossier").find("#" + target).animate({ height: 'toggle', 'min-height': 'toggle' }, 800);
+					} else if (typeof $(event.target).attr("id") != "undefined" && $(event.target).attr("id").startsWith("input-alias-")) {
+						return;
+					} else if (typeof $(event.target).attr("id") != "undefined" && $(event.target).attr("id").startsWith("alias-")) {
+						var nation = $(event.target).attr("id").split("alias-")[1];
+						console.log("Alias for: " + nation);
+						if (getNationAlias(nation) == null) {
+							//$(event.target).attr("src", "http://capitalistparadise.com/nationstates/static/remove-alias.png");
+							if ($("#input-alias-" + nation).length == 0) {
+								$(event.target).parent().find(".wa_status, .last_activity").hide();
+								$("<input id='input-alias-" + nation + "' type='text' placeholder='Alias' style='height: 22px; font-size: 15px;width:250px;margin-left: 10px;'>").insertAfter($(event.target));
+								$("#input-alias-" + nation).on('keydown', function(e) {
+									if (e.which == 13) {
+										var value = $("#input-alias-" + nation).val();
+										$("#input-alias-" + nation).remove();
+										if (value.length > 0) {
+											console.log("Setting nation alias of " + nation + " to : " + value);
+											setNationAlias(nation, value);
+											$("#alias-" + nation).attr("src", "http://capitalistparadise.com/nationstates/static/remove-alias.png");
+											$("#alias-" + nation).attr("title", "Remove Alias");
+											$("#nation-link-" + nation).css("text-decoration", "line-through");
+											$("#nation-alias-" + nation).children("pre").html("  " + value);
+											$(event.target).parent().find(".wa_status, .last_activity").show();
+										}
+									}
+								});
+								$("#input-alias-" + nation).focus();
+							}
+						} else {
+							setNationAlias(nation, null);
+							$(event.target).attr("src", "http://capitalistparadise.com/nationstates/static/alias.png");
+							$(event.target).attr("title", "Set Alias");
+							$("#nation-link-" + nation).css("text-decoration", "");
+							$("#nation-alias-" + nation).children("pre").html("");
+						}
 					} else {
 						if (typeof $("#iframe-" + target).html() == "undefined") {
 							$("#nation_dossier").find("#" + target).html($("#" + target).html() + "<div id='iframe-" + target + "' class='nation-frame'><iframe style='width: 100%; height: 495px;' src='http://nationstates.net/nation=" + target + "?hideBanner=true&hideFooter=true&hidePanel=true&hideFlag=true'/></div>");
@@ -164,7 +198,18 @@
 						}
 						if ($("#nation_dossier").find("#" + nation).length == 0) {
 							targets.push(nation);
-							dossierHtml += "<div id='" + nation + "' class='dossier_element'" + (animate ? "style='display:none;'" : "") + "><div><img id='remove-" + nation + "' src='http://capitalistparadise.com/nationstates/static/remove.png' class='remove-dossier' title='Remove from Dossier'><img class='smallflag' src='" + flag + "'><a style='font-weight:bold' target='_blank' href='http://nationstates.net/nation=" + nation + "'>" + nation.replaceAll("_", " ").toTitleCase() + "</a>"
+							
+							var alias = getNationAlias(nation);
+
+							dossierHtml += "<div id='" + nation + "' class='dossier_element'" + (animate ? "style='display:none;'" : "") + "><div><img id='remove-" + nation + "' src='http://capitalistparadise.com/nationstates/static/remove.png' class='remove-dossier' title='Remove from Dossier'><img class='smallflag' src='" + flag + "'><a id='nation-link-" + nation + "' style='font-weight:bold; " + (alias != null ? "text-decoration:line-through;" : "") + "' target='_blank' href='http://nationstates.net/nation=" + nation + "'>" + nation.replaceAll("_", " ").toTitleCase() + "</a>";
+							
+							
+							if (alias == null) {
+								dossierHtml += "<span id='nation-alias-" + nation + "'><pre style='display: inline;'></pre></span><img src='http://capitalistparadise.com/nationstates/static/alias.png' title='Set Alias' style='height: 28px; margin-bottom: -10px; margin-left: 15px;' id='alias-" + nation + "'>";
+							} else {
+								dossierHtml += "<span id='nation-alias-" + nation + "'><pre style='display: inline;'>  " + alias + "</pre></span><img src='http://capitalistparadise.com/nationstates/static/remove-alias.png' title='Remove Alias' style='height: 28px; margin-bottom: -10px; margin-left: 15px;' id='alias-" + nation + "'>";
+							}
+							
 							if (waMember) {
 								dossierHtml += "<div class='wa_status dossier-wa'></div>";
 							}
@@ -173,7 +218,7 @@
 								var lastActivity = activityHtml.substring(0, activityHtml.indexOf("<br>"));
 								var region = $($($(this).children()[4]).children()[1]).attr("href").substring(7);
 								var formattedRegion = region.replaceAll(" ", "_").toLowerCase();
-								dossierHtml += "<div class='last_activity'>" + lastActivity + "<pre style='display: inline;'>&#9;&#9;</pre>(" + $($(this).children()[3]).text() + ") </div><div class='region_activity'><a target='_blank' href='/region=" + formattedRegion + "'>" + region + "</a></div>";
+								dossierHtml += "<div class='last_activity'>" + lastActivity + "<span style='width:50px;display: inline-block;'> </span>(" + $($(this).children()[3]).text() + ") </div><div class='region_activity'><a target='_blank' href='/region=" + formattedRegion + "'>" + region + "</a></div>";
 								$.get("http://capitalistparadise.com/api/regionflag/?region=" + formattedRegion, function(json) {
 									for (var regionName in json) {
 										var flag = json[regionName];
@@ -200,14 +245,42 @@
 				}
 				var dossier = region ? $("#region_dossier") : $("#nation_dossier");
 				dossier.append(dossierHtml);
-				if (animate) {
+				
+				var minWidth = Math.min(400, Math.max($(window).width() - 1250, 0));
+				if (animate || minWidth > 0) {
 					for (var i = 0; i < targets.length; i++) {
-						dossier.find("#" + targets[i]).hide().animate({ height: 'toggle', 'min-height': 'toggle' }, 800);
+						if (animate) {
+							dossier.find("#" + targets[i]).hide().animate({ height: 'toggle', 'min-height': 'toggle' }, 800);
+						}
+						if (!region && minWidth > 0) {
+							dossier.find("#nation-link-" + targets[i]).parent().find(".smallflag:first").bind('load', function() {
+								var nation = $(this).parent().parent().attr('id');
+								var ref = dossier.find("#nation-link-" + nation);
+								var margin = minWidth - ref.width() + (40 - ref.parent().find(".smallflag:first").width());
+								if (margin > 0) {
+									ref.css("margin-right", margin + "px");
+								}
+							});
+						}
 					}
 				}
 			});
 		}
 		loadDossierPage(false, false);
+		
+		window.onresize = function() {
+			if ($("#nation_dossier:visible").length == 1) {
+				var minWidth = Math.min(400, Math.max($(window).width() - 1250, 0));
+				$("#nation_dossier").find(".dossier_element").each(function() {
+					var nation = $(this).attr('id');
+					var ref = $("#nation_dossier").find("#nation-link-" + nation);
+					var margin = Math.max(0, minWidth - ref.width() + (40 - ref.parent().find(".smallflag:first").width()));
+					if (margin != ref.css("margin-right")) {
+						ref.css("margin-right", margin + "px");
+					}
+				});
+			}
+		}
 		
 		$(window).scroll(function handleInfiniteScroll() {
 			if ($(window).scrollTop() + 400 > ($(document).height() - $(window).height())) {

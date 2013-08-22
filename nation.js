@@ -3,6 +3,17 @@
 		displaySoftPowerScore();
 		fixFactbookLinks();
 		showNationChallenge();
+		showNationAlias();
+	}
+	
+	function showNationAlias() {
+		if (getUserNation() != getVisibleNation()) {
+			var alias = getNationAlias(getVisibleNation());
+			if (alias != null) {
+				$(".nationname").css("text-decoration", "line-through").css("display", "inline");
+				$("<span style='margin-left: 15px; font-size: 24px; display: inline; font-family: monospace;'>(" + alias + ")</span>").insertAfter($(".nationname"));
+			}
+		}
 	}
 
 	function showNationChallenge() {

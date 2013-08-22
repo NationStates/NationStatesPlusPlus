@@ -745,6 +745,39 @@ function isScrolledIntoView(elem) {
     return ((docViewTop <= elemBottom) && (docViewBottom >= elemTop));
 }
 
+function getNationAlias(nation) {
+	if (localStorage.getItem("aliases-" + getUserNation()) != null && getUserNation() != "") {
+		try {
+			var aliases = JSON.parse(localStorage.getItem("aliases-" + getUserNation()));
+			return aliases[nation];
+		} catch (error) {
+			console.log("Unable to retrieve aliases!");
+			console.log(error);
+		}
+	}
+	return null;
+}
+
+function setNationAlias(nation, alias) {
+	if (getUserNation() != "") {
+		var aliases = new Object();
+		if (localStorage.getItem("aliases-" + getUserNation()) != null) {
+			try {
+				aliases = JSON.parse(localStorage.getItem("aliases-" + getUserNation()));
+			} catch (error) {
+				console.log("Unable to parse aliases!");
+				console.log(error);
+			}
+		}
+		if (alias != null) {
+			aliases[nation] = alias;
+		} else {
+			delete aliases[nation];
+		}
+		localStorage.setItem("aliases-" + getUserNation(), JSON.stringify(aliases));
+	}
+}
+
 var _gaq = _gaq || [];
 function update(delay){
 	setTimeout(function() {
