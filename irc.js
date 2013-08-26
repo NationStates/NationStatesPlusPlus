@@ -28,7 +28,7 @@
 		{region: "unknown", network: "irc.esper.net", channel: "#incognita"},
 		{region: "new_warsaw_pact", network: "irc.esper.net", channel: "#NWP"},
 		{region: "new_odessa", network: "irc.uk.mibbit.net", channel: "#NewOdessa"},
-		{region: "panessos ", network: "irc.esper.net", channel: "#Panessos"},
+		{region: "panessos", network: "irc.esper.net", channel: "#Panessos"},
 		{region: "the_grand_northern_imperium", network: "irc.esper.net", channel: "#GNI"}
 	];
 	if (getVisiblePage() == "region" && getUserNation() !== "") {

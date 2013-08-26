@@ -33,6 +33,11 @@
 	}
 
 	function updateReports() {
+		if (typeof NProgress == "undefined") {
+			setTimeout(updateReports, 1000);
+			console.log("Nprogress is not defined");
+			return;
+		}
 		NProgress.start();
 		if (!$("input[name='report_self']").prop('checked')) {
 			$("#report_self").hide();
@@ -106,7 +111,7 @@
 	}
 
 	function loadReport(reportName) {
-		$.post("page=reports", "report_hours=" + reportHours + "&" + reportName + "=1&generate_report=Generate+Report", function(data) {
+		$.post("page=reports", "report_hours=" + $("input[name='report_hours']").val() + "&" + reportName + "=1&generate_report=Generate+Report", function(data) {
 			var report = $(data).find("h2").next();
 			$("#" + reportName).find("ul[name='report']").html(report.html());
 			if (!isSettingEnabled("report_dossier_regions")) {
