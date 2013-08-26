@@ -96,6 +96,7 @@
 											$("#nation-link-" + nation).css("text-decoration", "line-through");
 											$("#nation-alias-" + nation).children("pre").html("  " + value);
 											$(event.target).parent().find(".wa_status, .last_activity").show();
+											window.onresize();
 										}
 									}
 								});
@@ -107,6 +108,7 @@
 							$(event.target).attr("title", "Set Alias");
 							$("#nation-link-" + nation).css("text-decoration", "");
 							$("#nation-alias-" + nation).children("pre").html("");
+							window.onresize();
 						}
 					} else {
 						if (typeof $("#iframe-" + target).html() == "undefined") {
@@ -218,7 +220,11 @@
 								var lastActivity = activityHtml.substring(0, activityHtml.indexOf("<br>"));
 								var region = $($($(this).children()[4]).children()[1]).attr("href").substring(7);
 								var formattedRegion = region.replaceAll(" ", "_").toLowerCase();
-								dossierHtml += "<div class='last_activity'>" + lastActivity + "<span style='width:50px;display: inline-block;'> </span>(" + $($(this).children()[3]).text() + ") </div><div class='region_activity'><a target='_blank' href='/region=" + formattedRegion + "'>" + region + "</a></div>";
+								var censusType = $($(this).children()[3]).text();
+								if ($(this).find(".aflabel").length > 0) {
+									censusType = $(this).find(".aflabel").text();
+								}
+								dossierHtml += "<div class='last_activity'>" + lastActivity + "<span style='width:50px;display: inline-block;'> </span>(" + censusType + ") </div><div class='region_activity'><a target='_blank' href='/region=" + formattedRegion + "'>" + region + "</a></div>";
 								$.get("http://capitalistparadise.com/api/regionflag/?region=" + formattedRegion, function(json) {
 									for (var regionName in json) {
 										var flag = json[regionName];
@@ -256,9 +262,10 @@
 							dossier.find("#nation-link-" + targets[i]).parent().find(".smallflag:first").bind('load', function() {
 								var nation = $(this).parent().parent().attr('id');
 								var ref = dossier.find("#nation-link-" + nation);
-								var margin = minWidth - ref.width() + (40 - ref.parent().find(".smallflag:first").width());
+								var alias = dossier.find("#nation-alias-" + nation);
+								var margin = minWidth - ref.width() + (40 - ref.parent().find(".smallflag:first").width()) - alias.width();
 								if (margin > 0) {
-									ref.css("margin-right", margin + "px");
+									alias.css("margin-right", margin + "px");
 								}
 							});
 						}
@@ -274,9 +281,10 @@
 				$("#nation_dossier").find(".dossier_element").each(function() {
 					var nation = $(this).attr('id');
 					var ref = $("#nation_dossier").find("#nation-link-" + nation);
-					var margin = Math.max(0, minWidth - ref.width() + (40 - ref.parent().find(".smallflag:first").width()));
-					if (margin != ref.css("margin-right")) {
-						ref.css("margin-right", margin + "px");
+					var alias = $("#nation_dossier").find("#nation-alias-" + nation);
+					var margin = Math.max(0, minWidth - ref.width() + (40 - ref.parent().find(".smallflag:first").width()) - alias.width());
+					if (margin != alias.css("margin-right")) {
+						alias.css("margin-right", margin + "px");
 					}
 				});
 			}

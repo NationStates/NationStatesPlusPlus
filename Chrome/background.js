@@ -1,7 +1,7 @@
 //versioned files are checked for modifications each page hit (slow)
-var urlPrefix = "http://capitalistparadise.com/nationstates/v1_9/";
+var urlPrefix = "http://direct.capitalistparadise.com/nationstates/v1_9/";
 //static files are cached by browser for 1 week, not checked for modifications (fast)
-var staticUrlPrefix = "http://capitalistparadise.com/nationstates/static/";
+var staticUrlPrefix = "http://direct.capitalistparadise.com/nationstates/static/";
 
 var pageUrl = window.location.href;
 
@@ -95,6 +95,8 @@ function loadJavascript() {
 			addJavascript(urlPrefix + 'help.js');
 			addJavascript(urlPrefix + 'irc.js');
 			addJavascript(urlPrefix + 'dossier.js');
+			addJavascript(urlPrefix + 'reports.js');
+
 
 			console.log('[NationStates++] Loading Completed Successfully.');
 		} else if (pageUrl.indexOf('http://forum.nationstates.net/') > -1 ) {

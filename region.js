@@ -74,13 +74,19 @@ function setupRegionPage(forumViewPage) {
 		}
 		var widebox = $('.widebox:last');
 		widebox.prepend(formHtml);
-	} else {
+	}
+	if (!isSettingEnabled("infinite_scroll")) {
 		//Override older rmb click
 		$('#olderrmb').unbind("click").click(function(event){
 			event.preventDefault();
+			console.log("RMB Processing: " + processingRMB);
+			if (processingRMB) {
+				return;
+			}
+			processingRMB = true;
 			$('.rmbolder .notloading').hide();
 			$('.rmbolder .loading').show();
-			$.get('/page=ajax/a=rmb/region=' + getVisibleRegion() + '/offset=' + rmboffset, function(data) {
+			request = $.get('/page=ajax/a=rmb/region=' + getVisibleRegion() + '/offset=' + rmboffset, function(data) {
 				rmboffset += 10;
 				if (data.length > 1) {
 					var html = "";
@@ -97,6 +103,12 @@ function setupRegionPage(forumViewPage) {
 				}
 				$('.rmbolder .loading').hide();
 				$('.rmbolder .notloading').show();
+			});
+			request.fail(function() {
+				console.log("RMB Request Failed!");
+			});
+			request.always(function() {
+				processingRMB = false;
 			});
 		});
 	}
@@ -407,6 +419,7 @@ function searchRMB() {
 	rmb.attr("style", "display: none;");
 	cancelled = false;
 	searchOffset = 0;
+	console.log("Searching for: " + searchWords);
 	doRMBSearch();
 }
 
@@ -439,7 +452,8 @@ function doRMBSearch() {
 	if ($("#rmb-search-input-author").val() != "") {
 		author = $("#rmb-search-input-author").val();
 	}
-	$.get('/page=ajax/a=rmbsearch/rmbsearch-text=' + encodeURIComponent(input) + (region == "*" ? "" : '/rmbsearch-region=' + region) + (author == "*" ? "" : '/rmbsearch-author=' + author) + '/rmbsearch-offset=' + searchOffset, function(data) {
+	var page = '/page=ajax/a=rmbsearch/rmbsearch-text=' + encodeURIComponent(input) + (region == "*" ? "" : '/rmbsearch-region=' + region) + (author == "*" ? "" : '/rmbsearch-author=' + author) + '/rmbsearch-offset=' + searchOffset;
+	$.get(page, function(data) {
 		if (cancelled) {
 			return;
 		}
@@ -459,11 +473,14 @@ function doRMBSearch() {
 			$(searchResults).attr("style", "display: block;");
 			searchOffset += 20;
 			lastSearchSuccessful = true;
+			console.log("Partial search result for : " + page);
 			$(searchResults).append("<div id='end-of-search-results' class='rmbolder'>End of Search Results</div>");
 		} else if (searchOffset > 0) {
+			console.log("Full search result for : " + page);
 			$(searchResults).append("<div class='rmbolder'>End of Search Results</div>");
 			lastSearchSuccessful = true;
 		} else {
+			console.log("No search result for : " + page);
 			$(searchResults).append("<div class='rmbolder'>No Search Results</div>");
 			lastSearchSuccessful = false;
 		}
@@ -524,6 +541,7 @@ function isAtBottomOfPage() {
 	return isInRange($(window).scrollTop() - 5, $(document).height() - $(window).height(), $(window).scrollTop() + (screen.height / 2.5));
 }
 
+var processingRMB = false;
 var atEarliestMessage = false;
 var rmboffset = 10;
 var lastRMBScroll = (new Date()).getTime();
@@ -534,7 +552,7 @@ function handleInfiniteScroll() {
 	if (!isAtBottomOfPage()) {
 		return;
 	}
-	if (lastRMBScroll + 100 > (new Date()).getTime()) {
+	if (lastRMBScroll + 100 > Date.now()) {
 		return;
 	}
 	//Infinite search Scroll
@@ -544,9 +562,12 @@ function handleInfiniteScroll() {
 			$(searchPaused).remove();
 			doRMBSearch();
 		}
-	} else if (isSettingEnabled("infinite_scroll")) {
+	} else if (isSettingEnabled("infinite_scroll") && !processingRMB) {
+		processingRMB = true;
+		lastRMBScroll = Date.now();
+		console.log("Processing");
 		//Infinite RMB post scroll
-		getRMBPosts(rmboffset, function(data) {
+		var request = $.get('/page=ajax/a=rmb/region=' + getVisibleRegion() + '/offset=' + rmboffset, function(data) {
 			if (data.length > 1) {
 				//Format HTML
 				var html = "";
@@ -562,9 +583,15 @@ function handleInfiniteScroll() {
 				atEarliestMessage = true;
 				$("<div class='rmbolder'>At Earliest Message</div>").insertAfter('.rmbrow:last').hide().show('slow');
 			}
+			rmboffset += 10;
+			console.log("Loaded RMB");
 		});
-		rmboffset += 10;
-		lastRMBScroll = (new Date()).getTime();
+		request.fail(function() {
+			console.log("RMB Request Failed!");
+		});
+		request.always(function() {
+			processingRMB = false;
+		});
 	}
 }
 
@@ -640,18 +667,6 @@ function updateRMB() {
 			}
 		}
 	});
-}
-
-var rmbCache = {};
-function getRMBPosts(offset, callback) {
-	if (offset in rmbCache) {
-		callback(rmbCache[offset]);
-	} else {
-		$.get('/page=ajax/a=rmb/region=' + getVisibleRegion() + '/offset=' + offset, function(data) {
-			rmbCache[offset] = data;
-			callback(rmbCache[offset]);
-		});
-	}
 }
 
 function getRMBPostId(html) {
