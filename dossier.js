@@ -147,7 +147,11 @@
 				if (region) {
 					$(html).find("table").find("tbody").find("tr").each(function() {
 						if ($(this).children().length == 4) {
-							var region = $($(this).children()[1]).find("a").attr("href").substring(7);
+							var regionElement = $($(this).children()[1]);
+							var region = regionElement.text();
+							if (regionElement.find("a").length > 0) {
+								region = regionElement.find("a").attr("href").substring(7);
+							}
 							var nations = $($(this).children()[2]).html();
 							var delegate = "None";
 							var delegateFlag = "";
