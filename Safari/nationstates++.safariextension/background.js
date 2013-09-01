@@ -5,6 +5,14 @@ var staticUrlPrefix = "http://direct.capitalistparadise.com/nationstates/static/
 
 var pageUrl = window.location.href;
 
+$.get(urlPrefix + "cache_buster.txt?time=" + Date.now() , function(value) {
+	var cacheBuster = localStorage.getItem("cache_buster");
+	if (value > cacheBuster) {
+		console.log("Cache Buster: " + value);
+		localStorage.setItem("cache_buster", value);
+	}
+});
+
 //Have to remove this one
 $("#banneradbox").remove();
 
@@ -156,7 +164,7 @@ function addStylesheet(url) {
 
 function addJavascript(url, onLoad) {
 	var script = document.createElement('script');
-	script.src = url;
+	script.src = url + (localStorage.getItem("cache_buster") != null ? ("?cache=" + localStorage.getItem("cache_buster")) : "");
 	var split = url.split("/");
 	script.id = split[split.length - 1];
 	if (onLoad) {

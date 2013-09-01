@@ -162,8 +162,67 @@ function setupRegionPage(forumViewPage) {
 		}
 	}
 
+	addFormattingButtons();
+
 	//Replace census slider
 	setupPageSlider();
+}
+
+function addFormattingButtons() {
+	$(".nscodedesc").find("abbr").each(function() {
+		var text = $(this).html().substring(1, $(this).html().length - 1);
+		$(this).html(text);
+		if (text.length > 1) {
+			$(this).css("width", "53px");
+		} else {
+			$(this).css("width", "23px");
+		}
+		if (text == "b") {
+			$(this).attr("id", "bold_format");
+			$(this).css("font-weight", "bold");
+			$(this).html(text.toUpperCase());
+		} else if ($(this).html() == "i") {
+			$(this).attr("id", "italic_format");
+			$(this).css("font-style", "italic");
+		} else if ($(this).html() == "u") {
+			$(this).attr("id", "underline_format");
+			$(this).css("text-decoration", "underline");
+		} else if ($(this).html() == "nation") {
+			$(this).attr("id", "nation_format");
+		} else if ($(this).html() == "region") {
+			$(this).attr("id", "region_format");
+		}
+		$(this).attr("class", "forum_bbcode_button");
+		$(this).changeElementType("button");
+	});
+	$("#bold_format").on("click", function(event) {
+		event.preventDefault();
+		getRMBTextArea().wrap_selection("[b]", "[/b]");
+	});
+	$("#italic_format").on("click", function(event) {
+		event.preventDefault();
+		getRMBTextArea().wrap_selection("[i]", "[/i]");
+	});
+	$("#underline_format").on("click", function(event) {
+		event.preventDefault();
+		getRMBTextArea().wrap_selection("[u]", "[/u]");
+	});
+	$("#nation_format").on("click", function(event) {
+		event.preventDefault();
+		getRMBTextArea().wrap_selection("[nation]", "[/nation]");
+	});
+	$("#region_format").on("click", function(event) {
+		event.preventDefault();
+		getRMBTextArea().wrap_selection("[region]", "[/region]");
+	});
+}
+
+function getRMBTextArea() {
+	var form = document.forms["rmb"];
+	var widebox = $(form).children(".widebox");
+	$(widebox).attr("id","widebox-form");
+	var textArea = $(widebox).find("textarea");
+	return textArea;
 }
 
 function isForumView() {
@@ -812,10 +871,7 @@ function quotePost(post) {
 		}
 	});
 
-	var form = document.forms["rmb"];
-	var widebox = $(form).children(".widebox");
-	$(widebox).attr("id","widebox-form");
-	var textArea = $(widebox).find("textarea");
+	var textArea = getRMBTextArea();
 	var value = $(textArea).val();
 	if (value.length > 0) {
 		value += "\n";

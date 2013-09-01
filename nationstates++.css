@@ -331,3 +331,21 @@ fieldset.preview {
 	margin-bottom: -8px;
 	margin-left: 20px;
 }
+
+.forum_bbcode_button {
+	cursor: pointer;
+	margin: 0px;
+	font-family: "Lucida Grande", Verdana, Helvetica, Arial, sans-serif;
+	padding: 0px;
+	border: 1px solid #666666;
+	padding-top: 1px;
+	display: inline-block;
+	padding-bottom: 1px;
+	background-image: url("http://forum.nationstates.net/styles/prosilver-ns/theme/images/bg_button.gif");
+	font-size: 1em;
+}
+
+.forum_bbcode_button:hover {
+	border-color: #BC2A4D;
+	color: #BC2A4D;
+}

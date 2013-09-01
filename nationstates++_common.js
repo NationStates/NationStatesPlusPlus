@@ -53,6 +53,80 @@
 		return this.replace(new RegExp(RegExp.escape(search),'g'), replace);
 	};
 
+	(function ($) {
+		$.fn.get_selection = function () {
+			var e = this.get(0);
+			//Mozilla and DOM 3.0
+			if('selectionStart' in e) {
+				var l = e.selectionEnd - e.selectionStart;
+				return { start: e.selectionStart, end: e.selectionEnd, length: l, text: e.value.substr(e.selectionStart, l) };
+			}
+			else if(document.selection) {		//IE
+				e.focus();
+				var r = document.selection.createRange();
+				var tr = e.createTextRange();
+				var tr2 = tr.duplicate();
+				tr2.moveToBookmark(r.getBookmark());
+				tr.setEndPoint('EndToStart',tr2);
+				if (r == null || tr == null) return { start: e.value.length, end: e.value.length, length: 0, text: '' };
+				var text_part = r.text.replace(/[\r\n]/g,'.'); //for some reason IE doesn't always count the \n and \r in length
+				var text_whole = e.value.replace(/[\r\n]/g,'.');
+				var the_start = text_whole.indexOf(text_part,tr.text.length);
+				return { start: the_start, end: the_start + text_part.length, length: text_part.length, text: r.text };
+			}
+			//Browser not supported
+			else return { start: e.value.length, end: e.value.length, length: 0, text: '' };
+		};
+
+		$.fn.set_selection = function (start_pos,end_pos) {
+			var e = this.get(0);
+			//Mozilla and DOM 3.0
+			if('selectionStart' in e) {
+				e.focus();
+				e.selectionStart = start_pos;
+				e.selectionEnd = end_pos;
+			}
+			else if (document.selection) { //IE
+				e.focus();
+				var tr = e.createTextRange();
+
+				//Fix IE from counting the newline characters as two seperate characters
+				var stop_it = start_pos;
+				for (i=0; i < stop_it; i++) if( e.value[i].search(/[\r\n]/) != -1 ) start_pos = start_pos - .5;
+				stop_it = end_pos;
+				for (i=0; i < stop_it; i++) if( e.value[i].search(/[\r\n]/) != -1 ) end_pos = end_pos - .5;
+
+				tr.moveEnd('textedit',-1);
+				tr.moveStart('character',start_pos);
+				tr.moveEnd('character',end_pos - start_pos);
+				tr.select();
+			}
+			return this.get_selection();
+		};
+
+		$.fn.replace_selection = function (replace_str) {
+			var e = this.get(0);
+			selection = this.get_selection();
+			var start_pos = selection.start;
+			var end_pos = start_pos + replace_str.length;
+			e.value = e.value.substr(0, start_pos) + replace_str + e.value.substr(selection.end, e.value.length);
+			this.set_selection(start_pos,end_pos);
+			return {start: start_pos, end: end_pos, length: replace_str.length, text: replace_str};
+		};
+
+		$.fn.wrap_selection = function (left_str, right_str, sel_offset, sel_length) {
+			var the_sel_text = this.get_selection().text;
+			var selection;
+			if (the_sel_text[the_sel_text.length - 1] == " ") selection = this.replace_selection(left_str + the_sel_text.substring(0, the_sel_text.length - 2) + right_str + " ");
+			else selection = this.replace_selection(left_str + the_sel_text + right_str );
+			if(sel_offset !== undefined && sel_length !== undefined) 
+				selection = this.set_selection(selection.start +	sel_offset, selection.start +	sel_offset + sel_length);
+			else if(the_sel_text == '') 
+				selection = this.set_selection(selection.start + left_str.length, selection.start + left_str.length);
+			return selection;
+		};
+	}(jQuery));
+
 //*** This code is copyright 2002-2003 by Gavin Kistner, !@phrogz.net
 //*** It is covered under the license viewable at http://phrogz.net/JS/_ReuseLicense.txt
 	if (typeof Date.prototype.customFormat != 'function') {
@@ -667,11 +741,11 @@ function getTelegramStart() {
 
 var _isPageActive;
 window.onfocus = function () { 
-  _isPageActive = true; 
+	_isPageActive = true; 
 }; 
 
 window.onblur = function () { 
-  _isPageActive = false; 
+	_isPageActive = false; 
 };
 
 function isPageActive() {
@@ -695,7 +769,7 @@ function isAntiquityTheme() {
 }
 
 function isNumber(n) {
-  return !isNaN(parseFloat(n)) && isFinite(n);
+	return !isNaN(parseFloat(n)) && isFinite(n);
 }
 
 function linkify(inputText) {
@@ -717,7 +791,7 @@ function linkify(inputText) {
 	replacePattern3 = /(\w+@[a-zA-Z_]+?\.[a-zA-Z]{2,6})/gim;
 	replacedText = replacedText.replace(replacePattern3, '<a href="mailto:$1">$1</a>');
 
-    return replacedText;
+		return replacedText;
 }
 
 function isInRange(min, value, max) {
@@ -739,13 +813,13 @@ function isSettingEnabled(setting) {
 }
 
 function isScrolledIntoView(elem) {
-    var docViewTop = $(window).scrollTop();
-    var docViewBottom = docViewTop + $(window).height();
+		var docViewTop = $(window).scrollTop();
+		var docViewBottom = docViewTop + $(window).height();
 
-    var elemTop = $(elem).offset().top;
-    var elemBottom = elemTop + $(elem).height();
+		var elemTop = $(elem).offset().top;
+		var elemBottom = elemTop + $(elem).height();
 
-    return ((docViewTop <= elemBottom) && (docViewBottom >= elemTop));
+		return ((docViewTop <= elemBottom) && (docViewBottom >= elemTop));
 }
 
 function getNationAlias(nation) {
@@ -822,7 +896,7 @@ function getNationStatesAPI() {
 			return result;
 		}
 		if (numRequests >= 49) {
-			setTimeout(doRequestInternal(url, result),  (oldest - Date.now() + 30001));
+			setTimeout(doRequestInternal(url, result),	(oldest - Date.now() + 30001));
 		} else {
 			var num = requests["" + Date.now()];
 			requests["" + Date.now()] = (num != null ? num + 1 : 1);
