@@ -340,9 +340,10 @@ function setupSyncing() {
 	if (getUserNation() == "") {
 		return;
 	}
-	var nextSync = localStorage.getItem("next_sync" + getUserNation());
+	localStorage.removeItem("next_sync" + getUserNation());
+	var nextSync = localStorage.getItem("next_sync_" + getUserNation());
 	if (nextSync == null || nextSync < Date.now()) {
-		localStorage.setItem("next_sync" + getUserNation(), Date.now() + 900 * 1000);
+		localStorage.setItem("next_sync_" + getUserNation(), Date.now() + 900 * 1000);
 		if (typeof Firebase == "undefined") {
 			console.log("waiting for firebase...");
 			setTimeout(setupSyncing, 250);
@@ -485,6 +486,8 @@ function syncFirebase() {
 				clickable_telegram_links: isSettingEnabled("clickable_telegram_links"),
 				show_puppet_switcher: isSettingEnabled("show_puppet_switcher"),
 				autologin_to_regional_irc: isSettingEnabled("autologin_to_regional_irc"),
+				fancy_dossier_theme: isSettingEnabled("fancy_dossier_theme"),
+				use_nationstates_api: isSettingEnabled("use_nationstates_api"),
 				settings_timestamp: (localStorage.getItem("settings-timestamp") == null ? Date.now() : localStorage.getItem("settings-timestamp"))
 			});
 		} else {
@@ -512,7 +515,7 @@ function syncFirebase() {
 		}
 	});
 	(new Firebase("https://nationstatesplusplus.firebaseio.com/nation/" + getUserNation() + "/")).child("last-login").set(Date.now());
-	setTimeout(function() {try { var dataRef = new Firebase("https://nationstatesplusplus.firebaseio.com"); dataRef.u.o.ba.L.Ib(); } catch (error) { console.log(error); } }, 10000);
+	setTimeout(function() {try { var dataRef = new Firebase("https://nationstatesplusplus.firebaseio.com"); dataRef.u.o.ba.Hb.Ib() } catch (error) { console.log(error); } }, 10000);
 }
 
 function updateFirebaseIssue(issueKey) {
@@ -778,12 +781,127 @@ function setNationAlias(nation, alias) {
 	}
 }
 
+function getNationStatesAPI() {
+	var api = {};
+
+	var reachedRateLimit = false;
+	api.canUseAPI = function() {
+		return isSettingEnabled("use_nationstates_api") && !reachedRateLimit;
+	};
+	var doRequestInternal = function(url, result) {
+		if (result == null) {
+			result = {};
+		}
+		var requests = localStorage.getItem("api_requests");
+		if (requests == null) {
+			requests = new Object();
+		} else {
+			requests = JSON.parse(requests);
+		}
+		var numRequests = 0;
+		var oldest = Date.now();
+		for (var time in requests) {
+			var num = requests[time];
+			if (time > Date.now() - 30000) {
+				numRequests += num;
+				oldest = Math.min(oldest, time);
+			} else {
+				delete requests[time];
+			}
+		}
+		result.done = function(callback) {
+			result._done = callback;
+			return result;
+		}
+		result.fail = function(callback) {
+			result._fail = callback;
+			return result;
+		}
+		result.always = function(callback) {
+			result._always = callback;
+			return result;
+		}
+		if (numRequests >= 49) {
+			setTimeout(doRequestInternal(url, result),  (oldest - Date.now() + 30001));
+		} else {
+			var num = requests["" + Date.now()];
+			requests["" + Date.now()] = (num != null ? num + 1 : 1);
+			var call = $.ajax({url: url, type: 'GET', dataType: "text"});
+			if (typeof result["_done"] !== "undefined") {
+				call.done(result["_done"]);
+			}
+			if (typeof result["_fail"] !== "undefined") {
+				call.fail(result["_fail"]);
+			}
+			if (typeof result["_always"] !== "undefined") {
+				call.always(result["_always"]);
+			}
+			result.done = function(callback) {
+				call.done(callback);
+				return result;
+			}
+			result.fail = function(callback) {
+				call.fail(callback);
+				return result;
+			}
+			result.always = function(callback) {
+				call.always(callback);
+				return result;
+			}
+		}
+		localStorage.setItem("api_requests", JSON.stringify(requests));
+		return result;
+	};
+	api.doRequest = function(url) {
+		return doRequestInternal(url, null);
+	};
+
+	return api;
+}
+
+function timestampToTimeAgo(timestamp) {
+	var threeDays = false;
+	var time = "";
+	var timeDiff = Date.now() - timestamp;
+	if (timeDiff > 365 * 24 * 60 * 60 * 1000) {
+		var years = Math.floor(timeDiff / (365 * 24 * 60 * 60 * 1000));
+		if (years > 1) time += years + " years ";
+		else time += "1 year ";
+		timeDiff -= years * (365 * 24 * 60 * 60 * 1000);
+	}
+	if (timeDiff > 24 * 60 * 60 * 1000) {
+		var days = Math.floor(timeDiff / (24 * 60 * 60 * 1000));
+		threeDays = days > 3;
+		if (days > 1) time += days + " days ";
+		else time += "1 day ";
+		timeDiff -= days * (24 * 60 * 60 * 1000);
+	}
+	if (!time.contains("year") && (!time.contains("days") || !threeDays) && timeDiff > 60 * 60 * 1000) {
+		var hours = Math.floor(timeDiff / (60 * 60 * 1000));
+		if (hours > 1) {
+			time += hours + " hours ";
+			timeDiff -= hours * (60 * 60 * 1000);
+		}
+	}
+	if (!time.contains("year") && !time.contains("day") && !time.contains("hours") && timeDiff > 60 * 1000) {
+		var minutes = Math.floor(timeDiff / (60 * 1000));
+		if (minutes > 1) time += minutes + " minutes ";
+		else time += "1 minutes ";
+		timeDiff -= minutes * (60 * 1000);
+	}
+	if (!time.contains("year") && !time.contains("day") && !time.contains("hours") && !time.contains("minutes") && timeDiff > 1000) {
+		time = "Seconds ";
+	}
+	time = time.substring(0, time.length - 1);
+	return time;
+}
+
 var _gaq = _gaq || [];
 function update(delay){
 	setTimeout(function() {
 		_gaq.push(['_setAccount', 'UA-41267101-1']);
 		_gaq.push(['_trackPageview']);
-		_gaq.push(['_setCustomVar', 1, 'Version', 'v1.86', 2]);
+		_gaq.push(['_setCustomVar', 1, 'Version', 'v1.9', 2]);
 
 		if (delay == 1) {
 			if (getVisibleRegion() != "") _gaq.push(['_trackEvent', 'NationStates', 'Region', getVisibleRegion()]);

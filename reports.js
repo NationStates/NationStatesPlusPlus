@@ -33,12 +33,6 @@
 	}
 
 	function updateReports() {
-		if (typeof NProgress == "undefined") {
-			setTimeout(updateReports, 1000);
-			console.log("Nprogress is not defined");
-			return;
-		}
-		NProgress.start();
 		if (!$("input[name='report_self']").prop('checked')) {
 			$("#report_self").hide();
 		} else {
@@ -73,29 +67,44 @@
 		$.get("http://www.nationstates.net/page=dossier?rstart=" + offset, function(data) {
 			$(data).find("table").each(function() {
 				var rows = $(this).find("tbody").find("tr");
-				console.log("Rows:");
-				console.log(rows);
-				console.log($(rows[0]).children());
+				var api = getNationStatesAPI();
 				if (rows.length > 0 && $(rows[0]).children().length == 4) {
-					var foundNew = false;
+					var loadedNextPage = false;
 					var delay = baseDelay;
 					for (var i = 0; i < rows.length; i++) {
 						var row = $(rows[i]);
 						var href = row.find("a:first").attr("href");
-						var region = href.substring(7).toLowerCase().replaceAll(" ", "_");
-						console.log("Region: " + region);
-						if ($("#regional_reports").find("#" + region).length == 0) {
-							delay += 6000;
-							$("#regional_reports").append("<div id='" + region + "'><h3><a href='" + href + "'>" + region.replaceAll("_", " ").toTitleCase() + "</a></h3></div>");
-							console.log("Delay: " + delay);
-							setTimeout(loadRegionHappenings, delay, region);
-							foundNew = true;
+						if (typeof href == "undefined") {
+							return true;
 						}
-					}
-					if (foundNew) {
-						setTimeout(generateRegionDossierReport, 1000, offset + 15, delay);
-					} else {
-						setTimeout(function() { NProgress.done(); }, delay + 1000);
+						var region = href.substring(7).toLowerCase().replaceAll(" ", "_");
+						if ($("#regional_reports").find("#" + region).length == 0) {
+							if (!loadedNextPage) {
+								setTimeout(generateRegionDossierReport, 1000, offset + 15, delay + 1);
+								loadedNextPage = true;
+							}
+							$("#regional_reports").append("<div id='" + region + "'><h3><a href='" + href + "'>" + region.replaceAll("_", " ").toTitleCase() + "</a></h3></div>");
+							if (getUserNation() != "afforess" || !api.canUseAPI()) {
+								delay += 6000;
+								setTimeout(loadRegionHappenings, delay, region);
+							} else {
+								(function(region) {
+									api.doRequest("http://www.nationstates.net/cgi-bin/api.cgi?region=" + region + "&q=happenings").done(function(data) {
+										(function(region) {
+											$.post("http://capitalistparadise.com/api/region/parseHappenings/", "region=" + region + "&xml=" + encodeURIComponent(data), function(json) {
+												var innerHTML = "";
+												for (var i = 0; i < json.length; i++) {
+													var hData = json[i];
+													innerHTML += "<li>" + timestampToTimeAgo(hData.timestamp * 1000) + " ago: " + hData.happening + "</li>";
+												}
+												$("#" + region).append("<ul id='" + region + "_list' style='display:none;'>" + innerHTML + "</ul");
+												$("#" + region + "_list").animate({height: "toggle"}, 600);
+											});
+										})(region);
+									});
+								})(region);
+							}
+						}
 					}
 				}
 			});
@@ -114,9 +123,6 @@
 		$.post("page=reports", "report_hours=" + $("input[name='report_hours']").val() + "&" + reportName + "=1&generate_report=Generate+Report", function(data) {
 			var report = $(data).find("h2").next();
 			$("#" + reportName).find("ul[name='report']").html(report.html());
-			if (!isSettingEnabled("report_dossier_regions")) {
-				setTimeout(function() { NProgress.done() }, 1000);
-			}
 		});
 	}
 })();

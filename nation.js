@@ -6,9 +6,8 @@
 		showNationAlias();
 		addInfiniteHappenings();
 	}
-	
-	var extraHappenings = null;
-	var happeningsIndex = 0;
+
+	var happeningsIndex = 10;
 	var endHappenings = false;
 	function addInfiniteHappenings() {
 		$("<div class='rmbolder' style='display: block;margin-left: 1%;  margin-right: 50%%;'><a href='javascript:void(0)' id='more_happenings'>&#8593; Load More Happenings</a></div>").insertAfter($(".newsbox").find("ul"));
@@ -16,62 +15,26 @@
 			if (endHappenings) {
 				return;
 			}
-			if (extraHappenings == null) {
-				$.get("http://capitalistparadise.com/api/happenings/?nation=" + getVisibleNation() + "&global=true&excludeNewest=true", function(json) {
-					extraHappenings = json;
-					addExtraHappenings();
-				});
-			} else {
-				addExtraHappenings();
-			}
+			$.get("http://capitalistparadise.com/api/happenings/?nation=" + getVisibleNation() + "&global=true&start=" + happeningsIndex + "&limit=20", function(json) {
+				happeningsIndex += 20;
+				parseHappenings(json);
+			});
 		});
 	}
 
-	function addExtraHappenings() {
+	function parseHappenings(json) {
 		var happenings = $(".newsbox").find("ul");
-		for (var i = happeningsIndex; i < Math.min(happeningsIndex + 20, extraHappenings.length); i++) {
-			var data = extraHappenings[i];
+		for (var i = 0; i < json.length; i++) {
+			var data = json[i];
 			if (i == 0 && data.happening.contains("Unknown nation:")) {
 				break;
 			}
-			var threeDays = false;
-			var time = "";
-			var timeDiff = Date.now() - data.timestamp;
-			if (timeDiff > 365 * 24 * 60 * 60 * 1000) {
-				var years = Math.floor(timeDiff / (365 * 24 * 60 * 60 * 1000));
-				if (years > 1) time += years + " years ";
-				else time += "1 year ";
-				timeDiff -= years * (365 * 24 * 60 * 60 * 1000);
-			}
-			if (timeDiff > 24 * 60 * 60 * 1000) {
-				var days = Math.floor(timeDiff / (24 * 60 * 60 * 1000));
-				threeDays = days > 3;
-				if (days > 1) time += days + " days ";
-				else time += "1 day ";
-				timeDiff -= days * (24 * 60 * 60 * 1000);
-			}
-			if (!time.contains("year") && (!time.contains("days") || !threeDays) && timeDiff > 60 * 60 * 1000) {
-				var hours = Math.floor(timeDiff / (60 * 60 * 1000));
-				if (hours > 1) {
-					time += hours + " hours ";
-					timeDiff -= hours * (60 * 60 * 1000);
-				}
-			}
-			if (!time.contains("year") && !time.contains("day") && !time.contains("hours") && timeDiff > 60 * 1000) {
-				var minutes = Math.floor(timeDiff / (60 * 1000));
-				if (minutes > 1) time += minutes + " minutes ";
-				else time += "1 minutes ";
-				timeDiff -= minutes * (60 * 1000);
-			}
-			if (!time.contains("year") && !time.contains("day") && !time.contains("hours") && !time.contains("minutes") && timeDiff > 1000) {
-				time = "Seconds ";
-			}
-			time = time.substring(0, time.length - 1);
-			happenings.append("<li style='display:none;' class='happenings_" + happeningsIndex + "'>" + time + " ago: " + data.happening + "</li>");
+			
+			happenings.append("<li style='display:none;' class='happenings_" + happeningsIndex + "'>" + timestampToTimeAgo(data.timestamp) + " ago: " + data.happening + "</li>");
 		}
 		$(".happenings_" + happeningsIndex).hide().animate({ height: 'toggle' }, 800);
 		happeningsIndex += 20;
-		if (happeningsIndex >= extraHappenings.length) {
+		if (20 > json.length) {
 			endHappenings = true;
 			$("#more_happenings").html("End of Happenings");
 		}

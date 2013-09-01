@@ -8,77 +8,105 @@
 		vertical-align: middle;
 	}
 </style>
-<form id='settings'>
+<div id='settings_content'>
+	<form id='settings'>
+		<div>
+			<input id='region_enhancements' type="checkbox" style='vertical-align: middle;'/>
+			<label for='region_enhancements'>Region Enhancements</label>
+		</div>
+		<fieldset id='region_enhancements_form'>
+			<div>
+				<input id='embassy_flags' class='indent' type="checkbox"/>
+				<label for='embassy_flags'>Embassy Flags</label>
+			</div>
+			<div>
+				<input id='search_rmb' class='indent' type="checkbox"/>
+				<label for='search_rmb'>Search Message Board</label>
+			</div>
+			<div>
+				<input id='infinite_scroll' class='indent' type="checkbox"/>
+				<label for='infinite_scroll'>Scrolling Message Board</label>
+			</div>
+			 <div>
+				<input id='show_ignore' class='indent' type="checkbox"/>
+				<label for='show_ignore'>Show Ignore Button</label>
+			</div>
+			<div>
+				<input id='show_quote' class='indent' type="checkbox"/>
+				<label for='show_quote'>Show Quote Button</label>
+			</div>
+			<div>
+				<input id='auto_update' class='indent' type="checkbox"/>
+				<label for='auto_update'>Auto Update Messages</label>
+			</div>
+			<div>
+				<input id='clickable_links' class='indent' type="checkbox"/>
+				<label for='clickable_links'>Linkify URLs</label>
+			</div>
+			<div>
+				<input id='hide_ads' class='indent' type="checkbox"/>
+				<label for='hide_ads'>Hide Ads</label>
+			</div>
+			<div>
+				<input id='scroll_nation_lists' class='indent' type="checkbox"/>
+				<label for='scroll_nation_lists'>Nation List Scrolling</label>
+			</div>
+			<div>
+				<input id='show_puppet_switcher' class='indent' type="checkbox"/>
+				<label for='show_puppet_switcher'>Show Puppet Switcher</label>
+			</div>
+			<div>
+				<input id='autologin_to_regional_irc' class='indent' type="checkbox"/>
+				<label for='autologin_to_regional_irc'>Autologin to Regional IRC</label>
+			</div>
+			<div>
+				<input id='fancy_dossier_theme' class='indent' type="checkbox"/>
+				<label for='fancy_dossier_theme'>Fancy Dossier Theme</label>
+			</div>
+			<div>
+				<input id='use_nationstates_api' class='indent' type="checkbox"/>
+				<label for='use_nationstates_api' title='The NationStates API allows faster reporting but may interfere with developer tools'>Use NationStates API</label>
+			</div>
+		</fieldset>
+		<div>
+			<input id='telegram_enhancements' type="checkbox" style='vertical-align: middle;'/>
+			<label for='telegram_enhancements'>Telegram Enhancements</label>
+		</div>
+		<fieldset id='telegram_enhancements_form'>
+			<div>
+				<input id='clickable_telegram_links' class='indent' type="checkbox"/>
+				<label for='clickable_telegram_links'>Linkify URLs</label>
+			</div>
+		</fieldset>
+	</form>
 	<div>
-		<input id='region_enhancements' type="checkbox" style='vertical-align: middle;'/>
-		<label for='region_enhancements'>Region Enhancements</label>
+		<button id='save_button' class='button ghbutton' style='margin:4px; font-size: 12px; font-weight: bold;'>Save</button>
+		<button id='reset_button' class='button ghbutton' style='margin:4px; font-size: 12px; font-weight: bold;'>Reset</button>
+		<button id='cancel_button' class='button ghbutton' style='margin:4px; font-size: 12px; font-weight: bold;'>Cancel</button>
 	</div>
-    <fieldset id='region_enhancements_form'>
-        <div>
-            <input id='embassy_flags' class='indent' type="checkbox"/>
-            <label for='embassy_flags'>Embassy Flags</label>
-        </div>
-        <div>
-            <input id='search_rmb' class='indent' type="checkbox"/>
-            <label for='search_rmb'>Search Message Board</label>
-        </div>
-        <div>
-            <input id='infinite_scroll' class='indent' type="checkbox"/>
-            <label for='infinite_scroll'>Scrolling Message Board</label>
-        </div>
-         <div>
-            <input id='show_ignore' class='indent' type="checkbox"/>
-            <label for='show_ignore'>Show Ignore Button</label>
-        </div>
-        <div>
-            <input id='show_quote' class='indent' type="checkbox"/>
-            <label for='show_quote'>Show Quote Button</label>
-        </div>
-        <div>
-            <input id='auto_update' class='indent' type="checkbox"/>
-            <label for='auto_update'>Auto Update Messages</label>
-        </div>
-        <div>
-            <input id='clickable_links' class='indent' type="checkbox"/>
-            <label for='clickable_links'>Linkify URLs</label>
-        </div>
-		<div>
-            <input id='hide_ads' class='indent' type="checkbox"/>
-            <label for='hide_ads'>Hide Ads</label>
-        </div>
-		<div>
-            <input id='scroll_nation_lists' class='indent' type="checkbox"/>
-            <label for='scroll_nation_lists'>Nation List Scrolling</label>
-        </div>
-		<div>
-            <input id='show_puppet_switcher' class='indent' type="checkbox"/>
-            <label for='show_puppet_switcher'>Show Puppet Switcher</label>
-        </div>
-		<div>
-            <input id='autologin_to_regional_irc' class='indent' type="checkbox"/>
-            <label for='autologin_to_regional_irc'>Autologin to Regional IRC</label>
-        </div>
-		<div>
-            <input id='fancy_dossier_theme' class='indent' type="checkbox"/>
-            <label for='fancy_dossier_theme'>Fancy Dossier Theme</label>
-        </div>
-    </fieldset>
-	<div>
-		<input id='telegram_enhancements' type="checkbox" style='vertical-align: middle;'/>
-		<label for='telegram_enhancements'>Telegram Enhancements</label>
-	</div>
-	<fieldset id='telegram_enhancements_form'>
-        <div>
-            <input id='clickable_telegram_links' class='indent' type="checkbox"/>
-            <label for='clickable_telegram_links'>Linkify URLs</label>
-        </div>
-    </fieldset>
-</form>
-<div>
-	<button id='save_button' class='button ghbutton' style='margin:4px; font-size: 12px; font-weight: bold;'>Save</button>
-	<button id='reset_button' class='button ghbutton' style='margin:4px; font-size: 12px; font-weight: bold;'>Reset</button>
-	<button id='cancel_button' class='button ghbutton' style='margin:4px; font-size: 12px; font-weight: bold;'>Cancel</button>
+	<p><a href='http://forum.nationstates.net/?open_settings'>Looking for the Forum Settings?</a></p>
+	<p><a href='http://afforess.uservoice.com/forums/210362-nationstates-'>Suggest Ideas & Features!</a></p>
+	<p><a id='server_stats_link' href='javascript:void(0)'>Bored? Live NationStates++ Server Stats.</a></p>
+	<p style='font-style:italic; font-size:10px;'>NationStates++ v1.9</p>
 </div>
-<p><a href='http://forum.nationstates.net/?open_settings'>Looking for the Forum Settings?</a></p>
-<p><a href='http://afforess.uservoice.com/forums/210362-nationstates-'>Suggest Ideas & Features!</a></p>
-<p style='font-style:italic; font-size:10px;'>NationStates++ v1.9</p>
+<div id='server_stats' style='display:none;'>
+
+</div>
+<script>
+	if (window.location.href.indexOf("show_stats=true") > -1) {
+		showServerStats();
+	}
+	$("#server_stats_link").click(showServerStats);
+	function showServerStats() {
+		$("#settings_content").hide();
+		$("#server_stats").show();
+		$("h1").html("NationStates++ Server Statistics");
+		var cpu = '<iframe src="https://rpm.newrelic.com/public/charts/7WJapKYtFih" width="500" height="300" scrolling="no" frameborder="no"></iframe>';
+		var memory = '<iframe src="https://rpm.newrelic.com/public/charts/6pDIb1fy4n7" width="500" height="300" scrolling="no" frameborder="no"></iframe>';
+		var disk = '<iframe src="https://rpm.newrelic.com/public/charts/3kGBkWVkkQD" width="500" height="300" scrolling="no" frameborder="no"></iframe>';
+		var network = '<iframe src="https://rpm.newrelic.com/public/charts/jllI6ankuA5" width="500" height="300" scrolling="no" frameborder="no"></iframe>';
+		var connections = '<iframe src="https://rpm.newrelic.com/public/charts/72FSNE33rRb" width="500" height="300" scrolling="no" frameborder="no"></iframe>';
+		var requests = '<iframe src="https://rpm.newrelic.com/public/charts/kmNJ6MUqrab" width="500" height="300" scrolling="no" frameborder="no"></iframe>';
+		$("#server_stats").html(cpu + memory + disk + network + connections + requests);
+	}
+</script>

@@ -447,10 +447,10 @@ function doRMBSearch() {
 	var region = getVisibleRegion();
 	var author = "*";
 	if ($("#rmb-search-input-region").val() != "") {
-		region = $("#rmb-search-input-region").val();
+		region = $("#rmb-search-input-region").val().replaceAll(" ", "_");
 	}
 	if ($("#rmb-search-input-author").val() != "") {
-		author = $("#rmb-search-input-author").val();
+		author = $("#rmb-search-input-author").val().replaceAll(" ", "_");
 	}
 	var page = '/page=ajax/a=rmbsearch/rmbsearch-text=' + encodeURIComponent(input) + (region == "*" ? "" : '/rmbsearch-region=' + region) + (author == "*" ? "" : '/rmbsearch-author=' + author) + '/rmbsearch-offset=' + searchOffset;
 	$.get(page, function(data) {

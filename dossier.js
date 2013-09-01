@@ -20,6 +20,15 @@
 		
 		$("#clear_national_dossier, #clear_regional_dossier").click(function(event) {
 			var isRegional = $(this).attr("id") == "clear_regional_dossier";
+			console.log("HTML: " + $(this).html() );
+			if ($(this).html() != "Are You Sure?") {
+				var html = $(this).html();
+				var resetButton = function(button, html) { $(button).html(html); };
+				setTimeout(resetButton, 6000, this, html);
+				$(this).css("min-width", ($(this).width() + 32 )+ "px");
+				$(this).html("Are You Sure?");
+				return;
+			}
 			$.post("page=dossier", (isRegional ? "clear_rdossier=REMOVE+ALL" : "clear_dossier=REMOVE+ALL"), function(html) {
 				var dossier = $((isRegional ? "#region_dossier" : "#nation_dossier"));
 				dossier.find(".dossier_element").remove();
@@ -142,7 +151,7 @@
 				return;
 			}
 			var targets = [];
-			$.get("page=dossier?start=" + (currentNationPage * 15), function(html) {
+			$.get("page=dossier?start=" + (currentNationPage * 15) + "&rstart=" + (currentRegionPage * 15), function(html) {
 				var dossierHtml = "";
 				if (region) {
 					$(html).find("table").find("tbody").find("tr").each(function() {
@@ -152,6 +161,7 @@
 							if (regionElement.find("a").length > 0) {
 								region = regionElement.find("a").attr("href").substring(7);
 							}
+							region = region.toLowerCase().replaceAll(" ", "_");
 							var nations = $($(this).children()[2]).html();
 							var delegate = "None";
 							var delegateFlag = "";
@@ -160,9 +170,7 @@
 									delegate = $($(this).children()[3]).find(".nlink").attr("href").substring(7);
 									delegateFlag = $($(this).children()[3]).find(".smallflag").attr("src");
 								}
-								console.log("Delegate: " + delegate + " flag: " + delegateFlag);
-							} catch (error) {
-							}
+							} catch (error) { }
 							if ($("#region_dossier").find("#" + region).length == 0) {
 								dossierHtml += "<div id='" + region + "' class='dossier_element'" + (animate ? "style='display:none; min-height:28px;'" : "style='min-height:28px'") + "><div><img id='remove-" + region + "' src='http://capitalistparadise.com/nationstates/static/remove.png' class='remove-dossier' title='Remove from Dossier'><a style='font-weight:bold' target='_blank' href='http://nationstates.net/region=" + region + "'>" + region.replaceAll("_", " ").toTitleCase() + "</a><div class='last_activity'>Nations: " + nations + "</div>";
 								if (delegateFlag.length > 0) {
