@@ -1,6 +1,7 @@
 var quote = '<button id="quote-btn-${id}" class="button QuoteButton" onclick="quotePost(this);">Quote</button>';
 (function() {
 	if (getVisiblePage() == "list_nations" || getVisiblePage() == "list_regions" || getVisiblePage() == "world") {
+		if (getVisiblePage() == "list_regions") addRegionFlags();
 		setupPageSlider();
 	} else if (getVisiblePage() == "region" || getVisiblePage() == "display_region") {
 		setupRegionPage(false);
@@ -189,32 +190,27 @@ function addFormattingButtons() {
 			$(this).css("text-decoration", "underline");
 		} else if ($(this).html() == "nation") {
 			$(this).attr("id", "nation_format");
+			$(this).html("<option>nation</option><option>nation=short</option><option>nation=noflag</option><option>nation=short+noflag</option>");
+			$(this).css("width", "143px");
+			$(this).changeElementType("select");
+			return true;
 		} else if ($(this).html() == "region") {
 			$(this).attr("id", "region_format");
 		}
 		$(this).attr("class", "forum_bbcode_button");
 		$(this).changeElementType("button");
 	});
-	$("#bold_format").on("click", function(event) {
-		event.preventDefault();
-		getRMBTextArea().wrap_selection("[b]", "[/b]");
-	});
-	$("#italic_format").on("click", function(event) {
-		event.preventDefault();
-		getRMBTextArea().wrap_selection("[i]", "[/i]");
-	});
-	$("#underline_format").on("click", function(event) {
-		event.preventDefault();
-		getRMBTextArea().wrap_selection("[u]", "[/u]");
-	});
-	$("#nation_format").on("click", function(event) {
-		event.preventDefault();
-		getRMBTextArea().wrap_selection("[nation]", "[/nation]");
-	});
-	$("#region_format").on("click", function(event) {
-		event.preventDefault();
-		getRMBTextArea().wrap_selection("[region]", "[/region]");
-	});
+	$("#bold_format").on("click", formatBBCode);
+	$("#italic_format").on("click", formatBBCode);
+	$("#underline_format").on("click", formatBBCode);
+	$("#nation_format").on("change", formatBBCode);
+	$("#region_format").on("click", formatBBCode);
+}
+
+function formatBBCode(event) {
+	event.preventDefault();
+	var value = ($(this).html().contains("<option>") ? $(this).val() : $(this).html());
+	getRMBTextArea().wrap_selection("[" + value + "]", "[/" + value + "]");
 }
 
 function getRMBTextArea() {
@@ -443,10 +439,28 @@ function updateShinyPage(page, request) {
 	}, 250);
 }
 
+function addRegionFlags() {
+	$("a.rlink").each(function() {
+		if ($(this).find(".smallflag, .miniflag").length > 0) return true;
+		var region = $(this).attr("href").substring(7);
+		$(this).attr("id", "rflag-" + region);
+		$.get("http://capitalistparadise.com/api/regionflag/?region=" + region, function(json) {
+			for (var region in json) {
+				var flag = json[region];
+				if (flag != null && flag.length > 0) {
+					var rlink = $("#rflag-" + region);
+					rlink.html("<img class='smallflag' src='" + flag + "'>" + rlink.html());
+				}
+			}
+		});
+	});
+}
+
 function doShinyPageUpdate(data) {
 	var search = getShinyTableSelector();
 	var table = $(search);
 	table.html($(data).find(search).html());
+	addRegionFlags();
 	if (getVisibleRegion() == getUserRegion()) {
 		if (shinyRangePage != 1) {
 			$(shinyTableBottomRows).insertAfter($(search).children().children(':last-child'));

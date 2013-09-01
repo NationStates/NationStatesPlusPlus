@@ -13,9 +13,9 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.900</string>
+	<string>1.910</string>
 	<key>CFBundleVersion</key>
-	<string>&lt;?xml version="1.0"?&gt; &lt;r:RDF xmlns:r="http://www.w3.org/1999/02/22-rdf-syntax-ns#"         xmlns="http://www.mozilla.org/2004/em-rdf#"&gt;  &lt;r:Description about="urn:mozilla:extension:afforess@gmail.com"&gt;     &lt;updates&gt;     &lt;r:Seq&gt;     &lt;r:li&gt;     &lt;r:Description&gt;         &lt;version&gt;1.900&lt;/version&gt;         &lt;targetApplication&gt;             &lt;r:Description&gt;             &lt;id&gt;{ec8030f7-c20a-464f-9b0e-13a3a9e97384}&lt;/id&gt;             &lt;minVersion&gt;4.0&lt;/minVersion&gt;             &lt;maxVersion&gt;30.*&lt;/maxVersion&gt;             &lt;updateLink&gt;http://capitalistparadise.com/nationstates/nationstates.xpi&lt;/updateLink&gt;             &lt;updateHash&gt;             sha1:EDB177CF67B704BFC7177435A01C4A91E0D06793             &lt;/updateHash&gt;             &lt;/r:Description&gt;         &lt;/targetApplication&gt;     &lt;/r:Description&gt;     &lt;/r:li&gt;     &lt;/r:Seq&gt;     &lt;/updates&gt; &lt;/r:Description&gt;  &lt;/r:RDF&gt;</string>
+	<string>1.910</string>
 	<key>Chrome</key>
 	<dict/>
 	<key>Content</key>
