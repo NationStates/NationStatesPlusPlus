@@ -349,3 +349,9 @@ fieldset.preview {
 	border-color: #BC2A4D;
 	color: #BC2A4D;
 }
+
+#panel ul.menu {
+	font-family: Verdana,Tahoma !important; 
+	font-weight: bold !important;
+	font-size: 13px !important;
+}

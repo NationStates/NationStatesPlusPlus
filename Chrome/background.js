@@ -79,10 +79,11 @@ function loadJavascript() {
 	addJavascript(staticUrlPrefix + 'jquery.caret.js');
 	addJavascript(staticUrlPrefix + 'jquery.highlight.js');
 	addJavascript(staticUrlPrefix + 'jquery.nouislider.min.js');
+	addJavascript(staticUrlPrefix + 'textFit.min.js');
 	addJavascript(staticUrlPrefix + 'nprogress.js');
 
 	addJavascript(urlPrefix + 'nationstates++_common.js', function() {
-		if (pageUrl.indexOf('http://www.nationstates.net/') > -1 && isSettingEnabled("region_enhancements")) {
+		if (pageUrl.indexOf('http://www.nationstates.net/') > -1 && isSettingEnabled("gameplay_enhancements")) {
 			console.log('[NationStates++] Detected NationStates Page. Loading...');
 
 			if (document.head.innerHTML.indexOf("antiquity") != -1) {
@@ -96,9 +97,7 @@ function loadJavascript() {
 			if (isSettingEnabled("embassy_flags")) {
 				addJavascript(urlPrefix + 'embassy_flags.js');
 			}
-			if (isSettingEnabled("telegram_enhancements")) {
-				addJavascript(urlPrefix + 'telegrams.js');
-			}
+			addJavascript(urlPrefix + 'telegrams.js');
 			addJavascript(urlPrefix + 'issues.js');
 			addJavascript(urlPrefix + 'help.js');
 			addJavascript(urlPrefix + 'irc.js');
@@ -147,6 +146,8 @@ window.addEventListener("message", function(event) {
 			});
 			window.postMessage({ method: "unread_forum_posts_amt", amt: unread}, "*");
 		});*/
+	} else if (event.data.method == "load_live_happenings") {
+		window.location.href = "http://www.nationstates.net/page=news/?live_happenings=true";
 	}
 });
 

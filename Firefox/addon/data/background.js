@@ -79,6 +79,7 @@ function loadJavascript() {
 	addJavascript(staticUrlPrefix + 'jquery.caret.js');
 	addJavascript(staticUrlPrefix + 'jquery.highlight.js');
 	addJavascript(staticUrlPrefix + 'jquery.nouislider.min.js');
+	addJavascript(staticUrlPrefix + 'textFit.min.js');
 	addJavascript(staticUrlPrefix + 'nprogress.js');
 
 	addJavascript(urlPrefix + 'nationstates++_common.js', function() {

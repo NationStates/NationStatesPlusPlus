@@ -1,14 +1,21 @@
 var quote = '<button id="quote-btn-${id}" class="button QuoteButton" onclick="quotePost(this);">Quote</button>';
 (function() {
-	if (getVisiblePage() == "list_nations" || getVisiblePage() == "list_regions" || getVisiblePage() == "world") {
-		if (getVisiblePage() == "list_regions") addRegionFlags();
+	if (getVisiblePage() == "list_nations" || getVisiblePage() == "list_regions" || getVisiblePage() == "world" || getVisiblePage() == "tag_search") {
+		if (getVisiblePage() == "list_regions" || getVisiblePage() == "tag_search") addRegionFlags();
 		setupPageSlider();
 	} else if (getVisiblePage() == "region" || getVisiblePage() == "display_region") {
+		updateRegionFlag();
 		setupRegionPage(false);
 	} else if (getVisiblePage() == "display_region_rmb") {
 		setupRegionPage(true);
 	}
 })();
+
+function updateRegionFlag() {
+	if ($("h1").find(".rflag").length == 1) {
+		$.post("http://capitalistparadise.com/api/region/updateFlag/", "region=" + getVisibleRegion() + "&flag=" + encodeURIComponent("http://www.nationstates.net" + $("h1").find(".rflag").attr("src")), function() { });
+	}
+}
 
 function setupRegionPage(forumViewPage) {
 	if (isSettingEnabled("auto_update")) {
@@ -334,14 +341,42 @@ function setupPageSlider() {
 		});
 		if (maxPage > 1) {
 			census.attr("align", "");
-			if (getVisiblePage() == "region" || getVisibleRegion() == "") {
+			census.html("<button name='prev-shiny-page' class='button' style='left: 210px; position: absolute; margin-top: -10px;'>Prev Page</button>");
+			if (getVisiblePage() == "tag_search") {
+				$(getShinyTableSelector()).css("min-width", "99%");
+				census.html(census.html() + "<div id='page-slider' style='text-align: center; width:75%; margin-left:12.5%;' class='noUiSlider'></div>");
+			} else if (getVisiblePage() == "region" || getVisibleRegion() == "") {
 				if (getVisibleSorting() == "alpha" || window.location.href.contains("un=")) $(getShinyTableSelector()).css("min-width", "98%");
-				census.html("<div id='page-slider' style='text-align: center; width:75%; margin-left:12.5%;' class='noUiSlider'></div>");
+				census.html(census.html() + "<div id='page-slider' style='text-align: center; width:75%; margin-left:12.5%;' class='noUiSlider'></div>");
 			} else {
 				$(getShinyTableSelector()).css("min-width", "75%");
-				census.html("<div id='page-slider' style='text-align: center; width:73%; margin-left:1%;' class='noUiSlider'></div>");
+				census.html(census.html() + "<div id='page-slider' style='text-align: center; width:73%; margin-left:1%;' class='noUiSlider'></div>");
 			}
+			census.html(census.html() + "<button name='next-shiny-page' class='button' style='right: 20px; position: absolute; margin-top: -10px;'>Next Page</button>");
 			addPageSlider(maxPage);
+			
+			$("button[name='next-shiny-page']").on("click", function(event) {
+				event.preventDefault();
+				if (shinyRangePage < maxPage - 1) {
+					updatePageSlider(shinyRangePage + 1);
+					$("#prev-shiny-page").attr("disabled", false);
+				} else if (shinyRangePage == maxPage - 1) {
+					updatePageSlider(maxPage);
+					$("button[name='next-shiny-page']").attr("disabled", true);
+					$("#prev-shiny-page").attr("disabled", false);
+				}
+			});
+			$("button[name='prev-shiny-page']").on("click", function(event) {
+				event.preventDefault();
+				if (shinyRangePage > 2) {
+					updatePageSlider(shinyRangePage - 1);
+					$("#next-shiny-page").attr("disabled", false);
+				} else if (shinyRangePage == 2) {
+					updatePageSlider(1);
+					$("button[name='prev-shiny-page']").attr("disabled", true);
+					$("#next-shiny-page").attr("disabled", false);
+				}
+			});
 		}
 	}
 }
@@ -368,7 +403,7 @@ function addPageSlider(maxPage) {
 				}
 			}
 		});
-		if (getVisibleRegion() == getUserRegion() && getVisiblePage() == "region") {
+		if (getVisibleRegion() == getUserRegion() && getUserNation() != "" && getVisiblePage() == "region" && $(getShinyTableSelector()).find("tbody").children().length == 13) {
 			var html = "";
 			$(getShinyTableSelector()).children().children(':last-child').prev('tr').andSelf().each(function() {
 				html += "<tr>" + $(this).html() + "</tr>"
@@ -423,6 +458,13 @@ function updateShinyPage(page, request) {
 				pageUrl += "/un=DL";
 			}
 			pageUrl += '?start=' + (page * 10 - 10);
+		} else if (getVisiblePage() == "tag_search") {
+			pageUrl = '/page=tag_search/type=region/'
+			if (getVisibleSorting() != "") {
+				pageUrl += "/sort=" + getVisibleSorting();
+			}
+			pageUrl += "/tag=" + getVisibleTag();
+			pageUrl += '?start=' + (page * 15 - 15);
 		} else if (getVisiblePage() == "list_regions") {
 			pageUrl = '/page=list_regions';
 			if (getVisibleSorting() != "") {
@@ -460,7 +502,7 @@ function doShinyPageUpdate(data) {
 	var search = getShinyTableSelector();
 	var table = $(search);
 	table.html($(data).find(search).html());
-	addRegionFlags();
+	if (getVisiblePage() == "list_regions" || getVisiblePage() == "tag_search") addRegionFlags();
 	if (getVisibleRegion() == getUserRegion()) {
 		if (shinyRangePage != 1) {
 			$(shinyTableBottomRows).insertAfter($(search).children().children(':last-child'));

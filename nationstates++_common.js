@@ -365,20 +365,14 @@ function showSettings() {
 			if (!$("#forum_enhancements").prop("checked")) {
 				$("#forum_enhancements_form").find('input').toggleDisabled();
 			}
-			if (!$("#region_enhancements").prop("checked")) {
-				$("#region_enhancements_form").find('input').toggleDisabled();
+			if (!$("#gameplay_enhancements").prop("checked")) {
+				$("#gameplay_enhancements_form").find('input').toggleDisabled();
 			}
-			if (!$("#telegram_enhancements").prop("checked")) {
-				$("#telegram_enhancements_form").find('input').toggleDisabled();
-			}
-			$("#region_enhancements").on('click', function() {
-				$("#region_enhancements_form").find('input').toggleDisabled();
+			$("#gameplay_enhancements").on('click', function() {
+				$("#gameplay_enhancements_form").find('input').toggleDisabled();
 			});
 			$("#forum_enhancements").on('click', function() {
 				$("#forum_enhancements_form").find('input').toggleDisabled();
-			});
-			$("#telegram_enhancements").on('click', function() {
-				$("#telegram_enhancements_form").find('input').toggleDisabled();
 			});
 			$("#save_button").on("click", function() {
 				$("#nationstates_settings").find('input').each(function() {
@@ -417,7 +411,6 @@ function setupSyncing() {
 	localStorage.removeItem("next_sync" + getUserNation());
 	var nextSync = localStorage.getItem("next_sync_" + getUserNation());
 	if (nextSync == null || nextSync < Date.now()) {
-		localStorage.setItem("next_sync_" + getUserNation(), Date.now() + 900 * 1000);
 		if (typeof Firebase == "undefined") {
 			console.log("waiting for firebase...");
 			setTimeout(setupSyncing, 250);
@@ -440,12 +433,13 @@ function setupSyncing() {
 		_progress_label.css("width", "auto");
 		$('.ui-progressbar-value').append(_progress_label);
 		$('.ui-progressbar-value').css("background", "#425AFF");
-
+	
 		setTimeout(function() {
 			var authToken = localStorage.getItem("auth-" + getUserNation());
 			if (authToken != null) {
 				$("#firebase_progress_bar" ).progressbar({value: 40});
 				loginFirebase(authToken);
+				localStorage.setItem("next_sync_" + getUserNation(), Date.now() + 900 * 1000);
 			} else {
 				$("#firebase_progress_bar" ).progressbar({value: 5});
 				requestAuthToken();
@@ -459,6 +453,7 @@ function requestAuthToken() {
 	$.get("/page=verify_login", function(data) {
 		$("#firebase_progress_bar" ).progressbar({value: 25});
 		var authCode = $(data).find("#proof_of_login_checksum").html();
+		console.log("Auth code:" + authCode);
 		//Regenerate localid if nessecary
 		if ($("input[name='localid']").length > 0) {
 			setTimeout(function () {
@@ -546,7 +541,7 @@ function syncFirebase() {
 		}
 		if (lastFirebaseUpdate < lastSettingsUpdate) {
 			dataRef.child("settings").set({
-				region_enhancements: isSettingEnabled("region_enhancements"),
+				gameplay_enhancements: isSettingEnabled("gameplay_enhancements"),
 				embassy_flags: isSettingEnabled("embassy_flags"),
 				search_rmb: isSettingEnabled("search_rmb"),
 				infinite_scroll: isSettingEnabled("infinite_scroll"),
@@ -556,12 +551,13 @@ function syncFirebase() {
 				clickable_links: isSettingEnabled("clickable_links"),
 				hide_ads: isSettingEnabled("hide_ads"),
 				scroll_nation_lists: isSettingEnabled("scroll_nation_lists"),
-				telegram_enhancements: isSettingEnabled("telegram_enhancements"),
 				clickable_telegram_links: isSettingEnabled("clickable_telegram_links"),
 				show_puppet_switcher: isSettingEnabled("show_puppet_switcher"),
 				autologin_to_regional_irc: isSettingEnabled("autologin_to_regional_irc"),
 				fancy_dossier_theme: isSettingEnabled("fancy_dossier_theme"),
 				use_nationstates_api: isSettingEnabled("use_nationstates_api"),
+				show_live_happenings_feed: isSettingEnabled("show_live_happenings_feed"),
+				show_gameplay_news: isSettingEnabled("show_gameplay_news"),
 				settings_timestamp: (localStorage.getItem("settings-timestamp") == null ? Date.now() : localStorage.getItem("settings-timestamp"))
 			});
 		} else {
@@ -695,7 +691,7 @@ function getVisibleRegion() {
 	var split = window.location.href.split(/[/#/?]/);
 	for (var i = 0; i < split.length; i++) {
 		if (split[i].startsWith("region=")) {
-			return split[i].substring(7);
+			return split[i].substring(7).toLowerCase().replaceAll(" ", "_");
 		}
 	}
 	return "";}
@@ -727,6 +723,16 @@ function getTelegramFolder() {
 		}
 	}
 	return "inbox";
+}
+
+function getVisibleTag() {
+	var split = window.location.href.split(/[/#/?]/);
+	for (var i = 0; i < split.length; i++) {
+		if (split[i].startsWith("tag=")) {
+			return split[i].substring(4);
+		}
+	}
+	return "";
 }
 
 function getTelegramStart() {
