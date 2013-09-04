@@ -17,3 +17,7 @@
 	background-color: green;
 	box-shadow: 1px 1px 2px #343;
 }
+
+#panel ul.menu {
+	font-size: 12px !important;
+}

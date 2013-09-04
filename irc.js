@@ -41,7 +41,7 @@
 				} else {
 					ircUrl += "/?theme=relaxed&nick=";
 				}
-				ircUrl += getUserNation().split("_").join(" ").toTitleCase() + "&" + region["channel"];
+				ircUrl += getUserNation().replaceAll("_", " ").toTitleCase().replaceAll(" ", "_") + "&" + region["channel"];
 				$("<h2 style='display: inline-block; margin-bottom: 0;'>Regional IRC</h2>" + 
 				"<div style='display: inline; margin-left: 10px;'>" +
 				"<a id='irc-link' href='javascript:void(0)' onclick=toggleIRC(this)>(Hide)</a></div>" + 
@@ -50,15 +50,6 @@
 				if (localStorage.getItem("show_irc") == "false") {
 					toggleIRC($("#irc-link"));
 				}
-				var contentWindow = $("#irc-frame")[0].contentWindow;
-				setTimeout(function() {
-					if (isSettingEnabled("autologin_to_regional_irc")) {
-						contentWindow.postMessage({ method: "login"}, "*");
-					}
-				}, 2500);
-				window.onbeforeunload = function(event) {
-					contentWindow.postMessage({ method: "logout"}, "*");
-				};
 				break;
 			}
 		}

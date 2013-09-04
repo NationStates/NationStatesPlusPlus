@@ -359,22 +359,22 @@ function setupPageSlider() {
 				event.preventDefault();
 				if (shinyRangePage < maxPage - 1) {
 					updatePageSlider(shinyRangePage + 1);
-					$("#prev-shiny-page").attr("disabled", false);
+					$("button[name='prev-shiny-page']").attr("disabled", false);
 				} else if (shinyRangePage == maxPage - 1) {
 					updatePageSlider(maxPage);
 					$("button[name='next-shiny-page']").attr("disabled", true);
-					$("#prev-shiny-page").attr("disabled", false);
+					$("button[name='prev-shiny-page']").attr("disabled", false);
 				}
 			});
 			$("button[name='prev-shiny-page']").on("click", function(event) {
 				event.preventDefault();
 				if (shinyRangePage > 2) {
 					updatePageSlider(shinyRangePage - 1);
-					$("#next-shiny-page").attr("disabled", false);
+					$("button[name='next-shiny-page']").attr("disabled", false);
 				} else if (shinyRangePage == 2) {
 					updatePageSlider(1);
 					$("button[name='prev-shiny-page']").attr("disabled", true);
-					$("#next-shiny-page").attr("disabled", false);
+					$("button[name='next-shiny-page']").attr("disabled", false);
 				}
 			});
 		}
