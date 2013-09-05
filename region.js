@@ -85,7 +85,12 @@ function setupRegionPage(forumViewPage) {
 	}
 	if (!isSettingEnabled("infinite_scroll")) {
 		//Override older rmb click
-		$('#olderrmb').unbind("click").click(function(event){
+		var olderRMB = $('#olderrmb').prop('outerHTML')
+		var olderParent = $('#olderrmb').parent();
+		$('#olderrmb').remove();
+		olderParent.append(olderRMB.replaceAll("olderrmb", "older_rmb"));
+		console.log("unbound event handlers 2");
+		$('#older_rmb').click(function(event){
 			event.preventDefault();
 			console.log("RMB Processing: " + processingRMB);
 			if (processingRMB) {
@@ -94,8 +99,8 @@ function setupRegionPage(forumViewPage) {
 			processingRMB = true;
 			$('.rmbolder .notloading').hide();
 			$('.rmbolder .loading').show();
-			request = $.get('/page=ajax/a=rmb/region=' + getVisibleRegion() + '/offset=' + rmboffset, function(data) {
-				rmboffset += 10;
+			request = $.get('/page=ajax/a=rmb/region=' + getVisibleRegion() + '/offset=' + _rmboffset, function(data) {
+				_rmboffset += 10;
 				if (data.length > 1) {
 					var html = "";
 					$(data).each( function() {
@@ -109,14 +114,14 @@ function setupRegionPage(forumViewPage) {
 				} else {
 					$('.rmbolder').text("At Earliest Message");
 				}
-				$('.rmbolder .loading').hide();
-				$('.rmbolder .notloading').show();
 			});
 			request.fail(function() {
 				console.log("RMB Request Failed!");
 			});
 			request.always(function() {
 				processingRMB = false;
+				$('.rmbolder .loading').hide();
+				$('.rmbolder .notloading').show();
 			});
 		});
 	}
@@ -211,13 +216,14 @@ function addFormattingButtons() {
 	$("#italic_format").on("click", formatBBCode);
 	$("#underline_format").on("click", formatBBCode);
 	$("#nation_format").on("change", formatBBCode);
+	$("#nation_format").on("select", formatBBCode);
 	$("#region_format").on("click", formatBBCode);
 }
 
 function formatBBCode(event) {
 	event.preventDefault();
 	var value = ($(this).html().contains("<option>") ? $(this).val() : $(this).html());
-	getRMBTextArea().wrap_selection("[" + value + "]", "[/" + value + "]");
+	getRMBTextArea().wrap_selection("[" + value + "]", "[/" + value.split("=")[0] + "]");
 }
 
 function getRMBTextArea() {
@@ -658,7 +664,7 @@ function isAtBottomOfPage() {
 
 var processingRMB = false;
 var atEarliestMessage = false;
-var rmboffset = 10;
+var _rmboffset = 10;
 var lastRMBScroll = (new Date()).getTime();
 function handleInfiniteScroll() {
 	if (atEarliestMessage) {
@@ -682,7 +688,7 @@ function handleInfiniteScroll() {
 		lastRMBScroll = Date.now();
 		console.log("Processing");
 		//Infinite RMB post scroll
-		var request = $.get('/page=ajax/a=rmb/region=' + getVisibleRegion() + '/offset=' + rmboffset, function(data) {
+		var request = $.get('/page=ajax/a=rmb/region=' + getVisibleRegion() + '/offset=' + _rmboffset, function(data) {
 			if (data.length > 1) {
 				//Format HTML
 				var html = "";
@@ -698,7 +704,7 @@ function handleInfiniteScroll() {
 				atEarliestMessage = true;
 				$("<div class='rmbolder'>At Earliest Message</div>").insertAfter('.rmbrow:last').hide().show('slow');
 			}
-			rmboffset += 10;
+			_rmboffset += 10;
 			console.log("Loaded RMB");
 		});
 		request.fail(function() {
