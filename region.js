@@ -814,21 +814,22 @@ function parseRMBPostWithId(innerHTML, quoteHTML, className, postId) {
 
 	//Add inner body div
 	var innerBody = innerHTML.indexOf('<div class="rmbspacer"></div>');
-	if (localStorage.getItem("ignored-post-" + postId) == "true") {
-		innerHTML = "<div id='rmb-inner-body-" + postId + "' style='display:none;'>" + innerHTML.substring(0, innerBody) + "</div>" + innerHTML.substring(innerBody);
-	} else {
-		innerHTML = "<div id='rmb-inner-body-" + postId + "'>" + innerHTML.substring(0, innerBody) + "</div>" + innerHTML.substring(innerBody);
-	}
-
-	//Add ignore button
+	
 	if (isSettingEnabled("show_ignore")) {
-		if (postId.indexOf("-search") == -1 && innerHTML.indexOf('div class="rmbbuttons">') == -1 && innerHTML.indexOf('class="rmbsuppressed"') == -1) {
-				innerHTML = '<div style="margin-top:6px;" class="rmbbuttons"><a href="" class="forumpaneltoggle rmbignore"><img src="http://capitalistparadise.com/nationstates/static/rmb_ignore.png" alt="Ignore" title="Ignore Post"></a></div>' + innerHTML;
-		}
-		
-		if (localStorage.getItem("ignored-post-" + postId) == "true") {
-			innerHTML += "<div id='rmb-ignored-body-" + postId + "' class='rmbsuppressed' style='margin-top:-16px; padding-bottom:6px;'>Ignored post.</div>";
-			quoteHTML = "";
+		if (postId.indexOf("-search") == -1 && innerHTML.indexOf('rmbbuttons') == -1 && innerHTML.indexOf('rmbsuppressed') == -1) {
+			if (localStorage.getItem("ignored-post-" + postId) == "true") {
+				innerHTML = "<div id='rmb-inner-body-" + postId + "' style='display:none;'>" + innerHTML.substring(0, innerBody) + "</div>" + innerHTML.substring(innerBody);
+			} else {
+				innerHTML = "<div id='rmb-inner-body-" + postId + "'>" + innerHTML.substring(0, innerBody) + "</div>" + innerHTML.substring(innerBody);
+			}
+
+			//Add ignore button
+			innerHTML = '<div style="margin-top:6px;" class="rmbbuttons"><a href="" class="forumpaneltoggle rmbignore"><img src="http://capitalistparadise.com/nationstates/static/rmb_ignore.png" alt="Ignore" title="Ignore Post"></a></div>' + innerHTML;
+	
+			if (localStorage.getItem("ignored-post-" + postId) == "true") {
+				innerHTML += "<div id='rmb-ignored-body-" + postId + "' class='rmbsuppressed' style='margin-top:-16px; padding-bottom:6px;'>Ignored post.</div>";
+				quoteHTML = "";
+			}
 		}
 	}
 	

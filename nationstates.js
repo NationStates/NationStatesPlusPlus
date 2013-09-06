@@ -24,15 +24,6 @@ var quote = '<button id="quote-btn-${id}" class="button QuoteButton" onclick="qu
 			openLiveHappeningsFeed();
 		}
 	});
-	$("#ns_newspaper_link").on("click", function(event) {
-		//iFrame?
-		if ($("#main").length == 0) {
-			//don't cancel event
-		} else {
-			event.preventDefault();
-			openNationStatesNews();
-		}
-	});
 	if (window.location.href.indexOf("live_happenings=true") != -1) {
 		openLiveHappeningsFeed();
 	} else if (window.location.href.indexOf("ns_newspaper=true") != -1) {
@@ -65,7 +56,6 @@ function showNationStatesUpdate() {
 	}
 	setTimeout(showNationStatesUpdate, 600);
 }
-
 function openNationStatesNews() {
 	localStorage.setItem("last_read_newspaper", Date.now());
 	$("#ns_news_nag").remove();
@@ -77,24 +67,64 @@ function openNationStatesNews() {
 		content = $("#content");
 	}
 	content.html("<div id='news_header' style='text-align: center;'><h1>NationStates Aggregated News <i style='font-size: 14px;'>0&#162;/Daily</i></h1><i>NationStates Latest Gameplay News, a free service provided by NationStates++, the premier NationStates experience.</i><hr></div><div id='inner-content'><div id='left_column' style='position: absolute; width: 25%; padding-right: 0.5%; border-right: solid 1px black;'></div><div style='position: absolute; margin-left: 26%; width: 25%; padding-right: 0.5%; border-right: solid 1px black;' id='middle_column'></div><div id='right_column' style='position: absolute; margin-left: 52%; width: 25%;'></div></div>");
-	addArticle("document/d/1A8ewl1BcW6GXis-meRf3Vz74Z3KmO6MjUkk0T-NofOQ/", "left_column");
-	addArticle("document/d/1sfI4_SwmFJjdThGdgNJEgTiC6y5Jd5nBBZ4m6p8KBCo/", "middle_column");
-	addArticle("document/d/1e-HY4P-IPFKnB7FsdeFArKHasEbRt2rQ9IloJ-93_10/", "right_column");
+	//addArticle("document/d/1A8ewl1BcW6GXis-meRf3Vz74Z3KmO6MjUkk0T-NofOQ/", "left_column");
+	addArticle("document/d/1zxH5SkR6GwMx4TOi8vsUnlVuInNxJeyOQWYgs9BR_ww/", "left_column");
+	//addArticle("document/d/1sfI4_SwmFJjdThGdgNJEgTiC6y5Jd5nBBZ4m6p8KBCo/", "middle_column");
+	addArticle("document/d/1Y3hw44lYIKd9SgoeNeefg2o6Is2P2AChU7BS2mKkHBY/", "middle_column");
+	//addArticle("document/d/1e-HY4P-IPFKnB7FsdeFArKHasEbRt2rQ9IloJ-93_10/", "right_column");
+	addArticle("document/d/1GCKIl7GePcYpJ4ipJwkLrLdCYYWOr2Fc2bxQSbIqKQo/", "right_column");
+	loadingAnimation();
+	window.document.title = "NationStates | Gameplay News"
 	$(window).unbind("scroll");
 }
 
 function addArticle(document, columnId) {
+	$("#" + columnId).html("<div class='loading_animation' style='background-image:url(http://capitalistparadise.com/nationstates/static/loading.gif); margin-left: 33%; height:128px; width:128px; -webkit-transform:scale(0.25); transform:scale(0.25);'></div>");
 	$.post("http://capitalistparadise.com/api/googledoc/", "doc=" + encodeURIComponent(document + "pub?embedded=true"), function(html) {
 		var text = $('<div />').html(html).text();
 		var start = text.indexOf("<h2");
-		$("#" + columnId).html(text.substring(start));
+		text = text.substring(start);
+		text = updateTextLinks("nation", text);
+		text = updateTextLinks("region", text);
+		$("#" + columnId).html(text);
 		
 		$("#" + columnId).find("img").error(function() {
 			if (!$(this).attr("src").startsWith("https://docs.google.com/")) {
 				$(this).attr("src", "https://docs.google.com/" + document + $(this).attr("src"));
 			}
 		});
+		
+		var height = $("#inner-content").height();
+		$("#inner-content").css("height", Math.max(height, $("#" + columnId).height() + 400) + "px");
 	});
+}
+
+function loadingAnimation() {
+	if ($(".loading_animation").length > 0) {
+		$(".loading_animation").each(function() {
+			var frame = $(this).attr("frame");
+			frame = (frame != null ? parseInt(frame) : 0);
+			frame += 1;
+			if (frame > 18) frame = 0;
+			$(this).attr("frame", frame);
+			$(this).css("background-position", frame * -128 + "px 0px");
+		});
+		setTimeout(loadingAnimation, 50);
+	}
+}
+
+function updateTextLinks(tag, text) {
+	var index = text.indexOf("[" + tag + "]");
+	while (index > -1) {
+		var endIndex = text.indexOf("[/" + tag + "]", index + tag.length + 2);
+		if (endIndex == -1) {
+			break;
+		}
+		var innerText = text.substring(index + tag.length + 2, endIndex);
+		text = text.substring(0, index) + "<a target='_blank' href='/" + tag + "=" + innerText.toLowerCase().replaceAll(" ", "_") + "'>" + innerText + "</a>" + text.substring(endIndex + tag.length + 3);
+		index = text.indexOf("[" + tag + "]", index);
+	}
+	return text;
 }
 
 function openLiveHappeningsFeed() {
@@ -106,6 +136,8 @@ function openLiveHappeningsFeed() {
 	}
 	content.html("<h1>Live Happenings Feed</h1><div id='inner-content'><ul id='happenings-feed'></ul></div>");
 	$(window).unbind("scroll");
+	happeningsToShow = [];
+	window.document.title = "NationStates | Live Happenings"
 	updateLiveHappenings();
 	updateTime();
 	showLatestHappennings();
@@ -118,6 +150,7 @@ function updateTime() {
 	}
 }
 
+var happeningsToShow = [];
 function showLatestHappennings() {
 	if (happeningsToShow.length > 0) {
 		var amountToShow = Math.min(1, happeningsToShow.length / 30);
@@ -130,7 +163,6 @@ function showLatestHappennings() {
 	setTimeout(showLatestHappennings, 500);
 }
 
-var happeningsToShow = [];
 function updateLiveHappenings() {
 	$.get("http://capitalistparadise.com/api/nation/livefeed/", function(json) {
 		var list = $("#happenings-feed");
@@ -252,7 +284,7 @@ function updatePanelAlerts() {
 		});
 	}
 	var lastRead = localStorage.getItem("last_read_newspaper");
-	var lastNewspaperUpdate = new Date(2013, 8, 4, 0, 0, 0, 0);
+	var lastNewspaperUpdate = new Date(2013, 8, 5, 23, 13, 0, 0);
 	if (lastRead == null || lastRead < lastNewspaperUpdate.getTime() && $("#ns_news_nag").length == 0) {
 		$("#ns_newspaper_link").html($("#ns_newspaper_link").html() + "<span id='ns_news_nag'> (1)</span>");
 	} else {
