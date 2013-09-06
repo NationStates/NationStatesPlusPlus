@@ -22,6 +22,16 @@
 	background: #FFFF00;
 }
 
+.news_quote {
+    border: 2px solid #CCC;
+    padding: 0 6px 0 6px;
+    background-color:#EAEAE2;
+    border-radius:8px;
+    -moz-border-radius: 8px;
+    -webkit-border-radius: 8px;
+    -khtml-border-radius: 8px;
+}
+
 .ns-settings  {
 	position:absolute;
 	top:0px;

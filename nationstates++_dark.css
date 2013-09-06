@@ -1,3 +1,11 @@
+h1 {
+	text-shadow: 2px 2px 1px #5A5858;
+}
+
+.news_quote {
+	background-color: #1F1F1F;
+}
+
 .ns-settings  {
 	background: #2A2A2A;
 	border: 1px solid #383838;

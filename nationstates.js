@@ -5,7 +5,7 @@ var quote = '<button id="quote-btn-${id}" class="button QuoteButton" onclick="qu
 	addCustomAlerts();
 	checkPageHappenings()
 	$("<li id='live_happenings_feed'><a id='live_happenings_link' href='http://www.nationstates.net/page=news/?live_happenings=true'>HAPPENINGS FEED</a></li>").insertAfter($($("#panel").find(".menu").children()[3]));
-	$("<li id='ns_newspaper'><a id='ns_newspaper_link' href='http://www.nationstates.net/page=news/?ns_newspaper=true'>GAMEPLAY NEWS</a></li>").insertAfter($("#live_happenings_feed"));
+	$("<li id='ns_newspaper'><a id='ns_newspaper_link' style='display: inline;' href='http://www.nationstates.net/page=news/?ns_newspaper=true'>GAMEPLAY NEWS</a></li>").insertAfter($("#live_happenings_feed"));
 	if (!isSettingEnabled("show_live_happenings_feed")) {
 		$("#live_happenings_feed").hide();
 	} else {
@@ -93,6 +93,9 @@ function addArticle(document, columnId) {
 				$(this).attr("src", "https://docs.google.com/" + document + $(this).attr("src"));
 			}
 		});
+		
+		var existingClass = $("blockquote").attr("class");
+		$("blockquote").attr("class", (existingClass != null ? existingClass + " news_quote" : "news_quote"));
 		
 		var height = $("#inner-content").height();
 		$("#inner-content").css("height", Math.max(height, $("#" + columnId).height() + 400) + "px");
@@ -285,8 +288,9 @@ function updatePanelAlerts() {
 	}
 	var lastRead = localStorage.getItem("last_read_newspaper");
 	var lastNewspaperUpdate = new Date(2013, 8, 5, 23, 13, 0, 0);
-	if (lastRead == null || lastRead < lastNewspaperUpdate.getTime() && $("#ns_news_nag").length == 0) {
-		$("#ns_newspaper_link").html($("#ns_newspaper_link").html() + "<span id='ns_news_nag'> (1)</span>");
+	if ((lastRead == null || lastRead < lastNewspaperUpdate.getTime())) {
+		if ($("#ns_news_nag").length == 0)
+			$("<span id='ns_news_nag'> (1)</span>").insertAfter($("#ns_newspaper_link"));
 	} else {
 		$("#ns_news_nag").remove();
 	}
