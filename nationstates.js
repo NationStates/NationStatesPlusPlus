@@ -66,40 +66,53 @@ function openNationStatesNews() {
 	} else {
 		content = $("#content");
 	}
-	content.html("<div id='news_header' style='text-align: center;'><h1>NationStates Aggregated News <i style='font-size: 14px;'>0&#162;/Daily</i></h1><i>NationStates Latest Gameplay News, a free service provided by NationStates++, the premier NationStates experience.</i><hr></div><div id='inner-content'><div id='left_column' style='position: absolute; width: 25%; padding-right: 0.5%; border-right: solid 1px black;'></div><div style='position: absolute; margin-left: 26%; width: 25%; padding-right: 0.5%; border-right: solid 1px black;' id='middle_column'></div><div id='right_column' style='position: absolute; margin-left: 52%; width: 25%;'></div></div>");
+	content.html("<div id='news_header' style='text-align: center;'><h1>NationStates Aggregated News <i style='font-size: 14px;'>0&#162;/Daily</i></h1><i>NationStates Latest Gameplay News, a free service provided by NationStates++, the premier NationStates experience.</i><hr></div><div id='inner-content'><div id='left_column' style='position: absolute; width: 25%; padding-right: 0.5%; border-right: solid 1px black;'></div><div style='position: absolute; margin-left: 26%; width: 25%; padding-right: 0.5%; border-right: solid 1px black;' id='middle_column'></div><div id='right_column' style='position: absolute; margin-left: 52%; width: 25%;'></div></div><div id='bottom_content' style='text-align:center;'><i>Looking to have your article or content featured? Contact <a href='/nation=afforess' class='nlink'>Afforess</a> for submissions!</i></div>");
 	//addArticle("document/d/1A8ewl1BcW6GXis-meRf3Vz74Z3KmO6MjUkk0T-NofOQ/", "left_column");
-	addArticle("document/d/1zxH5SkR6GwMx4TOi8vsUnlVuInNxJeyOQWYgs9BR_ww/", "left_column");
+	//addArticle("document/d/1zxH5SkR6GwMx4TOi8vsUnlVuInNxJeyOQWYgs9BR_ww/", "left_column");
+	addArticle("left_column", "document/d/19j9YjCCtpoQPRlLm2AOwbeQLGipPL8LnDuBtfBU8NsE/");
 	//addArticle("document/d/1sfI4_SwmFJjdThGdgNJEgTiC6y5Jd5nBBZ4m6p8KBCo/", "middle_column");
-	addArticle("document/d/1Y3hw44lYIKd9SgoeNeefg2o6Is2P2AChU7BS2mKkHBY/", "middle_column");
+	addArticle("middle_column", "document/d/1Y3hw44lYIKd9SgoeNeefg2o6Is2P2AChU7BS2mKkHBY/");
 	//addArticle("document/d/1e-HY4P-IPFKnB7FsdeFArKHasEbRt2rQ9IloJ-93_10/", "right_column");
-	addArticle("document/d/1GCKIl7GePcYpJ4ipJwkLrLdCYYWOr2Fc2bxQSbIqKQo/", "right_column");
+	addArticle("right_column", "document/d/1GCKIl7GePcYpJ4ipJwkLrLdCYYWOr2Fc2bxQSbIqKQo/", "document/d/1zxH5SkR6GwMx4TOi8vsUnlVuInNxJeyOQWYgs9BR_ww/");
 	loadingAnimation();
 	window.document.title = "NationStates | Gameplay News"
 	$(window).unbind("scroll");
+	updateSize = function() {
+		$("#inner-content").css("height", 0);
+		$("#inner-content").children().each(function() {
+			var height = $("#inner-content").height();
+			$("#inner-content").css("height", Math.max(height, $(this).height() + 200) + "px");
+		});
+	}
+	window.onresize = updateSize;
 }
 
-function addArticle(document, columnId) {
+function addArticle(columnId) {
 	$("#" + columnId).html("<div class='loading_animation' style='background-image:url(http://capitalistparadise.com/nationstates/static/loading.gif); margin-left: 33%; height:128px; width:128px; -webkit-transform:scale(0.25); transform:scale(0.25);'></div>");
-	$.post("http://capitalistparadise.com/api/googledoc/", "doc=" + encodeURIComponent(document + "pub?embedded=true"), function(html) {
-		var text = $('<div />').html(html).text();
-		var start = text.indexOf("<h2");
-		text = text.substring(start);
-		text = updateTextLinks("nation", text);
-		text = updateTextLinks("region", text);
-		$("#" + columnId).html(text);
-		
-		$("#" + columnId).find("img").error(function() {
-			if (!$(this).attr("src").startsWith("https://docs.google.com/")) {
-				$(this).attr("src", "https://docs.google.com/" + document + $(this).attr("src"));
-			}
+	for (var i = 1; i < arguments.length; i++) {
+		var document = arguments[i];
+		$.post("http://capitalistparadise.com/api/googledoc/", "doc=" + encodeURIComponent(document + "pub?embedded=true"), function(html) {
+			var text = $('<div />').html(html).text();
+			var start = text.indexOf("<h2");
+			text = text.substring(start);
+			text = updateTextLinks("nation", text);
+			text = updateTextLinks("region", text);
+			var first = $("#" + columnId).find(".loading_animation").length == 1;
+			$("#" + columnId).html((first ? "" : $("#" + columnId).html() + "<p><hr></p>") + text);
+			
+			$("#" + columnId).find("img").error(function() {
+				if (!$(this).attr("src").startsWith("https://docs.google.com/")) {
+					$(this).attr("src", "https://docs.google.com/" + document + $(this).attr("src"));
+				}
+			});
+			
+			var existingClass = $("blockquote").attr("class");
+			$("blockquote").attr("class", (existingClass != null ? existingClass + " news_quote" : "news_quote"));
+			
+			var height = $("#inner-content").height();
+			$("#inner-content").css("height", Math.max(height, $("#" + columnId).height() + 200) + "px");
 		});
-		
-		var existingClass = $("blockquote").attr("class");
-		$("blockquote").attr("class", (existingClass != null ? existingClass + " news_quote" : "news_quote"));
-		
-		var height = $("#inner-content").height();
-		$("#inner-content").css("height", Math.max(height, $("#" + columnId).height() + 400) + "px");
-	});
+	}
 }
 
 function loadingAnimation() {
@@ -154,9 +167,9 @@ function updateTime() {
 }
 
 var happeningsToShow = [];
+var amountToShow = 1;
 function showLatestHappennings() {
 	if (happeningsToShow.length > 0) {
-		var amountToShow = Math.min(1, happeningsToShow.length / 30);
 		var list = $("#happenings-feed");
 		for (var i = 0; i < amountToShow; i++) {
 			var id = happeningsToShow.pop();
@@ -182,6 +195,7 @@ function updateLiveHappenings() {
 			}
 		}
 		list.prepend(html);
+		amountToShow = Math.max(1, happeningsToShow.length / 20);
 		if (list.find("li").length == 0) {
 			list.append("<li id='no-happenings'>No News Is Good News!</li>");
 		} else if (list.find("li").length > 1) {
@@ -226,7 +240,8 @@ function checkPageHappenings() {
 				var happenings = (getVisiblePage() == "un" ? $("h3:contains('Recent Events')").next() : $(".newsbox").find("ul"));
 				$(happenings.children()).each(function() {
 					if ($(this).text().contains(split[1])) {
-						$(this).html(html);
+						var text = $(this).html().split(":")[1];
+						$(this).html(split[0] + ":" + text);
 						found = true;
 						return false;
 					}
@@ -287,8 +302,7 @@ function updatePanelAlerts() {
 		});
 	}
 	var lastRead = localStorage.getItem("last_read_newspaper");
-	var lastNewspaperUpdate = new Date(2013, 8, 5, 23, 13, 0, 0);
-	if ((lastRead == null || lastRead < lastNewspaperUpdate.getTime())) {
+	if ((lastRead == null || lastRead < 1378589818375)) {
 		if ($("#ns_news_nag").length == 0)
 			$("<span id='ns_news_nag'> (1)</span>").insertAfter($("#ns_newspaper_link"));
 	} else {
