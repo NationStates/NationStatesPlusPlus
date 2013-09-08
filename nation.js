@@ -78,28 +78,23 @@
 	}
 
 	function fixFactbookLinks() {
-		var factbooks = new Array();
-		$(".newsbox").find("ul").children().each(function() {
+		var factbooks = 0;
+		$(".newsbox").find("ul").children("li").each(function() {
 			var search = "published the Factbook";
 			var index = $(this).html().indexOf(search);
 			if (index != -1) {
 				var factbookName = $(this).html().substring(index + search.length + 2, $(this).html().length - 2);
-				var fb = new Object();
-				fb['name'] = factbookName;
-				fb['element'] = $(this).get();
-				fb['start'] = index + search.length + 2;
-				fb['end'] = $(this).html().length - 2;
-				factbooks.push(fb);
+				$(this).html($(this).html().substring(0, index + search.length + 2) + "<span name='" + factbookName.toLowerCase().replaceAll(" ", "_") + "'>" + factbookName + "</span>\".");
+				factbooks++;
 			}
 		});
-		if (factbooks.length > 0) {
+		if (factbooks > 0) {
 			$.get("/nation=" + getVisibleNation() + "/detail=factbook/", function(data) {
 				$(data).find('ul[class=factbooklist]').find("a").each(function() {
-					for (var i = 0; i < factbooks.length; i += 1) {
-						var factbook = factbooks[i];
-						if ($(this).html() == factbook['name']) {
-							$(factbook['element']).html($(factbook['element']).html().substring(0, factbook['start']) + "<a href='" + $(this).attr("href") + "'>" + factbook['name'] + "</a>" + $(factbook['element']).html().substring(factbook['end']));
-						}
+					var link = $("span[name='" + $(this).html().toLowerCase().replaceAll(" ", "_") + "']");
+					if (link.length > 0) {
+						link.attr("href",  $(this).attr("href"));
+						link.changeElementType("a");
 					}
 				});
 			});
