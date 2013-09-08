@@ -2,9 +2,9 @@
 	if (getVisiblePage() == "reports") {
 		var reportForm = $("form[action='page=reports']");
 		var reportHours = $("input[name='report_hours']").val();
-		var reportSelf = $("input[name='report_self']").prop('checked');
-		var reportRegion = $("input[name='report_region']").prop('checked');
-		var reportDossierNations = $("input[name='report_dossier']").prop('checked');
+		var reportSelf = $("input[name='report_self']").prop('checked') || isSettingEnabled("report_self");
+		var reportRegion = $("input[name='report_region']").prop('checked') || isSettingEnabled("report_region");
+		var reportDossierNations = $("input[name='report_dossier']").prop('checked') || isSettingEnabled("report_dossier");
 		var reportDossierRegions = isSettingEnabled("report_dossier_regions");
 		
 		var reportHtml = "<p>Show reports from last <input name='report_hours' size='7' maxlength='15' value='" + reportHours + "'>" +
@@ -25,8 +25,10 @@
 			updateReports();
 		});
 		
-		$("h2").next().remove();
-		$("h2").remove();
+		var oldHeader = $("h2");
+		oldHeader.next().attr("class", "to-remove");
+		oldHeader.hide();
+		
 		$("<div id='report_self'><h2>National Report</h2><ul name='report'></ul></div><div id='report_region'><h2>Regional Report</h2><ul name='report'></ul></div><div id='report_dossier'><h2>National Dossier Report</h2><ul name='report'></ul></div><div id='report_dossier_regions'><h2>Regional Dossier Report</h2><div id='regional_reports'></div></div>").insertAfter(reportForm);
 		
 		updateReports();
@@ -35,28 +37,30 @@
 	function updateReports() {
 		if (!$("input[name='report_self']").prop('checked')) {
 			$("#report_self").hide();
+			localStorage.removeItem("report_self");
 		} else {
-			$("#report_self").show();
 			loadReport("report_self");
+			localStorage.setItem("report_self", true);
 		}
 		if (!$("input[name='report_region']").prop('checked')) {
 			$("#report_region").hide();
+			localStorage.removeItem("report_region");
 		} else {
-			$("#report_region").show();
 			loadReport("report_region");
+			localStorage.setItem("report_region", true);
 		}
 		if (!$("input[name='report_dossier']").prop('checked')) {
 			$("#report_dossier").hide();
+			localStorage.removeItem("report_dossier");
 		} else {
-			$("#report_dossier").show();
 			loadReport("report_dossier");
+			localStorage.setItem("report_dossier", true);
 		}
 		if (!$("input[name='report_region_dossier']").prop("checked")) {
 			$("#report_dossier_regions").hide();
-			localStorage.setItem("report_dossier_regions", false);
+			localStorage.removeItem("report_dossier_regions");
 		} else {
 			$("#regional_reports").html("");
-			$("#report_dossier_regions").show();
 			localStorage.setItem("report_dossier_regions", true);
 			generateRegionDossierReport(0, 0);
 		}
@@ -123,6 +127,8 @@
 		$.post("page=reports", "report_hours=" + $("input[name='report_hours']").val() + "&" + reportName + "=1&generate_report=Generate+Report", function(data) {
 			var report = $(data).find("h2").next();
 			$("#" + reportName).find("ul[name='report']").html(report.html());
+			$("#" + reportName).show();
+			$(".to-remove").remove();
 		});
 	}
 })();
