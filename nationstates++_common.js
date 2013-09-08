@@ -262,14 +262,16 @@ function handleRegionCache(name) {
 		}
 	}
 	$.get("/nation=" + name, function(data) {
-		var region = $(data).find(".rlink:first").attr('href').substring(7);
-		$("#puppet-region-" + name).html("(<a style='color: white;' href='/region=" + region + "'>" + region.split("_").join(" ").toTitleCase() + "</a>)");
-		var cache = new Object();
-		cache['region'] = region;
-		cache['timestamp'] = (Date.now() + 24 * 60 * 60 * 1000);
-		localStorage.setItem("puppet-" + name + "-region", JSON.stringify(cache));
+		if (typeof $(data).find(".rlink:first").attr('href') != "undefined") {
+			var region = $(data).find(".rlink:first").attr('href').substring(7);
+			$("#puppet-region-" + name).html("(<a style='color: white;' href='/region=" + region + "'>" + region.split("_").join(" ").toTitleCase() + "</a>)");
+			var cache = new Object();
+			cache['region'] = region;
+			cache['timestamp'] = (Date.now() + 24 * 60 * 60 * 1000);
+			localStorage.setItem("puppet-" + name + "-region", JSON.stringify(cache));
+		}
 	});
-	return "";
+	return "UNKNOWN REGION";
 }
 
 function showPuppetRegion(name) {
@@ -283,10 +285,14 @@ function showPuppetRegion(name) {
 function switchToPuppet(name) {
 	localStorage.removeItem("puppet-" + name + "-region");
 	$.post("http://www.nationstates.net/", "logging_in=1&nation=" + encodeURIComponent(name) + "&password=" + encodeURIComponent(localStorage.getItem("puppet-" + name)), function(data) {
-		if (localStorage.getItem("redirect-puppet-page") == "true") {
-			window.location.href = "/nation=" + name;
+		if (data.contains("Would you like to restore it?")) {
+			$("#content").html($(data).find("#content").html());
 		} else {
-			window.location.reload(false);
+			if (localStorage.getItem("redirect-puppet-page") == "true") {
+				window.location.href = "/nation=" + name;
+			} else {
+				window.location.reload(false);
+			}
 		}
 	});
 }
@@ -466,7 +472,7 @@ function requestAuthToken() {
 							console.log("Updating localid from " + $("input[name='localid']").val() + " to " + localid);
 							$("input[name='localid']").val(localid);
 						}
-					},
+					}
 				});
 			}, 2000);
 		}
