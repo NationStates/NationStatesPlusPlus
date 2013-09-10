@@ -365,3 +365,21 @@ fieldset.preview {
 	font-weight: bold !important;
 	font-size: 13px !important;
 }
+
+.older { 
+    border:1px #CCC solid; 
+    border-radius:12px;
+    -moz-border-radius:12px;
+    -webkit-border-radius:12px;
+    margin-bottom:4px; 
+    padding:0 8px 0 12px;
+    background-color: #FDFFFC; 
+    text-align:center; 
+    font-weight:bold; 
+    margin-left:18%; 
+    margin-right:18%;
+    min-height:18px;
+}
+.older, .older a { color:#AAA; }
+.older a:hover { color:#666; text-decoration:none;}
+.older img { margin-right:10px; vertical-align:middle;}

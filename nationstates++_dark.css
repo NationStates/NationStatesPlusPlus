@@ -38,3 +38,8 @@ h1 {
 	border: 6px solid #191919 !important;
 	background-color: #191919 !important;
 }
+
+.older {
+	background: #191919;
+	border: 1px #383838 solid;
+}
