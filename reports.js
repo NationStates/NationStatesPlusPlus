@@ -1,5 +1,5 @@
 (function() {
-	if (getVisiblePage() == "reports") {
+	if (getVisiblePage() == "reports" && window.location.href.indexOf("template-overall=none") == -1) {
 		var reportForm = $("form[action='page=reports']");
 		var reportHours = $("input[name='report_hours']").val();
 		var reportSelf = $("input[name='report_self']").prop('checked') || isSettingEnabled("report_self");
