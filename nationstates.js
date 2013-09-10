@@ -4,8 +4,8 @@ var quote = '<button id="quote-btn-${id}" class="button QuoteButton" onclick="qu
 	checkPanelAlerts();
 	addCustomAlerts();
 	checkPageHappenings()
-	$("<li id='live_happenings_feed'><a id='live_happenings_link' href='http://www.nationstates.net/page=news/?live_happenings=true'>HAPPENINGS FEED</a></li>").insertAfter($($("#panel").find(".menu").children()[3]));
-	$("<li id='ns_newspaper'><a id='ns_newspaper_link' style='display: inline;' href='http://www.nationstates.net/page=news/?ns_newspaper=true'>GAMEPLAY NEWS</a></li>").insertAfter($("#live_happenings_feed"));
+	$("<li id='live_happenings_feed'><a id='live_happenings_link' href='http://www.nationstates.net/page=blank/?live_happenings=true'>HAPPENINGS FEED</a></li>").insertAfter($($("#panel").find(".menu").children()[3]));
+	$("<li id='ns_newspaper'><a id='ns_newspaper_link' style='display: inline;' href='http://www.nationstates.net/page=blank/?ns_newspaper=true'>GAMEPLAY NEWS</a></li>").insertAfter($("#live_happenings_feed"));
 	if (!isSettingEnabled("show_live_happenings_feed")) {
 		$("#live_happenings_feed").hide();
 	} else {
@@ -240,7 +240,7 @@ function checkPageHappenings() {
 				var happenings = (getVisiblePage() == "un" ? $("h3:contains('Recent Events')").next() : $(".newsbox").find("ul"));
 				$(happenings.children()).each(function() {
 					if ($(this).text().contains(split[1])) {
-						var text = $(this).html().split(":")[1];
+						var text = $(this).html().substring($(this).html().indexOf(":") + 1);
 						$(this).html(split[0] + ":" + text);
 						found = true;
 						return false;
