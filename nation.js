@@ -10,14 +10,22 @@
 	var happeningsIndex = 10;
 	var endHappenings = false;
 	function addInfiniteHappenings() {
-		$("<div class='rmbolder' style='display: block;margin-left: 1%;  margin-right: 50%%;'><a href='javascript:void(0)' id='more_happenings'>&#8593; Load More Happenings</a></div>").insertAfter($(".newsbox").find("ul"));
+		$("<div class='older' style='display: block;margin-left: 1%;  margin-right: 50%;'><a href='javascript:void(0)' id='more_happenings'><span id='load_more_happenings'>&#8593; Load More Happenings</span><span id='error_happenings'>Error Loading Happenings</span><span id='loading_happenings'>Loading...</span><span id='end_of_happenings'>End of Happenings</span></a></div>").insertAfter($(".newsbox").find("ul"));
+		$("#more_happenings").find("span").hide();
+		$("#load_more_happenings").show();
 		$("#more_happenings").on("click", function() {
 			if (endHappenings) {
 				return;
 			}
+			$("#more_happenings").find("span").hide();
+			$("#loading_happenings").show();
 			$.get("http://capitalistparadise.com/api/happenings/?nation=" + getVisibleNation() + "&global=true&start=" + happeningsIndex + "&limit=20", function(json) {
-				happeningsIndex += 20;
+				$("#more_happenings").find("span").hide();
+				$("#load_more_happenings").show();
 				parseHappenings(json);
+			}).fail(function() {
+				$("#more_happenings").find("span").hide();
+				$("#error_happenings").show();
 			});
 		});
 	}
@@ -29,14 +37,14 @@
 			if (i == 0 && data.happening.contains("Unknown nation:")) {
 				break;
 			}
-			
 			happenings.append("<li style='display:none;' class='happenings_" + happeningsIndex + "'>" + timestampToTimeAgo(data.timestamp) + " ago: " + data.happening + "</li>");
 		}
 		$(".happenings_" + happeningsIndex).hide().animate({ height: 'toggle' }, 800);
 		happeningsIndex += 20;
 		if (20 > json.length) {
 			endHappenings = true;
-			$("#more_happenings").html("End of Happenings");
+			$("#more_happenings").find("span").hide();
+			$("#end_of_happenings").show();
 		}
 	}
 
