@@ -882,7 +882,13 @@ function getNationStatesAPI() {
 		if (requests == null) {
 			requests = new Object();
 		} else {
-			requests = JSON.parse(requests);
+			try {
+				requests = JSON.parse(requests);
+			} catch (error) {
+				numRequests = 50;
+				localStorage.removeItem("api_requests");
+				requests = new Object();
+			}
 		}
 		var numRequests = 0;
 		var oldest = Date.now();
@@ -908,7 +914,7 @@ function getNationStatesAPI() {
 			return result;
 		}
 		if (numRequests >= 49) {
-			setTimeout(doRequestInternal(url, result),	(oldest - Date.now() + 30001));
+			setTimeout(doRequestInternal(url, result),	30001);
 		} else {
 			var num = requests["" + Date.now()];
 			requests["" + Date.now()] = (num != null ? num + 1 : 1);
