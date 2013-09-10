@@ -1,4 +1,4 @@
-var quote = '<button id="quote-btn-${id}" class="button QuoteButton" onclick="quotePost(this);">Quote</button>';
+var quote = '<button id="quote-btn-${id}" class="button QuoteButton" onclick="quotePost(this);">Quote</button><a href="javascript:void(0)" class="QuoteButton rmbcomment" id="comment-link-${id}" style="margin-right: 5px;">Comment</a><a href="javascript:void(0)" class="QuoteButton rmbcomment-submit" id="submit-comment-link-${id}" style="margin-right: 5px; display:none;">Submit</a><a href="javascript:void(0)" class="QuoteButton rmbcomment-cancel" id="cancel-comment-link-${id}" style="display:none;">Cancel</a><textarea id="comment-rmb-${id}" style="width: 100%; height: 8em; display:none;" wrap="soft"></textarea>';
 (function() {
 	if (getVisiblePage() == "list_nations" || getVisiblePage() == "list_regions" || getVisiblePage() == "world" || getVisiblePage() == "tag_search") {
 		if (getVisiblePage() == "list_regions" || getVisiblePage() == "tag_search") addRegionFlags();
@@ -176,9 +176,57 @@ function setupRegionPage(forumViewPage) {
 	}
 
 	addFormattingButtons();
+	
+	addInfiniteRegionHappenings();
 
 	//Replace census slider
 	setupPageSlider();
+}
+
+function addInfiniteRegionHappenings() {
+	if ($("p:contains('Gargantuan')").length == 0) {
+		return;
+	}
+	var happeningsIndex = 10;
+	var endHappenings = false;
+	
+	var parseHappenings = function(json) {
+		var happenings = $("h3:contains('Regional Happenings')").next();
+		console.log(json);
+		for (var i = 0; i < json.length; i++) {
+			var data = json[i];
+			if (i == 0 && data.happening.contains("Unknown region:")) {
+				break;
+			}
+			happenings.append("<li style='display:none;' class='happenings_" + happeningsIndex + "'>" + timestampToTimeAgo(data.timestamp * 1000) + " ago: " + data.happening + "</li>");
+		}
+		$(".happenings_" + happeningsIndex).hide().animate({ height: 'toggle' }, 800);
+		happeningsIndex += 20;
+		if (20 > json.length) {
+			endHappenings = true;
+			$("#more_happenings").find("span").hide();
+			$("#end_of_happenings").show();
+		}
+	}
+
+	$("<div class='older' style='display: block;margin-left: 1%;  margin-right: 50%;'><a href='javascript:void(0)' id='more_happenings'><span id='load_more_happenings'>&#8593; Load More Happenings</span><span id='error_happenings'>Error Loading Happenings</span><span id='loading_happenings'>Loading...</span><span id='end_of_happenings'>End of Happenings</span></a></div>").insertAfter($("h3:contains('Regional Happenings')").next());
+	$("#more_happenings").find("span").hide();
+	$("#load_more_happenings").show();
+	$("#more_happenings").on("click", function() {
+		if (endHappenings) {
+			return;
+		}
+		$("#more_happenings").find("span").hide();
+		$("#loading_happenings").show();
+		$.get("http://capitalistparadise.com/api/region/happenings/?region=" + getVisibleRegion() + "&start=" + happeningsIndex, function(json) {
+			$("#more_happenings").find("span").hide();
+			$("#load_more_happenings").show();
+			parseHappenings(json);
+		}).fail(function() {
+			$("#more_happenings").find("span").hide();
+			$("#error_happenings").show();
+		});
+	});
 }
 
 function addFormattingButtons() {
@@ -356,7 +404,7 @@ function setupPageSlider() {
 				census.html(census.html() + "<div id='page-slider' style='text-align: center; width:75%; margin-left:12.5%;' class='noUiSlider'></div>");
 			} else {
 				$(getShinyTableSelector()).css("min-width", "75%");
-				census.html(census.html() + "<div id='page-slider' style='text-align: center; width:73%; margin-left:1%;' class='noUiSlider'></div>");
+				census.html(census.html() + "<div id='page-slider' style='text-align: center; width:70%; margin-left:100px;' class='noUiSlider'></div>");
 			}
 			census.html(census.html() + "<button name='next-shiny-page' class='button' style='right: 20px; position: absolute; margin-top: -10px;'>Next Page</button>");
 			addPageSlider(maxPage);
@@ -805,7 +853,7 @@ function parseRMBPostWithId(innerHTML, quoteHTML, className, postId) {
 	if (innerHTML.indexOf("rmbsuppressed") > -1 || innerHTML.indexOf(quoteHTML) > -1 || !isSettingEnabled("show_quote")) {
 		quoteHTML = "";
 	} else {
-		quoteHTML = quoteHTML.replace("${id}", postId);
+		quoteHTML = quoteHTML.replaceAll("${id}", postId);
 	}
 
 	if (isSettingEnabled("clickable_links")) {
@@ -857,6 +905,46 @@ $('body').on('click', 'a.rmbignore', function(event) {
 			$(this).parents('.rmbrow').append(quote.replace("${id}", postId));
 		}
 	}
+});
+
+$('body').on('click', 'a.rmbcomment', function(event) {
+	event.preventDefault();
+	var split = $(this).attr('id').split('-');
+	var postId = split[split.length - 1];
+	
+	console.log("Open comment");
+	
+	$("#comment-link-" + postId).hide();
+	$("#submit-comment-link-" + postId).show();
+	$("#cancel-comment-link-" + postId).show();
+	$("#comment-rmb-" + postId).hide().animate({height: 'toggle'}, 500);
+});
+
+$('body').on('click', 'a.rmbcomment-submit', function(event) {
+	event.preventDefault();
+	var split = $(this).attr('id').split('-');
+	var postId = split[split.length - 1];
+	
+	console.log("Submitting comment: " + $("#comment-rmb-" + postId).val());
+	
+	$("#comment-link-" + postId).show();
+	$("#submit-comment-link-" + postId).hide();
+	$("#cancel-comment-link-" + postId).hide();
+	$("#comment-rmb-" + postId).show().animate({height: 'toggle'}, 500);
+});
+
+$('body').on('click', 'a.rmbcomment-cancel', function(event) {
+	event.preventDefault();
+	var split = $(this).attr('id').split('-');
+	var postId = split[split.length - 1];
+	
+	console.log("Cancelling comment");
+	
+	$("#comment-link-" + postId).show();
+	$("#submit-comment-link-" + postId).hide();
+	$("#cancel-comment-link-" + postId).hide();
+	$("#comment-rmb-" + postId).val("");
+	$("#comment-rmb-" + postId).show().animate({height: 'toggle'}, 500);
 });
 
 function quotePost(post) {
