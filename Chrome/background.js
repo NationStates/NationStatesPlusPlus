@@ -1,5 +1,5 @@
 //versioned files are checked for modifications each page hit (slow)
-var urlPrefix = "http://direct.capitalistparadise.com/nationstates/v1_9/";
+var urlPrefix = "http://direct.capitalistparadise.com/nationstates/v2_0/";
 //static files are cached by browser for 1 week, not checked for modifications (fast)
 var staticUrlPrefix = "http://direct.capitalistparadise.com/nationstates/static/";
 
@@ -7,8 +7,7 @@ var pageUrl = window.location.href;
 
 $.get(urlPrefix + "cache_buster.txt?time=" + Date.now() , function(value) {
 	var cacheBuster = localStorage.getItem("cache_buster");
-	if (value > cacheBuster) {
-		console.log("Cache Buster: " + value);
+	if (value != cacheBuster) {
 		localStorage.setItem("cache_buster", value);
 	}
 });
@@ -99,9 +98,10 @@ function loadJavascript() {
 			}
 
 			addJavascript(urlPrefix + 'nationstates.js');
-			addJavascript("https://dl.dropboxusercontent.com/u/49805/region.js");
-			//addJavascript(urlPrefix + 'region.js');
+			addJavascript(urlPrefix + 'region.js');
 			addJavascript(urlPrefix + 'nation.js');
+			
+			addJavascript(urlPrefix + 'happenings.js');
 			
 			if (isSettingEnabled("embassy_flags")) {
 				addJavascript(urlPrefix + 'embassy_flags.js');
