@@ -102,7 +102,10 @@ function loadJavascript() {
 			addJavascript(urlPrefix + 'nation.js');
 			
 			addJavascript(urlPrefix + 'happenings.js');
-			
+			if (isSettingEnabled("scroll_nation_lists")) {
+				addJavascript(urlPrefix + 'census_slider.js');
+			}
+
 			if (isSettingEnabled("embassy_flags")) {
 				addJavascript(urlPrefix + 'embassy_flags.js');
 			}
