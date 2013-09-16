@@ -100,7 +100,7 @@ function loadJavascript() {
 			addJavascript(urlPrefix + 'nationstates.js');
 			addJavascript(urlPrefix + 'region.js');
 			addJavascript(urlPrefix + 'nation.js');
-			addJavascript(urlPrefix + 'newspaper.js');
+			addJavascript(urlPrefix + 'newspapers.js');
 
 			addJavascript(urlPrefix + 'happenings.js');
 			if (isSettingEnabled("scroll_nation_lists")) {
