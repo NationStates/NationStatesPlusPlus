@@ -26,41 +26,37 @@
 	}
 
 	function showWorldAssemblyInfo() {
-		if ($(".wa_status").length > 0) {
-			$(".smalltext:first").html($(".smalltext:first").html() + $('<div/>').html(" &#8226; ").text() + "<a id='wa_stats_link' href='/nation=" + getVisibleNation() + "/detail=wa_stats'>World Assembly</a>");
-			if (getPageDetail() == "" || getPageDetail() == "wa_stats") {
-				var foundSmalltext;
-				var items = [];
-				$("#content").children().each(function() { 
-					if (foundSmalltext) {
-						items.push($(this));
-					}
-					if ($(this).attr("class") == "smalltext") {
-						foundSmalltext = true;
-					}
-				});
-				$("<div id='nation_content'></div><div id='wa_stats'></div>").insertAfter($(".smalltext:first"));
-				for (var i = 0; i < items.length; i++) {
-					$("#nation_content").append(items[i].clone());
-					items[i].remove();
+		if (getPageDetail() == "wa_stats") {
+			$(".smalltext:first").html("<a href='nation=" + getVisibleNation() + "'>Overview</a>" + $(".smalltext:first").html().substring(8) + $('<div/>').html(" &#8226; ").text() + "World Assembly");
+			var foundSmalltext;
+			var items = [];
+			$("#content").children().each(function() { 
+				if (foundSmalltext) {
+					items.push($(this));
 				}
-				$("#wa_stats_link").on("click", function(event) {
-					if ($("#main").length == 0) {
-						//don't cancel event
-					} else {
-						event.preventDefault();
-						openWorldAssemblyStats();
-					}
-				});
+				if ($(this).attr("class") == "smalltext") {
+					foundSmalltext = true;
+				}
+			});
+			$("<div id='nation_content'></div><div id='wa_stats'></div>").insertAfter($(".smalltext:first"));
+			$("#nation_content").hide();
+			for (var i = 0; i < items.length; i++) {
+				$("#nation_content").append(items[i].clone());
 			}
-			if (getPageDetail() == "wa_stats") {
-				openWorldAssemblyStats();
+			for (var i = 0; i < items.length; i++) {
+				items[i].remove();
 			}
+			openWorldAssemblyStats();
+		} else {
+			$(".smalltext:first").html($(".smalltext:first").html() + $('<div/>').html(" &#8226; ").text() + "<a id='wa_stats_link' href='nation=" + getVisibleNation() + "/detail=wa_stats'>World Assembly</a>");
 		}
 	}
 
 	function openWorldAssemblyStats() {
-		$("#nation_content").hide();
+		if ($(".wa_status").length == 0) {
+			$("#wa_stats").html("<h3>World Assembly Stats</h3><p><b>Not A World Assembly Member!</b></p>");
+			return;
+		}
 		$("#wa_stats").html("<h3>World Assembly Stats</h3><div id='all_nations'><h4>All World Assembly Nations</h4></div><div id='endorsements'><h4>Endorsements</h4></div>");
 		$("#all_nations").append("<button id='calculate_wa' class='button'>Calculate</button><div id='all_wa'></div>");
 		$("#endorsements").append($(".unbox").find("p").clone());
