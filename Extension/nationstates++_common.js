@@ -757,6 +757,17 @@ function getTelegramStart() {
 	return "0";
 }
 
+
+function getPageDetail() {
+	var split = window.location.href.split(/[/#/?]/);
+	for (var i = 0; i < split.length; i++) {
+		if (split[i].startsWith("detail=")) {
+			return split[i].substring(7);
+		}
+	}
+	return "";
+}
+
 var _isPageActive;
 window.onfocus = function () { 
 	_isPageActive = true; 
