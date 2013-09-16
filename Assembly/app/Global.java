@@ -18,7 +18,6 @@ import com.mchange.v2.c3p0.ComboPooledDataSource;
 
 import controllers.DatabaseController;
 import controllers.FirebaseAuthenticator;
-import controllers.LiveHappeningsController;
 import controllers.NationStatesController;
 import play.*;
 import play.libs.Akka;
@@ -28,7 +27,6 @@ public class Global extends GlobalSettings {
 	private ComboPooledDataSource pool;
 	private NationCache cache;
 	private RegionCache regionCache;
-	private LiveHappeningsController liveHappenings;
 	private FirebaseAuthenticator firebase;
 	private NationStates api;
 
@@ -74,7 +72,6 @@ public class Global extends GlobalSettings {
 		api.setRelaxed(true);
 		this.cache = new NationCache(pool);
 		this.regionCache = new RegionCache(pool);
-		liveHappenings = new LiveHappeningsController(pool, cache, regionCache);
 
 		//Setup firebase
 		ConfigurationNode firebaseConfig = config.getChild("firebase");
@@ -90,15 +87,9 @@ public class Global extends GlobalSettings {
 		dailyDumps.setDaemon(true);
 		dailyDumps.start();
 
-		//Setup prism
-		/*ConfigurationNode prismConfig = config.getChild("prism");
-		Prism prism = new Prism(pool, cache, regionCache, prismConfig.getChild("nation").getString(), prismConfig.getChild("password").getString(), dumps);
-		prism.start();
-		*/
 		HappeningsTask happenings = new HappeningsTask(pool, cache, api);
 		Akka.system().scheduler().schedule(Duration.create(60, TimeUnit.SECONDS), Duration.create(2, TimeUnit.SECONDS), happenings, Akka.system().dispatcher());
 		Akka.system().scheduler().schedule(Duration.create(120, TimeUnit.SECONDS), Duration.create(31, TimeUnit.SECONDS), new UpdateTask(api, pool, cache, happenings), Akka.system().dispatcher());
-		Akka.system().scheduler().schedule(Duration.create(60, TimeUnit.SECONDS), Duration.create(6, TimeUnit.SECONDS), liveHappenings, Akka.system().dispatcher());
 		Akka.system().scheduler().schedule(Duration.create(60, TimeUnit.SECONDS), Duration.create(60, TimeUnit.SECONDS), monitoring, Akka.system().dispatcher());
 	}
 
@@ -111,9 +102,7 @@ public class Global extends GlobalSettings {
 	@SuppressWarnings("unchecked")
 	@Override
 	public <A> A getControllerInstance(Class<A> controllerClass) throws Exception {
-		if (LiveHappeningsController.class.isAssignableFrom(controllerClass)) {
-			return (A) liveHappenings;
-		} else if (FirebaseAuthenticator.class.isAssignableFrom(controllerClass)) {
+		if (FirebaseAuthenticator.class.isAssignableFrom(controllerClass)) {
 			return (A) firebase;
 		} else if (NationStatesController.class.isAssignableFrom(controllerClass)) {
 			Constructor<A> cons = controllerClass.getConstructor(new Class[] {ComboPooledDataSource.class, NationCache.class, RegionCache.class, NationStates.class});

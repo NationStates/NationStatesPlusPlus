@@ -5,7 +5,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 
 import org.apache.commons.dbutils.DbUtils;
@@ -29,7 +29,10 @@ public class HappeningsTask implements Runnable {
 	private int maxEventId = -1;
 	private int newEvents = 0;
 	private long lastRun = 0L;
-	private final AtomicBoolean highActivity = new AtomicBoolean(false);
+	/**
+	 * A counter, when set > 0, runs happening update polls at 2s intervals, otherwise at 10s intervals.
+	 */
+	private final AtomicInteger highActivity = new AtomicInteger(0);
 	public HappeningsTask(ComboPooledDataSource pool, NationCache cache, NationStates api) {
 		this.api = api;
 		this.pool = pool;
@@ -37,7 +40,7 @@ public class HappeningsTask implements Runnable {
 	}
 
 	public boolean isHighActivity() {
-		return highActivity.get();
+		return highActivity.get() > 0;
 	}
 
 	private long getLastUpdate(Connection conn, String nation) throws SQLException {
@@ -83,18 +86,17 @@ public class HappeningsTask implements Runnable {
 	public void run() {
 		HappeningData data;
 		synchronized (api) {
-			//Throttle the happening queries based on how many new happenings occured last run
-			boolean highActivity = false;
+			//Throttle the happening queries based on how many new happenings occurred last run
 			if (lastRun + Duration.standardSeconds(10).getMillis() > System.currentTimeMillis()) {
-				if (newEvents < 25) {
-					Logger.debug("Skipping happening run, too recent");
-					return;
+				final int activity = this.highActivity.get();
+				if (newEvents >= 25 || activity > 0) {
+					Logger.info("Very high happenings activity, running at 2s intervals");
+					this.highActivity.set(newEvents > 25 ? 10 : activity - 1);
 				} else {
-					Logger.debug("Not skipping happening run - very active");
-					highActivity = true;
+					Logger.debug("Skipping happening run, little activity, last run was " + (System.currentTimeMillis() - lastRun) + " ms ago");
+					return;
 				}
 			}
-			this.highActivity.set(highActivity);
 			lastRun = System.currentTimeMillis();
 			newEvents = 0;
 			Logger.info("Starting global happenings run. Max Event ID: " + maxEventId);
@@ -104,9 +106,12 @@ public class HappeningsTask implements Runnable {
 				Logger.warn("Happenings monitoring rate limited!");
 				return;
 			}
+			final int oldEventId = maxEventId;
 			for (EventHappening happening : data.happenings) {
 				if (maxEventId < happening.eventId) {
 					maxEventId = happening.eventId;
+				}
+				if (oldEventId < happening.eventId) {
 					newEvents++;
 				}
 			}
