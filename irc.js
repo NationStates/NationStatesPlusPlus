@@ -4,7 +4,7 @@
 		{region: "the_north_pacific", network: "irc.esper.net", channel: "#tnp"},
 		{region: "the_south_pacific", network: "irc.esper.net", channel: "#the_south_pacific"},
 		{region: "the_west_pacific", network: "irc.esper.net", channel: "#thewestpacific"},
-		{region: "the_pacific", network: "irc.esper.net", channel: "#the_pacific"},
+		{region: "the_pacific", network: "irc.coldfront.net", channel: "#the_pacific"},
 		{region: "the_east_pacific", network: "irc.esper.net", channel: "#theeastpacific"},
 		{region: "lazarus", network: "irc.esper.net", channel: "#lazarus"},
 		{region: "balder", network: "irc.esper.net", channel: "#balder"},

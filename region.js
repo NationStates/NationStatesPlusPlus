@@ -1,18 +1,11 @@
 var quote = '<button id="quote-btn-${id}" class="button QuoteButton" onclick="quotePost(this);">Quote</button><a href="javascript:void(0)" class="QuoteButton rmbcomment" id="view-comment-link-${id}" style="margin-right: 5px; display:none;">View Comments</a><a href="javascript:void(0)" class="QuoteButton rmbcomment" id="comment-link-${id}" style="margin-right: 5px; display:none;">Add Comment</a><a href="javascript:void(0)" class="QuoteButton rmbcomment-submit" id="submit-comment-link-${id}" style="margin-right: 5px; display:none;">Submit</a><a href="javascript:void(0)" class="QuoteButton rmbcomment-cancel" id="cancel-comment-link-${id}" style="display:none;">Cancel</a><textarea id="comment-rmb-${id}" style="width: 100%; height: 8em; display:none;" wrap="soft"></textarea>';
 (function() {
 	if (getVisiblePage() == "region" || getVisiblePage() == "display_region") {
-		updateRegionFlag();
 		setupRegionPage(false);
 	} else if (getVisiblePage() == "display_region_rmb") {
 		setupRegionPage(true);
 	}
 })();
-
-function updateRegionFlag() {
-	if ($("h1").find(".rflag").length == 1) {
-		$.post("http://capitalistparadise.com/api/region/updateFlag/", "region=" + getVisibleRegion() + "&flag=" + encodeURIComponent("http://www.nationstates.net" + $("h1").find(".rflag").attr("src")), function() { });
-	}
-}
 
 function setupRegionPage(forumViewPage) {
 	if (isSettingEnabled("auto_update")) {

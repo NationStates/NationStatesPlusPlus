@@ -11,6 +11,10 @@ h1 {
 	border: 1px solid #383838;
 }
 
+.puppet-form {
+	background: #2A2A2A;
+}
+
 #puppet_password {
 	background: white !important;
 	border: 2px inset !important;

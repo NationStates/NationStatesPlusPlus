@@ -218,8 +218,9 @@ function showPuppets() {
 	for (var i = 0; i < split.length; i++) {
 		var name = split[i];
 		if (name.length > 0) {
-			var region = handleRegionCache(name);
-			html += "<li><div class='puppet-form-inner' style='margin-bottom: -15px;'><p style='margin-top: 3px;'><a id='" + name + "' href='/nation=" + name + "' style='color: white;' onmouseover='showPuppetRegion(\"" + name + "\");' onclick='switchToPuppet(\"" + name + "\"); return false;'>" + name.split("_").join(" ").toTitleCase() + "</a></p><ul style='display:none;'><li id='puppet-region-" + name + "'>(<a style='color: white;' href='/region=" + region + "'>" + region.split("_").join(" ").toTitleCase() + "</a>)</li></ul></div><img class='puppet-form-remove' onclick='removePuppet(\"" + name + "\");' src='http://capitalistparadise.com/nationstates/static/remove.png'></img></li>";
+			var cache = getPuppetCache(name);
+			var region = cache.region;
+			html += "<li><div class='puppet-form-inner' style='margin-bottom: -15px;'><p style='margin-top: 3px;'><a id='" + name + "' href='/nation=" + name + "' style='color: white;' onmouseover='showPuppetRegion(\"" + name + "\");' onclick='switchToPuppet(\"" + name + "\"); return false;'>" + name.split("_").join(" ").toTitleCase() + "</a>" + (cache.wa == "true" ? "<span style='color:green'> (WA) </span>" : "") + "</p><ul style='display:none;'><li id='puppet-region-" + name + "'>(<a style='color: white;' href='/region=" + region + "'>" + region.split("_").join(" ").toTitleCase() + "</a>)</li></ul></div><img class='puppet-form-remove' onclick='removePuppet(\"" + name + "\");' src='http://capitalistparadise.com/nationstates/static/remove.png'></img></li>";
 			numPuppets++;
 		}
 	}
@@ -253,12 +254,13 @@ function setupPuppetSetting(setting) {
 	$("#" + setting).prop("checked", localStorage.getItem(setting) == "true");
 }
 
-function handleRegionCache(name) {
-	var regionNameCache = localStorage.getItem("puppet-" + name + "-region");
-	if (regionNameCache != null) {
-		var cache = JSON.parse(regionNameCache);
-		if (parseInt(regionNameCache['timestamp']) > Date.now()) {
-			return cache['region'];
+function getPuppetCache(name) {
+	var cache = localStorage.getItem("puppet-" + name + "-cache");
+	localStorage.removeItem("puppet-" + name + "-region");
+	if (cache != null) {
+		cache = JSON.parse(cache);
+		if (parseInt(cache['timestamp']) > Date.now()) {
+			return cache;
 		}
 	}
 	$.get("/nation=" + name, function(data) {
@@ -267,11 +269,15 @@ function handleRegionCache(name) {
 			$("#puppet-region-" + name).html("(<a style='color: white;' href='/region=" + region + "'>" + region.split("_").join(" ").toTitleCase() + "</a>)");
 			var cache = new Object();
 			cache['region'] = region;
+			cache['wa'] = $(data).find(".wa_status").length > 0 ? "true" : "false";
 			cache['timestamp'] = (Date.now() + 24 * 60 * 60 * 1000);
-			localStorage.setItem("puppet-" + name + "-region", JSON.stringify(cache));
+			localStorage.setItem("puppet-" + name + "-cache", JSON.stringify(cache));
 		}
 	});
-	return "UNKNOWN REGION";
+	var cache = new Object();
+	cache['region'] = "UNKNOWN REGION";
+	cache['wa'] = false;
+	return cache;
 }
 
 function showPuppetRegion(name) {

@@ -2,7 +2,7 @@
 	window.postMessage({ method: "unread_forum_posts"}, "*");
 	checkPanelAlerts();
 	addCustomAlerts();
-	$("<li id='live_happenings_feed'><a id='live_happenings_link' href='http://www.nationstates.net/page=blank/?live_happenings=true'>HAPPENINGS FEED</a></li>").insertAfter($($("#panel").find(".menu").children()[3]));
+	$("<li id='live_happenings_feed'><a href='http://www.nationstates.net/page=reports2/'>HAPPENINGS FEED</a></li>").insertAfter($($("#panel").find(".menu").children()[3]));
 	$("<li id='ns_newspaper'><a id='ns_newspaper_link' style='display: inline;' href='http://www.nationstates.net/page=blank/?ns_newspaper=true'>GAMEPLAY NEWS</a></li>").insertAfter($("#live_happenings_feed"));
 	if (!isSettingEnabled("show_live_happenings_feed")) {
 		$("#live_happenings_feed").hide();
@@ -10,47 +10,10 @@
 	if (!isSettingEnabled("show_gameplay_news")) {
 		$("#ns_newspaper").hide();
 	}
-	$("#live_happenings_link").on("click", function(event) {
-		//iFrame?
-		if ($("#main").length == 0) {
-			//don't cancel event
-		} else {
-			event.preventDefault();
-			openLiveHappeningsFeed();
-		}
-	});
-	if (window.location.href.indexOf("live_happenings=true") != -1) {
-		openLiveHappeningsFeed();
-	} else if (window.location.href.indexOf("ns_newspaper=true") != -1) {
+	if (window.location.href.indexOf("ns_newspaper=true") != -1) {
 		openNationStatesNews();
 	}
 
-	var updateStatus = false;
-	var monitorNationStatesUpdate = function() {
-		$.get("http://capitalistparadise.com/api/nation/updateStatus/", function(json) {
-			updateStatus = json["update"];
-		});
-		setTimeout(monitorNationStatesUpdate, 30000);
-	}
-	$(window).on("page/update", monitorNationStatesUpdate);
-	
-
-	var showNationStatesUpdate = function() {
-		var happenings = $("#live_happenings_link");
-		if (updateStatus) {
-			$("#live_happenings_link").attr("title", "High activity of national happenings in progress!");
-			if (happenings.html().contains("!")) {
-				$("#live_happenings_link").html("HAPPENINGS FEED");
-			} else {
-				$("#live_happenings_link").html("HAPPENINGS FEED!");
-			}
-		} else if (happenings.html().contains("!")) {
-			$("#live_happenings_link").html("HAPPENINGS FEED");
-			$("#live_happenings_link").attr("title", "Live happenings from across the NationStates realm");
-		}
-	}
-	$(window).on("page/update", showNationStatesUpdate);
-	
 	function openNationStatesNews() {
 		localStorage.setItem("last_read_newspaper", Date.now());
 		$("#ns_news_nag").remove();
@@ -62,13 +25,6 @@
 			content = $("#content");
 		}
 		content.html("<div id='news_header' style='text-align: center;'><h1>NationStates Aggregated News <i style='font-size: 14px;'>0&#162;/Daily</i></h1><i>NationStates Latest Gameplay News, a free service provided by NationStates++, the premier NationStates experience.</i><hr></div><div id='inner-content'><div id='left_column' style='position: absolute; width: 25%; padding-right: 0.5%; border-right: solid 1px black;'></div><div style='position: absolute; margin-left: 26%; width: 25%; padding-right: 0.5%; border-right: solid 1px black;' id='middle_column'></div><div id='right_column' style='position: absolute; margin-left: 52%; width: 25%;'></div></div><div id='bottom_content' style='text-align:center;'><i>Looking to have your article or content featured? Contact <a href='/nation=afforess' class='nlink'>Afforess</a> for submissions!</i></div>");
-		//addArticle("document/d/1A8ewl1BcW6GXis-meRf3Vz74Z3KmO6MjUkk0T-NofOQ/", "left_column");
-		//addArticle("document/d/1zxH5SkR6GwMx4TOi8vsUnlVuInNxJeyOQWYgs9BR_ww/", "left_column");
-		addArticle("left_column", "document/d/19j9YjCCtpoQPRlLm2AOwbeQLGipPL8LnDuBtfBU8NsE/");
-		//addArticle("document/d/1sfI4_SwmFJjdThGdgNJEgTiC6y5Jd5nBBZ4m6p8KBCo/", "middle_column");
-		addArticle("middle_column", "document/d/1Y3hw44lYIKd9SgoeNeefg2o6Is2P2AChU7BS2mKkHBY/");
-		//addArticle("document/d/1e-HY4P-IPFKnB7FsdeFArKHasEbRt2rQ9IloJ-93_10/", "right_column");
-		addArticle("right_column", "document/d/1GCKIl7GePcYpJ4ipJwkLrLdCYYWOr2Fc2bxQSbIqKQo/", "document/d/1zxH5SkR6GwMx4TOi8vsUnlVuInNxJeyOQWYgs9BR_ww/");
 		loadingAnimation();
 		window.document.title = "NationStates | Gameplay News"
 		$(window).unbind("scroll");
@@ -79,35 +35,47 @@
 				$("#inner-content").css("height", Math.max(height, $(this).height() + 200) + "px");
 			});
 		}
-		window.onresize = updateSize;
-	}
-
-	function addArticle(columnId) {
-		$("#" + columnId).html("<div class='loading_animation' style='background-image:url(http://capitalistparadise.com/nationstates/static/loading.gif); margin-left: 33%; height:128px; width:128px; -webkit-transform:scale(0.25); transform:scale(0.25);'></div>");
-		for (var i = 1; i < arguments.length; i++) {
-			var document = arguments[i];
-			$.post("http://capitalistparadise.com/api/googledoc/", "doc=" + encodeURIComponent(document + "pub?embedded=true"), function(html) {
-				var text = $('<div />').html(html).text();
-				var start = text.indexOf("<h2");
-				text = text.substring(start);
+		$.get("http://capitalistparadise.com/api/newspaper/gameplay/", function(json) {
+			var getSelector = function(column) {
+				switch (parseInt(column, 10)) {
+					case 0:
+						return $("#left_column");
+					case 1:
+						return $("#middle_column");
+					case 2:
+						return $("#right_column");
+				}
+			}
+			$("#left_column, #middle_column, #right_column").html("");
+			for (var order = 0; order < 5; order++) {
+				for (var i = 0; i < json.length; i++) {
+					var article = json[i];
+					if (article.order == order) {
+						var selector = getSelector(article.column);
+						if (order > 0) selector.append("<hr style='margin-top: 40px;'>");
+						selector.append("<div id='article_id_" + article.article_id + "'></div>");
+					}
+				}
+			}
+			for (var i = 0; i < json.length; i++) {
+				var article = json[i];
+				var selector = $("#article_id_" + article.article_id);
+				var html = "<h2 style='margin-top:-5px;margin-bottom:-15px'>" + article.title + "</h2>";
+				html += "<i><p>" + article.author + ", " + (new Date(parseInt(article.timestamp, 10))).customFormat("#D##th# #MMMM# #YYYY#") + "</p></i>";
+				var text = article.article;
+				text = text.replaceAll("[b]", "<b>").replaceAll("[/b]", "</b>");
+				text = text.replaceAll("[i]", "<i>").replaceAll("[/i]", "</i>");
+				text = text.replaceAll("[u]", "<u>").replaceAll("[/u]", "</u>");
+				text = text.replaceAll("[blockquote]", "<blockquote class='news_quote'>").replaceAll("[/blockquote]", "</blockquote>");
+				text = parseUrls(text);
 				text = updateTextLinks("nation", text);
 				text = updateTextLinks("region", text);
-				var first = $("#" + columnId).find(".loading_animation").length == 1;
-				$("#" + columnId).html((first ? "" : $("#" + columnId).html() + "<p><hr></p>") + text);
-				
-				$("#" + columnId).find("img").error(function() {
-					if (!$(this).attr("src").startsWith("https://docs.google.com/")) {
-						$(this).attr("src", "https://docs.google.com/" + document + $(this).attr("src"));
-					}
-				});
-				
-				var existingClass = $("blockquote").attr("class");
-				$("blockquote").attr("class", (existingClass != null ? existingClass + " news_quote" : "news_quote"));
-				
-				var height = $("#inner-content").height();
-				$("#inner-content").css("height", Math.max(height, $("#" + columnId).height() + 200) + "px");
-			});
-		}
+				html += text;
+				selector.html(html);
+			}
+			window.onresize();
+		});
+		window.onresize = updateSize;
 	}
 
 	function loadingAnimation() {
@@ -138,79 +106,20 @@
 		return text;
 	}
 
-	function openLiveHappeningsFeed() {
-		var content;
-		if (document.head.innerHTML.indexOf("antiquity") != -1) {
-			content = $("#main");
-		} else {
-			content = $("#content");
+	function parseUrls(text) {
+		var index = text.indexOf("[url=");
+		while (index > -1) {
+			var endIndex = text.indexOf("[/url]", index + 6);
+			if (endIndex == -1) {
+				break;
+			}
+			var innerText = text.substring(index + 5, endIndex);
+			var url = innerText.substring(innerText.indexOf("=") + 1, innerText.indexOf("]"));
+			
+			text = text.substring(0, index) + "<a target='_blank' href='" + url + "'>" + innerText.substring(innerText.indexOf("]")) + "</a>" + text.substring(endIndex + 6);
+			index = text.indexOf("[url=", index);
 		}
-		content.html("<h1>Live Happenings Feed</h1><div id='inner-content'><ul id='happenings-feed'></ul></div>");
-		$(window).unbind("scroll");
-		happeningsToShow = [];
-		window.document.title = "NationStates | Live Happenings"
-		updateLiveHappenings();
-		updateTime();
-		showLatestHappennings();
-	}
-
-	function updateTime() {
-		if ($("h1").html().contains("Live Happenings Feed")) {
-			$("h1").html("Live Happenings Feed (" + (new Date()).customFormat("#hh#:#mm#:#ss# #AMPM# - #DDDD# - #D##th# #MMMM# #YYYY#") + ")");
-			setTimeout(updateTime, 500);
-		}
-	}
-
-	var happeningsToShow = [];
-	var amountToShow = 1;
-	function showLatestHappennings() {
-		if (happeningsToShow.length > 0) {
-			var list = $("#happenings-feed");
-			for (var i = 0; i < amountToShow; i++) {
-				var id = happeningsToShow.pop();
-				list.find("#" + id).animate({ height: 'toggle' }, 500);
-			}
-		}
-		setTimeout(showLatestHappennings, 500);
-	}
-
-	function updateLiveHappenings() {
-		$.get("http://capitalistparadise.com/api/nation/livefeed/", function(json) {
-			var list = $("#happenings-feed");
-			var empty = list.find("li").length == 0;
-			var html = "";
-			for (var i = 0; i < json.length; i++) {
-				var happening = json[i];
-				if (list.find("#" + happening.id).length == 0) {
-					var time = (empty ? happening.timestamp : Date.now() - 5000);
-					html += "<li " + (empty ? "" : "style='display:none;'") + " id='" + happening.id + "'><span time='" + time + "'>" +  timestampToTimeAgo(time) + "</span>" + " ago: " + happening.text + "</li>";
-					if (!empty) {
-						happeningsToShow.push(happening.id);
-					}
-				}
-			}
-			list.prepend(html);
-			amountToShow = Math.max(1, happeningsToShow.length / 20);
-			if (list.find("li").length == 0) {
-				list.append("<li id='no-happenings'>No News Is Good News!</li>");
-			} else if (list.find("li").length > 1) {
-				$("#no-happenings").remove();
-			}
-		});
-		var list = $("#happenings-feed");
-		list.find("span:visible").each(function() {
-			var time = $(this).attr("time");
-			if (Date.now() - time > 1000 * 60 * 10) {
-				$(this).parent().animate({ height: 'toggle' }, 500);
-				var remove = function(obj) {
-					$(obj).remove();
-				}
-				setTimeout(remove, 750, $(this).parent());
-			} else {
-				$(this).html(timestampToTimeAgo(time));
-			}
-		});
-		setTimeout(updateLiveHappenings, 6001);
+		return text;
 	}
 
 	function addCustomAlerts() {
