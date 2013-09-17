@@ -59,7 +59,7 @@ public class HappeningsController extends DatabaseController {
 		}
 		
 		String calculatedEtag = String.valueOf(happenings.hashCode());
-		Result result = Utils.handleDefaultHeaders(request(), response(), calculatedEtag);
+		Result result = Utils.handleDefaultGetHeaders(request(), response(), calculatedEtag);
 		
 		Logger.info("Time to retrieve happenings for region [" + region + "] was: " + (System.currentTimeMillis() - time) + " ms");
 		
@@ -98,7 +98,7 @@ public class HappeningsController extends DatabaseController {
 		}
 		
 		String calculatedEtag = String.valueOf(happenings.hashCode());
-		Result result = Utils.handleDefaultHeaders(request(), response(), calculatedEtag);
+		Result result = Utils.handleDefaultGetHeaders(request(), response(), calculatedEtag);
 
 		Logger.info("Time to parse happenings for region [" + region + "] was: " + (System.nanoTime() - start) / 1E6D + " ms");
 		
@@ -141,7 +141,7 @@ public class HappeningsController extends DatabaseController {
 			Logger.info("Query time for all [" + nation + "] happenings: " + (System.nanoTime() - time) / 1E6D + " ms");
 		}
 		String calculatedEtag = String.valueOf(happenings.hashCode());
-		Result result = Utils.handleDefaultHeaders(request(), response(), calculatedEtag);
+		Result result = Utils.handleDefaultGetHeaders(request(), response(), calculatedEtag);
 
 		if (happenings.isEmpty()) {
 			HappeningData data = new HappeningData();

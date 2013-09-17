@@ -42,7 +42,7 @@ public class LiveHappeningsController extends DatabaseController implements Runn
 	}
 
 	private Result processJsonNode(JsonNode node) {
-		Result result = Utils.handleDefaultHeaders(request(), response(), node != null ? String.valueOf(node.hashCode()) : null, "6");
+		Result result = Utils.handleDefaultGetHeaders(request(), response(), node != null ? String.valueOf(node.hashCode()) : null, "6");
 		if (result != null) {
 			return result;
 		}

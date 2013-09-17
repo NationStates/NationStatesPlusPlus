@@ -130,7 +130,7 @@ public class Application extends DatabaseController {
 			DbUtils.closeQuietly(conn);
 		}
 
-		Result result = Utils.handleDefaultHeaders(request(), response(), String.valueOf(flag.hashCode()));
+		Result result = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(flag.hashCode()));
 		if (result != null) {
 			return result;
 		}
@@ -182,7 +182,7 @@ public class Application extends DatabaseController {
 			DbUtils.closeQuietly(conn);
 		}
 
-		Result result = Utils.handleDefaultHeaders(request(), response(), String.valueOf(json.hashCode()));
+		Result result = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(json.hashCode()));
 		if (result != null) {
 			return result;
 		}
@@ -268,7 +268,7 @@ public class Application extends DatabaseController {
 			}
 			Logger.info("Query time for all endorsements [" + nationName + "]: " + (System.nanoTime() - time) / 1E6D + " ms");
 		}
-		Result result = Utils.handleDefaultHeaders(request(), response(), String.valueOf(json.hashCode()));
+		Result result = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(json.hashCode()));
 		if (result != null) {
 			return result;
 		}
@@ -348,7 +348,7 @@ public class Application extends DatabaseController {
 		} else {
 			json.put(nation, "unknown_nation");
 		}
-		Result result = Utils.handleDefaultHeaders(request(), response(), String.valueOf(json.hashCode()));
+		Result result = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(json.hashCode()));
 		if (result != null) {
 			return result;
 		}

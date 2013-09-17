@@ -44,7 +44,7 @@ public class RMBCommentController extends NationStatesController {
 		} finally {
 			DbUtils.closeQuietly(conn);
 		}
-		Result result = Utils.handleDefaultHeaders(request(), response(), String.valueOf(comments.hashCode()));
+		Result result = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(comments.hashCode()));
 		if (result != null) {
 			return result;
 		}
@@ -64,7 +64,7 @@ public class RMBCommentController extends NationStatesController {
 		} finally {
 			DbUtils.closeQuietly(conn);
 		}
-		Result result = Utils.handleDefaultHeaders(request(), response(), String.valueOf(list.hashCode()));
+		Result result = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(list.hashCode()));
 		if (result != null) {
 			return result;
 		}
@@ -132,7 +132,7 @@ public class RMBCommentController extends NationStatesController {
 		final int nationId = getCache().getNationId(nation);
 		Connection conn = getConnection();
 		if (getRMBCommentNation(conn, commentId) == nationId) {
-			Utils.handleDefaultHeaders(request(), response(), null, "0");
+			Utils.handleDefaultGetHeaders(request(), response(), null, "0");
 			return Results.badRequest();
 		}
 		try {
@@ -161,7 +161,7 @@ public class RMBCommentController extends NationStatesController {
 		} finally {
 			DbUtils.closeQuietly(conn);
 		}
-		Utils.handleDefaultHeaders(request(), response(), null, "0");
+		Utils.handleDefaultGetHeaders(request(), response(), null, "0");
 		return Results.ok();
 	}
 
@@ -174,7 +174,7 @@ public class RMBCommentController extends NationStatesController {
 		final int nationId = getCache().getNationId(nation);
 		Connection conn = getConnection();
 		if (getRMBCommentNation(conn, commentId) == nationId) {
-			Utils.handleDefaultHeaders(request(), response(), null, "0");
+			Utils.handleDefaultGetHeaders(request(), response(), null, "0");
 			return Results.badRequest();
 		}
 		try {
@@ -203,7 +203,7 @@ public class RMBCommentController extends NationStatesController {
 		} finally {
 			DbUtils.closeQuietly(conn);
 		}
-		Utils.handleDefaultHeaders(request(), response(), null, "0");
+		Utils.handleDefaultGetHeaders(request(), response(), null, "0");
 		return Results.ok();
 	}
 
@@ -214,7 +214,7 @@ public class RMBCommentController extends NationStatesController {
 		}
 		final String comment = Utils.getPostValue(request(), "comment");
 		if (comment == null) {
-			Utils.handleDefaultHeaders(request(), response(), null, "0");
+			Utils.handleDefaultGetHeaders(request(), response(), null, "0");
 			return Results.badRequest();
 		}
 		final String nation = Utils.getPostValue(request(), "nation");
@@ -226,7 +226,7 @@ public class RMBCommentController extends NationStatesController {
 			select.setLong(3, System.currentTimeMillis() - Duration.standardSeconds(10).getMillis());
 			ResultSet result = select.executeQuery();
 			if (result.next()) {
-				Utils.handleDefaultHeaders(request(), response(), null, "0");
+				Utils.handleDefaultGetHeaders(request(), response(), null, "0");
 				return Results.status(429);
 			}
 			DbUtils.closeQuietly(result);
@@ -240,7 +240,7 @@ public class RMBCommentController extends NationStatesController {
 		} finally {
 			DbUtils.closeQuietly(conn);
 		}
-		Utils.handleDefaultHeaders(request(), response(), null, "0");
+		Utils.handleDefaultGetHeaders(request(), response(), null, "0");
 		return Results.ok();
 	}
 }

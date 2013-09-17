@@ -29,6 +29,11 @@
 			});
 		}
 		$.get("http://capitalistparadise.com/api/newspaper/gameplay/", function(json) {
+			getNationStatesAuth(function(authCode) {
+				$.post("http://capitalistparadise.com/api/newspaper/canedit/?newspaper=0", "nation=" + getUserNation() + "&auth=" + authCode, function(json) {
+					console.log("Can edit newspaper!");
+				});
+			});
 			var getSelector = function(column) {
 				switch (parseInt(column, 10)) {
 					case 0:

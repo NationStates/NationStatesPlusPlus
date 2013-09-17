@@ -460,28 +460,19 @@ function setupSyncing() {
 	}
 }
 
-function requestAuthToken() {
-	$("#firebase_progress_bar" ).show();
+function getNationStatesAuth(callback) {
 	$.get("/page=verify_login", function(data) {
-		$("#firebase_progress_bar" ).progressbar({value: 25});
 		var authCode = $(data).find("#proof_of_login_checksum").html();
 		console.log("Auth code:" + authCode);
 		//Regenerate localid if nessecary
-		if ($("input[name='localid']").length > 0) {
-			setTimeout(function () {
-				$.ajax({
-					cache: false,
-					url: window.location.href.substring(window.location.href.indexOf("/", 10)),
-					success: function(html) {
-						var localid = $(html).find("input[name='localid']").val();
-						if (typeof localid != "undefined" && localid != "") {
-							console.log("Updating localid from " + $("input[name='localid']").val() + " to " + localid);
-							$("input[name='localid']").val(localid);
-						}
-					}
-				});
-			}, 2000);
-		}
+		$(window).trigger("page/update");
+		callback(authCode);
+	});
+}
+
+function requestAuthToken() {
+	$("#firebase_progress_bar" ).show();
+	getNationStatesAuth(function(authCode) {
 		//Verify code
 		$.post("http://capitalistparadise.com/api/firebase/", "nation=" + getUserNation() + "&auth=" + authCode, function(response) {
 			console.log("auth token: " + response['token']);

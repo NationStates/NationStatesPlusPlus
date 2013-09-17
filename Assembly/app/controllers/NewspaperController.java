@@ -35,7 +35,7 @@ public class NewspaperController extends NationStatesController {
 			if (result.next()) {
 				return getNewspaper(result.getInt(1));
 			}
-			 Utils.handleDefaultHeaders(request(), response(), null);
+			 Utils.handleDefaultGetHeaders(request(), response(), null);
 			return Results.notFound();
 		} finally {
 			DbUtils.closeQuietly(conn);
@@ -65,7 +65,7 @@ public class NewspaperController extends NationStatesController {
 			DbUtils.closeQuietly(conn);
 		}
 
-		Result result = Utils.handleDefaultHeaders(request(), response(), String.valueOf(news.hashCode()));
+		Result result = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(news.hashCode()));
 		if (result != null) {
 			return result;
 		}
@@ -102,7 +102,7 @@ public class NewspaperController extends NationStatesController {
 		} finally {
 			DbUtils.closeQuietly(conn);
 		}
-		Utils.handleDefaultHeaders(request(), response(), null, "0");
+		Utils.handleDefaultPostHeaders(request(), response());
 		return Results.ok();
 	}
 
@@ -128,7 +128,7 @@ public class NewspaperController extends NationStatesController {
 			}
 			
 			if (!validEditor) {
-				Utils.handleDefaultHeaders(request(), response(), null, "0");
+				Utils.handleDefaultPostHeaders(request(), response());
 				return Results.unauthorized();
 			}
 		} finally {
@@ -142,7 +142,7 @@ public class NewspaperController extends NationStatesController {
 		if (result != null) {
 			return result;
 		}
-		Utils.handleDefaultHeaders(request(), response(), null, "0");
+		Utils.handleDefaultPostHeaders(request(), response());
 		return Results.ok();
 	}
 
@@ -160,7 +160,7 @@ public class NewspaperController extends NationStatesController {
 		String visible = Utils.getPostValue(request(), "visible");
 		String nation = Utils.getPostValue(request(), "nation");
 		if (article == null || title == null || timestamp == null || author == null || column == null || order == null || newspaper == -1) {
-			Utils.handleDefaultHeaders(request(), response(), null, "0");
+			Utils.handleDefaultPostHeaders(request(), response());
 			return Results.badRequest();
 		}
 		Connection conn = null;
@@ -180,7 +180,7 @@ public class NewspaperController extends NationStatesController {
 			}
 			
 			if (!validEditor) {
-				Utils.handleDefaultHeaders(request(), response(), null, "0");
+				Utils.handleDefaultPostHeaders(request(), response());
 				return Results.unauthorized();
 			}
 			
@@ -210,7 +210,7 @@ public class NewspaperController extends NationStatesController {
 		} finally {
 			DbUtils.closeQuietly(conn);
 		}
-		Utils.handleDefaultHeaders(request(), response(), null, "0");
+		Utils.handleDefaultPostHeaders(request(), response());
 		return Results.ok();
 	}
 }

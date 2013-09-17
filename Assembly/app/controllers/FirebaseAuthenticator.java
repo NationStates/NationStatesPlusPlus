@@ -49,10 +49,7 @@ public class FirebaseAuthenticator extends DatabaseController {
 				result.put("nation", nation);
 				result.put("token", token);
 				
-				response().setHeader("Access-Control-Allow-Origin", "*");
-				response().setHeader("Access-Control-Allow-Methods", "POST, GET, HEAD");
-				response().setHeader("Access-Control-Max-Age", "300");
-				response().setHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+				Utils.handleDefaultPostHeaders(request(), response());
 				return ok(Json.toJson(result)).as("application/json");
 			} else {
 				Logger.warn("Nation: " + nation + " with auth token: " + auth + " failed to authenticate!");

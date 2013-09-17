@@ -33,11 +33,11 @@ public class Utils {
 			.appendSecondOfMinute(2).appendLiteral(" GMT").toFormatter();
 
 
-	public static Result handleDefaultHeaders(Request request, Response response, String calculatedEtag) {
-		return handleDefaultHeaders(request, response, calculatedEtag, "60");
+	public static Result handleDefaultGetHeaders(Request request, Response response, String calculatedEtag) {
+		return handleDefaultGetHeaders(request, response, calculatedEtag, "60");
 	}
 
-	public static Result handleDefaultHeaders(Request request, Response response, String calculatedEtag, String seconds) {
+	public static Result handleDefaultGetHeaders(Request request, Response response, String calculatedEtag, String seconds) {
 		response.setHeader("Access-Control-Allow-Origin", "*");
 		response.setHeader("Access-Control-Allow-Methods", "POST, GET, HEAD");
 		response.setHeader("Access-Control-Max-Age", seconds);
@@ -53,6 +53,13 @@ public class Utils {
 			return Results.status(304);
 		}
 		return null;
+	}
+
+	public static void handleDefaultPostHeaders(Request request, Response response) {
+		response.setHeader("Access-Control-Allow-Origin", "*");
+		response.setHeader("Access-Control-Allow-Methods", "POST, GET, HEAD");
+		response.setHeader("Access-Control-Max-Age", "60");
+		response.setHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
 	}
 
 	public static String formatHappeningText(String text, NationCache cache, Connection conn, boolean longNames, String owner) throws SQLException {
@@ -141,11 +148,11 @@ public class Utils {
 		String auth = Utils.getPostValue(request, "auth");
 		String nation = Utils.getPostValue(request, "nation");
 		if (auth == null || nation == null || cache.getNationId(nation) == -1) {
-			Utils.handleDefaultHeaders(request, response, null, "0");
+			Utils.handleDefaultPostHeaders(request, response);
 			return Results.badRequest();
 		}
 		if (!api.verifyNation(nation, auth)) {
-			Utils.handleDefaultHeaders(request, response, null, "0");
+			Utils.handleDefaultPostHeaders(request, response);
 			return Results.unauthorized();
 		}
 		return null;

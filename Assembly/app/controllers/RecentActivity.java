@@ -52,7 +52,7 @@ public class RecentActivity extends DatabaseController {
 			}
 		}
 
-		Result result = Utils.handleDefaultHeaders(request(), response(), String.valueOf(json.hashCode()));
+		Result result = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(json.hashCode()));
 		if (result != null) {
 			return result;
 		}

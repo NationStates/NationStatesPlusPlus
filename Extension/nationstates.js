@@ -13,6 +13,24 @@
 		}
 	}
 
+	function updateSecurityCodes() {
+		var chk = $("input[name='chk']");
+		if (chk.length != 0) {
+			$.get("/page=tgsettings", function(html) {
+				console.log("Updating chk to: " + $(html).find("input[name='chk']").val());
+				chk.val($(html).find("input[name='chk']").val());
+			});
+		}
+		var localid = $("input[name='localid']");
+		if (localid.length != 0) {
+			$.get("/page=tgsettings", function(html) {
+				console.log("Updating localid to: " + $(html).find("input[name='localid']").val());
+				localid.val($(html).find("input[name='localid']").val());
+			});
+		}
+	}
+	$(window).on("page/update", updateSecurityCodes);
+
 	var _lastPanelUpdate = 0;
 	function checkPanelAlerts() {
 		setTimeout(function() {
