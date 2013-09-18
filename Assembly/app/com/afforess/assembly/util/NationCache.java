@@ -7,6 +7,9 @@ import java.sql.SQLException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.apache.commons.dbutils.DbUtils;
+import org.joda.time.Duration;
+
 import play.Logger;
 
 import com.mchange.v2.c3p0.ComboPooledDataSource;
@@ -86,11 +89,58 @@ public class NationCache {
 		} catch (SQLException e) {
 			Logger.error("Unable to look up nation id", e);
 		} finally {
-			if (conn != null) {
-				try { conn.close(); } catch (SQLException ignore) { }
-			}
+			DbUtils.closeQuietly(conn);
 		}
 		return -1;
+	}
+	
+	public boolean isValidAuthToken(int id, String authToken) {
+		if (authToken == null) {
+			return false;
+		}
+		Connection conn = null;
+		try {
+			conn = pool.getConnection();
+			PreparedStatement statement = conn.prepareStatement("SELECT auth from assembly.nation_auth WHERE nation_id = ? AND time > ?");
+			statement.setInt(1, id);
+			statement.setLong(2, System.currentTimeMillis());
+			ResultSet result = statement.executeQuery();
+			while (result.next()) {
+				if (authToken.equals(result.getString(1))) {
+					return true;
+				}
+			}
+		} catch (SQLException e) {
+			Logger.error("Unable to verify auth token", e);
+		} finally {
+			DbUtils.closeQuietly(conn);
+		}
+		return false;
+	}
+
+	public String generateAuthToken(int id) {
+		Connection conn = null;
+		try {
+			conn = pool.getConnection();
+			PreparedStatement statement = conn.prepareStatement("SELECT auth from assembly.nation_auth WHERE nation_id = ? AND time > ?");
+			statement.setInt(1, id);
+			statement.setLong(2, System.currentTimeMillis());
+			ResultSet result = statement.executeQuery();
+			while (result.next()) {
+				return result.getString(1);
+			}
+			String auth = Sha.hash256(id + "-" + System.nanoTime());
+			statement = conn.prepareStatement("INSERT INTO assembly.nation_auth (nation_id, auth, time) VALUES (?, ?, ?)");
+			statement.setInt(1, id);
+			statement.setString(2, auth);
+			statement.setLong(3, System.currentTimeMillis() + Duration.standardDays(7).getMillis());
+			statement.executeUpdate();
+			return auth;
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
+		} finally {
+			DbUtils.closeQuietly(conn);
+		}
 	}
 
 	public String getNationName(int id) {
@@ -117,9 +167,7 @@ public class NationCache {
 		} catch (SQLException e) {
 			Logger.error("Unable to look up nation id", e);
 		} finally {
-			if (conn != null) {
-				try { conn.close(); } catch (SQLException ignore) { }
-			}
+			DbUtils.closeQuietly(conn);
 		}
 		return null;
 	}

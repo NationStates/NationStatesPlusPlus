@@ -145,6 +145,24 @@ public class Utils {
 	}
 
 	public static Result validateRequest(Http.Request request, Http.Response response, NationStates api, NationCache cache) {
+		String authToken = Utils.getPostValue(request, "auth-token");
+		String nation = Utils.getPostValue(request, "nation");
+		String auth = Utils.getPostValue(request, "auth");
+		final int nationId = cache.getNationId(nation);
+		if (nation != null && nationId != -1) {
+			if (authToken != null && cache.isValidAuthToken(nationId, authToken)) {
+				return null;
+			}
+			if (auth != null && api.verifyNation(nation, auth)) {
+				response.setHeader("X-Auth-Token", cache.generateAuthToken(nationId));
+				return null;
+			}
+		}
+		Utils.handleDefaultPostHeaders(request, response);
+		return Results.unauthorized();
+	}
+
+	public static Result verifyNation(Http.Request request, Http.Response response, NationStates api, NationCache cache) {
 		String auth = Utils.getPostValue(request, "auth");
 		String nation = Utils.getPostValue(request, "nation");
 		if (auth == null || nation == null || cache.getNationId(nation) == -1) {
@@ -157,5 +175,4 @@ public class Utils {
 		}
 		return null;
 	}
-
 }

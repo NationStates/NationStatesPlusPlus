@@ -76,9 +76,7 @@ public class Global extends GlobalSettings {
 		//Setup firebase
 		ConfigurationNode firebaseConfig = config.getChild("firebase");
 		firebase = new FirebaseAuthenticator(pool, cache, regionCache, firebaseConfig.getChild("token").getString(), api);
-		
-		if (true) return;
-
+			
 		//Setup region monitoring
 		RegionMonitoring monitoring = new RegionMonitoring(api, pool);
 
