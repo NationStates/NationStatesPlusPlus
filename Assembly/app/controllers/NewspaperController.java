@@ -33,7 +33,7 @@ public class NewspaperController extends NationStatesController {
 			articles.setString(1, region);
 			ResultSet result = articles.executeQuery();
 			if (result.next()) {
-				return getNewspaper(result.getInt(1));
+				return getNewspaper(result.getInt(1), false);
 			}
 			 Utils.handleDefaultGetHeaders(request(), response(), null);
 			return Results.notFound();
@@ -42,12 +42,13 @@ public class NewspaperController extends NationStatesController {
 		}
 	}
 
-	public Result getNewspaper(int id) throws SQLException {
+	public Result getNewspaper(int id, boolean visible) throws SQLException {
+		Map<String, Object> newspaper = new HashMap<String, Object>();
 		ArrayList<Map<String, String>> news = new ArrayList<Map<String, String>>();
 		Connection conn = null;
 		try {
 			conn = getConnection();
-			PreparedStatement articles = conn.prepareStatement("SELECT article_id, article, title, articles.timestamp, author, articles.column, articles.order FROM assembly.articles WHERE newspaper_id = ? AND visible = 1");
+			PreparedStatement articles = conn.prepareStatement("SELECT article_id, article, title, articles.timestamp, author, articles.column, articles.order, visible FROM assembly.articles WHERE newspaper_id = ? " + (visible ? "AND visible = 1" : ""));
 			articles.setInt(1, id);
 			ResultSet result = articles.executeQuery();
 			while(result.next()) {
@@ -59,17 +60,30 @@ public class NewspaperController extends NationStatesController {
 				article.put("author", result.getString(5));
 				article.put("column", result.getString(6));
 				article.put("order", result.getString(7));
+				article.put("newspaper", String.valueOf(id));
+				article.put("visible", String.valueOf(result.getByte(8)));
 				news.add(article);
 			}
+			
+			PreparedStatement select = conn.prepareStatement("SELECT title, byline, editor FROM assembly.newspapers WHERE newspaper = ? ");
+			select.setInt(1, id);
+			result = select.executeQuery();
+			result.next();
+			newspaper.put("newspaper_id", id);
+			newspaper.put("newspaper", result.getString(1));
+			newspaper.put("byline", result.getString(2));
+			newspaper.put("editor", result.getString(3));
 		} finally {
 			DbUtils.closeQuietly(conn);
 		}
+		newspaper.put("articles", news);
+		newspaper.put("newspaper_id", id);
 
-		Result result = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(news.hashCode()));
+		Result result = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(newspaper.hashCode()), "60");
 		if (result != null) {
 			return result;
 		}
-		return ok(Json.toJson(news)).as("application/json");
+		return ok(Json.toJson(newspaper)).as("application/json");
 	}
 
 	public Result changeEditors(int newspaper) throws SQLException {
@@ -141,6 +155,51 @@ public class NewspaperController extends NationStatesController {
 		Result result = canEditImpl(newspaper);
 		if (result != null) {
 			return result;
+		}
+		Utils.handleDefaultPostHeaders(request(), response());
+		return Results.ok();
+	}
+
+	public Result administrateNewspaper(int newspaper) throws SQLException {
+		Result result = Utils.validateRequest(request(), response(), getAPI(), getCache());
+		if (result != null) {
+			return result;
+		}
+		String nation = Utils.getPostValue(request(), "nation");
+		String title = Utils.getPostValue(request(), "title");
+		String byline = Utils.getPostValue(request(), "byline");
+		if (title == null || title.length() > 255 || byline == null || byline.length() > 255) {
+			Utils.handleDefaultPostHeaders(request(), response());
+			return Results.badRequest();
+		}
+		Connection conn = null;
+		try {
+			conn = getConnection();
+			
+			PreparedStatement editors = conn.prepareStatement("SELECT nation_id FROM assembly.newspaper_editors WHERE newspaper = ?");
+			editors.setInt(1, newspaper);
+			ResultSet set = editors.executeQuery();
+			final int nationId = getCache().getNationId(nation);
+			boolean validEditor = false;
+			while (set.next()) {
+				if (set.getInt(1) == nationId) {
+					validEditor = true;
+					break;
+				}
+			}
+			
+			if (!validEditor) {
+				Utils.handleDefaultPostHeaders(request(), response());
+				return Results.unauthorized();
+			}
+			
+			PreparedStatement update = conn.prepareStatement("UPDATE assembly.newspapers SET title = ?, byline = ? WHERE newspaper = ?");
+			update.setString(1, title);
+			update.setString(2, byline);
+			update.setInt(3, newspaper);
+			update.executeUpdate();
+		} finally {
+			DbUtils.closeQuietly(conn);
 		}
 		Utils.handleDefaultPostHeaders(request(), response());
 		return Results.ok();

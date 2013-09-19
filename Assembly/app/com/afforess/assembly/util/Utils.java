@@ -151,28 +151,17 @@ public class Utils {
 		final int nationId = cache.getNationId(nation);
 		if (nation != null && nationId != -1) {
 			if (authToken != null && cache.isValidAuthToken(nationId, authToken)) {
+				response.setHeader("Access-Control-Expose-Headers", "X-Auth-Token");
+				response.setHeader("X-Auth-Token", authToken);
 				return null;
 			}
 			if (auth != null && api.verifyNation(nation, auth)) {
+				response.setHeader("Access-Control-Expose-Headers", "X-Auth-Token");
 				response.setHeader("X-Auth-Token", cache.generateAuthToken(nationId));
 				return null;
 			}
 		}
 		Utils.handleDefaultPostHeaders(request, response);
 		return Results.unauthorized();
-	}
-
-	public static Result verifyNation(Http.Request request, Http.Response response, NationStates api, NationCache cache) {
-		String auth = Utils.getPostValue(request, "auth");
-		String nation = Utils.getPostValue(request, "nation");
-		if (auth == null || nation == null || cache.getNationId(nation) == -1) {
-			Utils.handleDefaultPostHeaders(request, response);
-			return Results.badRequest();
-		}
-		if (!api.verifyNation(nation, auth)) {
-			Utils.handleDefaultPostHeaders(request, response);
-			return Results.unauthorized();
-		}
-		return null;
 	}
 }
