@@ -1,7 +1,9 @@
 import java.beans.PropertyVetoException;
 import java.io.File;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.spout.cereal.config.ConfigurationException;
 import org.spout.cereal.config.ConfigurationNode;
@@ -13,6 +15,7 @@ import com.afforess.assembly.RegionMonitoring;
 import com.afforess.assembly.UpdateTask;
 import com.afforess.assembly.util.NationCache;
 import com.afforess.assembly.util.RegionCache;
+import com.google.common.collect.ObjectArrays;
 import com.limewoodMedia.nsapi.NationStates;
 import com.mchange.v2.c3p0.ComboPooledDataSource;
 
@@ -20,7 +23,13 @@ import controllers.DatabaseController;
 import controllers.FirebaseAuthenticator;
 import controllers.NationStatesController;
 import play.*;
+import play.api.mvc.EssentialFilter;
+import play.api.mvc.PlainResult;
+import play.extras.iteratees.GzipFilter;
 import play.libs.Akka;
+import play.mvc.Action;
+import play.mvc.Http.Context;
+import play.mvc.Http.Request;
 import scala.concurrent.duration.Duration;
 
 public class Global extends GlobalSettings {
@@ -97,6 +106,55 @@ public class Global extends GlobalSettings {
 	public void onStop(Application app) {
 		Logger.info("Application shutdown");
 		pool.close();
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public <T extends EssentialFilter> Class<T>[] filters() {
+		return (Class[]) ObjectArrays.concat(GzipFilter.class, super.filters());
+    }
+
+	private final AtomicLong requestId = new AtomicLong(0);
+	@SuppressWarnings("rawtypes")
+	@Override
+	public Action onRequest(final Request request, Method actionMethod) {
+		final long id = requestId.getAndIncrement();
+		final long start = System.nanoTime();
+		Logger.debug("LOGGING [ID: " + id + "] REQUEST FROM [" + request.remoteAddress().split(",")[0] + "] TO [" + request.uri() + "]");
+		final Action superAction = super.onRequest(request, actionMethod);
+		final Action logAction = new StatusCodeAction(superAction, id, start);
+		return logAction;
+	}
+
+	private static class StatusCodeAction extends Action.Simple {
+		@SuppressWarnings("rawtypes")
+		private final Action superAction;
+		private final long id;
+		private final long start;
+		public StatusCodeAction(@SuppressWarnings("rawtypes") Action superAction, long id, long start) {
+			this.superAction = superAction;
+			this.id = id;
+			this.start = start;
+		}
+
+		@SuppressWarnings("unchecked")
+		@Override
+		public play.mvc.Result call(Context ctx) throws Throwable {
+			if (superAction.delegate == null) {
+				superAction.delegate = delegate;
+			}
+			int status = -1;
+			try {
+				play.mvc.Result superResult = superAction.call(ctx);
+				if (superResult.getWrappedResult() instanceof PlainResult) {
+					PlainResult plain = (PlainResult)(superResult.getWrappedResult());
+					status = plain.header().status();
+				}
+				return superResult;
+			} finally {
+				Logger.debug("LOGGING [ID: " + id + "] REQUEST COMPLETED [STATUS: " + status + "] IN [" + ((System.nanoTime() - start) / 1E6D) + " ms]");
+			}
+		}
 	}
 
 	@SuppressWarnings("unchecked")

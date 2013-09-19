@@ -189,7 +189,6 @@ public class Application extends DatabaseController {
 	}
 
 	public Result getWAMembers() throws SQLException {
-		long time = System.nanoTime();
 		Map<String, Map<String, Object>> json = new HashMap<String, Map<String, Object>>();
 		Connection conn = getConnection();
 		try {
@@ -203,7 +202,6 @@ public class Application extends DatabaseController {
 				values.put("influence_desc", result.getString(4));
 				json.put(nation, values);
 			}
-			Logger.info("Query time for all wa members: " + (System.nanoTime() - time) / 1E6D + " ms");
 		} finally {
 			DbUtils.closeQuietly(conn);
 		}
@@ -216,7 +214,6 @@ public class Application extends DatabaseController {
 	}
 
 	public Result getEndorsements(final String nationName) throws SQLException {
-		long time = System.nanoTime();
 		Map<String, Object> json = new HashMap<String, Object>();
 		if (nationName != null && nationName.length() > 0) {
 			Connection conn = getConnection();
@@ -292,7 +289,6 @@ public class Application extends DatabaseController {
 			} finally {
 				DbUtils.closeQuietly(conn);
 			}
-			Logger.info("Query time for all endorsements [" + nationName + "]: " + (System.nanoTime() - time) / 1E6D + " ms");
 		}
 		Result result = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(json.hashCode()));
 		if (result != null) {
@@ -309,7 +305,6 @@ public class Application extends DatabaseController {
 	}
 
 	public Result getNationHistory(final String nation) throws SQLException {
-		long time = System.nanoTime();
 		Map<String, Object> json = new HashMap<String, Object>();
 
 		int nationId = getCache().getNationId(nation);
@@ -370,7 +365,6 @@ public class Application extends DatabaseController {
 			} finally {
 				DbUtils.closeQuietly(conn);
 			}
-			Logger.info("Query time for national history [" + nation + "]: " + (System.nanoTime() - time) / 1E6D + " ms");
 		} else {
 			json.put(nation, "unknown_nation");
 		}
