@@ -1,0 +1,73 @@
+<form class="form-horizontal">
+<fieldset>
+
+<div class="control-group">
+  <label class="control-label" for="article_title">Article Title</label>
+  <div class="controls">
+    <input id="article_title" name="article_title" type="text" placeholder="Article Title" class="input-xlarge" style="width: 85%;" required="">
+    <p class="help-block">Title of the Article</p>
+  </div>
+</div>
+
+<div class="control-group">
+  <label class="control-label" for="article_author">Article Author</label>
+  <div class="controls">
+    <input id="article_author" name="article_author" type="text" placeholder="Article Author" class="input-xlarge" style="width: 85%;" required="">
+    <p class="help-block">Author(s) of the Article</p>
+  </div>
+</div>
+
+<div class="control-group">
+  <label class="control-label" for="article_column">Article Column</label>
+  <div class="controls">
+    <select id="article_column" name="article_column" class="input-xlarge">
+      <option value="0">Left Column</option>
+      <option value="1">Center Column</option>
+      <option value="2">Right Column</option>
+    </select>
+  </div>
+</div>
+
+<div class="control-group">
+  <label class="control-label" for="article_order">Article Order</label>
+  <div class="controls">
+    <select id="article_order" name="article_order" class="input-xlarge">
+      <option value="0">First</option>
+      <option value="1">Second</option>
+      <option value="2">Third</option>
+      <option value="3">Fourth</option>
+      <option value="4">Fifth</option>
+    </select>
+  </div>
+</div>
+
+<div class="control-group">
+  <label class="control-label" for="article_body">Article Body</label>
+  <div class="controls">                     
+    <textarea id="article_body" name="article_body" style="width: 85%; height: 450px;" required="">Your article goes here!</textarea>
+  </div>
+</div>
+
+<div class="control-group">
+  <label class="control-label" for="article_visible">Ariticle Published:</label>
+  <div class="controls">
+    <label class="radio" for="article_visible-0">
+      <input type="radio" name="article_visible" id="article_visible-0" value="Draft" checked="checked">
+      Draft
+    </label>
+    <label class="radio" for="article_visible-1">
+      <input type="radio" name="article_visible" id="article_visible-1" value="Published">
+      Published
+    </label>
+  </div>
+</div>
+
+<div class="control-group">
+  <div class="controls">
+    <button id="submit_article" name="submit_article" class="btn btn-success">Submit Article</button>
+    <button id="cancel_article" name="cancel_article" class="btn btn-danger">Cancel Changes</button>
+  </div>
+</div>
+
+</fieldset>
+</form>

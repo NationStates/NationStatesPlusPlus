@@ -72,10 +72,14 @@ $.get(urlPrefix + "cache_buster.txt?time=" + Date.now() , function(value) {
 	} else if (document.head.innerHTML.indexOf("ns.dark") != -1) {
 		addStylesheet(urlPrefix + 'nationstates++_dark.css');
 	}
-
-	if (document.head.innerHTML.indexOf("//ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js") == -1) {
-		addJavascript("//ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js", function() {
-			addJavascript("//ajax.googleapis.com/ajax/libs/jqueryui/1.9.2/jquery-ui.min.js", loadJavascript);
+	
+	if (pageUrl.indexOf("article_editor") != -1 || pageUrl.indexOf("newspaper_editor") != -1) {
+		addStylesheet(urlPrefix + 'newspaper_bootstrap.min.css');
+	}
+	
+	if (document.head.innerHTML.indexOf("//ajax.googleapis.com/ajax/libs/jquery") == -1) {
+		addJavascript("//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js", function() {
+			addJavascript("//ajax.googleapis.com/ajax/libs/jqueryui/1.10.2/jquery-ui.min.js", loadJavascript);
 		});
 	} else {
 		loadJavascript();

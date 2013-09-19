@@ -23,7 +23,7 @@
 		}
 		var localid = $("input[name='localid']");
 		if (localid.length != 0) {
-			$.get("/page=tgsettings", function(html) {
+			$.get("/page=settings", function(html) {
 				console.log("Updating localid to: " + $(html).find("input[name='localid']").val());
 				localid.val($(html).find("input[name='localid']").val());
 			});

@@ -21,6 +21,18 @@
 			});
 		};
 	})(jQuery);
+	
+	$.QueryString = (function(a) {
+        if (a == "") return {};
+        var b = {};
+        for (var i = 0; i < a.length; ++i)
+        {
+            var p=a[i].split('=');
+            if (p.length != 2) continue;
+            b[p[0]] = decodeURIComponent(p[1].replace(/\+/g, " "));
+        }
+        return b;
+    })(window.location.search.substr(1).split('&'))
 
 	//Add string.startsWith
 	if (typeof String.prototype.startsWith != 'function') {
@@ -447,7 +459,12 @@ function setupSyncing() {
 		$('.ui-progressbar-value').css("background", "#425AFF");
 	
 		setTimeout(function() {
-			var authToken = localStorage.getItem("auth-" + getUserNation());
+			var oldAuthToken = localStorage.getItem("auth-" + getUserNation());
+			if (oldAuthToken != null) {
+				localStorage.setItem("firebase-auth-" + getUserNation(), oldAuthToken);
+				localStorage.removeItem("auth-" + getUserNation());
+			}
+			var authToken = localStorage.getItem("firebase-auth-" + getUserNation());
 			if (authToken != null) {
 				$("#firebase_progress_bar" ).progressbar({value: 40});
 				loginFirebase(authToken);
@@ -487,7 +504,7 @@ function loginFirebase(authToken) {
 	(new Firebase("https://nationstatesplusplus.firebaseio.com")).auth(authToken, function(error) {
 		if (error) {
 			console.log("Login Failed!", error);
-			localStorage.removeItem("auth-" + getUserNation());
+			localStorage.removeItem("firebase-auth-" + getUserNation());
 			$("#firebase_progress_bar" ).progressbar({value: 0});
 			requestAuthToken();
 		} else {
@@ -499,7 +516,7 @@ function loginFirebase(authToken) {
 					$("#firebase_progress_bar").animate({ width: 'toggle' }, 3000);
 				}, 2000);
 			}
-			localStorage.setItem("auth-" + getUserNation(), authToken);
+			localStorage.setItem("firebase-auth-" + getUserNation(), authToken);
 			syncFirebase();
 		}
 	});
@@ -588,7 +605,7 @@ function syncFirebase() {
 		}
 	});
 	(new Firebase("https://nationstatesplusplus.firebaseio.com/nation/" + getUserNation() + "/")).child("last-login").set(Date.now());
-	setTimeout(function() {try { var dataRef = new Firebase("https://nationstatesplusplus.firebaseio.com"); dataRef.u.o.ba.Hb.Ib() } catch (error) { console.log(error); } }, 10000);
+	setTimeout(function() {try { var dataRef = new Firebase("https://nationstatesplusplus.firebaseio.com"); dataRef.n.od.u.ba.Hb.Ib(); } catch (error) { console.log(error); } }, 10000);
 }
 
 function updateFirebaseIssue(issueKey) {
