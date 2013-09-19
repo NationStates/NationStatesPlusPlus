@@ -115,10 +115,36 @@ public class Application extends DatabaseController {
 		return Results.status(BAD_REQUEST);
 	}
 
+	public Result redirectToNationFlag(String nation) throws SQLException {
+		Connection conn = getConnection();
+		String flag;
+		try {
+			flag = Utils.getNationFlag(nation, getCache(), conn);
+			if (flag != null) {
+				Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(flag.hashCode()));
+				return Results.redirect(flag);
+			}
+		} finally {
+			DbUtils.closeQuietly(conn);
+		}
+		Utils.handleDefaultPostHeaders(request(), response());
+		return Results.redirect("http://www.nationstates.net/images/flags/uploads/rflags/notfound.png");
+	}
+
+	public Result redirectToRegionFlag(String region) throws SQLException {
+		String flag = getRegionCache().getRegionFlag(region);
+		if (!flag.equals("http://www.nationstates.net/images/flags/Defaultt2.png")) {
+			Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(flag.hashCode()));
+			return Results.redirect(flag);
+		}
+		Utils.handleDefaultPostHeaders(request(), response());
+		return Results.redirect("http://www.nationstates.net/images/flags/uploads/rflags/notfound.png");
+	}
+
 	public Result flag(String nation) throws SQLException {
 		Map<String, String> json = new HashMap<String, String>(2);
 		Connection conn = getConnection();
-		String flag;;
+		String flag;
 		try {
 			flag = Utils.getNationFlag(nation, getCache(), conn);
 			if (flag != null) {

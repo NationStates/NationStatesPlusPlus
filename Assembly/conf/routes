@@ -24,13 +24,17 @@ POST    /rmb/comments/flag            @controllers.RMBCommentController.flagComm
 POST    /rmb/comments/like            @controllers.RMBCommentController.likeComment(commentId: Integer ?= -1, like: Boolean ?= false)
 POST    /rmb/comments/add             @controllers.RMBCommentController.addComment(rmbPost: Integer ?= -1)
 
+GET    /flag/nation/                  @controllers.Application.redirectToNationFlag(nation: String ?= "")
+GET    /flag/region/                  @controllers.Application.redirectToRegionFlag(region: String ?= "")
+
 GET     /newspaper/region/            @controllers.NewspaperController.findNewspaper(region: String ?= "")
-GET     /newspaper/gameplay/          @controllers.NewspaperController.getNewspaper(id: Integer ?= 0)
-GET     /newspaper/roleplay/          @controllers.NewspaperController.getNewspaper(id: Integer ?= 1)
+GET     /newspaper/gameplay/          @controllers.NewspaperController.getNewspaper(id: Integer ?= 0, visible: Boolean ?= true)
+GET     /newspaper/roleplay/          @controllers.NewspaperController.getNewspaper(id: Integer ?= 1, visible: Boolean ?= true)
+GET     /newspaper/lookup/            @controllers.NewspaperController.getNewspaper(id: Integer ?= -1, visible: Boolean ?= true)
 POST    /newspaper/editors/           @controllers.NewspaperController.changeEditors(newspaper: Integer ?= 0)
 POST    /newspaper/canedit/           @controllers.NewspaperController.canEdit(newspaper: Integer ?= 0)
 POST    /newspaper/submit/            @controllers.NewspaperController.submitArticle(newspaper: Integer ?= 0, articleId: Integer ?= -1)
-
+POST    /newspaper/administrate/      @controllers.NewspaperController.administrateNewspaper(newspaper: Integer ?= 0)
 
 
 # Map static resources from the /public folder to the /assets URL path
