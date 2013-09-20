@@ -10,6 +10,8 @@
 			$("#regional_newspaper").show();
 		});
 	}
+	
+	
 	if (window.location.href.indexOf("regional_news") != -1) {
 		$.get("http://capitalistparadise.com/api/newspaper/region/?region=" + getUserRegion(), function(json) {
 			openNationStatesNews(json.newspaper_id);
@@ -20,8 +22,42 @@
 		openNationStatesNews(1);
 	} else if (window.location.href.indexOf("article_editor=") != -1) {
 		openArticleEditor($.QueryString["article_editor"], $.QueryString["article"]);
+	} else if (window.location.href.indexOf("manage_newspaper=") != -1) {
+		openNewspaperAdministration($.QueryString["manage_newspaper"]);
 	}
-	
+
+	function openNewspaperAdministration(newspaper) {
+		$("#content").html("<div id='news_header' style='text-align: center;'><h1>Newspaper Administration</h1><hr></div><div id='inner-content'><</div>");
+		$.get("http://capitalistparadise.com/nationstates/v2_0/newspaper_administration.html", function(html) {
+			$("#inner-content").hide();
+			$("#inner-content").html(html);
+			$.get("http://capitalistparadise.com/api/newspaper/details/?id=" + newspaper, function(data) {
+				$("#newspaper_name").val(data.newspaper);
+				$("#newspaper_byline").val(data.byline);
+				$("#newspaper_editor").val(data.editor);
+				$("#newspaper_editor").toggleDisabled();
+				$("#newspaper_region").val(data.region != "null" ? data.region : "");
+				$("#newspaper_region").toggleDisabled();
+				var editors = "";
+				console.log(data.editors);
+				for (var i = 0; i < data.editors.length; i++) {
+					editors += "<option value='" + i + "' name='" + data.editors[i].name + "'>" + data.editors[i].formatted_name + "</option>";
+				}
+				$("#newspaper_editors").html(editors);
+				$("#remove_selected_editors").on("click", function(event) {
+					event.preventDefault();
+					var selected = $("#newspaper_editors").val();
+					for (var i = 0; i < selected.length; i++) {
+						var option = $("#newspaper_editors").find("option[value=" + selected[i] + "]");
+						console.log(option);
+						
+					}
+				});
+				$("#inner-content").show();
+			});
+		});
+	}
+
 	function openArticleEditor(newspaper, article_id) {
 		$("#content").html("<div id='news_header' style='text-align: center;'><h1>Newspaper Article Editor</h1><hr></div><div id='inner-content'><</div>");
 		$.get("http://capitalistparadise.com/nationstates/v2_0/newspaper_editor.html", function(html) {

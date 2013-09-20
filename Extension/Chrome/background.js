@@ -73,8 +73,9 @@ $.get(urlPrefix + "cache_buster.txt?time=" + Date.now() , function(value) {
 		addStylesheet(urlPrefix + 'nationstates++_dark.css');
 	}
 	
-	if (pageUrl.indexOf("article_editor") != -1 || pageUrl.indexOf("newspaper_editor") != -1) {
+	if (pageUrl.indexOf("article_editor") != -1 || pageUrl.indexOf("manage_newspaper") != -1) {
 		addStylesheet(urlPrefix + 'newspaper_bootstrap.min.css');
+		addJavascript(urlPrefix + "bootstrap-dropdown.min.js");
 	}
 	
 	if (document.head.innerHTML.indexOf("//ajax.googleapis.com/ajax/libs/jquery") == -1) {

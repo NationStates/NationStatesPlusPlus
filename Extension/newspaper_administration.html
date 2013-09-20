@@ -1,72 +1,68 @@
 <form class="form-horizontal">
 <fieldset>
-
-<!-- Form Name -->
-<legend>Form Name</legend>
-
-<!-- Text input-->
 <div class="control-group">
   <label class="control-label" for="newspaper_name">Newspaper Name</label>
   <div class="controls">
-    <input id="newspaper_name" name="newspaper_name" type="text" placeholder="New York Times" class="input-xlarge" required="">
+    <input id="newspaper_name" name="newspaper_name" type="text" placeholder="New York Times" style="width: 85%;" class="input-xlarge" required="">
     <p class="help-block">Name of the Newspaper</p>
   </div>
 </div>
 
-<!-- Text input-->
-<div class="control-group">
-  <label class="control-label" for="newspaper_editor">Editor-in-chief</label>
-  <div class="controls">
-    <input id="newspaper_editor" name="newspaper_editor" type="text" placeholder="El Presidente" class="input-xlarge">
-    <p class="help-block">Newspaper Official Editor</p>
-  </div>
-</div>
-
-<!-- Text input-->
 <div class="control-group">
   <label class="control-label" for="newspaper_byline">Byline</label>
   <div class="controls">
-    <input id="newspaper_byline" name="newspaper_byline" type="text" placeholder="Fair, Free, Fun Press a courtesy of Megacorp Inc." class="input-xlarge">
+    <input id="newspaper_byline" name="newspaper_byline" type="text" placeholder="Fair, Free, Fun Press a courtesy of Megacorp Inc." style="width: 85%;" class="input-xlarge">
     <p class="help-block">Newspaper Byline</p>
   </div>
 </div>
 
-<!-- Text input-->
+<div class="control-group">
+  <label class="control-label" for="newspaper_editor">Editor-in-chief</label>
+  <div class="controls">
+    <input id="newspaper_editor" name="newspaper_editor" type="text" placeholder="El Presidente" style="width: 450px;" title="Contact Afforess to change Editor-In-Chief" class="input-xlarge">
+    <p class="help-block">Newspaper Official Editor</p>
+  </div>
+</div>
+
 <div class="control-group">
   <label class="control-label" for="newspaper_region">Affiliated Region</label>
   <div class="controls">
-    <input id="newspaper_region" name="newspaper_region" type="text" placeholder="" class="input-xlarge">
+    <input id="newspaper_region" name="newspaper_region" type="text" placeholder="" style="width: 450px;" title="Contact Afforess to change Affiliate Region" class="input-xlarge">
     
   </div>
 </div>
 
-<!-- Select Multiple -->
 <div class="control-group">
   <label class="control-label" for="newspaper_editors">Editors</label>
   <div class="controls">
-    <select id="newspaper_editors" name="newspaper_editors" class="input-xlarge" multiple="multiple">
+    <select id="newspaper_editors" name="newspaper_editors" class="input-xlarge" style="width: 460px;" multiple="multiple">
       <option>Option one</option>
       <option>Option two</option>
     </select>
   </div>
 </div>
 
-<!-- Button Drop Down -->
 <div class="control-group">
-  <label class="control-label" for="add_editor">Change Editors</label>
+  <div class="controls">
+   	<button id="remove_selected_editors" name="remove_selected_editors" class="btn btn-danger">Remove Selected Editors</button>
+  </div>
+</div>
+<div class="control-group">
+  <label class="control-label" for="add_editor">Add Editors</label>
   <div class="controls">
     <div class="input-append">
-      <input id="add_editor" name="add_editor" class="input-xlarge" placeholder="Really Cool Nation" type="text">
+      <input id="add_editor" name="add_editor" class="input-xlarge" placeholder="Really Cool Nation" style="width: 450px;" type="text">
       <div class="btn-group">
-        <button class="btn dropdown-toggle" data-toggle="dropdown">
-          Add
-          <span class="caret"></span>
-        </button>
-        <ul class="dropdown-menu">
-          <li><a href="#">Remove</a></li>
-        </ul>
+        <button id='add_editor_btn' class="btn">Add Editor</button>
       </div>
     </div>
+  </div>
+</div>
+
+<div class="control-group">
+  <div class="controls">
+    <button id="submit_changes" name="submit_changes" class="btn btn-success">Save</button>
+    <button id="cancel_changes" name="cancel_changes" class="btn btn-danger">Cancel</button>
   </div>
 </div>
 
