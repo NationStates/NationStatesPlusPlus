@@ -36,6 +36,9 @@ POST    /newspaper/canedit/           @controllers.NewspaperController.canEdit(n
 POST    /newspaper/submit/            @controllers.NewspaperController.submitArticle(newspaper: Integer ?= 0, articleId: Integer ?= -1)
 POST    /newspaper/administrate/      @controllers.NewspaperController.administrateNewspaper(newspaper: Integer ?= 0)
 
+GET     /autocomplete/nation/         @controllers.AutocompleteController.autocompleteNation(start: String ?= "")
+
+
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.at(path="/public", file)
