@@ -4,9 +4,12 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Savepoint;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.dbutils.DbUtils;
 
@@ -26,6 +29,7 @@ public class NewspaperController extends NationStatesController {
 	}
 
 	public Result findNewspaper(String region) throws SQLException {
+		Map<String, Object> newspaper = new HashMap<String, Object>();
 		Connection conn = null;
 		try {
 			conn = getConnection();
@@ -33,13 +37,81 @@ public class NewspaperController extends NationStatesController {
 			articles.setString(1, region);
 			ResultSet result = articles.executeQuery();
 			if (result.next()) {
-				return getNewspaper(result.getInt(1), false);
+				newspaper.put("newspaper_id", result.getInt(1));
+			} else {
+				Utils.handleDefaultGetHeaders(request(), response(), null);
+				return Results.notFound();
 			}
-			 Utils.handleDefaultGetHeaders(request(), response(), null);
-			return Results.notFound();
 		} finally {
 			DbUtils.closeQuietly(conn);
 		}
+		Result result = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(newspaper.hashCode()), "60");
+		if (result != null) {
+			return result;
+		}
+		return ok(Json.toJson(newspaper)).as("application/json");
+	}
+
+	public Result getLatestUpdate(int id) throws SQLException {
+		Map<String, Object> newspaper = new HashMap<String, Object>();
+		Connection conn = null;
+		try {
+			conn = getConnection();
+			PreparedStatement articles = conn.prepareStatement("SELECT max(articles.timestamp) FROM assembly.articles WHERE newspaper_id = ? AND visible = 1");
+			articles.setInt(1, id);
+			ResultSet result = articles.executeQuery();
+			if (result.next()) {
+				newspaper.put("timestamp", result.getLong(1));
+			}
+		} finally {
+			DbUtils.closeQuietly(conn);
+		}
+		newspaper.put("newspaper_id", id);
+
+		Result result = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(newspaper.hashCode()), "60");
+		if (result != null) {
+			return result;
+		}
+		return ok(Json.toJson(newspaper)).as("application/json");
+	}
+
+	public Result getNewspaperDetails(int id) throws SQLException {
+		Map<String, Object> newspaper = new HashMap<String, Object>();
+		Connection conn = null;
+		try {
+			conn = getConnection();
+
+			PreparedStatement select = conn.prepareStatement("SELECT title, byline, editor, region FROM assembly.newspapers WHERE newspaper = ? ");
+			select.setInt(1, id);
+			ResultSet result = select.executeQuery();
+			if (result.next()) {
+				newspaper.put("newspaper_id", id);
+				newspaper.put("newspaper", result.getString(1));
+				newspaper.put("byline", result.getString(2));
+				newspaper.put("editor", result.getString(3));
+				newspaper.put("region", result.getString(4));
+			}
+			PreparedStatement editors = conn.prepareStatement("SELECT n.name, n.formatted_name FROM assembly.newspaper_editors AS e LEFT OUTER JOIN assembly.nation AS n ON n.id = e.nation_id WHERE newspaper = ?");
+			editors.setInt(1, id);
+			ResultSet set = editors.executeQuery();
+			ArrayList<Map<String, String>> editorNations = new ArrayList<Map<String, String>>();
+			while(set.next()) {
+				Map<String, String> nation = new HashMap<String, String>(2);
+				nation.put("name", set.getString(1));
+				nation.put("formatted_name", set.getString(2));
+				editorNations.add(nation);
+			}
+			newspaper.put("editors", editorNations);
+		} finally {
+			DbUtils.closeQuietly(conn);
+		}
+		newspaper.put("newspaper_id", id);
+
+		Result result = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(newspaper.hashCode()), "60");
+		if (result != null) {
+			return result;
+		}
+		return ok(Json.toJson(newspaper)).as("application/json");
 	}
 
 	public Result getNewspaper(int id, boolean visible) throws SQLException {
@@ -97,23 +169,78 @@ public class NewspaperController extends NationStatesController {
 		Connection conn = null;
 		try {
 			conn = getConnection();
+			
+			String editor = null;
+			PreparedStatement select = conn.prepareStatement("SELECT editor FROM assembly.newspapers WHERE newspaper = ? ");
+			select.setInt(1, newspaper);
+			ResultSet set = select.executeQuery();
+			if (set.next()) {
+				editor = set.getString(1);
+			} else {
+				Utils.handleDefaultPostHeaders(request(), response());
+				return Results.badRequest();
+			}
+			
+			Set<Integer> existingEditors = new HashSet<Integer>();
+			select = conn.prepareStatement("SELECT nation_id FROM assembly.newspaper_editors WHERE newspaper = ?");
+			select.setInt(1, newspaper);
+			set = select.executeQuery();
+			while(set.next()) {
+				existingEditors.add(set.getInt(1));
+			}
+			
+			Map<String, String> errors = new HashMap<String, String>();
+			conn.setAutoCommit(false);
+			Savepoint save = conn.setSavepoint(String.valueOf(System.currentTimeMillis()));
 			if (add != null) {
 				for (String nation : add.split(",")) {
-					PreparedStatement editors = conn.prepareStatement("INSERT INTO assembly.newspaper_editors (newspaper, nation_id) VALUES (?, ?)");
-					editors.setInt(1, newspaper);
-					editors.setInt(2, getCache().getNationId(nation.toLowerCase().replaceAll(" ", "_")));
-					editors.executeUpdate();
+					final String format = nation.toLowerCase().replaceAll(" ", "_");
+					final int nationId = getCache().getNationId(format);
+					if (nationId > -1) {
+						if (!existingEditors.contains(nationId)) {
+							PreparedStatement editors = conn.prepareStatement("INSERT INTO assembly.newspaper_editors (newspaper, nation_id) VALUES (?, ?)");
+							editors.setInt(1, newspaper);
+							editors.setInt(2, nationId);
+							editors.executeUpdate();
+						}
+					} else {
+						errors.put("error", "unknown nation: " + nation);
+						conn.rollback(save);
+						Utils.handleDefaultPostHeaders(request(), response());
+						return Results.ok(Json.toJson(errors)).as("application/json");
+					}
 				}
 			}
 			if (remove != null) {
 				for (String nation : remove.split(",")) {
-					PreparedStatement editors = conn.prepareStatement("DELETE FROM assembly.newspaper_editors WHERE newspaper = ? AND nation_id = ?");
-					editors.setInt(1, newspaper);
-					editors.setInt(2, getCache().getNationId(nation.toLowerCase().replaceAll(" ", "_")));
-					editors.executeUpdate();
+					final String format = nation.toLowerCase().replaceAll(" ", "_");
+					if (format.equals(editor)) {
+						errors.put("error", "Cannot remove Editor-in-Chief");
+						conn.rollback(save);
+						Utils.handleDefaultPostHeaders(request(), response());
+						return Results.ok(Json.toJson(errors)).as("application/json");
+					}
+					final int nationId = getCache().getNationId(format);
+					if (nationId > -1) {
+						if (existingEditors.contains(nationId)) {
+							PreparedStatement editors = conn.prepareStatement("DELETE FROM assembly.newspaper_editors WHERE newspaper = ? AND nation_id = ?");
+							editors.setInt(1, newspaper);
+							editors.setInt(2, nationId);
+							editors.executeUpdate();
+						}
+					} else {
+						errors.put("error", "unknown nation: " + nation);
+						conn.rollback(save);
+						Utils.handleDefaultPostHeaders(request(), response());
+						return Results.ok(Json.toJson(errors)).as("application/json");
+					}
 				}
 			}
+			conn.commit();
 		} finally {
+			if (conn != null) {
+				conn.setAutoCommit(true);
+			}
 			DbUtils.closeQuietly(conn);
 		}
 		Utils.handleDefaultPostHeaders(request(), response());

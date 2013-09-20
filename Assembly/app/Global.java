@@ -15,6 +15,7 @@ import com.afforess.assembly.RegionMonitoring;
 import com.afforess.assembly.UpdateTask;
 import com.afforess.assembly.util.NationCache;
 import com.afforess.assembly.util.RegionCache;
+import com.amazonaws.auth.BasicAWSCredentials;
 import com.google.common.collect.ObjectArrays;
 import com.limewoodMedia.nsapi.NationStates;
 import com.mchange.v2.c3p0.ComboPooledDataSource;
@@ -90,8 +91,13 @@ public class Global extends GlobalSettings {
 		RegionMonitoring monitoring = new RegionMonitoring(api, pool);
 
 		//Setup daily dumps
+		BasicAWSCredentials awsCredentials = null;
+		ConfigurationNode aws = config.getChild("aws-credentials");
+		if (aws.getChild("access-key").getString() != null && aws.getChild("secret-key").getString() != null) {
+			awsCredentials = new BasicAWSCredentials(aws.getChild("access-key").getString(), aws.getChild("secret-key").getString());
+		}
 		File dumpsDir = new File(settings.getChild("dailydumps").getString());
-		DailyDumps dumps = new DailyDumps(pool, dumpsDir, settings.getChild("User-Agent").getString());
+		DailyDumps dumps = new DailyDumps(pool, dumpsDir, settings.getChild("User-Agent").getString(), awsCredentials);
 		Thread dailyDumps = new Thread(dumps);
 		dailyDumps.setDaemon(true);
 		dailyDumps.start();

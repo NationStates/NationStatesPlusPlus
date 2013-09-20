@@ -15,6 +15,8 @@ import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 
+import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.services.s3.AmazonS3Client;
 import com.mchange.v2.c3p0.ComboPooledDataSource;
 
 import play.Logger;
@@ -22,7 +24,7 @@ import play.libs.Akka;
 import scala.concurrent.duration.Duration;
 
 public class DailyDumps implements Runnable{
-	private static final DateTimeFormatter FILE_DATE = DateTimeFormat.forPattern("yyyy_MM_dd");
+	private static final DateTimeFormatter FILE_DATE = DateTimeFormat.forPattern("yyyy-MM-dd");
 	private static final String REGIONS_URL = "http://www.nationstates.net/pages/regions.xml.gz";
 	private static final String NATIONS_URL = "http://www.nationstates.net/pages/nations.xml.gz";
 	
@@ -32,13 +34,15 @@ public class DailyDumps implements Runnable{
 	private final File nationsDir;
 	private final ComboPooledDataSource pool;
 	private final String userAgent;
-	public DailyDumps(ComboPooledDataSource pool, File directory, String userAgent) {
+	private final BasicAWSCredentials awsCredentials;
+	public DailyDumps(ComboPooledDataSource pool, File directory, String userAgent, BasicAWSCredentials awsCredentials) {
 		this.pool = pool;
 		this.userAgent = userAgent;
 		regionsDir = new File(directory, "regions");
 		regionsDir.mkdirs();
 		nationsDir = new File(directory, "nations");
 		nationsDir.mkdirs();
+		this.awsCredentials = awsCredentials;
 	}
 
 	@Override
@@ -81,7 +85,7 @@ public class DailyDumps implements Runnable{
 			DateTime serverModified = new DateTime(time, DateTimeZone.forOffsetHours(0));
 			
 			Logger.info("Checking region dump, length: " + contentLength + " lastModified: " + serverModified);
-			File regionsDump = new File(regionsDir, serverModified.toString(FILE_DATE) + "_regions.xml.gz");
+			File regionsDump = new File(regionsDir, serverModified.toString(FILE_DATE) + "-regions.xml.gz");
 			latestRegionDump.set(regionsDump);
 			stream = conn.getInputStream();
 			if (!regionsDump.exists() || regionsDump.length() != contentLength) {
@@ -91,6 +95,12 @@ public class DailyDumps implements Runnable{
 					fos = new FileOutputStream(regionsDump);
 					IOUtils.copy(stream, fos);
 					Logger.info("Saved regions dump successfully, size: " + regionsDump.length());
+					
+					if (awsCredentials != null) {
+						final AmazonS3Client client = new AmazonS3Client(awsCredentials);
+						client.putObject("dailydumps", "regions/" + regionsDump.getName(), regionsDump);
+						Logger.info("Successfully Uploaded regions dump to s3");
+					}
 				} finally {
 					IOUtils.closeQuietly(fos);
 				}
@@ -115,7 +125,7 @@ public class DailyDumps implements Runnable{
 			DateTime serverModified = new DateTime(time, DateTimeZone.forOffsetHours(0));
 			
 			Logger.info("Checking nations dump, length: " + contentLength + " lastModified: " + serverModified);
-			File nationsDump = new File(nationsDir, serverModified.toString(FILE_DATE) + "_nations.xml.gz");
+			File nationsDump = new File(nationsDir, serverModified.toString(FILE_DATE) + "-nations.xml.gz");
 			latestNationDump.set(nationsDump);
 			stream = conn.getInputStream();
 			if (!nationsDump.exists() || nationsDump.length() != contentLength) {
@@ -126,7 +136,13 @@ public class DailyDumps implements Runnable{
 					IOUtils.copy(stream, fos);
 					Logger.info("Saved nations dump successfully, size: " + nationsDump.length());
 					
+					if (awsCredentials != null) {
+						final AmazonS3Client client = new AmazonS3Client(awsCredentials);
+						client.putObject("dailydumps", "nations/" + nationsDump.getName(), nationsDump);
+						Logger.info("Successfully Uploaded nations dump to s3");
+					}
 					Akka.system().scheduler().scheduleOnce(Duration.create(60, TimeUnit.SECONDS), new DumpUpdateTask(pool, getMostRecentRegionDump(), nationsDump), Akka.system().dispatcher());
+				
 				} finally {
 					IOUtils.closeQuietly(fos);
 				}
