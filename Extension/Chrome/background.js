@@ -30,6 +30,24 @@ $.get(urlPrefix + "cache_buster.txt?time=" + Date.now() , function(value) {
 	if (pageUrl.indexOf("template-overall=none") != -1) {
 		return;
 	}
+	
+	if (document.head.innerHTML.indexOf("antiquity") != -1) {
+		$("#main").prepend("<div style='height: 60px; width: 100%; background-image: linear-gradient(-45deg, rgba(255, 255, 0, 1) 25%, transparent 25%, transparent 50%, rgba(255, 255, 0, 1) 50%, rgba(255, 255, 0, 1) 75%, transparent 75%, transparent); background-color: #F00; background-size: 50px 50px;font-size: 56px;font-family: impact;text-align: center;'><a style='color: black;' href='javascript:void(0)' id='fix_theme'>NationStates++ Does Not Support The Antiquity Theme</a></div>");
+	} else if ($(".shiny.rmbtable").length != 0) {
+		$("#content").prepend("<div style='height: 60px; width: 100%; background-image: linear-gradient(-45deg, rgba(255, 255, 0, 1) 25%, transparent 25%, transparent 50%, rgba(255, 255, 0, 1) 50%, rgba(255, 255, 0, 1) 75%, transparent 75%, transparent); background-color: #F00; background-size: 50px 50px;font-size: 56px;font-family: impact;text-align: center;'><a style='color: black;' href='javascript:void(0)' id='fix_theme'>NationStates++ Does Not Support The Century Theme</a></div>");
+	}
+	if ($(".shiny.rmbtable").length != 0 || document.head.innerHTML.indexOf("antiquity") != -1) {
+		$("#fix_theme").on("click", function(event) {
+			event.preventDefault();
+			$.get("http://www.nationstates.net/page=settings", function(html) {
+				var localid = $(html).find("input[name='localid']").val();
+				$.post("http://www.nationstates.net/page=settings", "localid=" + localid + "&newtheme=default&update=+Update+", function(data) {
+					location.reload();
+				});
+			});
+		});
+		return;
+	}
 
 	var bannerStyle = "position:absolute; top:0px; margin:6px 60px 0px 0px; z-index:98; font-weight:bold; color: white !important; font-weight: bold; font-size: 8pt; padding: 2px 8px 2px 8px; background: black; 	background-color: rgba(0,0,0,0.2); 	border-radius: 8px;";
 	if (document.head.innerHTML.indexOf("ns.dark") != -1) {
@@ -40,7 +58,7 @@ $.get(urlPrefix + "cache_buster.txt?time=" + Date.now() , function(value) {
 		$("#banner").hide();
 	} else {
 		var banner = $("#banner, #nsbanner");
-		$(banner).append("<div id='ns_setting'><a href='javascript:void(0)' style='" + bannerStyle + " right: 78px; ' onclick='return showSettings();'>NS++ Settings</a></div>");
+		$(banner).append("<div id='ns_setting'><a href='http://www.nationstates.net/page=blank?ns_settings=true' style='" + bannerStyle + " right: 78px;'>NS++ Settings</a></div>");
 		if (pageUrl.indexOf('http://forum.nationstates.net/') == -1 ) {
 			$(banner).append("<div id='puppet_setting' style='display:none;'><a href='javascript:void(0)' style='" + bannerStyle + " right: 188px;' onmouseover='return showPuppets();'>Puppets</a></div>");
 		}
@@ -67,13 +85,11 @@ $.get(urlPrefix + "cache_buster.txt?time=" + Date.now() , function(value) {
 	addStylesheet(staticUrlPrefix + 'nprogress.css');
 	addStylesheet(urlPrefix + 'nationstates++.css');
 
-	if (document.head.innerHTML.indexOf("antiquity") != -1) {
-		addStylesheet(urlPrefix + 'nationstates++_antiquity.css');
-	} else if (document.head.innerHTML.indexOf("ns.dark") != -1) {
+	if (document.head.innerHTML.indexOf("ns.dark") != -1) {
 		addStylesheet(urlPrefix + 'nationstates++_dark.css');
 	}
 	
-	if (pageUrl.indexOf("article_editor") != -1 || pageUrl.indexOf("manage_newspaper") != -1) {
+	if (pageUrl.indexOf("page=blank") != -1) {
 		addStylesheet(urlPrefix + 'newspaper_bootstrap.min.css');
 		addJavascript(urlPrefix + "bootstrap-dropdown.min.js");
 	}
@@ -121,7 +137,8 @@ function loadJavascript() {
 			addJavascript(urlPrefix + 'irc.js');
 			addJavascript(urlPrefix + 'dossier.js');
 			addJavascript(urlPrefix + 'reports.js');
-
+			addJavascript(urlPrefix + 'administration.js');
+			addJavascript(urlPrefix + 'settings.js');
 
 			console.log('[NationStates++] Loading Completed Successfully.');
 		} else if (pageUrl.indexOf('http://forum.nationstates.net/') > -1 ) {
@@ -177,7 +194,7 @@ function addStylesheet(url) {
 	var style = document.createElement('link');
 	style.setAttribute('rel', 'stylesheet');
 	style.setAttribute('type', 'text/css');
-	style.setAttribute('href', url);
+	style.setAttribute('href', url + (localStorage.getItem("cache_buster") != null ? ("?cache=" + localStorage.getItem("cache_buster")) : ""));
 	document.head.appendChild(style);
 }
 

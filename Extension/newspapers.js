@@ -1,5 +1,5 @@
 (function() {
-	$("<li id='regional_newspaper' style='display:none;'><a style='display: inline;' href='http://www.nationstates.net/page=blank/?regional_news=" + getUserRegion() + "'>REGIONAL NEWS</a></li>").insertAfter($("#live_happenings_feed"));
+	$("<li id='regional_newspaper' style='display:none;'><a style='display: inline;' href='http://www.nationstates.net/page=blank/?regional_news=" + getUserRegion() + "'>REGIONAL NEWS</a></li>").insertAfter($("a[href='page=un']").parent());
 	$("<li id='gameplay_newspaper'><a style='display: inline;' href='http://www.nationstates.net/page=blank/?gameplay_news'>GAMEPLAY NEWS</a></li>").insertAfter($("#regional_newspaper"));
 	$("<li id='roleplay_newspaper'><a style='display: inline;' href='http://www.nationstates.net/page=blank/?roleplay_news'>ROLEPLAY NEWS</a></li>").insertAfter($("#gameplay_newspaper"));
 	if (!isSettingEnabled("show_gameplay_news")) {
@@ -10,12 +10,13 @@
 			$("#regional_newspaper").show();
 		});
 	}
-	
-	
+
 	if (window.location.href.indexOf("regional_news") != -1) {
-		$.get("http://capitalistparadise.com/api/newspaper/region/?region=" + getUserRegion(), function(json) {
+		$.get("http://capitalistparadise.com/api/newspaper/region/?region=" + $.QueryString["regional_news"], function(json) {
 			openNationStatesNews(json.newspaper_id);
 		});
+	} else if (window.location.href.indexOf("lookup_newspaper") != -1) {
+		openNationStatesNews($.QueryString["lookup_newspaper"]);
 	} else if (window.location.href.indexOf("gameplay_news") != -1) {
 		openNationStatesNews(0);
 	} else if (window.location.href.indexOf("roleplay_news") != -1) {
@@ -33,13 +34,14 @@
 			$("#inner-content").html(html);
 			$.get("http://capitalistparadise.com/api/newspaper/details/?id=" + newspaper, function(data) {
 				$("#newspaper_name").val(data.newspaper);
+				$("#newspaper_name").attr("newspaper_id", newspaper);
 				$("#newspaper_byline").val(data.byline);
-				$("#newspaper_editor").val(data.editor);
+				$("#newspaper_editor").val(data.editor.replaceAll("_", " ").toTitleCase());
+				$("#newspaper_editor").attr("name", data.editor);
 				$("#newspaper_editor").toggleDisabled();
 				$("#newspaper_region").val(data.region != "null" ? data.region : "");
 				$("#newspaper_region").toggleDisabled();
 				var editors = "";
-				console.log(data.editors);
 				for (var i = 0; i < data.editors.length; i++) {
 					editors += "<option value='" + i + "' name='" + data.editors[i].name + "'>" + data.editors[i].formatted_name + "</option>";
 				}
@@ -48,10 +50,95 @@
 					event.preventDefault();
 					var selected = $("#newspaper_editors").val();
 					for (var i = 0; i < selected.length; i++) {
+						$("#editor-warning").hide();
 						var option = $("#newspaper_editors").find("option[value=" + selected[i] + "]");
-						console.log(option);
-						
+						if (option.attr("name") != $("#newspaper_editor").attr("name")) {
+							console.log(option);
+							var removed = (typeof $("#newspaper_editors").attr("remove") != "undefined" ? $("#newspaper_editors").attr("remove") : "");
+							$("#newspaper_editors").attr("remove", removed + (removed.length > 0 ? "," : "") + option.attr("name"));
+							option.remove();
+						} else {
+							$("#editor-warning").show();
+						}
 					}
+				});
+				$("#add_editor").autocomplete({
+					source: function( request, response ) {
+						if (request.term.length < 3) {
+							response(new Array());
+						} else {
+							$.get("http://www.capitalistparadise.com/api/autocomplete/nation/?start=" + request.term, function(nations) {
+								response(nations);
+							});
+						}
+					}
+				});
+				$("#add_editor_btn").on("click", function(event) {
+					event.preventDefault();
+					var nation = $("#add_editor").val();
+					if (nation != "") {
+						var name = nation.replaceAll(" ", "_").toLowerCase();
+						if ($("#newspaper_editors").find("option[name='" + name + "']").length > 0) {
+							$("#editor_duplicate").show();
+							$("#editor_error").hide();
+							return;
+						}
+						$("#editor_error").hide();
+						$.get("http://www.capitalistparadise.com/api/nation/title/?name=" + name, function(json) {
+							if (json[name] != null && $("#newspaper_editors").find("option[name='" + name + "']").length == 0) {
+								var title = json[name]
+								$("#newspaper_editors").append("<option value='" + $("#newspaper_editors").find("option").length + "' name='" + name + "'>" + title + "</option>");
+								$("#editor_error").hide();
+								$("#editor_duplicate").hide();
+								$("#add_editor").val("");
+								var added = (typeof $("#newspaper_editors").attr("add") != "undefined" ? $("#newspaper_editors").attr("add") : "");
+								$("#newspaper_editors").attr("add", added + (added.length > 0 ? "," : "") + name);
+							} else {
+								$("#editor_duplicate").hide();
+								$("#editor_error").show();
+							}
+						});
+					} else {
+						$("#editor_duplicate").hide();
+						$("#editor_error").show();
+					}
+				});
+				$("#submit_changes").on("click", function(event) {
+					event.preventDefault();
+					getNationStatesAuth(function(authCode) {
+						var authToken = localStorage.getItem(getUserNation() + "-auth-token");
+						var postData = "nation=" + getUserNation() + "&auth=" + authCode + (authToken != null ? "&auth-token=" + authToken : "");
+						postData += "&title=" + encodeURIComponent($("#newspaper_name").val());
+						postData += "&byline=" + encodeURIComponent($("#newspaper_byline").val());
+						$.post("http://www.capitalistparadise.com/api/newspaper/administrate/?newspaper=" + $("#newspaper_name").attr("newspaper_id"), postData, function(data, textStatus, jqXHR) {
+							var authToken = jqXHR.getResponseHeader("X-Auth-Token");
+							if (authToken != null) {
+								localStorage.setItem(getUserNation() + "-auth-token", authToken);
+							}
+							var postData = "";
+							if (typeof $("#newspaper_editors").attr("remove") != "undefined") {
+								postData += "&remove=" + $("#newspaper_editors").attr("remove");
+							}
+							if (typeof $("#newspaper_editors").attr("add") != "undefined") {
+								postData += "&add=" + $("#newspaper_editors").attr("add");
+							}
+							if (postData.length > 0) {
+								postData = "nation=" + getUserNation() + "&auth=" + authCode + (authToken != null ? "&auth-token=" + authToken : "") + postData;
+								$.post("http://www.capitalistparadise.com/api/newspaper/editors/?newspaper=" + $("#newspaper_name").attr("newspaper_id"), postData, function(json) {
+									window.location.href = "http://www.nationstates.net/page=blank/?lookup_newspaper=" + $("#newspaper_name").attr("newspaper_id");
+								});
+							} else {
+								window.location.href = "http://www.nationstates.net/page=blank/?lookup_newspaper=" + $("#newspaper_name").attr("newspaper_id");
+							}
+						}).fail(function(data) {
+							$("#submission_error").show();
+							console.log(data);
+						});
+					});
+				});
+				$("#cancel_changes").on("click", function(event) {
+					event.preventDefault();
+					window.location.href = "http://www.nationstates.net/page=blank/?lookup_newspaper=" + $("#newspaper_name").attr("newspaper_id");
 				});
 				$("#inner-content").show();
 			});
@@ -115,7 +202,7 @@
 	function openNationStatesNews(id) {
 		localStorage.setItem("last_read_newspaper-" + id, Date.now());
 		$("#ns_news_nag").remove();
-		$("#content").html("<div id='news_header' style='text-align: center;'><h1 id='newspaper_name'></h1><div id='manage_newspaper' style='display:none; position: absolute; right: 200px; top: 125px;'><p><a class='button' style='font-weight: bold;' href='page=blank/?manage_newspaper=" + id + "'>Manage Newspaper</a></p></div><i id='newspaper_byline'></i><hr></div><div id='inner-content'><div id='left_column' style='position: absolute; width: 25%; padding-right: 0.5%; border-right: solid 1px black;'></div><div style='position: absolute; margin-left: 26%; width: 25%; padding-right: 0.5%; border-right: solid 1px black;' id='middle_column'></div><div id='right_column' style='position: absolute; margin-left: 52%; width: 25%;'></div></div><div id='bottom_content' style='text-align:center;'><i id='submissions' style='display:none;'>Looking to have your article or content featured? Contact <a id='submissions_editor' href='nation=afforess' class='nlink'>Afforess</a> for submissions!</i></div>");
+		$("#content").html("<div id='news_header' style='text-align: center;'><h1 id='newspaper_name'></h1><div id='manage_newspaper' style='display:none; position: absolute; right: 200px; top: 125px;'><p><a class='button' style='font-weight: bold;' href='page=blank/?manage_newspaper=" + id + "'>Manage Newspaper</a><a class='button' style='font-weight: bold;' href='page=blank/?article_editor=" + id + "&article=-1'>Submit Article</a></p></div><i id='newspaper_byline'></i><hr></div><div id='inner-content'><div id='left_column' style='position: absolute; width: 25%; padding-right: 0.5%; border-right: solid 1px black;'></div><div style='position: absolute; margin-left: 26%; width: 25%; padding-right: 0.5%; border-right: solid 1px black;' id='middle_column'></div><div id='right_column' style='position: absolute; margin-left: 52%; width: 25%;'></div></div><div id='bottom_content' style='text-align:center;'><i id='submissions' style='display:none;'>Looking to have your article or content featured? Contact <a id='submissions_editor' href='nation=afforess' class='nlink'>Afforess</a> for submissions!</i></div>");
 		loadingAnimation();
 		window.document.title = "NationStates"
 		$(window).unbind("scroll");
@@ -130,7 +217,7 @@
 			getNationStatesAuth(function(authCode) {	
 				var authToken = localStorage.getItem(getUserNation() + "-auth-token");
 				var postData = "nation=" + getUserNation() + "&auth=" + authCode + (authToken != null ? "&auth-token=" + authToken : "");
-				$.post("http://capitalistparadise.com/api/newspaper/canedit/?newspaper=0", postData, function(data, textStatus, jqXHR) {
+				$.post("http://capitalistparadise.com/api/newspaper/canedit/?newspaper=" + id, postData, function(data, textStatus, jqXHR) {
 					var authToken = jqXHR.getResponseHeader("X-Auth-Token");
 					if (authToken != null) {
 						localStorage.setItem(getUserNation() + "-auth-token", authToken);
@@ -140,7 +227,7 @@
 				});
 			});
 			window.document.title = json.newspaper;
-			$("#newspaper_name").html(json.newspaper);
+			$("#newspaper_name").html("<a href='page=blank?lookup_newspaper=" + id + "'>" + json.newspaper + "</a>");
 			$("#newspaper_byline").html(json.byline);
 			$("#submissions_editor").html(json.editor.replaceAll("_", " ").toTitleCase());
 			$("#submissions_editor").attr("href", "nation=" + json.editor);

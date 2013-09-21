@@ -5,6 +5,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.commons.dbutils.DbUtils;
 import org.apache.commons.lang3.text.WordUtils;
@@ -34,7 +36,7 @@ public class AutocompleteController extends DatabaseController {
 		Connection conn = null;
 		try {
 			conn = getConnection();
-			PreparedStatement select = conn.prepareStatement("SELECT name FROM assembly.nation WHERE name LIKE ? LIMIT 0, 50");
+			PreparedStatement select = conn.prepareStatement("SELECT name FROM assembly.nation WHERE alive = 1 AND name LIKE ? LIMIT 0, 50");
 			select.setString(1, start.toLowerCase().replaceAll(" ", "_") + "%");
 			ResultSet result = select.executeQuery();
 			while(result.next()) {
@@ -49,5 +51,33 @@ public class AutocompleteController extends DatabaseController {
 			return result;
 		}
 		return ok(Json.toJson(nations)).as("application/json");
+	}
+
+	public Result getFullName(String nation) throws SQLException {
+		if (nation == null || nation.length() < 1) {
+			Utils.handleDefaultGetHeaders(request(), response(), null);
+			return Results.badRequest();
+		}
+		
+		Map<String, String> json = new HashMap<String, String>(1);
+		Connection conn = null;
+		try {
+			conn = getConnection();
+			PreparedStatement select = conn.prepareStatement("SELECT formatted_name FROM assembly.nation WHERE name = ?");
+			select.setString(1, nation.toLowerCase().replaceAll(" ", "_"));
+			ResultSet result = select.executeQuery();
+			if (result.next()) {
+				json.put(nation, result.getString(1));
+			}
+			
+		} finally {
+			DbUtils.closeQuietly(conn);
+		}
+		
+		Result result = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(json.hashCode()));
+		if (result != null) {
+			return result;
+		}
+		return ok(Json.toJson(json)).as("application/json");
 	}
 }

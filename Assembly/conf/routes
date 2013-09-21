@@ -35,8 +35,12 @@ POST    /newspaper/editors/           @controllers.NewspaperController.changeEdi
 POST    /newspaper/canedit/           @controllers.NewspaperController.canEdit(newspaper: Integer ?= 0)
 POST    /newspaper/submit/            @controllers.NewspaperController.submitArticle(newspaper: Integer ?= 0, articleId: Integer ?= -1)
 POST    /newspaper/administrate/      @controllers.NewspaperController.administrateNewspaper(newspaper: Integer ?= 0)
+POST    /newspaper/found/             @controllers.NewspaperController.foundNewspaper(region: String ?= "")
+POST    /newspaper/disband/           @controllers.NewspaperController.disbandNewspaper(region: String ?= "")
+
 
 GET     /autocomplete/nation/         @controllers.AutocompleteController.autocompleteNation(start: String ?= "")
+GET     /nation/title/                @controllers.AutocompleteController.getFullName(name: String ?= "")
 
 
 

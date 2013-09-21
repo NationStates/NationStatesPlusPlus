@@ -103,7 +103,7 @@ public class Global extends GlobalSettings {
 		dailyDumps.start();
 
 		HappeningsTask happenings = new HappeningsTask(pool, cache, api);
-		Akka.system().scheduler().schedule(Duration.create(60, TimeUnit.SECONDS), Duration.create(2, TimeUnit.SECONDS), happenings, Akka.system().dispatcher());
+		Akka.system().scheduler().schedule(Duration.create(15, TimeUnit.SECONDS), Duration.create(2, TimeUnit.SECONDS), happenings, Akka.system().dispatcher());
 		Akka.system().scheduler().schedule(Duration.create(120, TimeUnit.SECONDS), Duration.create(31, TimeUnit.SECONDS), new UpdateTask(api, pool, cache, happenings), Akka.system().dispatcher());
 		Akka.system().scheduler().schedule(Duration.create(60, TimeUnit.SECONDS), Duration.create(60, TimeUnit.SECONDS), monitoring, Akka.system().dispatcher());
 	}

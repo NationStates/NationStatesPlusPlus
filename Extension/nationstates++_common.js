@@ -240,10 +240,10 @@ function showPuppets() {
 		html += "<li>There's nothing here...</li>";
 	}
 	html += "</ul>";
-	html += "<p style='margin-top: -20px; margin-bottom: 1px;'><input id='puppet_nation' size='18' placeholder='Nation' onkeydown='if (event.keyCode == 13) { addPuppet(); }'></p>";
+	html += "<p style='margin-top: -20px; margin-bottom: 1px;'><input type='text' id='puppet_nation' size='18' placeholder='Nation' onkeydown='if (event.keyCode == 13) { addPuppet(); }'></p>";
 	html += "<p style='margin-top: 1px;'><input type='password' id='puppet_password' size='18' placeholder='Password' onkeydown='if (event.keyCode == 13) { addPuppet(); }'></p>";
 	
-	var labelStyle = "style='font-size: 13px; line-height: 13px; vertical-align: text-top;'";
+	var labelStyle = "style='font-size: 13px; line-height: 13px; vertical-align: text-top; display: inline;'";
 	html += "<div style='margin-left: -27px; margin-top: -10px;'><input id='redirect-puppet-page' title='When you login, you will be redirected to the nation page of the puppet' class='indent' type='checkbox'><label title='When you login, you will be redirected to the nation page of the puppet' " + labelStyle + " for='redirect-puppet-page'>Redirect to Nation Page</label></div>"
 	html += "<div style='margin-left: -34px; padding-bottom: 5px;'><input id='show-region-on-hover' title='Hovering over the name of a puppet reveals which region it is in' class='indent' type='checkbox'><label title='Hovering over the name of a puppet reveals which region it is in' " + labelStyle + " for='show-region-on-hover'>Show regions on hover</label></div>"
 	html += "<div id='puppet_invalid_login' style='display:none;'><p>Invalid Login</p></div>";
@@ -302,7 +302,7 @@ function showPuppetRegion(name) {
 
 function switchToPuppet(name) {
 	localStorage.removeItem("puppet-" + name + "-region");
-	$.post("http://www.nationstates.net/", "logging_in=1&nation=" + encodeURIComponent(name) + "&password=" + encodeURIComponent(localStorage.getItem("puppet-" + name)), function(data) {
+	$.post("http://www.nationstates.net/", "logging_in=1&nation=" + encodeURIComponent(name) + "&password=" + encodeURIComponent(localStorage.getItem("puppet-" + name)) + "&autologin=yes", function(data) {
 		if (data.contains("Would you like to restore it?")) {
 			$("#content").html($(data).find("#content").html());
 		} else {
@@ -360,71 +360,6 @@ function addPuppet() {
 	}
 	showPuppets();
 	$("#puppet_nation").focus();
-}
-
-function showSettings() {
-	localStorage.removeItem("next_sync" + getUserNation());
-	if ($("#nationstates_settings").length == 0) {
-		var forums = $("#wrap").length == 1;
-		$.get("http://capitalistparadise.com/nationstates/v1_9/" + (forums ? "forum_" : "region_") + "settings.html", function(data) {
-			if (forums) {
-				var html = $("#wrap").html();
-				var classes = $("#wrap").attr('class');
-				$("#wrap").remove();
-				$("<div id='main'><div id='wrap' class='" + classes + "'>" + html + "</div></div>").insertAfter("#nssidebar, #nstopbar");
-			} else if (isAntiquityTheme()) {
-				var html = $("#main").html();
-				$("#main").remove();
-				$("<div id='main'><div id='wrap'>" + html + "</div></div>").insertAfter("#banner");
-			}
-			$("#main").html($("#main").html() + "<div id='nationstates_settings'><div>");
-			$("#nationstates_settings").html(data);
-			if (isAntiquityTheme() && !forums) {
-				$("#nationstates_settings").css("margin-left", "0");
-			}
-			$("#nationstates_settings").hide();
-			$("#nationstates_settings").find('input').each(function() {
-				$(this).prop("checked", isSettingEnabled($(this).prop("id")));
-			});
-			if (!$("#forum_enhancements").prop("checked")) {
-				$("#forum_enhancements_form").find('input').toggleDisabled();
-			}
-			if (!$("#gameplay_enhancements").prop("checked")) {
-				$("#gameplay_enhancements_form").find('input').toggleDisabled();
-			}
-			$("#gameplay_enhancements").on('click', function() {
-				$("#gameplay_enhancements_form").find('input').toggleDisabled();
-			});
-			$("#forum_enhancements").on('click', function() {
-				$("#forum_enhancements_form").find('input').toggleDisabled();
-			});
-			$("#save_button").on("click", function() {
-				$("#nationstates_settings").find('input').each(function() {
-					localStorage.setItem($(this).prop("id"), $(this).prop("checked"));
-				});
-				localStorage.setItem("settings-timestamp", Date.now());
-				$("#nationstates_settings").hide();
-				$("#content, #wrap").show();
-				location.reload();
-			});
-			$("#reset_button").on("click", function() {
-				$("#nationstates_settings").find('input').prop("checked", true);
-				$("#autologin_to_regional_irc").prop("checked", false);
-			});
-			$("#cancel_button").on("click", function() {
-				$("#nationstates_settings").find('input').each(function() {
-					$(this).prop("checked", isSettingEnabled($(this).prop("id")));
-				});
-				$("#nationstates_settings").hide();
-				$("#content, #wrap").show();
-			});
-			showSettings();
-		});
-	} else {
-		$("#content, #wrap").hide();
-		$("#nationstates_settings").show();
-	}
-	return false;
 }
 
 var _progress_label
@@ -573,11 +508,11 @@ function syncFirebase() {
 				scroll_nation_lists: isSettingEnabled("scroll_nation_lists"),
 				clickable_telegram_links: isSettingEnabled("clickable_telegram_links"),
 				show_puppet_switcher: isSettingEnabled("show_puppet_switcher"),
-				autologin_to_regional_irc: isSettingEnabled("autologin_to_regional_irc"),
 				fancy_dossier_theme: isSettingEnabled("fancy_dossier_theme"),
 				use_nationstates_api: isSettingEnabled("use_nationstates_api"),
-				show_live_happenings_feed: isSettingEnabled("show_live_happenings_feed"),
 				show_gameplay_news: isSettingEnabled("show_gameplay_news"),
+				show_roleplay_news: isSettingEnabled("show_roleplay_news"),
+				show_regional_news: isSettingEnabled("show_regional_news"),
 				settings_timestamp: (localStorage.getItem("settings-timestamp") == null ? Date.now() : localStorage.getItem("settings-timestamp"))
 			});
 		} else {

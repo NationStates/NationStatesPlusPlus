@@ -2,11 +2,7 @@
 	window.postMessage({ method: "unread_forum_posts"}, "*");
 	checkPanelAlerts();
 	addCustomAlerts();
-	$("<li id='live_happenings_feed'><a href='http://www.nationstates.net/page=reports2/'>HAPPENINGS FEED</a></li>").insertAfter($($("#panel").find(".menu").children()[3]));
-	if (!isSettingEnabled("show_live_happenings_feed")) {
-		$("#live_happenings_feed").hide();
-	}
-	
+
 	function addCustomAlerts() {
 		if (localStorage.getItem("show_admin_area") == "true") {
 		//	$(".menu").append("<li><a id='nationbot' href='http://capitalistparadise.com/api/nationbot/'>NATIONBOT ONLINE</a></li>");
@@ -17,35 +13,40 @@
 		var chk = $("input[name='chk']");
 		if (chk.length != 0) {
 			$.get("/page=tgsettings", function(html) {
-				console.log("Updating chk to: " + $(html).find("input[name='chk']").val());
 				chk.val($(html).find("input[name='chk']").val());
 			});
 		}
 		var localid = $("input[name='localid']");
 		if (localid.length != 0) {
 			$.get("/page=settings", function(html) {
-				console.log("Updating localid to: " + $(html).find("input[name='localid']").val());
 				localid.val($(html).find("input[name='localid']").val());
 			});
 		}
 	}
-	$(window).on("page/update", updateSecurityCodes);
+	if (getUserNation() != "") {
+		$(window).on("page/update", updateSecurityCodes);
+	}
 
+	var _pageInactiveCount = 0;
 	var _lastPanelUpdate = 0;
 	function checkPanelAlerts() {
 		setTimeout(function() {
 			var updateDelay = 10000; //10 sec
 			if (!isPageActive()) {
-				updateDelay = 300000; //5 min
+				_pageInactiveCount += 1;
+				updateDelay = 300000 * _pageInactiveCount; //5 min
 			} else if (getLastActivity() + 60000 < Date.now()) {
-				updateDelay = 150000; //2.5 min
+				_pageInactiveCount += 1;
+				updateDelay = 150000 * _pageInactiveCount; //2.5 min
+			} else {
+				_pageInactiveCount = 0;
 			}
 			if (Date.now() > (_lastPanelUpdate + updateDelay)) {
 				_lastPanelUpdate = Date.now();
 				$(window).trigger("page/update");
 			}
 			checkPanelAlerts();
-		}, 10000);
+		}, 500);
 	}
 
 	var _unreadForumPosts = 0;
@@ -69,18 +70,17 @@
 		if (getUserNation() != "") {
 			window.postMessage({ method: "unread_forum_posts"}, "*");
 			$.get('/page=panel/template-overall=none', function(html) {
-				var searchString = '<a href="page=telegrams">';
-				var indicatorStart = html.indexOf(searchString);
-				var indicatorEnd = html.indexOf('</a>', indicatorStart);
-				$('a[href$="page=telegrams"]').html(html.substring(indicatorStart + searchString.length, indicatorEnd));
+				//Verify we haven't switched nations/logged out
+				if ($(".STANDOUT:first").attr("href").substring(7) == getUserNation()) {
+					var page = $(html);
+					var panel = $("#panel");
+					if ($("#panel").length == 0) panel = $(document);
+					panel.find("a[href='page=telegrams']").html(page.find("a[href='page=telegrams']").html());
+					panel.find("a[href='page=dilemmas']").html(page.find("a[href='page=dilemmas']").html());
+					panel.find("a[href='region=" + getUserRegion() + "']").html(page.find("a[href='region=" + getUserRegion() + "']").html());
+					panel.find("a[href='page=news']").html(page.find("a[href='page=news']").html());
+				}
 			});
-		}
-		var lastRead = localStorage.getItem("last_read_newspaper");
-		if ((lastRead == null || lastRead < 1378589818375)) {
-			if ($("#ns_news_nag").length == 0)
-				$("<span id='ns_news_nag'> (1)</span>").insertAfter($("#ns_newspaper_link"));
-		} else {
-			$("#ns_news_nag").remove();
 		}
 	}
 	$(window).on("page/update", updatePanelAlerts);

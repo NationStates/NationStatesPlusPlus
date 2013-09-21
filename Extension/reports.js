@@ -1,5 +1,6 @@
 (function() {
 	if (getVisiblePage() == "reports" && window.location.href.indexOf("template-overall=none") == -1) {
+		$("h1:first").html($("h1:first").html() + "<span style='right: 10px; margin-top: 10px; position: absolute; font-size: 20px;'><a href='page=reports2'>Real Time Reports</a></span>");
 		var reportForm = $("form[action='page=reports']");
 		var reportHours = $("input[name='report_hours']").val();
 		var reportSelf = $("input[name='report_self']").prop('checked') || isSettingEnabled("report_self");

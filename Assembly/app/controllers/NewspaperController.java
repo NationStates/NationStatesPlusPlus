@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.dbutils.DbUtils;
+import org.apache.commons.lang3.text.WordUtils;
 
 import play.libs.Json;
 import play.mvc.Result;
@@ -28,18 +29,118 @@ public class NewspaperController extends NationStatesController {
 		super(pool, cache, regionCache, api);
 	}
 
+	public Result foundNewspaper(String region) throws SQLException {
+		Result ret = Utils.validateRequest(request(), response(), getAPI(), getCache());
+		if (ret != null) {
+			return ret;
+		}
+		String nation = Utils.getPostValue(request(), "nation");
+		
+		Map<String, Object> results = new HashMap<String, Object>(1);
+		Utils.handleDefaultPostHeaders(request(), response());
+		Connection conn = null;
+		try {
+			conn = getConnection();
+			PreparedStatement newspaper = conn.prepareStatement("SELECT newspaper FROM assembly.newspapers WHERE region = ? AND disbanded = 0");
+			newspaper.setString(1, region);
+			ResultSet result = newspaper.executeQuery();
+			if (result.next()) {
+				return Results.forbidden();
+			}
+			
+			PreparedStatement select = conn.prepareStatement("SELECT delegate, founder FROM assembly.region WHERE name = ?");
+			select.setString(1, region);
+			result = select.executeQuery();
+			boolean regionAdministrator = true;
+			if (result.next()) {
+				if (!nation.equals(result.getString(1)) && !nation.equals(result.getString(2))) {
+					regionAdministrator = false;
+				}
+			} else {
+				regionAdministrator = false;
+			}
+			if (!regionAdministrator) {
+				return Results.unauthorized();
+			}
+			
+			newspaper = conn.prepareStatement("INSERT INTO assembly.newspapers (region, editor, title, byline) VALUES (?, ?, ?, ?)");
+			newspaper.setString(1, region);
+			newspaper.setString(2, nation);
+			newspaper.setString(3, WordUtils.capitalize(region.replaceAll("_", " ")) + " Regional News");
+			newspaper.setString(4, WordUtils.capitalize(nation.replaceAll("_", " ")) + " makes the trains run on time!");
+			newspaper.executeUpdate();
+			
+			newspaper = conn.prepareStatement("SELECT newspaper FROM assembly.newspapers WHERE disbanded = 0 AND region = ?");
+			newspaper.setString(1, region);
+			result = newspaper.executeQuery();
+			result.next();
+			final int newspaperId = result.getInt(1);
+			results.put("newspaper_id", newspaperId);
+			
+			PreparedStatement editors = conn.prepareStatement("INSERT INTO assembly.newspaper_editors (newspaper, nation_id) VALUES (?, ?)");
+			editors.setInt(1, newspaperId);
+			editors.setInt(2, getCache().getNationId(nation));
+			editors.executeUpdate();
+		} finally {
+			DbUtils.closeQuietly(conn);
+		}
+		return Results.ok(Json.toJson(results)).as("application/json");
+	}
+
+	public Result disbandNewspaper(String region) throws SQLException {
+		Result ret = Utils.validateRequest(request(), response(), getAPI(), getCache());
+		if (ret != null) {
+			return ret;
+		}
+		String nation = Utils.getPostValue(request(), "nation");
+		
+		Utils.handleDefaultPostHeaders(request(), response());
+		Connection conn = null;
+		try {
+			conn = getConnection();
+			PreparedStatement newspaper = conn.prepareStatement("SELECT newspaper FROM assembly.newspapers WHERE region = ? AND disbanded = 0");
+			newspaper.setString(1, region);
+			ResultSet result = newspaper.executeQuery();
+			if (!result.next()) {
+				return Results.forbidden();
+			}
+			
+			PreparedStatement select = conn.prepareStatement("SELECT delegate, founder FROM assembly.region WHERE name = ?");
+			select.setString(1, region);
+			result = select.executeQuery();
+			boolean regionAdministrator = true;
+			if (result.next()) {
+				if (!nation.equals(result.getString(1)) && !nation.equals(result.getString(2))) {
+					regionAdministrator = false;
+				}
+			} else {
+				regionAdministrator = false;
+			}
+			if (!regionAdministrator) {
+				return Results.unauthorized();
+			}
+			
+			newspaper = conn.prepareStatement("UPDATE assembly.newspapers SET disbanded = 1 WHERE region = ?");
+			newspaper.setString(1, region);
+			newspaper.executeUpdate();
+		} finally {
+			DbUtils.closeQuietly(conn);
+		}
+		return Results.ok();
+	}
+
 	public Result findNewspaper(String region) throws SQLException {
 		Map<String, Object> newspaper = new HashMap<String, Object>();
 		Connection conn = null;
 		try {
 			conn = getConnection();
-			PreparedStatement articles = conn.prepareStatement("SELECT newspaper FROM assembly.newspapers WHERE region = ?");
+			PreparedStatement articles = conn.prepareStatement("SELECT newspaper FROM assembly.newspapers WHERE disbanded = 0 AND region = ?");
 			articles.setString(1, region);
 			ResultSet result = articles.executeQuery();
 			if (result.next()) {
 				newspaper.put("newspaper_id", result.getInt(1));
 			} else {
-				Utils.handleDefaultGetHeaders(request(), response(), null);
+				Utils.handleDefaultPostHeaders(request(), response());
 				return Results.notFound();
 			}
 		} finally {
@@ -68,7 +169,7 @@ public class NewspaperController extends NationStatesController {
 		}
 		newspaper.put("newspaper_id", id);
 
-		Result result = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(newspaper.hashCode()), "60");
+		Result result = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(newspaper.hashCode()), "0");
 		if (result != null) {
 			return result;
 		}
@@ -107,7 +208,7 @@ public class NewspaperController extends NationStatesController {
 		}
 		newspaper.put("newspaper_id", id);
 
-		Result result = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(newspaper.hashCode()), "60");
+		Result result = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(newspaper.hashCode()), "0");
 		if (result != null) {
 			return result;
 		}
@@ -151,7 +252,7 @@ public class NewspaperController extends NationStatesController {
 		newspaper.put("articles", news);
 		newspaper.put("newspaper_id", id);
 
-		Result result = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(newspaper.hashCode()), "60");
+		Result result = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(newspaper.hashCode()), "0");
 		if (result != null) {
 			return result;
 		}

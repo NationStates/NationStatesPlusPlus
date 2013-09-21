@@ -55,13 +55,13 @@ public class DumpUpdateTask implements Runnable {
 				set.add(result.getString(1));
 			}
 			Logger.info("Updating " + set.size() + " regions from daily dump");
-			PreparedStatement select = conn.prepareStatement("SELECT flag, delegate, numnations FROM regions WHERE name = ?");
+			PreparedStatement select = conn.prepareStatement("SELECT flag, delegate, founder, numnations FROM regions WHERE name = ?");
 			int newRegions = 0;
 			for (String region : set) {
 				select.setString(1, region);
 				result = select.executeQuery();
 				result.next();
-				newRegions += updateRegion(region, result.getString(1), result.getString(2), result.getInt(3));
+				newRegions += updateRegion(region, result.getString(1), result.getString(2), result.getString(3), result.getInt(4));
 				try {
 					Thread.sleep(1);
 				} catch (InterruptedException e) { }
@@ -97,7 +97,7 @@ public class DumpUpdateTask implements Runnable {
 		}
 	}
 
-	private int updateRegion(String region, String flag, String delegate, int numNations) throws SQLException {
+	private int updateRegion(String region, String flag, String delegate, String founder, int numNations) throws SQLException {
 		Connection conn = pool.getConnection();
 		try {
 			PreparedStatement select = conn.prepareStatement("SELECT name FROM assembly.region WHERE name = ?");
@@ -119,17 +119,19 @@ public class DumpUpdateTask implements Runnable {
 	
 			PreparedStatement update = null;
 			if (!found) {
-				update = conn.prepareStatement("INSERT INTO assembly.region (name, flag, delegate) VALUES (?, ?, ?)");
+				update = conn.prepareStatement("INSERT INTO assembly.region (name, flag, delegate, founder) VALUES (?, ?, ?, ?)");
 				update.setString(1, region);
 				update.setString(2, flag);
 				update.setString(3, delegate);
+				update.setString(4, founder);
 				update.executeUpdate();
 				return 1;
 			} else {
-				update = conn.prepareStatement("UPDATE assembly.region SET flag = ?, delegate = ? WHERE name = ?");
+				update = conn.prepareStatement("UPDATE assembly.region SET flag = ?, delegate = ?, founder = ? WHERE name = ?");
 				update.setString(1, flag);
 				update.setString(2, delegate);
-				update.setString(3, region);
+				update.setString(3, founder);
+				update.setString(4, region);
 				update.executeUpdate();
 				return 0;
 			}
@@ -200,7 +202,7 @@ public class DumpUpdateTask implements Runnable {
 			Logger.info("Updating nation [" + nation + "] from the daily dump");
 			PreparedStatement insert = null;
 			if (id == -1) {
-				insert = conn.prepareStatement("INSERT INTO assembly.nation (name, formatted_name, flag, region, influence_desc, last_login, wa_member, alive) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+				insert = conn.prepareStatement("INSERT INTO assembly.nation (name, formatted_name, flag, region, influence_desc, last_login, wa_member, alive, first_seen) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
 				insert.setString(1, nation);
 				insert.setString(2, fullName);
 				insert.setString(3, flag);
@@ -209,6 +211,7 @@ public class DumpUpdateTask implements Runnable {
 				insert.setInt(6, lastLogin);
 				insert.setByte(7, (byte)(waMember ? 1 : 0));
 				insert.setByte(8, (byte)1);
+				insert.setLong(9, System.currentTimeMillis() / 1000L);
 				insert.executeUpdate();
 				return 1;
 			} else {
