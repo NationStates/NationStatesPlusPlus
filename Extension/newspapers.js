@@ -200,7 +200,11 @@
 								window.location.href = "http://www.nationstates.net/page=blank/?lookup_newspaper=" + $("#newspaper_name").attr("newspaper_id");
 							}
 						}).fail(function(data) {
-							$("#submission_error").show();
+							if (data.status == 401) {
+								$("#lack_permissions_error").show();
+							} else {
+								$("#submission_error").show();
+							}
 							console.log(data);
 						});
 					});
@@ -232,9 +236,7 @@
 					postData += "&article=" + encodeURIComponent($("#article_body").val());
 					postData += "&visible=" + ($("#article_visible-1").prop("checked") ? "1" : "0");
 					$.post("http://capitalistparadise.com/api/newspaper/submit/?newspaper=" + newspaper + "&articleId=" + article_id, postData, function(json) {
-						$(".error, .info").remove();
-						$("<p class='info'>Article Submitted</p>").insertAfter($("#news_header"));
-						$(".info").hide().animate({height: "toggle"}, 600);
+						window.location.href = "http://www.nationstates.net/page=blank/?lookup_newspaper=" + newspaper;
 					}).fail(function() {
 						$(".error, .info").remove();
 						$("<p class='error'>Error Submitting Article</p>").insertAfter($("#news_header"));
@@ -332,6 +334,7 @@
 				html += "<div class='edit_article' style='display:none; margin-top:-12px;'><p><a class='button' href='page=blank/?article_editor=" + article.newspaper + "&article=" + article.article_id + "'>Edit Article</a></p></div>";
 				html += parseBBCodes(article.article);
 				selector.html(html);
+				selector.find("img").load(function() {window.onresize();});
 			}
 			window.onresize();
 		});
@@ -347,6 +350,7 @@
 		text = text.replaceAll("[u]", "<u>").replaceAll("[/u]", "</u>");
 		text = text.replaceAll("[blockquote]", "<blockquote class='news_quote'>").replaceAll("[/blockquote]", "</blockquote>");
 		text = parseUrls(text);
+		text = parseImages(text);
 		text = updateTextLinks("nation", text);
 		text = updateTextLinks("region", text);
 		text = text.replaceAll("\n", "</br>");
@@ -393,6 +397,22 @@
 			
 			text = text.substring(0, index) + "<a target='_blank' href='" + url + "'>" + innerText.substring(innerText.indexOf("]") + 1, innerText.length - 1) + "</a>" + text.substring(endIndex + 6);
 			index = text.indexOf("[url=", index);
+		}
+		return text;
+	}
+
+	function parseImages(text) {
+		var index = text.indexOf("[img]");
+		while (index > -1) {
+			var endIndex = text.indexOf("[/img]", index + 6);
+			if (endIndex == -1) {
+				break;
+			}
+			var url = text.substring(index + 5, endIndex);
+			console.log(url);
+			
+			text = text.substring(0, index) + "<img class='center-img' src='" + url + "'>" + text.substring(endIndex + 6);
+			index = text.indexOf("[img]", index);
 		}
 		return text;
 	}

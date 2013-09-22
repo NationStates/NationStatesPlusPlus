@@ -215,7 +215,7 @@ public class NewspaperController extends NationStatesController {
 		return ok(Json.toJson(newspaper)).as("application/json");
 	}
 
-	public Result getNewspaper(int id, boolean visible) throws SQLException {
+	public Result getNewspaper(int id, boolean visible, boolean hideBody) throws SQLException {
 		Map<String, Object> newspaper = new HashMap<String, Object>();
 		ArrayList<Map<String, String>> news = new ArrayList<Map<String, String>>();
 		Connection conn = null;
@@ -227,7 +227,9 @@ public class NewspaperController extends NationStatesController {
 			while(result.next()) {
 				Map<String, String> article = new HashMap<String, String>();
 				article.put("article_id", String.valueOf(result.getInt(1)));
-				article.put("article", result.getString(2));
+				if (!hideBody) {
+					article.put("article", result.getString(2));
+				}
 				article.put("title", result.getString(3));
 				article.put("timestamp", String.valueOf(result.getLong(4)));
 				article.put("author", result.getString(5));
@@ -266,6 +268,7 @@ public class NewspaperController extends NationStatesController {
 		}
 		String add = Utils.getPostValue(request(), "add");
 		String remove = Utils.getPostValue(request(), "remove");
+		String submitter = Utils.getPostValue(request(), "nation");
 		
 		Connection conn = null;
 		try {
@@ -280,6 +283,11 @@ public class NewspaperController extends NationStatesController {
 			} else {
 				Utils.handleDefaultPostHeaders(request(), response());
 				return Results.badRequest();
+			}
+			
+			if (!editor.equals(submitter)) {
+				Utils.handleDefaultPostHeaders(request(), response());
+				return Results.unauthorized();
 			}
 			
 			Set<Integer> existingEditors = new HashSet<Integer>();
@@ -404,15 +412,13 @@ public class NewspaperController extends NationStatesController {
 		try {
 			conn = getConnection();
 			
-			PreparedStatement editors = conn.prepareStatement("SELECT nation_id FROM assembly.newspaper_editors WHERE newspaper = ?");
+			PreparedStatement editors = conn.prepareStatement("SELECT editor FROM assembly.newspapers WHERE newspaper = ?");
 			editors.setInt(1, newspaper);
 			ResultSet set = editors.executeQuery();
-			final int nationId = getCache().getNationId(nation);
 			boolean validEditor = false;
-			while (set.next()) {
-				if (set.getInt(1) == nationId) {
+			if (set.next()) {
+				if (set.getString(1).equals(nation)) {
 					validEditor = true;
-					break;
 				}
 			}
 			

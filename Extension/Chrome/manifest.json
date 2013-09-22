@@ -2,7 +2,7 @@
   "manifest_version": 2,
   "name": "NationStates++",
   "minimum_chrome_version": "22",
-  "description": "Improves the NationStates Regional Message Board experience",
+  "description": "Improves the NationStates.net experience",
   "version": "2.0.0",
   "content_scripts": [ {
 	  "run_at": "document_end",

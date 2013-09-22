@@ -483,6 +483,10 @@ fieldset.preview {
 	border-right: solid 1px black;
 }
 
+#left_column img, #middle_column img, #right_column img {
+	max-width: 400px;
+}
+
 #middle_column {
 	position: absolute;
 	margin-left: 26%;
@@ -495,4 +499,10 @@ fieldset.preview {
 	position: absolute;
 	margin-left: 52%;
 	width: 25%;
+}
+
+.center-img {
+	display: block;
+	margin-left: auto;
+	margin-right: auto;
 }

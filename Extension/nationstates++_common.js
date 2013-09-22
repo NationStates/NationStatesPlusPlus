@@ -956,7 +956,7 @@ function update(delay){
 	setTimeout(function() {
 		_gaq.push(['_setAccount', 'UA-41267101-1']);
 		_gaq.push(['_trackPageview']);
-		_gaq.push(['_setCustomVar', 1, 'Version', 'v1.9', 2]);
+		_gaq.push(['_setCustomVar', 1, 'Version', 'v2.0.0', 2]);
 
 		if (delay == 1) {
 			if (getVisibleRegion() != "") _gaq.push(['_trackEvent', 'NationStates', 'Region', getVisibleRegion()]);
