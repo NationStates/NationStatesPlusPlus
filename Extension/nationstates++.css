@@ -464,7 +464,7 @@ fieldset.preview {
 }
 
 .edit_article {
-	color: black;
+	color: black !important;
 	font-weight: bold;
 	margin-top: 8px;
 }

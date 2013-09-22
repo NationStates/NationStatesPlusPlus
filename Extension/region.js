@@ -79,10 +79,8 @@ function setupRegionPage(forumViewPage) {
 		var olderParent = $('#olderrmb').parent();
 		$('#olderrmb').remove();
 		olderParent.append(olderRMB.replaceAll("olderrmb", "older_rmb"));
-		console.log("unbound event handlers 2");
 		$('#older_rmb').click(function(event){
 			event.preventDefault();
-			console.log("RMB Processing: " + processingRMB);
 			if (processingRMB) {
 				return;
 			}
@@ -337,7 +335,6 @@ function searchRMB() {
 	rmb.attr("style", "display: none;");
 	cancelled = false;
 	searchOffset = 0;
-	console.log("Searching for: " + searchWords);
 	doRMBSearch();
 }
 
@@ -391,14 +388,11 @@ function doRMBSearch() {
 			$(searchResults).attr("style", "display: block;");
 			searchOffset += 20;
 			lastSearchSuccessful = true;
-			console.log("Partial search result for : " + page);
 			$(searchResults).append("<div id='end-of-search-results' class='rmbolder'>End of Search Results</div>");
 		} else if (searchOffset > 0) {
-			console.log("Full search result for : " + page);
 			$(searchResults).append("<div class='rmbolder'>End of Search Results</div>");
 			lastSearchSuccessful = true;
 		} else {
-			console.log("No search result for : " + page);
 			$(searchResults).append("<div class='rmbolder'>No Search Results</div>");
 			lastSearchSuccessful = false;
 		}
@@ -483,7 +477,6 @@ function handleInfiniteScroll() {
 	} else if (isSettingEnabled("infinite_scroll") && !processingRMB) {
 		processingRMB = true;
 		lastRMBScroll = Date.now();
-		console.log("Processing");
 		//Infinite RMB post scroll
 		var request = $.get('/page=ajax/a=rmb/region=' + getVisibleRegion() + '/offset=' + _rmboffset, function(data) {
 			if (data.length > 1) {
@@ -502,7 +495,6 @@ function handleInfiniteScroll() {
 				$("<div class='rmbolder'>At Earliest Message</div>").insertAfter('.rmbrow:last').hide().show('slow');
 			}
 			_rmboffset += 10;
-			console.log("Loaded RMB");
 		});
 		request.fail(function() {
 			console.log("RMB Request Failed!");
