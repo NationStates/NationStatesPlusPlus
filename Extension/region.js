@@ -308,6 +308,7 @@ function rmbpost() {
 				$("#rmb").html($(data).find("#rmb").html());
 			}
 			$('textarea[name="message"]').val("");
+			$("#previewcontent").html("");
 			updateRMB();
 		});
 	});
