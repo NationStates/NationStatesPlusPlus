@@ -1,13 +1,20 @@
 (function() {
-	$("<li id='regional_newspaper' style='display:none;'><a style='display: inline;' href='http://www.nationstates.net/page=blank/?regional_news=" + getUserRegion() + "'>REGIONAL NEWS</a></li>").insertAfter($("a[href='page=un']").parent());
-	$("<li id='gameplay_newspaper'><a style='display: inline;' href='http://www.nationstates.net/page=blank/?gameplay_news'>GAMEPLAY NEWS</a></li>").insertAfter($("#regional_newspaper"));
-	$("<li id='roleplay_newspaper'><a style='display: inline;' href='http://www.nationstates.net/page=blank/?roleplay_news'>ROLEPLAY NEWS</a></li>").insertAfter($("#gameplay_newspaper"));
+	$("<li id='regional_newspaper' style='display:none;'><a id='rnews' style='display: inline;' href='http://www.nationstates.net/page=blank/?regional_news=" + getUserRegion() + "'>REGIONAL NEWS</a></li>").insertAfter($("a[href='page=un']").parent());
+	$("<li id='gameplay_newspaper'><a id='gnews' style='display: inline;' href='http://www.nationstates.net/page=blank/?gameplay_news'>GAMEPLAY NEWS</a></li>").insertAfter($("#regional_newspaper"));
+	$("<li id='roleplay_newspaper'><a id='rpnews' style='display: inline;' href='http://www.nationstates.net/page=blank/?roleplay_news'>ROLEPLAY NEWS</a></li>").insertAfter($("#gameplay_newspaper"));
 	if (!isSettingEnabled("show_gameplay_news")) {
 		$("#gameplay_newspaper").hide();
+	}
+	if (!isSettingEnabled("show_roleplay_news")) {
+		$("#roleplay_newspaper").hide();
+	}
+	if (!isSettingEnabled("show_regional_news")) {
+		$("#regional_newspaper").hide();
 	}
 	if (getUserRegion() != "") {
 		$.get("http://capitalistparadise.com/api/newspaper/region/?region=" + getUserRegion(), function(json) {
 			$("#regional_newspaper").show();
+			$("#regional_newspaper").attr("news-id", json.newspaper_id);
 		});
 	}
 
@@ -25,9 +32,71 @@
 		openArticleEditor($.QueryString["article_editor"], $.QueryString["article"]);
 	} else if (window.location.href.indexOf("manage_newspaper=") != -1) {
 		openNewspaperAdministration($.QueryString["manage_newspaper"]);
+	} else if (window.location.href.indexOf("view_articles=") != -1) {
+		viewNewspaperArticles($.QueryString["view_articles"]);
+	}
+	
+	function updateNewspaperNags() {
+		var checkUpdates = function(id, selector) {
+			$.get("http://capitalistparadise.com/api/newspaper/latest/?id=" + id, function(json) {
+				var lastRead = localStorage.getItem("last_read_newspaper-" + id);
+				var menu = $("#" + selector);
+				if (lastRead == null || json.timestamp > parseInt(lastRead)) {
+					if (menu.find("span[name='nag']").length == 0) {
+						menu.html(menu.html() + "<span name='nag'> (1)</span>");
+					}
+				} else {
+					menu.find("span[name='nag']").remove();
+				}
+			});
+		}
+		if (isSettingEnabled("show_gameplay_news")) {
+			checkUpdates(0, "gnews");
+		}
+		if (isSettingEnabled("show_roleplay_news")) {
+			checkUpdates(1, "rpnews");
+		}
+		if (isSettingEnabled("show_regional_news")) {
+			if ($("#regional_newspaper").attr("news-id") != null) {
+				checkUpdates($("#regional_newspaper").attr("news-id"), "rnews");
+			}
+		}
+	}
+	$(window).on("page/update", updateNewspaperNags);
+	
+	function viewNewspaperArticles(newspaper) {
+		window.document.title = "NationStates | Newspaper"
+		$("#content").html("<div id='news_header' style='text-align: center;'><h1>Newspaper Article Database</h1><hr></div><div id='inner-content'></div>");
+		getNationStatesAuth(function(authCode) {	
+			var authToken = localStorage.getItem(getUserNation() + "-auth-token");
+			var postData = "nation=" + getUserNation() + "&auth=" + authCode + (authToken != null ? "&auth-token=" + authToken : "");
+			$.post("http://capitalistparadise.com/api/newspaper/canedit/?newspaper=" + newspaper, postData, function(data, textStatus, jqXHR) {
+				var authToken = jqXHR.getResponseHeader("X-Auth-Token");
+				if (authToken != null) {
+					localStorage.setItem(getUserNation() + "-auth-token", authToken);
+				}
+				$.get("http://capitalistparadise.com/api/newspaper/lookup/?id=" + newspaper + "&visible=false&hideBody=true", function(json) {
+					var articles = json.articles;
+					var html = "";
+					for (var i = 0; i < articles.length; i++) {
+						var article = articles[i];
+						html += "<div class='article_summary'><div style='position:absolute; right: 20px;'><a class='btn edit_article' href='page=blank/?article_editor=" + article.newspaper + "&article=" + article.article_id + "'>Edit Article</a></div><b>Article: </b>" + parseBBCodes(article.title) + "<br/><b>Author: </b>" + parseBBCodes(article.author) + "</br><b>Last Edited: </b>" + (new Date(parseInt(article.timestamp, 10))).customFormat("#D##th# #MMMM# #YYYY#") + "</div>"
+					}
+					$("button[name='edit_article']").on("click", function(event) {
+						event.preventDefault();
+						var articleId = $(this).attr("id");
+						
+					});
+					$("#inner-content").html(html);
+				});
+			}).fail(function() {
+				$("#inner-content").html("<span style='color:red'>You do not have permission to view the article database for this newspaper!</span>");
+			});
+		});
 	}
 
 	function openNewspaperAdministration(newspaper) {
+		window.document.title = "NationStates | Newspaper"
 		$("#content").html("<div id='news_header' style='text-align: center;'><h1>Newspaper Administration</h1><hr></div><div id='inner-content'><</div>");
 		$.get("http://capitalistparadise.com/nationstates/v2_0/newspaper_administration.html", function(html) {
 			$("#inner-content").hide();
@@ -146,6 +215,7 @@
 	}
 
 	function openArticleEditor(newspaper, article_id) {
+		window.document.title = "NationStates | Article Editor"
 		$("#content").html("<div id='news_header' style='text-align: center;'><h1>Newspaper Article Editor</h1><hr></div><div id='inner-content'><</div>");
 		$.get("http://capitalistparadise.com/nationstates/v2_0/newspaper_editor.html", function(html) {
 			$("#inner-content").html(html);
@@ -202,9 +272,9 @@
 	function openNationStatesNews(id) {
 		localStorage.setItem("last_read_newspaper-" + id, Date.now());
 		$("#ns_news_nag").remove();
-		$("#content").html("<div id='news_header' style='text-align: center;'><h1 id='newspaper_name'></h1><div id='manage_newspaper' style='display:none; position: absolute; right: 200px; top: 125px;'><p><a class='button' style='font-weight: bold;' href='page=blank/?manage_newspaper=" + id + "'>Manage Newspaper</a><a class='button' style='font-weight: bold;' href='page=blank/?article_editor=" + id + "&article=-1'>Submit Article</a></p></div><i id='newspaper_byline'></i><hr></div><div id='inner-content'><div id='left_column' style='position: absolute; width: 25%; padding-right: 0.5%; border-right: solid 1px black;'></div><div style='position: absolute; margin-left: 26%; width: 25%; padding-right: 0.5%; border-right: solid 1px black;' id='middle_column'></div><div id='right_column' style='position: absolute; margin-left: 52%; width: 25%;'></div></div><div id='bottom_content' style='text-align:center;'><i id='submissions' style='display:none;'>Looking to have your article or content featured? Contact <a id='submissions_editor' href='nation=afforess' class='nlink'>Afforess</a> for submissions!</i></div>");
+		$("#content").html("<div id='news_header' style='text-align: center;'><h1 id='newspaper_name'></h1><div id='manage_newspaper' style='display:none; position: absolute; right: 20px; top: 125px;'><p><a class='button' style='font-weight: bold;' href='page=blank/?manage_newspaper=" + id + "'>Manage Newspaper</a><a class='button' style='font-weight: bold;' href='page=blank/?article_editor=" + id + "&article=-1'>Submit Article</a><a class='button' style='font-weight: bold;' href='page=blank/?view_articles=" + id + "'>View All Articles</a></p></div><i id='newspaper_byline'></i><hr></div><div id='inner-content'><div id='left_column' style='position: absolute; width: 25%; padding-right: 0.5%; border-right: solid 1px black;'></div><div style='position: absolute; margin-left: 26%; width: 25%; padding-right: 0.5%; border-right: solid 1px black;' id='middle_column'></div><div id='right_column' style='position: absolute; margin-left: 52%; width: 25%;'></div></div><div id='bottom_content' style='text-align:center;'><i id='submissions' style='display:none;'>Looking to have your article or content featured? Contact <a id='submissions_editor' href='nation=afforess' class='nlink'>Afforess</a> for submissions!</i></div>");
 		loadingAnimation();
-		window.document.title = "NationStates"
+		window.document.title = "NationStates | Newspaper"
 		$(window).unbind("scroll");
 		updateSize = function() {
 			$("#inner-content").css("height", 0);
@@ -227,8 +297,8 @@
 				});
 			});
 			window.document.title = json.newspaper;
-			$("#newspaper_name").html("<a href='page=blank?lookup_newspaper=" + id + "'>" + json.newspaper + "</a>");
-			$("#newspaper_byline").html(json.byline);
+			$("#newspaper_name").html("<a href='page=blank?lookup_newspaper=" + id + "'>" + parseBBCodes(json.newspaper) + "</a>");
+			$("#newspaper_byline").html(parseBBCodes(json.byline));
 			$("#submissions_editor").html(json.editor.replaceAll("_", " ").toTitleCase());
 			$("#submissions_editor").attr("href", "nation=" + json.editor);
 			
@@ -250,31 +320,37 @@
 					if (article.order == order) {
 						var selector = getSelector(article.column);
 						if (order > 0) selector.append("<hr style='margin-top: 40px;'>");
-						selector.append("<div newspaper='" + article.newspaper + "' id='article_id_" + article.article_id + "' style='white-space: pre;'></div>");
+						selector.append("<div newspaper='" + article.newspaper + "' id='article_id_" + article.article_id + "'></div>");
 					}
 				}
 			}
 			for (var i = 0; i < articles.length; i++) {
 				var article = articles[i];
 				var selector = $("#article_id_" + article.article_id);
-				var html = "<h2 style='margin-top:-5px;margin-bottom:-15px'>" + article.title + "</h2>";
-				html += "<i><p>" + article.author + ", " + (new Date(parseInt(article.timestamp, 10))).customFormat("#D##th# #MMMM# #YYYY#") + "</p></i>";
+				var html = "<h2 style='margin-top:-5px;margin-bottom:-15px'>" + parseBBCodes(article.title) + "</h2>";
+				html += "<i><p>" + parseBBCodes(article.author) + ", " + (new Date(parseInt(article.timestamp, 10))).customFormat("#D##th# #MMMM# #YYYY#") + "</p></i>";
 				html += "<div class='edit_article' style='display:none; margin-top:-12px;'><p><a class='button' href='page=blank/?article_editor=" + article.newspaper + "&article=" + article.article_id + "'>Edit Article</a></p></div>";
-				var text = article.article;
-				text = text.replaceAll("[b]", "<b>").replaceAll("[/b]", "</b>");
-				text = text.replaceAll("[i]", "<i>").replaceAll("[/i]", "</i>");
-				text = text.replaceAll("[u]", "<u>").replaceAll("[/u]", "</u>");
-				text = text.replaceAll("[blockquote]", "<blockquote class='news_quote'>").replaceAll("[/blockquote]", "</blockquote>");
-				text = parseUrls(text);
-				text = updateTextLinks("nation", text);
-				text = updateTextLinks("region", text);
-				html += text;
+				html += parseBBCodes(article.article);
 				selector.html(html);
 			}
 			window.onresize();
 		});
 		$("#submissions").show();
 		window.onresize = updateSize;
+	}
+
+	function parseBBCodes(text) {
+		text = $("<div></div>").html(text).text();
+		text = text.replaceAll("[b]", "<b>").replaceAll("[/b]", "</b>");
+		text = text.replaceAll("[i]", "<i>").replaceAll("[/i]", "</i>");
+		text = text.replaceAll("[normal]", "<span style='font-size:14px'>").replaceAll("[/normal]", "</span>");
+		text = text.replaceAll("[u]", "<u>").replaceAll("[/u]", "</u>");
+		text = text.replaceAll("[blockquote]", "<blockquote class='news_quote'>").replaceAll("[/blockquote]", "</blockquote>");
+		text = parseUrls(text);
+		text = updateTextLinks("nation", text);
+		text = updateTextLinks("region", text);
+		text = text.replaceAll("\n", "</br>");
+		return text;
 	}
 
 	function loadingAnimation() {
@@ -312,10 +388,10 @@
 			if (endIndex == -1) {
 				break;
 			}
-			var innerText = text.substring(index + 5, endIndex);
-			var url = innerText.substring(innerText.indexOf("=") + 1, innerText.indexOf("]"));
+			var innerText = text.substring(index + 5, endIndex + 1);
+			var url = innerText.substring(0, innerText.indexOf("]"));
 			
-			text = text.substring(0, index) + "<a target='_blank' href='" + url + "'>" + innerText.substring(innerText.indexOf("]")) + "</a>" + text.substring(endIndex + 6);
+			text = text.substring(0, index) + "<a target='_blank' href='" + url + "'>" + innerText.substring(innerText.indexOf("]") + 1, innerText.length - 1) + "</a>" + text.substring(endIndex + 6);
 			index = text.indexOf("[url=", index);
 		}
 		return text;

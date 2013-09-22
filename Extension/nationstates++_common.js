@@ -500,7 +500,6 @@ function syncFirebase() {
 		}
 		if (lastFirebaseUpdate < lastSettingsUpdate) {
 			dataRef.child("settings").set({
-				gameplay_enhancements: isSettingEnabled("gameplay_enhancements"),
 				embassy_flags: isSettingEnabled("embassy_flags"),
 				search_rmb: isSettingEnabled("search_rmb"),
 				infinite_scroll: isSettingEnabled("infinite_scroll"),

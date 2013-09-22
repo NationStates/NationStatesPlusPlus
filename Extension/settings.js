@@ -1,5 +1,6 @@
 (function() {
 	if (getVisiblePage() == "blank" && window.location.href.indexOf("ns_settings") != -1) {
+		window.document.title = "NationStates++ Settings"
 		$.get("http://capitalistparadise.com/nationstates/v2_0/settings.html", function(html) {
 			$("#content").html(html);
 			$("#content").find("input[type='checkbox']").each(function() {
@@ -78,6 +79,7 @@
 		});
 	}
 	if (getVisiblePage() == "blank" && window.location.href.indexOf("show_server_stats") != -1) {
+		window.document.title = "NationStates++ Server Stats"
 		$("#content").html("<h1>NationStates++ Server Statistics</h1><div id='server_stats'></div>");
 		var cpu = '<iframe src="https://rpm.newrelic.com/public/charts/7WJapKYtFih" width="500" height="300" scrolling="no" frameborder="no"></iframe>';
 		var memory = '<iframe src="https://rpm.newrelic.com/public/charts/6pDIb1fy4n7" width="500" height="300" scrolling="no" frameborder="no"></iframe>';

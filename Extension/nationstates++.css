@@ -454,3 +454,17 @@ fieldset.preview {
 	padding-right: 0px;
 	padding-top: 1px;
 }
+
+.article_summary {
+	border: 2px solid #CCC;
+	padding: 3px 6px 3px 6px;
+	border-radius: 8px;
+	margin-bottom: 8px;
+	background-color: rgba(247, 247, 247, 0);
+}
+
+.edit_article {
+	color: black;
+	font-weight: bold;
+	margin-top: 8px;
+}
