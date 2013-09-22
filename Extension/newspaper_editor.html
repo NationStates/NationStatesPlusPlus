@@ -48,16 +48,26 @@
   </div>
 </div>
 
+<div class="control-group" id='minor-edit-group' style='display:none;'>
+  <label class="control-label" for="minor_edit">Minor Edit</label>
+  <div class="controls">
+    <label class="checkbox" for="minor_edit-0" title="Minor edits will not update article timestamps nor nag readers about an update">
+      <input type="checkbox" name="minor_edit" id="minor_edit-0" value="This is a minor edit" title="Minor edits will not update article timestamps nor nag readers about an update">
+      This is a minor edit
+    </label>
+  </div>
+</div>
+
 <div class="control-group">
   <label class="control-label" for="article_visible">Ariticle Published:</label>
   <div class="controls">
     <label class="radio" for="article_visible-0">
       <input type="radio" name="article_visible" id="article_visible-0" value="Draft" checked="checked">
-      Draft
+      Draft <i>(Article will NOT be visible)</i>
     </label>
     <label class="radio" for="article_visible-1">
       <input type="radio" name="article_visible" id="article_visible-1" value="Published">
-      Published
+      Published <i>(Article WILL be visible)</i>
     </label>
   </div>
 </div>

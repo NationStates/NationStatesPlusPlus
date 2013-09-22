@@ -3,7 +3,7 @@
   "name": "NationStates++",
   "minimum_chrome_version": "22",
   "description": "Improves the NationStates.net experience",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "content_scripts": [ {
 	  "run_at": "document_end",
       "js": [ "jquery-2.0.2.min.js", "background.js"],

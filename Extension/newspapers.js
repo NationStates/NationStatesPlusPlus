@@ -21,6 +21,8 @@
 	if (window.location.href.indexOf("regional_news") != -1) {
 		$.get("http://capitalistparadise.com/api/newspaper/region/?region=" + $.QueryString["regional_news"], function(json) {
 			openNationStatesNews(json.newspaper_id);
+		}).fail(function() {
+			$("#content").html("<div id='news_header' style='text-align: center;'><h1>Newspaper</h1><hr></div><div id='inner-content' style='text-align:center'>No regional newspaper exists for " + $.QueryString["regional_news"].replaceAll("_", " ").toTitleCase() + "! Contact their delegate or founder to establish one.</div>");
 		});
 	} else if (window.location.href.indexOf("lookup_newspaper") != -1) {
 		openNationStatesNews($.QueryString["lookup_newspaper"]);
@@ -97,7 +99,7 @@
 
 	function openNewspaperAdministration(newspaper) {
 		window.document.title = "NationStates | Newspaper"
-		$("#content").html("<div id='news_header' style='text-align: center;'><h1>Newspaper Administration</h1><hr></div><div id='inner-content'><</div>");
+		$("#content").html("<div id='news_header' style='text-align: center;'><h1>Newspaper Administration</h1><hr></div><div id='inner-content'></div>");
 		$.get("http://capitalistparadise.com/nationstates/v2_0/newspaper_administration.html", function(html) {
 			$("#inner-content").hide();
 			$("#inner-content").html(html);
@@ -220,7 +222,7 @@
 
 	function openArticleEditor(newspaper, article_id) {
 		window.document.title = "NationStates | Article Editor"
-		$("#content").html("<div id='news_header' style='text-align: center;'><h1>Newspaper Article Editor</h1><hr></div><div id='inner-content'><</div>");
+		$("#content").html("<div id='news_header' style='text-align: center;'><h1>Newspaper Article Editor</h1><hr></div><div id='inner-content'></div>");
 		$.get("http://capitalistparadise.com/nationstates/v2_0/newspaper_editor.html", function(html) {
 			$("#inner-content").html(html);
 				$("#submit_article").on("click", function(event) {
@@ -229,7 +231,7 @@
 					var authToken = localStorage.getItem(getUserNation() + "-auth-token");
 					var postData = "nation=" + getUserNation() + "&auth=" + authCode + (authToken != null ? "&auth-token=" + authToken : "");
 					postData += "&title=" + encodeURIComponent($("#article_title").val());
-					postData += "&timestamp=" + Date.now();
+					postData += "&timestamp=" + ($("#minor_edit-0").prop("checked") ? $("#minor-edit-group").attr("timestamp") : Date.now());
 					postData += "&author=" + encodeURIComponent($("#article_author").val());
 					postData += "&column=" + $("#article_column").val();
 					postData += "&order=" + $("#article_order").val();
@@ -249,11 +251,13 @@
 				window.location.href = "http://www.nationstates.net/page=blank/?gameplay_news";
 			});
 			if (article_id > -1) {
+				$("#minor-edit-group").show();
 				$.get("http://capitalistparadise.com/api/newspaper/lookup/?id=" + newspaper + "&visible=false", function(json) {
 					for (var i = 0; i < json.articles.length; i++) {
 						var article = json.articles[i];
 						if (article.article_id == article_id) {
 							console.log(article);
+							$("#minor-edit-group").attr("timestamp", article.timestamp);
 							$("#article_title").val(article.title);
 							$("#article_author").val(article.author);
 							$("#article_column").val(article.column);
@@ -274,7 +278,7 @@
 	function openNationStatesNews(id) {
 		localStorage.setItem("last_read_newspaper-" + id, Date.now());
 		$("#ns_news_nag").remove();
-		$("#content").html("<div id='news_header' style='text-align: center;'><h1 id='newspaper_name'></h1><div id='manage_newspaper'><p><a class='button' style='font-weight: bold;' href='page=blank/?manage_newspaper=" + id + "'>Manage Newspaper</a><a class='button' style='font-weight: bold;' href='page=blank/?article_editor=" + id + "&article=-1'>Submit Article</a><a class='button' style='font-weight: bold;' href='page=blank/?view_articles=" + id + "'>View All Articles</a></p></div><i id='newspaper_byline'></i><hr></div><div id='inner-content'><div id='left_column'></div><div id='middle_column'></div><div id='right_column'></div></div><div id='bottom_content' style='text-align:center;'><i id='submissions' style='display:none;'>Looking to have your article or content featured? Contact <a id='submissions_editor' href='nation=afforess' class='nlink'>Afforess</a> for submissions!</i></div>");
+		$("#content").html("<div id='news_header' style='text-align: center;'><h1 id='newspaper_name'></h1><div id='manage_newspaper'><p class='newspaper_controls'>Newspaper Controls</p><a class='button' style='font-weight: bold;' href='page=blank/?manage_newspaper=" + id + "'>Manage Newspaper</a><a class='button' style='font-weight: bold;' href='page=blank/?article_editor=" + id + "&article=-1'>Submit Article</a><a class='button' style='font-weight: bold;' href='page=blank/?view_articles=" + id + "'>View All Articles</a></div><i id='newspaper_byline'></i><hr></div><div id='inner-content'><div id='left_column'></div><div id='middle_column'></div><div id='right_column'></div></div><div id='bottom_content' style='text-align:center;'><i id='submissions' style='display:none;'>Looking to have your article or content featured? Contact <a id='submissions_editor' href='nation=afforess' class='nlink'>Afforess</a> for submissions!</i></div>");
 		loadingAnimation();
 		window.document.title = "NationStates | Newspaper"
 		$(window).unbind("scroll");
@@ -283,6 +287,9 @@
 			$("#inner-content").children().each(function() {
 				var height = $("#inner-content").height();
 				$("#inner-content").css("height", Math.max(height, $(this).height() + 200) + "px");
+				$("#left_column").find("img").css("max-width", ($("#left_column").width() - 30) + "px");
+				$("#middle_column").find("img").css("max-width", ($("#middle_column").width() - 30) + "px");
+				$("#right_column").find("img").css("max-width", ($("#right_column").width() - 30) + "px");
 			});
 		}
 		$.get("http://capitalistparadise.com/api/newspaper/lookup/?id=" + id, function(json) {
@@ -336,6 +343,7 @@
 				selector.html(html);
 				selector.find("img").load(function() {window.onresize();});
 			}
+			setTimeout(function() {window.onresize();}, 1000);
 			window.onresize();
 		});
 		$("#submissions").show();

@@ -173,6 +173,9 @@
 	if (isSettingEnabled("show_puppet_switcher")) {
 		$("#puppet_setting").show();
 	}
+	if (getUserNation() == "glen-rhodes") {
+		localStorage.setItem("ignore_theme_warning", true);
+	}
 	update(1);
 })();
 

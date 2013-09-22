@@ -470,10 +470,20 @@ fieldset.preview {
 }
 
 #manage_newspaper {
-	display:none;
+	display: none;
 	position: absolute;
 	right: 20px;
-	top: 125px;
+	top: 35px;
+	border: solid 2px black;
+	background: white;
+	padding: 2px;
+}
+
+.newspaper_controls {
+	height: 26px;
+	font-family: impact;
+	font-size: 20px;
+	margin: 0;
 }
 
 #left_column {

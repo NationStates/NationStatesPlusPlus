@@ -2,6 +2,10 @@
 	window.postMessage({ method: "unread_forum_posts"}, "*");
 	checkPanelAlerts();
 	addCustomAlerts();
+	
+	if (getVisiblePage() == "blank" && document.head.innerHTML.indexOf("antiquity") != -1) {
+		$("#main").append("<div id='content'></div>");
+	}
 
 	function addCustomAlerts() {
 		if (localStorage.getItem("show_admin_area") == "true") {
@@ -31,7 +35,7 @@
 	var _lastPanelUpdate = 0;
 	function checkPanelAlerts() {
 		setTimeout(function() {
-			var updateDelay = 10000; //10 sec
+			var updateDelay = 30000; //30 sec
 			if (!isPageActive()) {
 				_pageInactiveCount += 1;
 				updateDelay = 300000 * _pageInactiveCount; //5 min

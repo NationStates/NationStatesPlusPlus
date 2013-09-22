@@ -31,22 +31,24 @@ $.get(urlPrefix + "cache_buster.txt?time=" + Date.now() , function(value) {
 		return;
 	}
 	
-	if (document.head.innerHTML.indexOf("antiquity") != -1) {
-		$("#main").prepend("<div style='height: 60px; width: 100%; background-image: linear-gradient(-45deg, rgba(255, 255, 0, 1) 25%, transparent 25%, transparent 50%, rgba(255, 255, 0, 1) 50%, rgba(255, 255, 0, 1) 75%, transparent 75%, transparent); background-color: #F00; background-size: 50px 50px;font-size: 56px;font-family: impact;text-align: center;'><a style='color: black;' href='javascript:void(0)' id='fix_theme'>NationStates++ Does Not Support The Antiquity Theme</a></div>");
-	} else if ($(".shiny.rmbtable").length != 0) {
-		$("#content").prepend("<div style='height: 60px; width: 100%; background-image: linear-gradient(-45deg, rgba(255, 255, 0, 1) 25%, transparent 25%, transparent 50%, rgba(255, 255, 0, 1) 50%, rgba(255, 255, 0, 1) 75%, transparent 75%, transparent); background-color: #F00; background-size: 50px 50px;font-size: 56px;font-family: impact;text-align: center;'><a style='color: black;' href='javascript:void(0)' id='fix_theme'>NationStates++ Does Not Support The Century Theme</a></div>");
-	}
-	if ($(".shiny.rmbtable").length != 0 || document.head.innerHTML.indexOf("antiquity") != -1) {
-		$("#fix_theme").on("click", function(event) {
-			event.preventDefault();
-			$.get("http://www.nationstates.net/page=settings", function(html) {
-				var localid = $(html).find("input[name='localid']").val();
-				$.post("http://www.nationstates.net/page=settings", "localid=" + localid + "&newtheme=default&update=+Update+", function(data) {
-					location.reload();
+	if (localStorage.getItem("ignore_theme_warning") != "true") {
+		if (document.head.innerHTML.indexOf("antiquity") != -1) {
+			$("#main").prepend("<div style='height: 60px; width: 100%; background-image: linear-gradient(-45deg, rgba(255, 255, 0, 1) 25%, transparent 25%, transparent 50%, rgba(255, 255, 0, 1) 50%, rgba(255, 255, 0, 1) 75%, transparent 75%, transparent); background-color: #F00; background-size: 50px 50px;font-size: 56px;font-family: impact;text-align: center;'><a style='color: black;' href='javascript:void(0)' id='fix_theme'>NationStates++ Does Not Support The Antiquity Theme</a></div>");
+		} else if ($(".shiny.rmbtable").length != 0) {
+			$("#content").prepend("<div style='height: 60px; width: 100%; background-image: linear-gradient(-45deg, rgba(255, 255, 0, 1) 25%, transparent 25%, transparent 50%, rgba(255, 255, 0, 1) 50%, rgba(255, 255, 0, 1) 75%, transparent 75%, transparent); background-color: #F00; background-size: 50px 50px;font-size: 56px;font-family: impact;text-align: center;'><a style='color: black;' href='javascript:void(0)' id='fix_theme'>NationStates++ Does Not Support The Century Theme</a></div>");
+		}
+		if ($(".shiny.rmbtable").length != 0 || document.head.innerHTML.indexOf("antiquity") != -1) {
+			$("#fix_theme").on("click", function(event) {
+				event.preventDefault();
+				$.get("http://www.nationstates.net/page=settings", function(html) {
+					var localid = $(html).find("input[name='localid']").val();
+					$.post("http://www.nationstates.net/page=settings", "localid=" + localid + "&newtheme=default&update=+Update+", function(data) {
+						location.reload();
+					});
 				});
 			});
-		});
-		return;
+			return;
+		}
 	}
 
 	var bannerStyle = "position:absolute; top:0px; margin:6px 60px 0px 0px; z-index:98; font-weight:bold; color: white !important; font-weight: bold; font-size: 8pt; padding: 2px 8px 2px 8px; background: black; 	background-color: rgba(0,0,0,0.2); 	border-radius: 8px;";
