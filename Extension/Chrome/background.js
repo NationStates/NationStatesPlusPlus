@@ -90,9 +90,14 @@ $.get(urlPrefix + "cache_buster.txt?time=" + Date.now() , function(value) {
 	}
 	
 	if (pageUrl.indexOf("page=blank") != -1) {
-		addStylesheet(urlPrefix + 'newspaper_bootstrap.min.css');
-		addJavascript(urlPrefix + "bootstrap-dropdown.min.js");
+		addStylesheet(staticUrlPrefix + 'newspaper_bootstrap.min.css');
+		addJavascript(staticUrlPrefix + "bootstrap-dropdown.min.js");
+		addStylesheet(staticUrlPrefix + "bootstrap-fileupload.min.css");
+		addJavascript(staticUrlPrefix + "bootstrap-fileupload.min.js");
 	}
+	
+	addJavascript(staticUrlPrefix + "Blob.js");
+	addJavascript(staticUrlPrefix + "FileSaver.js");
 	
 	if (document.head.innerHTML.indexOf("//ajax.googleapis.com/ajax/libs/jquery") == -1) {
 		addJavascript("//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js", function() {

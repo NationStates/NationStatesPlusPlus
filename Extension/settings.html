@@ -106,6 +106,27 @@
 </div>
 
 <div class="control-group">
+  <label class="control-label" for="export_puppets">Export Puppets</label>
+  <div class="controls">
+    <button id="export_puppets" name="export_puppets" class="btn btn-default">Download Puppets</button>
+  </div>
+</div>
+
+<div class="control-group">
+  <label class="control-label" for="import_buttons">Import Puppets</label>
+  <div class="controls">
+	  <div class="fileupload fileupload-new" data-provides="fileupload">
+		  <div class="input-append">
+			<div class="uneditable-input span3"><i class="icon-file fileupload-exists"></i> <span class="fileupload-preview"></span></div><span class="btn btn-file"><span class="fileupload-new">Select file</span><span class="fileupload-exists">Change</span><input name="import_buttons" id="import_buttons" type="file" /></span><a href="#" class="btn fileupload-exists" data-dismiss="fileupload">Remove</a>
+			<button id="import_puppets_btn" class="btn btn-default" style="margin-top: -1px; margin-left: 20px;">Import Puppets</button>
+		  </div>
+		</div>
+		<div id='unparseable' style='display:none; color:red;'>Error parsing file</div>
+  </div>
+</div>
+
+
+<div class="control-group">
   <label class="control-label" for="save_settings"></label>
   <div class="controls">
     <button id="save_settings" name="save_settings" class="btn btn-success">Save Settings</button>

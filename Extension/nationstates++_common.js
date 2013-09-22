@@ -341,13 +341,19 @@ function addPuppet() {
 		return;
 	}
 	var formattedName = nationName.val().toLowerCase().split(" ").join("_");
-	localStorage.setItem("puppet-" + formattedName, nationPassword.val());
+	addPuppetNation(formattedName, nationPassword.val());
+	showPuppets();
+	$("#puppet_nation").focus();
+}
+
+function addPuppetNation(nation, password) {
+	localStorage.setItem("puppet-" + nation, password);
 	var puppets = localStorage.getItem("puppets");
 	if (puppets == null) puppets = "";
 	var split = puppets.split(",");
 	var found = false;
 	for (var i = 0; i < split.length; i++) {
-		if (split[i] == formattedName) {
+		if (split[i] == nation) {
 			found = true;
 			break;
 		}
@@ -356,10 +362,8 @@ function addPuppet() {
 		if (puppets.length != 0) {
 			puppets += ",";
 		}
-		localStorage.setItem("puppets", puppets + formattedName);
+		localStorage.setItem("puppets", puppets + nation);
 	}
-	showPuppets();
-	$("#puppet_nation").focus();
 }
 
 var _progress_label

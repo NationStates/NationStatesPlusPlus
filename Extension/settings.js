@@ -5,6 +5,54 @@
 			$("#content").find("input[type='checkbox']").each(function() {
 				$(this).prop("checked", isSettingEnabled($(this).attr("id")));
 			});
+			//var blob = new Blob(["Hello, world!"], {type: "text/plain;charset=utf-8"});
+			//saveAs(blob, "hello world.txt");
+			$("#export_puppets").on("click", function(event) {
+				event.preventDefault();
+				var puppetArr = new Array();
+				var puppets = localStorage.getItem("puppets");
+				if (puppets == null) puppets = "";
+				var split = puppets.split(",");
+				puppetArr.push('"Nation", "Password"\n');
+				for (var i = 0; i < split.length; i++) {
+					var name = split[i];
+					if (name.length > 0) {
+						puppetArr.push('"' + name.replaceAll("_", " ").toTitleCase() + '", "' + localStorage.getItem("puppet-" + name) + '"\n');
+					};
+				}
+				var blob = new Blob(puppetArr, {type: "text/plain;charset=utf-8"});
+				saveAs(blob, "puppets.csv");
+			});
+			$("#import_puppets_btn").on("click", function(event) {
+				event.preventDefault();
+				var file = document.getElementById('import_buttons').files[0];
+				if (file) {
+					var reader = new FileReader();
+					reader.readAsText(file, "UTF-8");
+					reader.onload = function (evt) {
+						try {
+							$("#unparseable").hide();
+							var split = evt.target.result.split("\n");
+							for (var i = 1; i < split.length; i++) {
+								var line = split[i];
+								var nation = line.split(",")[0];
+								nation = nation.substring(1, nation.length - 1);
+								var pass = line.split(",")[1];
+								pass = pass.substring(2, pass.length - 1);
+								addPuppetNation(nation.toLowerCase().split(" ").join("_"), pass);
+							}
+						} catch (error) {
+							$("#unparseable").show();
+							console.log(error);
+						}
+					}
+					reader.onerror = function (evt) {
+						console.log(evt);
+					}
+				} else {
+					$("#unparseable").show();
+				}
+			});
 			$("#save_settings").on("click", function(event) {
 				event.preventDefault();
 				$("#content").find("input[type='checkbox']").each(function() {
