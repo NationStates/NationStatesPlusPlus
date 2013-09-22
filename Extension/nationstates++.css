@@ -468,3 +468,31 @@ fieldset.preview {
 	font-weight: bold;
 	margin-top: 8px;
 }
+
+#manage_newspaper {
+	display:none;
+	position: absolute;
+	right: 20px;
+	top: 125px;
+}
+
+#left_column {
+	position: absolute;
+	width: 25%;
+	padding-right: 0.5%;
+	border-right: solid 1px black;
+}
+
+#middle_column {
+	position: absolute;
+	margin-left: 26%;
+	width: 25%;
+	padding-right: 0.5%;
+	border-right: solid 1px black;
+}
+
+#right_column {
+	position: absolute;
+	margin-left: 52%;
+	width: 25%;
+}

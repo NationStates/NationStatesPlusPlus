@@ -47,3 +47,15 @@ h1 {
 	background: #191919;
 	border: 1px #383838 solid;
 }
+
+#left_column {
+	border-right: solid 1px white;
+}
+
+#middle_column {
+	border-right: solid 1px white;
+}
+
+#inner-content fieldset, #target fieldset {
+	background-color: black;
+}
