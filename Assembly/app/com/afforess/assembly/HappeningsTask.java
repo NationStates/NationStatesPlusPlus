@@ -130,11 +130,12 @@ public class HappeningsTask implements Runnable {
 					if (timestamp > lastUpdate) {
 						int nationId = cache.getNationId(nation);
 						if (nationId == -1) {
-							PreparedStatement insert = conn.prepareStatement("INSERT INTO assembly.nation (name, formatted_name, region, needs_update) VALUES (?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);
+							PreparedStatement insert = conn.prepareStatement("INSERT INTO assembly.nation (name, formatted_name, region, needs_update, first_seen) VALUES (?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);
 							insert.setString(1, nation);
 							insert.setString(2, WordUtils.capitalizeFully(nation.replaceAll("_", " ")));
 							insert.setString(3, "");
 							insert.setByte(4, (byte) 1);
+							insert.setLong(5, happening.timestamp);
 							insert.executeUpdate();
 							ResultSet keys = insert.getGeneratedKeys();
 							keys.next();

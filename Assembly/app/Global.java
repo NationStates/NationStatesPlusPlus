@@ -77,7 +77,7 @@ public class Global extends GlobalSettings {
 			return;
 		}
 		api = new NationStates();
-		api.setRateLimit(48);
+		api.setRateLimit(47);
 		api.setUserAgent(settings.getChild("User-Agent").getString());
 		api.setRelaxed(true);
 		this.cache = new NationCache(pool);

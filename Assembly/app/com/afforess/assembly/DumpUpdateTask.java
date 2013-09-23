@@ -174,9 +174,11 @@ public class DumpUpdateTask implements Runnable {
 			}
 			allNations.removeAll(set);
 			Logger.info("Marking " + allNations.size() + " nations as dead");
-			PreparedStatement dead = assembly.prepareStatement("UPDATE assembly.nation SET alive = 0 WHERE name = ?");
+			PreparedStatement dead = assembly.prepareStatement("UPDATE assembly.nation SET alive = 0, cte = ? WHERE name = ?");
+			final long cte = System.currentTimeMillis() / 1000L;
 			for (String nation : allNations) {
-				dead.setString(1, nation);
+				dead.setLong(1, cte);
+				dead.setString(2, nation);
 				dead.addBatch();
 			}
 			dead.executeBatch();

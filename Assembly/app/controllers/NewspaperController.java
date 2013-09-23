@@ -146,7 +146,7 @@ public class NewspaperController extends NationStatesController {
 		} finally {
 			DbUtils.closeQuietly(conn);
 		}
-		Result result = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(newspaper.hashCode()), "60");
+		Result result = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(newspaper.hashCode()), "15");
 		if (result != null) {
 			return result;
 		}
@@ -169,7 +169,7 @@ public class NewspaperController extends NationStatesController {
 		}
 		newspaper.put("newspaper_id", id);
 
-		Result result = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(newspaper.hashCode()), "0");
+		Result result = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(newspaper.hashCode()), "60");
 		if (result != null) {
 			return result;
 		}
@@ -221,9 +221,22 @@ public class NewspaperController extends NationStatesController {
 		Connection conn = null;
 		try {
 			conn = getConnection();
+			PreparedStatement select = conn.prepareStatement("SELECT title, byline, editor FROM assembly.newspapers WHERE newspaper = ? ");
+			select.setInt(1, id);
+			ResultSet result = select.executeQuery();
+			if (result.next()) {
+				newspaper.put("newspaper_id", id);
+				newspaper.put("newspaper", result.getString(1));
+				newspaper.put("byline", result.getString(2));
+				newspaper.put("editor", result.getString(3));
+			} else {
+				Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(newspaper.hashCode()), "0");
+				return Results.notFound();
+			}
+
 			PreparedStatement articles = conn.prepareStatement("SELECT article_id, article, title, articles.timestamp, author, articles.column, articles.order, visible FROM assembly.articles WHERE newspaper_id = ? " + (visible ? "AND visible = 1" : ""));
 			articles.setInt(1, id);
-			ResultSet result = articles.executeQuery();
+			result = articles.executeQuery();
 			while(result.next()) {
 				Map<String, String> article = new HashMap<String, String>();
 				article.put("article_id", String.valueOf(result.getInt(1)));
@@ -239,15 +252,6 @@ public class NewspaperController extends NationStatesController {
 				article.put("visible", String.valueOf(result.getByte(8)));
 				news.add(article);
 			}
-			
-			PreparedStatement select = conn.prepareStatement("SELECT title, byline, editor FROM assembly.newspapers WHERE newspaper = ? ");
-			select.setInt(1, id);
-			result = select.executeQuery();
-			result.next();
-			newspaper.put("newspaper_id", id);
-			newspaper.put("newspaper", result.getString(1));
-			newspaper.put("byline", result.getString(2));
-			newspaper.put("editor", result.getString(3));
 		} finally {
 			DbUtils.closeQuietly(conn);
 		}

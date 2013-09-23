@@ -85,7 +85,7 @@ public class UpdateTask implements Runnable{
 				nations = new ArrayList<String>(allNations);
 				Logger.info("Retrieving nation list, starting new run");
 			}
-			final int limit = Math.min(index + (happenings.isHighActivity() ? 5 : 20), nations.size());
+			final int limit = Math.min(index + (happenings.isHighActivity() ? 4 : 16), nations.size());
 			for (int i = index; i < limit; i++) {
 				final String nation = nations.get(i);
 				//Fetch nation data
@@ -125,8 +125,9 @@ public class UpdateTask implements Runnable{
 					updateNationHappenings(conn, data, nation);
 					Logger.trace("Time to update happenings took: " + (System.nanoTime() - happenings) / 1E6D + " ms");
 				} else {
-					PreparedStatement update = conn.prepareStatement("UPDATE assembly.nation SET alive = 0, needs_update = 0 WHERE name = ?");
-					update.setString(1, nation);
+					PreparedStatement update = conn.prepareStatement("UPDATE assembly.nation SET alive = 0, needs_update = 0, cte = ? WHERE name = ?");
+					update.setLong(1, System.currentTimeMillis() / 1000L);
+					update.setString(2, nation);
 					update.execute();
 				}
 				index++;
