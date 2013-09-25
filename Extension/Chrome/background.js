@@ -25,6 +25,7 @@ $.get(urlPrefix + "cache_buster.txt?time=" + Date.now() , function(value) {
 		$("#removead").remove();
 		$("#maxad").remove();
 		$("#regionadbox").remove();
+		$("#dilemmasadbox").remove();
 	}
 	
 	if (pageUrl.indexOf("template-overall=none") != -1) {

@@ -4,7 +4,7 @@
 		$.get("http://capitalistparadise.com/nationstates/v2_0/settings.html", function(html) {
 			$("#content").html(html);
 			$("#content").find("input[type='checkbox']").each(function() {
-				$(this).prop("checked", isSettingEnabled($(this).attr("id")));
+				$(this).prop("checked", isSettingEnabled($(this).attr("id"), $(this).attr("default")));
 			});
 			//var blob = new Blob(["Hello, world!"], {type: "text/plain;charset=utf-8"});
 			//saveAs(blob, "hello world.txt");
@@ -24,9 +24,23 @@
 				var blob = new Blob(puppetArr, {type: "text/plain;charset=utf-8"});
 				saveAs(blob, "puppets.csv");
 			});
+			var parsingError = function(error) {
+				var log = "Error: " + error + "\n";
+				if (typeof error != "string") {
+					for (var prop in error) {
+						log += "    property: " + prop + " value: [" + error[prop] + "]\n"; 
+					}
+				}
+				$("#unparseable-span").remove();
+				$("#unparseable").html($("#unparseable").html() + "<span id='unparseable-span'><pre>" + log + "</pre></span>");
+				$("#unparseable").show();
+				console.log(log);
+			}
 			$("#import_puppets_btn").on("click", function(event) {
 				event.preventDefault();
 				var file = document.getElementById('import_buttons').files[0];
+				$("#parsed-success").hide();
+				$("#unparseable").hide();
 				if (file) {
 					var reader = new FileReader();
 					reader.readAsText(file, "UTF-8");
@@ -34,26 +48,45 @@
 						try {
 							$("#unparseable").hide();
 							var split = evt.target.result.split("\n");
+							var imported = false;
 							for (var i = 1; i < split.length; i++) {
 								var line = split[i];
-								var nation = line.split(",")[0];
-								nation = nation.substring(1, nation.length - 1);
-								var pass = line.split(",")[1];
-								pass = pass.substring(2, pass.length - 1);
-								addPuppetNation(nation.toLowerCase().split(" ").join("_"), pass);
+								if (line.trim() != "" && line.split(",").length == 2) {
+									var nation = line.split(",")[0];
+									nation = nation.replaceAll('"', "").trim();
+									var pass = line.split(",")[1];
+									pass = pass.replaceAll('"', "").trim();
+									addPuppetNation(nation.toLowerCase().split(" ").join("_"), pass);
+									imported = true;
+								}
+							}
+							if (imported) {
+								$("#parsed-success").show();
+							} else {
+								parsingError("No data found in file");
 							}
 						} catch (error) {
-							$("#unparseable").show();
-							console.log(error);
+							parsingError(error);
 						}
 					}
-					reader.onerror = function (evt) {
-						console.log(evt);
-					}
+					reader.onerror = parsingError;
 				} else {
 					$("#unparseable").show();
 				}
 			});
+			$("#clear_all_puppets").on("click", function(event) {
+				event.preventDefault();
+				if ($("#clear_all_puppets").html() != "Are You Sure?") {
+					$("#clear_all_puppets").html("Are You Sure?");
+					return;
+				}
+				var puppets = localStorage.getItem("puppets");
+				var split = puppets.split(",");
+				for (var i = 0; i < split.length; i++) {
+					removePuppet(split[i]);
+				}
+				$("#clear_all_puppets").html("Clear Puppets");
+			})
 			$("#save_settings").on("click", function(event) {
 				event.preventDefault();
 				$("#content").find("input[type='checkbox']").each(function() {
@@ -70,23 +103,16 @@
 					return;
 				}
 				$("#content").find("input[type='checkbox']").each(function() {
-					localStorage.removeItem($(this).attr("id"));
+					if ($(this).attr("default") == "false") {
+						localStorage.setItem($(this).attr("id"), "false");
+					} else {
+						localStorage.removeItem($(this).attr("id"));
+					}
 				});
 				localStorage.setItem("settings-timestamp", Date.now());
 				localStorage.removeItem("next_sync" + getUserNation());
 				location.reload();
 			});
 		});
-	}
-	if (getVisiblePage() == "blank" && window.location.href.indexOf("show_server_stats") != -1) {
-		window.document.title = "NationStates++ Server Stats"
-		$("#content").html("<h1>NationStates++ Server Statistics</h1><div id='server_stats'></div>");
-		var cpu = '<iframe src="https://rpm.newrelic.com/public/charts/7WJapKYtFih" width="500" height="300" scrolling="no" frameborder="no"></iframe>';
-		var memory = '<iframe src="https://rpm.newrelic.com/public/charts/6pDIb1fy4n7" width="500" height="300" scrolling="no" frameborder="no"></iframe>';
-		var disk = '<iframe src="https://rpm.newrelic.com/public/charts/3kGBkWVkkQD" width="500" height="300" scrolling="no" frameborder="no"></iframe>';
-		var network = '<iframe src="https://rpm.newrelic.com/public/charts/jllI6ankuA5" width="500" height="300" scrolling="no" frameborder="no"></iframe>';
-		var connections = '<iframe src="https://rpm.newrelic.com/public/charts/8SAAJiklSTl" width="500" height="300" scrolling="no" frameborder="no"></iframe>';
-		var requests = '<iframe src="https://rpm.newrelic.com/public/charts/5DfbHGNVIVM" width="500" height="300" scrolling="no" frameborder="no"></iframe>';
-		$("#server_stats").html(cpu + memory + disk + network + connections + requests);
 	}
 })();

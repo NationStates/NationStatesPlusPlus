@@ -245,28 +245,9 @@ function showPuppets() {
 	html += "</ul>";
 	html += "<p style='margin-top: -20px; margin-bottom: 1px;'><input type='text' id='puppet_nation' size='18' placeholder='Nation' onkeydown='if (event.keyCode == 13) { addPuppet(); }'></p>";
 	html += "<p style='margin-top: 1px;'><input type='password' id='puppet_password' size='18' placeholder='Password' onkeydown='if (event.keyCode == 13) { addPuppet(); }'></p>";
-	
-	var labelStyle = "style='font-size: 13px; line-height: 13px; vertical-align: text-top; display: inline;'";
-	html += "<div style='margin-left: -27px; margin-top: -10px;'><input id='redirect-puppet-page' title='When you login, you will be redirected to the nation page of the puppet' class='indent' type='checkbox'><label title='When you login, you will be redirected to the nation page of the puppet' " + labelStyle + " for='redirect-puppet-page'>Redirect to Nation Page</label></div>"
-	html += "<div style='margin-left: -34px; padding-bottom: 5px;'><input id='show-region-on-hover' title='Hovering over the name of a puppet reveals which region it is in' class='indent' type='checkbox'><label title='Hovering over the name of a puppet reveals which region it is in' " + labelStyle + " for='show-region-on-hover'>Show regions on hover</label></div>"
 	html += "<div id='puppet_invalid_login' style='display:none;'><p>Invalid Login</p></div>";
 
 	$("#puppet_setting_form").html(html);
-
-	setupPuppetSetting("redirect-puppet-page");
-	setupPuppetSetting("show-region-on-hover");
-}
-
-function setupPuppetSetting(setting) {
-	$("#" + setting).on('click', function() {
-		if (localStorage.getItem(setting) == "true") {
-			localStorage.removeItem(setting);
-		} else {
-			localStorage.setItem(setting, "true")
-		}
-		$("#" + setting).prop("checked", localStorage.getItem(setting) == "true");
-	});
-	$("#" + setting).prop("checked", localStorage.getItem(setting) == "true");
 }
 
 function getPuppetCache(name) {
@@ -305,7 +286,7 @@ function showPuppetRegion(name) {
 
 function switchToPuppet(name) {
 	localStorage.removeItem("puppet-" + name + "-region");
-	$.post("http://www.nationstates.net/", "logging_in=1&nation=" + encodeURIComponent(name) + "&password=" + encodeURIComponent(localStorage.getItem("puppet-" + name)) + "&autologin=yes", function(data) {
+	$.post("http://www.nationstates.net/", "logging_in=1&nation=" + encodeURIComponent(name) + "&password=" + encodeURIComponent(localStorage.getItem("puppet-" + name)) + (isSettingEnabled("autologin-puppets", false) ?"&autologin=yes" : ""), function(data) {
 		if (data.contains("Would you like to restore it?")) {
 			$("#content").html($(data).find("#content").html());
 		} else {
@@ -779,13 +760,13 @@ function isInRange(min, value, max) {
 	return false;
 }
 
-function isSettingEnabled(setting) {
+function isSettingEnabled(setting, defValue) {
 	var val = localStorage.getItem(setting);
 	if (val == null) {
-		if (setting == "autologin_to_regional_irc") {
-			return false;
+		if (typeof defValue == "undefined" || defValue === null) {
+			return true;
 		}
-		return true;
+		return defValue == "true";
 	}
 	return val == "true";
 }
