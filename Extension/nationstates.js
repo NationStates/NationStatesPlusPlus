@@ -17,13 +17,21 @@
 		var chk = $("input[name='chk']");
 		if (chk.length != 0) {
 			$.get("/page=tgsettings", function(html) {
-				chk.val($(html).find("input[name='chk']").val());
+				if ($(html).find(".STANDOUT:first").attr("href").substring(7) == getUserNation()) {
+					chk.val($(html).find("input[name='chk']").val());
+				} else {
+					console.log("Changed nations, can not update chk code");
+				}
 			});
 		}
 		var localid = $("input[name='localid']");
 		if (localid.length != 0) {
 			$.get("/page=settings", function(html) {
-				localid.val($(html).find("input[name='localid']").val());
+				if ($(html).find(".STANDOUT:first").attr("href").substring(7) == getUserNation()) {
+					localid.val($(html).find("input[name='localid']").val());
+				} else {
+					console.log("Changed nations, can not update localid code");
+				}
 			});
 		}
 	}
@@ -75,7 +83,7 @@
 			window.postMessage({ method: "unread_forum_posts"}, "*");
 			$.get('/page=panel/template-overall=none', function(html) {
 				//Verify we haven't switched nations/logged out
-				if ($(".STANDOUT:first").attr("href").substring(7) == getUserNation()) {
+				if ($(html).find(".STANDOUT:first").attr("href").substring(7) == getUserNation()) {
 					var page = $(html);
 					var panel = $("#panel");
 					if ($("#panel").length == 0) panel = $(document);
