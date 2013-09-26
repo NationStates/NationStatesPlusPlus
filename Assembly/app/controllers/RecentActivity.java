@@ -12,11 +12,8 @@ import java.util.Map;
 
 import org.codehaus.jackson.annotate.JsonProperty;
 
-import com.afforess.assembly.util.NationCache;
-import com.afforess.assembly.util.RegionCache;
+import com.afforess.assembly.util.DatabaseAccess;
 import com.afforess.assembly.util.Utils;
-import com.mchange.v2.c3p0.ComboPooledDataSource;
-
 import play.Logger;
 import play.mvc.*;
 import play.libs.Json;
@@ -25,8 +22,8 @@ public class RecentActivity extends DatabaseController {
 	private static long cacheTime = 0L;
 	private static List<WAActivity> cachedWAActivity = null;
 
-	public RecentActivity(ComboPooledDataSource pool, NationCache cache, RegionCache regionCache) {
-		super(pool, cache, regionCache);
+	public RecentActivity(DatabaseAccess access) {
+		super(access);
 	}
 
 	public Result getRecentActivity(boolean refresh) throws SQLException {

@@ -18,7 +18,8 @@ object ApplicationBuild extends Build {
 	"com.firebase" % "firebase-token-generator" % "1.0.2",
 	"commons-dbutils" % "commons-dbutils" % "1.5",
 	"com.typesafe.play.extras" % "iteratees-extras_2.10" % "1.0.1",
-	"com.amazonaws" % "aws-java-sdk" % "1.4.3"
+	"com.amazonaws" % "aws-java-sdk" % "1.4.3",
+	"com.google.guava" % "guava" % "15.0"
   )
 
   val main = play.Project(appName, appVersion, appDependencies).settings(

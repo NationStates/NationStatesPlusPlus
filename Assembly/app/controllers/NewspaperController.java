@@ -10,31 +10,28 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 
 import org.apache.commons.dbutils.DbUtils;
-import org.apache.commons.lang3.text.WordUtils;
-
 import play.libs.Json;
 import play.mvc.Result;
 import play.mvc.Results;
 
-import com.afforess.assembly.util.NationCache;
-import com.afforess.assembly.util.RegionCache;
+import com.afforess.assembly.util.DatabaseAccess;
 import com.afforess.assembly.util.Utils;
 import com.limewoodMedia.nsapi.NationStates;
-import com.mchange.v2.c3p0.ComboPooledDataSource;
 
 public class NewspaperController extends NationStatesController {
-	public NewspaperController(ComboPooledDataSource pool, NationCache cache, RegionCache regionCache, NationStates api) {
-		super(pool, cache, regionCache, api);
+	public NewspaperController(DatabaseAccess access, NationStates api) {
+		super(access, api);
 	}
 
-	public Result foundNewspaper(String region) throws SQLException {
-		Result ret = Utils.validateRequest(request(), response(), getAPI(), getCache());
+	public Result foundNewspaper(String region) throws SQLException, ExecutionException {
+		Result ret = Utils.validateRequest(request(), response(), getAPI(), getDatabase());
 		if (ret != null) {
 			return ret;
 		}
-		String nation = Utils.getPostValue(request(), "nation");
+		String nation = Utils.sanitizeName(Utils.getPostValue(request(), "nation"));
 		
 		Map<String, Object> results = new HashMap<String, Object>(1);
 		Utils.handleDefaultPostHeaders(request(), response());
@@ -66,8 +63,8 @@ public class NewspaperController extends NationStatesController {
 			newspaper = conn.prepareStatement("INSERT INTO assembly.newspapers (region, editor, title, byline) VALUES (?, ?, ?, ?)");
 			newspaper.setString(1, region);
 			newspaper.setString(2, nation);
-			newspaper.setString(3, WordUtils.capitalize(region.replaceAll("_", " ")) + " Regional News");
-			newspaper.setString(4, WordUtils.capitalize(nation.replaceAll("_", " ")) + " makes the trains run on time!");
+			newspaper.setString(3, Utils.formatName(nation) + " Regional News");
+			newspaper.setString(4, Utils.formatName(nation) + " makes the trains run on time!");
 			newspaper.executeUpdate();
 			
 			newspaper = conn.prepareStatement("SELECT newspaper FROM assembly.newspapers WHERE disbanded = 0 AND region = ?");
@@ -79,7 +76,7 @@ public class NewspaperController extends NationStatesController {
 			
 			PreparedStatement editors = conn.prepareStatement("INSERT INTO assembly.newspaper_editors (newspaper, nation_id) VALUES (?, ?)");
 			editors.setInt(1, newspaperId);
-			editors.setInt(2, getCache().getNationId(nation));
+			editors.setInt(2, getDatabase().getNationIdCache().get(nation));
 			editors.executeUpdate();
 		} finally {
 			DbUtils.closeQuietly(conn);
@@ -88,7 +85,7 @@ public class NewspaperController extends NationStatesController {
 	}
 
 	public Result disbandNewspaper(String region) throws SQLException {
-		Result ret = Utils.validateRequest(request(), response(), getAPI(), getCache());
+		Result ret = Utils.validateRequest(request(), response(), getAPI(), getDatabase());
 		if (ret != null) {
 			return ret;
 		}
@@ -265,7 +262,7 @@ public class NewspaperController extends NationStatesController {
 		return ok(Json.toJson(newspaper)).as("application/json");
 	}
 
-	public Result changeEditors(int newspaper) throws SQLException {
+	public Result changeEditors(int newspaper) throws SQLException, ExecutionException {
 		Result result = canEditImpl(newspaper);
 		if (result != null) {
 			return result;
@@ -307,8 +304,8 @@ public class NewspaperController extends NationStatesController {
 			Savepoint save = conn.setSavepoint(String.valueOf(System.currentTimeMillis()));
 			if (add != null) {
 				for (String nation : add.split(",")) {
-					final String format = nation.toLowerCase().replaceAll(" ", "_");
-					final int nationId = getCache().getNationId(format);
+					final String format = Utils.sanitizeName(nation);
+					final int nationId = getDatabase().getNationIdCache().get(format);
 					if (nationId > -1) {
 						if (!existingEditors.contains(nationId)) {
 							PreparedStatement editors = conn.prepareStatement("INSERT INTO assembly.newspaper_editors (newspaper, nation_id) VALUES (?, ?)");
@@ -326,14 +323,14 @@ public class NewspaperController extends NationStatesController {
 			}
 			if (remove != null) {
 				for (String nation : remove.split(",")) {
-					final String format = nation.toLowerCase().replaceAll(" ", "_");
+					final String format = Utils.sanitizeName(nation);
 					if (format.equals(editor)) {
 						errors.put("error", "Cannot remove Editor-in-Chief");
 						conn.rollback(save);
 						Utils.handleDefaultPostHeaders(request(), response());
 						return Results.ok(Json.toJson(errors)).as("application/json");
 					}
-					final int nationId = getCache().getNationId(format);
+					final int nationId = getDatabase().getNationIdCache().get(format);
 					if (nationId > -1) {
 						if (existingEditors.contains(nationId)) {
 							PreparedStatement editors = conn.prepareStatement("DELETE FROM assembly.newspaper_editors WHERE newspaper = ? AND nation_id = ?");
@@ -360,8 +357,8 @@ public class NewspaperController extends NationStatesController {
 		return Results.ok();
 	}
 
-	private Result canEditImpl(int newspaper) throws SQLException {
-		Result result = Utils.validateRequest(request(), response(), getAPI(), getCache());
+	private Result canEditImpl(int newspaper) throws SQLException, ExecutionException {
+		Result result = Utils.validateRequest(request(), response(), getAPI(), getDatabase());
 		if (result != null) {
 			return result;
 		}
@@ -372,7 +369,7 @@ public class NewspaperController extends NationStatesController {
 			PreparedStatement editors = conn.prepareStatement("SELECT nation_id FROM assembly.newspaper_editors WHERE newspaper = ?");
 			editors.setInt(1, newspaper);
 			ResultSet set = editors.executeQuery();
-			final int nationId = getCache().getNationId(nation);
+			final int nationId = getDatabase().getNationIdCache().get(Utils.sanitizeName(nation));
 			boolean validEditor = false;
 			while (set.next()) {
 				if (set.getInt(1) == nationId) {
@@ -391,7 +388,7 @@ public class NewspaperController extends NationStatesController {
 		return null;
 	}
 
-	public Result canEdit(int newspaper) throws SQLException {
+	public Result canEdit(int newspaper) throws SQLException, ExecutionException {
 		Result result = canEditImpl(newspaper);
 		if (result != null) {
 			return result;
@@ -401,7 +398,7 @@ public class NewspaperController extends NationStatesController {
 	}
 
 	public Result administrateNewspaper(int newspaper) throws SQLException {
-		Result result = Utils.validateRequest(request(), response(), getAPI(), getCache());
+		Result result = Utils.validateRequest(request(), response(), getAPI(), getDatabase());
 		if (result != null) {
 			return result;
 		}
@@ -443,8 +440,8 @@ public class NewspaperController extends NationStatesController {
 		return Results.ok();
 	}
 
-	public Result submitArticle(int newspaper, int articleId) throws SQLException {
-		Result result = Utils.validateRequest(request(), response(), getAPI(), getCache());
+	public Result submitArticle(int newspaper, int articleId) throws SQLException, ExecutionException {
+		Result result = Utils.validateRequest(request(), response(), getAPI(), getDatabase());
 		if (result != null) {
 			return result;
 		}
@@ -467,7 +464,7 @@ public class NewspaperController extends NationStatesController {
 			PreparedStatement editors = conn.prepareStatement("SELECT nation_id FROM assembly.newspaper_editors WHERE newspaper = ?");
 			editors.setInt(1, newspaper);
 			ResultSet set = editors.executeQuery();
-			final int nationId = getCache().getNationId(nation);
+			final int nationId = getDatabase().getNationIdCache().get(Utils.sanitizeName(nation));
 			boolean validEditor = false;
 			while (set.next()) {
 				if (set.getInt(1) == nationId) {

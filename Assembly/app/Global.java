@@ -13,8 +13,7 @@ import com.afforess.assembly.DailyDumps;
 import com.afforess.assembly.HappeningsTask;
 import com.afforess.assembly.RegionMonitoring;
 import com.afforess.assembly.UpdateTask;
-import com.afforess.assembly.util.NationCache;
-import com.afforess.assembly.util.RegionCache;
+import com.afforess.assembly.util.DatabaseAccess;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.google.common.collect.ObjectArrays;
 import com.limewoodMedia.nsapi.NationStates;
@@ -35,10 +34,9 @@ import scala.concurrent.duration.Duration;
 
 public class Global extends GlobalSettings {
 	private ComboPooledDataSource pool;
-	private NationCache cache;
-	private RegionCache regionCache;
 	private FirebaseAuthenticator firebase;
 	private NationStates api;
+	private DatabaseAccess access;
 
 	@Override
 	public void onStart(Application app) {
@@ -80,12 +78,11 @@ public class Global extends GlobalSettings {
 		api.setRateLimit(47);
 		api.setUserAgent(settings.getChild("User-Agent").getString());
 		api.setRelaxed(true);
-		this.cache = new NationCache(pool);
-		this.regionCache = new RegionCache(pool);
+		this.access = new DatabaseAccess(pool);
 
 		//Setup firebase
 		ConfigurationNode firebaseConfig = config.getChild("firebase");
-		firebase = new FirebaseAuthenticator(pool, cache, regionCache, firebaseConfig.getChild("token").getString(), api);
+		firebase = new FirebaseAuthenticator(access, firebaseConfig.getChild("token").getString(), api);
 			
 		//Setup region monitoring
 		RegionMonitoring monitoring = new RegionMonitoring(api, pool);
@@ -102,9 +99,9 @@ public class Global extends GlobalSettings {
 		dailyDumps.setDaemon(true);
 		dailyDumps.start();
 
-		HappeningsTask happenings = new HappeningsTask(pool, cache, api);
+		HappeningsTask happenings = new HappeningsTask(access, api);
 		Akka.system().scheduler().schedule(Duration.create(15, TimeUnit.SECONDS), Duration.create(2, TimeUnit.SECONDS), happenings, Akka.system().dispatcher());
-		Akka.system().scheduler().schedule(Duration.create(120, TimeUnit.SECONDS), Duration.create(31, TimeUnit.SECONDS), new UpdateTask(api, pool, cache, happenings), Akka.system().dispatcher());
+		Akka.system().scheduler().schedule(Duration.create(120, TimeUnit.SECONDS), Duration.create(31, TimeUnit.SECONDS), new UpdateTask(api, access, happenings), Akka.system().dispatcher());
 		Akka.system().scheduler().schedule(Duration.create(60, TimeUnit.SECONDS), Duration.create(60, TimeUnit.SECONDS), monitoring, Akka.system().dispatcher());
 	}
 
@@ -169,11 +166,11 @@ public class Global extends GlobalSettings {
 		if (FirebaseAuthenticator.class.isAssignableFrom(controllerClass)) {
 			return (A) firebase;
 		} else if (NationStatesController.class.isAssignableFrom(controllerClass)) {
-			Constructor<A> cons = controllerClass.getConstructor(new Class[] {ComboPooledDataSource.class, NationCache.class, RegionCache.class, NationStates.class});
-			return cons.newInstance(pool, cache, regionCache, api);
+			Constructor<A> cons = controllerClass.getConstructor(new Class[] {DatabaseAccess.class, NationStates.class});
+			return cons.newInstance(access, api);
 		} else if (DatabaseController.class.isAssignableFrom(controllerClass)) {
-			Constructor<A> cons = controllerClass.getConstructor(new Class[] {ComboPooledDataSource.class, NationCache.class, RegionCache.class});
-			return cons.newInstance(pool, cache, regionCache);
+			Constructor<A> cons = controllerClass.getConstructor(new Class[] {DatabaseAccess.class});
+			return cons.newInstance(access);
 		}
 		return super.getControllerInstance(controllerClass);
 	}

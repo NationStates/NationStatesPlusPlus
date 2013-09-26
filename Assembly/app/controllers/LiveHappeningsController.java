@@ -20,16 +20,14 @@ import play.libs.Json;
 import play.mvc.Result;
 import play.mvc.Results;
 
-import com.afforess.assembly.util.NationCache;
-import com.afforess.assembly.util.RegionCache;
+import com.afforess.assembly.util.DatabaseAccess;
 import com.afforess.assembly.util.Utils;
-import com.mchange.v2.c3p0.ComboPooledDataSource;
 
 public class LiveHappeningsController extends DatabaseController implements Runnable{
 	private final AtomicReference<JsonNode> happenings = new AtomicReference<JsonNode>();
 	private final AtomicReference<JsonNode> updateStatus = new AtomicReference<JsonNode>();
-	public LiveHappeningsController(ComboPooledDataSource pool, NationCache cache, RegionCache regionCache) {
-		super(pool, cache, regionCache);
+	public LiveHappeningsController(DatabaseAccess access) {
+		super(access);
 		happenings.set(Json.toJson(new ArrayList<NationHappening>(1)));
 	}
 
@@ -82,7 +80,7 @@ public class LiveHappeningsController extends DatabaseController implements Runn
 				happeningList.add(new NationHappening(result.getInt(1), result.getString(2), result.getString(3), result.getLong(4)));
 			}
 			for (NationHappening happening : happeningList) {
-				happening.text = Utils.formatHappeningText(happening.text, getCache(), conn, true, happening.nation);
+				happening.text = Utils.formatHappeningText(happening.text, conn, true, happening.nation);
 			}
 		} catch (SQLException e) {
 			Logger.error("Unable to update live happenings", e);

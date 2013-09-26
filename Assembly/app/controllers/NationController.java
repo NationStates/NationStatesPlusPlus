@@ -6,27 +6,26 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 import org.apache.commons.dbutils.DbUtils;
-import com.afforess.assembly.util.NationCache;
-import com.afforess.assembly.util.RegionCache;
+
+import com.afforess.assembly.util.DatabaseAccess;
 import com.afforess.assembly.util.Utils;
 import com.limewoodMedia.nsapi.NationStates;
-import com.mchange.v2.c3p0.ComboPooledDataSource;
-
 import play.libs.Json;
 import play.mvc.Result;
 import play.mvc.Results;
 
 public class NationController extends NationStatesController {
 
-	public NationController(ComboPooledDataSource pool, NationCache cache, RegionCache regionCache, NationStates api) {
-		super(pool, cache, regionCache, api);
+	public NationController(DatabaseAccess access, NationStates api) {
+		super(access, api);
 	}
 
-	public Result retrieveSettings(String nation) throws SQLException {
+	public Result retrieveSettings(String nation) throws SQLException, ExecutionException {
 		Utils.handleDefaultPostHeaders(request(), response());
-		final int nationId = getCache().getNationId(nation);
+		final int nationId = getDatabase().getNationIdCache().get(Utils.sanitizeName(nation));
 		if (nationId == -1) {
 			return Results.badRequest();
 		}
@@ -48,9 +47,9 @@ public class NationController extends NationStatesController {
 		return Results.noContent();
 	}
 
-	public Result getLastSettingsUpdate(String nation) throws SQLException {
+	public Result getLastSettingsUpdate(String nation) throws SQLException, ExecutionException {
 		Utils.handleDefaultPostHeaders(request(), response());
-		final int nationId = getCache().getNationId(nation);
+		final int nationId = getDatabase().getNationIdCache().get(Utils.sanitizeName(nation));
 		if (nationId == -1) {
 			return Results.badRequest();
 		}
@@ -71,15 +70,15 @@ public class NationController extends NationStatesController {
 		return Results.noContent();
 	}
 
-	public Result updateSettings() throws SQLException {
-		Result result = Utils.validateRequest(request(), response(), getAPI(), getCache());
+	public Result updateSettings() throws SQLException, ExecutionException {
+		Result result = Utils.validateRequest(request(), response(), getAPI(), getDatabase());
 		if (result != null) {
 			return result;
 		}
 		Utils.handleDefaultPostHeaders(request(), response());
 		final String nation = Utils.getPostValue(request(), "nation");
 		final String settings = Utils.getPostValue(request(), "settings");
-		final int nationId = getCache().getNationId(nation);
+		final int nationId = getDatabase().getNationIdCache().get(Utils.sanitizeName(nation));
 		if (nationId == -1 || settings == null) {
 			return Results.badRequest();
 		}
@@ -108,9 +107,9 @@ public class NationController extends NationStatesController {
 		}
 	}
 
-	public Result retrieveIssues(String nation) throws SQLException {
+	public Result retrieveIssues(String nation) throws SQLException, ExecutionException {
 		Utils.handleDefaultPostHeaders(request(), response());
-		final int nationId = getCache().getNationId(nation);
+		final int nationId = getDatabase().getNationIdCache().get(Utils.sanitizeName(nation));
 		if (nationId == -1) {
 			return Results.badRequest();
 		}
@@ -132,15 +131,15 @@ public class NationController extends NationStatesController {
 		return Results.noContent();
 	}
 
-	public Result updateIssues() throws SQLException {
-		Result result = Utils.validateRequest(request(), response(), getAPI(), getCache());
+	public Result updateIssues() throws SQLException, ExecutionException {
+		Result result = Utils.validateRequest(request(), response(), getAPI(), getDatabase());
 		if (result != null) {
 			return result;
 		}
 		Utils.handleDefaultPostHeaders(request(), response());
 		final String nation = Utils.getPostValue(request(), "nation");
 		final String issues = Utils.getPostValue(request(), "issues");
-		final int nationId = getCache().getNationId(nation);
+		final int nationId = getDatabase().getNationIdCache().get(Utils.sanitizeName(nation));
 		if (nationId == -1 || issues == null) {
 			return Results.badRequest();
 		}

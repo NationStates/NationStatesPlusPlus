@@ -5,6 +5,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+
 import org.apache.commons.dbutils.DbUtils;
 import org.apache.commons.io.IOUtils;
 import org.codehaus.jackson.annotate.JsonProperty;
@@ -14,18 +15,16 @@ import play.libs.Json;
 import play.mvc.Result;
 import play.mvc.Results;
 
-import com.afforess.assembly.util.NationCache;
-import com.afforess.assembly.util.RegionCache;
+import com.afforess.assembly.util.DatabaseAccess;
 import com.afforess.assembly.util.Utils;
 import com.limewoodMedia.nsapi.NationStates;
 import com.limewoodMedia.nsapi.holders.RegionData;
 import com.limewoodMedia.nsapi.holders.RegionHappening;
-import com.mchange.v2.c3p0.ComboPooledDataSource;
 
 public class HappeningsController extends DatabaseController {
 
-	public HappeningsController(ComboPooledDataSource pool, NationCache cache, RegionCache regionCache) {
-		super(pool, cache, regionCache);
+	public HappeningsController(DatabaseAccess access) {
+		super(access);
 	}
 
 	public Result parseHappenings() throws SQLException {
@@ -48,7 +47,7 @@ public class HappeningsController extends DatabaseController {
 			ResultSet result = statement.executeQuery();
 			
 			while(result.next()) {
-				final String happening = Utils.formatHappeningText(result.getString(1), getCache(), conn, true, "");
+				final String happening = Utils.formatHappeningText(result.getString(1), conn, true, "");
 				HappeningData data = new HappeningData();
 				data.happening = happening;
 				data.timestamp = result.getLong(2);
@@ -84,7 +83,7 @@ public class HappeningsController extends DatabaseController {
 			RegionData regionData = api.getRegionInfo(api.getInfo(IOUtils.toInputStream(xml)), region);
 			conn = getConnection();
 			for (RegionHappening happening : regionData.happenings) {
-				String text = Utils.formatHappeningText(happening.text, getCache(), conn, true, "");
+				String text = Utils.formatHappeningText(happening.text, conn, true, "");
 				HappeningData data = new HappeningData();
 				data.happening = text;
 				data.timestamp = happening.timestamp;
@@ -129,7 +128,7 @@ public class HappeningsController extends DatabaseController {
 				ResultSet result = statement.executeQuery();
 				
 				while(result.next()) {
-					final String happening = Utils.formatHappeningText(result.getString(1), getCache(), conn, global, nation);
+					final String happening = Utils.formatHappeningText(result.getString(1), conn, global, nation);
 					HappeningData data = new HappeningData();
 					data.happening = happening;
 					data.timestamp = result.getLong(2);

@@ -13,12 +13,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
 import org.apache.commons.dbutils.DbUtils;
 
 import play.Logger;
 
-import com.afforess.assembly.util.NationCache;
+import com.afforess.assembly.util.DatabaseAccess;
 import com.afforess.assembly.util.Sha;
 import com.limewoodMedia.nsapi.NationStates;
 import com.limewoodMedia.nsapi.enums.CauseOfDeath;
@@ -46,12 +45,12 @@ public class UpdateTask implements Runnable{
 	private int index = 0;
 	private final Map<String, Long> nationHappeningCache = new HashMap<String, Long>();
 	private final ComboPooledDataSource pool;
-	private final NationCache cache;
+	private final DatabaseAccess access;
 	private final HappeningsTask happenings;
-	public UpdateTask(NationStates api, ComboPooledDataSource pool, NationCache cache, HappeningsTask happenings) {
+	public UpdateTask(NationStates api, DatabaseAccess access, HappeningsTask happenings) {
 		this.api = api;
-		this.pool = pool;
-		this.cache = cache;
+		this.pool = access.getPool();
+		this.access = access;
 		this.happenings = happenings;
 	}
 
@@ -91,7 +90,7 @@ public class UpdateTask implements Runnable{
 				//Fetch nation data
 				Logger.info("Updating happenings and wa status for " + nation);
 				
-				final boolean needsHistoryUpdate = needsHistoryUpdate(conn, cache.getNationId(nation));
+				final boolean needsHistoryUpdate = needsHistoryUpdate(conn, access.getNationIdCache().get(nation));
 				NationData data = null;
 				try {
 					data = retrieveNationData(nation, needsHistoryUpdate);
@@ -199,6 +198,7 @@ public class UpdateTask implements Runnable{
 			keys.next();
 			nationId = keys.getInt(1);
 			insert.close();
+			access.getNationIdCache().put(nation, nationId);
 		} else {
 			nationId = result.getInt(1);
 			PreparedStatement update = conn.prepareStatement("UPDATE assembly.nation SET formatted_name = ?, wa_member = ?, endorsements = ?, influence = ?, flag = ?, last_login = ?, influence_desc = ?, region = ?, alive = ?, needs_update = 0 WHERE id = ?");
@@ -219,10 +219,6 @@ public class UpdateTask implements Runnable{
 		statement.close();
 
 		Logger.trace("Time to update nation data took: " + (System.nanoTime() - updateData) / 1E6D + " ms");
-		
-		//Add to nation id cache
-		cache.updateCache(nation, data.flagURL, waMember, nationId);
-		
 		return new NationStatus(nation, nationId, data.region, waMember);
 	}
 
@@ -316,14 +312,14 @@ public class UpdateTask implements Runnable{
 		insert.close();
 	}
 
-	private void updateEndorsements(final Connection conn, final NationData data, final int nationId) throws SQLException {
+	private void updateEndorsements(final Connection conn, final NationData data, final int nationId) throws Exception {
 		conn.setAutoCommit(false);
 		Savepoint save =  conn.setSavepoint();
 		try {
 			PreparedStatement endorsements = conn.prepareStatement("INSERT INTO assembly.endorsements (endorser, endorsed) VALUES (?, ?)");
 			for (String endorsed : data.endorsements) {
 				if (endorsed.trim().length() > 0) {
-					endorsements.setInt(1, cache.getNationId(endorsed));
+					endorsements.setInt(1, access.getNationIdCache().get(endorsed));
 					endorsements.setInt(2, nationId);
 					endorsements.addBatch();
 				}
@@ -339,7 +335,7 @@ public class UpdateTask implements Runnable{
 			
 			conn.commit();
 			conn.releaseSavepoint(save);
-		} catch (SQLException e) {
+		} catch (Exception e) {
 			conn.rollback(save);
 			Logger.error("Rolling back endorsement transaction");
 			throw e;

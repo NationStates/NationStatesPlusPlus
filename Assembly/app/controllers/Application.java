@@ -12,18 +12,15 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 import org.apache.commons.dbutils.DbUtils;
 import org.apache.commons.lang.WordUtils;
 import org.codehaus.jackson.annotate.JsonProperty;
 import org.joda.time.DateTime;
 
-import com.afforess.assembly.util.NationCache;
-import com.afforess.assembly.util.RegionCache;
+import com.afforess.assembly.util.DatabaseAccess;
 import com.afforess.assembly.util.Utils;
-import com.mchange.v2.c3p0.ComboPooledDataSource;
-
-import play.Logger;
 import play.mvc.*;
 import play.libs.Json;
 
@@ -104,8 +101,8 @@ public class Application extends DatabaseController {
 		}
 	}
 
-	public Application(ComboPooledDataSource pool, NationCache cache, RegionCache regionCache) {
-		super(pool, cache, regionCache);
+	public Application(DatabaseAccess access) {
+		super(access);
 	}
 
 	public Result sendFlagUpdate() {
@@ -119,7 +116,7 @@ public class Application extends DatabaseController {
 		Connection conn = getConnection();
 		String flag;
 		try {
-			flag = Utils.getNationFlag(nation, getCache(), conn);
+			flag = Utils.getNationFlag(nation, conn);
 			if (flag != null) {
 				Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(flag.hashCode()));
 				return Results.redirect(flag);
@@ -131,8 +128,8 @@ public class Application extends DatabaseController {
 		return Results.redirect("http://www.nationstates.net/images/flags/uploads/rflags/notfound.png");
 	}
 
-	public Result redirectToRegionFlag(String region) throws SQLException {
-		String flag = getRegionCache().getRegionFlag(region);
+	public Result redirectToRegionFlag(String region) throws ExecutionException {
+		String flag = getDatabase().getRegionCache().get(Utils.sanitizeName(region));
 		if (!flag.equals("http://www.nationstates.net/images/flags/Defaultt2.png")) {
 			Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(flag.hashCode()));
 			return Results.redirect(flag);
@@ -146,7 +143,7 @@ public class Application extends DatabaseController {
 		Connection conn = getConnection();
 		String flag;
 		try {
-			flag = Utils.getNationFlag(nation, getCache(), conn);
+			flag = Utils.getNationFlag(nation, conn);
 			if (flag != null) {
 				json.put(nation, flag);
 			} else {
@@ -163,16 +160,15 @@ public class Application extends DatabaseController {
 		return ok(Json.toJson(json)).as("application/json");
 	}
 
-	public Result regionFlag(String regions) throws SQLException {
+	public Result regionFlag(String regions) throws ExecutionException {
 		String eTag = request().getHeader("If-None-Match");
 		String[] regionNames = regions.split(",");
 		Map<String, String> json = new HashMap<String, String>(regionNames.length);
 		for (String region : regionNames) {
-			json.put(region, getRegionCache().getRegionFlag(region));
+			json.put(region, getDatabase().getRegionCache().get(Utils.sanitizeName(region)));
 		}
 		final String calculatedEtag = String.valueOf(json.hashCode());
 		if (calculatedEtag.equals(eTag)) {
-			Logger.info("Returning flag " + request().method() + " request from " + request().remoteAddress() + " [" + request().uri() + "] 304 NOT MODIFIED.");
 			return Results.status(304);
 		}
 		response().setHeader("Access-Control-Allow-Origin", "*");
@@ -184,7 +180,6 @@ public class Application extends DatabaseController {
 		response().setHeader("Last-Modified", new DateTime().plusHours(-1).toString(Utils.HTTP_DATE_TIME));
 		response().setHeader("Vary", "Accept-Encoding");
 		response().setHeader("ETag", calculatedEtag);
-		Logger.info("Returning flag " + request().method() + " request from " + request().remoteAddress() + " [" + request().uri() + "] 200 OK.");
 		return ok(Json.toJson(json)).as("application/json");
 	}
 
@@ -218,19 +213,27 @@ public class Application extends DatabaseController {
 		if (nationName != null && nationName.length() > 0) {
 			Connection conn = getConnection();
 			try {
-				String nation = nationName.toLowerCase().replaceAll(" ", "_");
-				int id = getCache().getNationId(nation);
-				if (id > -1 && getCache().isWAMember(id)) {
+				final String nation = Utils.sanitizeName(nationName);
+				PreparedStatement select = conn.prepareStatement("SELECT id, wa_member FROM assembly.nation WHERE name = ?");
+				select.setString(1, nation);
+				ResultSet result = select.executeQuery();
+				if (result.next() && result.getByte(2) != 0) {
+					final int id = result.getInt(1);
 					//Get list of nations of have endorsed us
 					PreparedStatement statement = conn.prepareStatement("SELECT endorser from assembly.endorsements WHERE endorsed = ?");
 					statement.setInt(1, id);
-					ResultSet result = statement.executeQuery();
+					result = statement.executeQuery();
 					HashSet<String> endorsements = new HashSet<String>();
 					ArrayList<String[]> endorsementData = new ArrayList<String[]>();
 					while(result.next()) {
 						int nationId = result.getInt(1);
-						endorsements.add(getCache().getNationName(nationId));
-						endorsementData.add(new String[] {getCache().getNationName(nationId), getCache().getNationFlag(nationId)});
+						
+						select = conn.prepareStatement("SELECT name, flag FROM assembly.nation WHERE id = ?");
+						select.setInt(1, nationId);
+						ResultSet query = select.executeQuery();
+						query.next();
+						endorsements.add(query.getString(1));
+						endorsementData.add(new String[] {query.getString(1), query.getString(2)});
 					}
 					Collections.sort(endorsementData, new NationComparator());
 					json.put("endorsements", endorsementData.toArray(new String[0][0]));
@@ -245,8 +248,13 @@ public class Application extends DatabaseController {
 					ArrayList<String[]> endorsedData = new ArrayList<String[]>();
 					while(result.next()) {
 						int nationId = result.getInt(1);
-						endorsed.add(getCache().getNationName(nationId));
-						endorsedData.add(new String[] {getCache().getNationName(nationId), getCache().getNationFlag(nationId)});
+						
+						select = conn.prepareStatement("SELECT name, flag FROM assembly.nation WHERE id = ?");
+						select.setInt(1, nationId);
+						ResultSet query = select.executeQuery();
+						query.next();
+						endorsed.add(query.getString(1));
+						endorsedData.add(new String[] {query.getString(1), query.getString(2)});
 					}
 					Collections.sort(endorsedData, new NationComparator());
 					json.put("endorsed", endorsedData.toArray(new String[0][0]));
@@ -256,7 +264,7 @@ public class Application extends DatabaseController {
 					notEndorsing.removeAll(endorsed);
 					ArrayList<String[]> notEndorsingData = new ArrayList<String[]>();
 					for (String name : notEndorsing) {
-						notEndorsingData.add(new String[] {name, getCache().getNationFlag(getCache().getNationId(name))});
+						notEndorsingData.add(new String[] {name, getNationFlag(conn, name)});
 					}
 					Collections.sort(notEndorsingData, new NationComparator());
 					json.put("not_endorsing_back", notEndorsingData.toArray(new String[0][0]));
@@ -266,7 +274,7 @@ public class Application extends DatabaseController {
 					notEndorsed.removeAll(endorsements);
 					ArrayList<String[]> notEndorsedData = new ArrayList<String[]>();
 					for (String name : notEndorsed) {
-						notEndorsedData.add(new String[] {name, getCache().getNationFlag(getCache().getNationId(name))});
+						notEndorsedData.add(new String[] {name, getNationFlag(conn, name)});
 					}
 					Collections.sort(notEndorsedData, new NationComparator());
 					json.put("not_endorsing", notEndorsedData.toArray(new String[0][0]));
@@ -296,6 +304,14 @@ public class Application extends DatabaseController {
 		}
 		return ok(Json.toJson(json)).as("application/json");
 	}
+	
+	private static String getNationFlag(Connection conn, String nation) throws SQLException {
+		PreparedStatement select = conn.prepareStatement("SELECT flag FROM assembly.nation WHERE name = ?");
+		select.setString(1, nation);
+		ResultSet result = select.executeQuery();
+		result.next();
+		return result.getString(1);
+	}
 
 	private static class NationComparator implements Comparator<String[]> {
 		@Override
@@ -304,10 +320,10 @@ public class Application extends DatabaseController {
 		}
 	}
 
-	public Result getNationHistory(final String nation) throws SQLException {
+	public Result getNationHistory(final String nation) throws SQLException, ExecutionException {
 		Map<String, Object> json = new HashMap<String, Object>();
 
-		int nationId = getCache().getNationId(nation);
+		int nationId = getDatabase().getNationIdCache().get(Utils.sanitizeName(nation));
 		if (nationId > -1) {
 			Connection conn = getConnection();
 			try {

@@ -15,15 +15,13 @@ import play.libs.Json;
 import play.mvc.Result;
 import play.mvc.Results;
 
-import com.afforess.assembly.util.NationCache;
-import com.afforess.assembly.util.RegionCache;
+import com.afforess.assembly.util.DatabaseAccess;
 import com.afforess.assembly.util.Utils;
-import com.mchange.v2.c3p0.ComboPooledDataSource;
 
 public class AutocompleteController extends DatabaseController {
 
-	public AutocompleteController(ComboPooledDataSource pool, NationCache cache, RegionCache regionCache) {
-		super(pool, cache, regionCache);
+	public AutocompleteController(DatabaseAccess access) {
+		super(access);
 	}
 
 	public Result autocompleteNation(String start) throws SQLException {

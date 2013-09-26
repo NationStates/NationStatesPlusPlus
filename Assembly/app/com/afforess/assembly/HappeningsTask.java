@@ -5,6 +5,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 
@@ -14,7 +15,7 @@ import org.joda.time.Duration;
 
 import play.Logger;
 
-import com.afforess.assembly.util.NationCache;
+import com.afforess.assembly.util.DatabaseAccess;
 import com.afforess.assembly.util.Utils;
 import com.limewoodMedia.nsapi.NationStates;
 import com.limewoodMedia.nsapi.exceptions.RateLimitReachedException;
@@ -25,7 +26,7 @@ import com.mchange.v2.c3p0.ComboPooledDataSource;
 public class HappeningsTask implements Runnable {
 	private final NationStates api;
 	private final ComboPooledDataSource pool;
-	private final NationCache cache;
+	private final DatabaseAccess access;
 	private int maxEventId = -1;
 	private int newEvents = 0;
 	private long lastRun = 0L;
@@ -33,10 +34,10 @@ public class HappeningsTask implements Runnable {
 	 * A counter, when set > 0, runs happening update polls at 2s intervals, otherwise at 10s intervals.
 	 */
 	private final AtomicInteger highActivity = new AtomicInteger(0);
-	public HappeningsTask(ComboPooledDataSource pool, NationCache cache, NationStates api) {
+	public HappeningsTask(DatabaseAccess access, NationStates api) {
 		this.api = api;
-		this.pool = pool;
-		this.cache = cache;
+		this.pool = access.getPool();
+		this.access = access;
 	}
 
 	public boolean isHighActivity() {
@@ -125,10 +126,10 @@ public class HappeningsTask implements Runnable {
 				final long timestamp = happening.timestamp * 1000;
 				Matcher match = Utils.NATION_PATTERN.matcher(text);
 				if (match.find()) {
-					String nation = text.substring(match.start() + 2, match.end() - 2);
+					String nation = Utils.sanitizeName(text.substring(match.start() + 2, match.end() - 2));
 					final long lastUpdate = getLastUpdate(conn, nation);
 					if (timestamp > lastUpdate) {
-						int nationId = cache.getNationId(nation);
+						int nationId = access.getNationIdCache().get(nation);
 						if (nationId == -1) {
 							PreparedStatement insert = conn.prepareStatement("INSERT INTO assembly.nation (name, formatted_name, region, needs_update, first_seen) VALUES (?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);
 							insert.setString(1, nation);
@@ -140,6 +141,7 @@ public class HappeningsTask implements Runnable {
 							ResultSet keys = insert.getGeneratedKeys();
 							keys.next();
 							nationId = keys.getInt(1);
+							access.getNationIdCache().put(nation, nationId);
 						}
 						batchInsert.setString(1, nation);
 						batchInsert.setString(2, parseHappening(text));
@@ -152,6 +154,8 @@ public class HappeningsTask implements Runnable {
 			}
 			batchInsert.executeBatch();
 		} catch (SQLException e) {
+			Logger.error("Unable to update happenings", e);
+		}  catch (ExecutionException e) {
 			Logger.error("Unable to update happenings", e);
 		} finally {
 			DbUtils.closeQuietly(conn);

@@ -8,14 +8,11 @@ import org.joda.time.Duration;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import com.afforess.assembly.util.NationCache;
-import com.afforess.assembly.util.RegionCache;
+import com.afforess.assembly.util.DatabaseAccess;
 import com.afforess.assembly.util.Utils;
 import com.firebase.security.token.TokenGenerator;
 import com.firebase.security.token.TokenOptions;
 import com.limewoodMedia.nsapi.NationStates;
-import com.mchange.v2.c3p0.ComboPooledDataSource;
-
 import play.Logger;
 import play.mvc.*;
 import play.libs.Json;
@@ -23,8 +20,8 @@ import play.libs.Json;
 public class FirebaseAuthenticator extends DatabaseController {
 	private final String token;
 	private final NationStates api;
-	public FirebaseAuthenticator(ComboPooledDataSource pool, NationCache cache, RegionCache regionCache, String token, NationStates api) {
-		super(pool, cache, regionCache);
+	public FirebaseAuthenticator(DatabaseAccess access, String token, NationStates api) {
+		super(access);
 		this.token = token;
 		this.api = api;
 	}

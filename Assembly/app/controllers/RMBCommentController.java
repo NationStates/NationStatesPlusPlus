@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 import org.apache.commons.dbutils.DbUtils;
 import org.apache.commons.lang.builder.ToStringBuilder;
@@ -18,15 +19,13 @@ import play.libs.Json;
 import play.mvc.Result;
 import play.mvc.Results;
 
-import com.afforess.assembly.util.NationCache;
-import com.afforess.assembly.util.RegionCache;
+import com.afforess.assembly.util.DatabaseAccess;
 import com.afforess.assembly.util.Utils;
 import com.limewoodMedia.nsapi.NationStates;
-import com.mchange.v2.c3p0.ComboPooledDataSource;
 
 public class RMBCommentController extends NationStatesController {
-	public RMBCommentController(ComboPooledDataSource pool, NationCache cache, RegionCache regionCache, NationStates api) {
-		super(pool, cache, regionCache, api);
+	public RMBCommentController(DatabaseAccess access, NationStates api) {
+		super(access, api);
 	}
 
 	public Result hasComments(int rmbPost) throws SQLException {
@@ -51,7 +50,7 @@ public class RMBCommentController extends NationStatesController {
 		return Results.ok(Json.toJson(comments)).as("application/json");
 	}
 
-	public Result getComments(int rmbPost) throws SQLException {
+	public Result getComments(int rmbPost) throws SQLException, ExecutionException {
 		Connection conn = getConnection();
 		List<RMBComment> list = new ArrayList<RMBComment>();
 		try {
@@ -59,7 +58,7 @@ public class RMBCommentController extends NationStatesController {
 			select.setInt(1, rmbPost);
 			ResultSet result = select.executeQuery();
 			while(result.next()) {
-				list.add(new RMBComment(result.getInt(1), result.getLong(2), result.getString(3), getCache().getNationName(result.getInt(4)), result.getInt(5), result.getInt(6)));
+				list.add(new RMBComment(result.getInt(1), result.getLong(2), result.getString(3), getDatabase().getReverseIdCache().get(result.getInt(4)), result.getInt(5), result.getInt(6)));
 			}
 		} finally {
 			DbUtils.closeQuietly(conn);
@@ -123,13 +122,13 @@ public class RMBCommentController extends NationStatesController {
 		return -1;
 	}
 
-	public Result flagComment(int commentId, boolean flag) throws SQLException {
-		Result invalid = Utils.validateRequest(request(), response(), getAPI(), getCache());
+	public Result flagComment(int commentId, boolean flag) throws SQLException, ExecutionException {
+		Result invalid = Utils.validateRequest(request(), response(), getAPI(), getDatabase());
 		if (invalid != null) {
 			return invalid;
 		}
 		String nation = Utils.getPostValue(request(), "nation");
-		final int nationId = getCache().getNationId(nation);
+		final int nationId = getDatabase().getNationIdCache().get(Utils.sanitizeName(nation));
 		Connection conn = getConnection();
 		if (getRMBCommentNation(conn, commentId) == nationId) {
 			Utils.handleDefaultGetHeaders(request(), response(), null, "0");
@@ -165,13 +164,13 @@ public class RMBCommentController extends NationStatesController {
 		return Results.ok();
 	}
 
-	public Result likeComment(int commentId, boolean like) throws SQLException {
-		Result invalid = Utils.validateRequest(request(), response(), getAPI(), getCache());
+	public Result likeComment(int commentId, boolean like) throws SQLException, ExecutionException {
+		Result invalid = Utils.validateRequest(request(), response(), getAPI(), getDatabase());
 		if (invalid != null) {
 			return invalid;
 		}
 		String nation = Utils.getPostValue(request(), "nation");
-		final int nationId = getCache().getNationId(nation);
+		final int nationId = getDatabase().getNationIdCache().get(Utils.sanitizeName(nation));
 		Connection conn = getConnection();
 		if (getRMBCommentNation(conn, commentId) == nationId) {
 			Utils.handleDefaultGetHeaders(request(), response(), null, "0");
@@ -207,8 +206,8 @@ public class RMBCommentController extends NationStatesController {
 		return Results.ok();
 	}
 
-	public Result addComment(int rmbPost) throws SQLException {
-		Result invalid = Utils.validateRequest(request(), response(), getAPI(), getCache());
+	public Result addComment(int rmbPost) throws SQLException, ExecutionException {
+		Result invalid = Utils.validateRequest(request(), response(), getAPI(), getDatabase());
 		if (invalid != null) {
 			return invalid;
 		}
@@ -218,11 +217,12 @@ public class RMBCommentController extends NationStatesController {
 			return Results.badRequest();
 		}
 		final String nation = Utils.getPostValue(request(), "nation");
+		final int nationId = getDatabase().getNationIdCache().get(Utils.sanitizeName(nation));
 		Connection conn = getConnection();
 		try {
 			PreparedStatement select = conn.prepareStatement("SELECT timestamp FROM assembly.rmb_comments WHERE rmb_message_id = ? AND nation_id = ? AND timestamp > ?");
 			select.setInt(1, rmbPost);
-			select.setInt(2, getCache().getNationId(nation));
+			select.setInt(2, nationId);
 			select.setLong(3, System.currentTimeMillis() - Duration.standardSeconds(10).getMillis());
 			ResultSet result = select.executeQuery();
 			if (result.next()) {
@@ -236,7 +236,7 @@ public class RMBCommentController extends NationStatesController {
 			insert.setInt(1, rmbPost);
 			insert.setLong(2, System.currentTimeMillis());
 			insert.setString(3, comment);
-			insert.setInt(4, getCache().getNationId(nation));
+			insert.setInt(4, nationId);
 		} finally {
 			DbUtils.closeQuietly(conn);
 		}

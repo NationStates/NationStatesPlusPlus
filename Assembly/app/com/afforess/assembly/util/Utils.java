@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.concurrent.ExecutionException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -14,6 +15,7 @@ import org.joda.time.format.DateTimeFormatterBuilder;
 
 import com.limewoodMedia.nsapi.NationStates;
 
+import play.Logger;
 import play.mvc.Http.Request;
 import play.mvc.Http.Response;
 import play.mvc.Http;
@@ -62,14 +64,14 @@ public class Utils {
 		response.setHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
 	}
 
-	public static String formatHappeningText(String text, NationCache cache, Connection conn, boolean longNames, String owner) throws SQLException {
+	public static String formatHappeningText(String text, Connection conn, boolean longNames, String owner) throws SQLException {
 		text = text.replaceAll("%%capitalist_paradise%rmb%%", "<a href=\"http://www.nationstates.net/region=capitalist_paradise#rmb \">Regional Message Board</a>");
 		boolean firstName = true;
 		do {
 			Matcher match = NATION_PATTERN.matcher(text);
 			if (match.find()) {
 				String nation = text.substring(match.start() + 2, match.end() - 2);
-				String replacement = "<a href=\"http://www.nationstates.net/nation=" + nation + "\">" + (longNames ? formatFullName(nation, cache, conn, firstName || owner.equals(nation)) : formatName(nation)) + "</a>";
+				String replacement = "<a href=\"http://www.nationstates.net/nation=" + nation + "\">" + (longNames ? formatFullName(nation, conn, firstName || owner.equals(nation)) : formatName(nation)) + "</a>";
 				text = match.replaceFirst(replacement);
 				firstName = false;
 			} else {
@@ -102,35 +104,35 @@ public class Utils {
 		return text;
 	}
 
-	public static String formatFullName(String nation, NationCache cache, Connection conn, boolean shortName) throws SQLException {
-		String fullName = shortName ? formatName(nation) : getFullName(nation, cache, conn);
-		String flag = getNationFlag(nation, cache, conn);
+	public static String formatFullName(String nation, Connection conn, boolean shortName) throws SQLException {
+		String fullName = shortName ? formatName(nation) : getFullName(nation, conn);
+		String flag = getNationFlag(nation, conn);
 		return "<img src=\"" + flag + "\" class=\"miniflag\" alt=\"\" title=\"" + fullName + "\">" + fullName;
 	}
 
-	public static String getFullName(String nation, NationCache cache, Connection conn) throws SQLException {
-		int id = cache.getNationId(nation);
-		if (id == -1) {
-			return formatName(nation);
-		}
-		PreparedStatement statement = conn.prepareStatement("SELECT formatted_name from assembly.nation WHERE id = ?");
-		statement.setInt(1, id);
+	public static String getFullName(String nation, Connection conn) throws SQLException {
+		PreparedStatement statement = conn.prepareStatement("SELECT formatted_name from assembly.nation WHERE name = ?");
+		statement.setString(1, sanitizeName(nation));
 		ResultSet result = statement.executeQuery();
-		result.next();
-		return result.getString(1);
+		if (result.next()) {
+			return result.getString(1);
+		}
+		return formatName(nation);
+	}
+
+	public static String sanitizeName(String name) {
+		return name.toLowerCase().replaceAll(" ", "_");
 	}
 
 	public static String formatName(String nation) {
 		return WordUtils.capitalizeFully(nation.replaceAll("_", " "));
 	}
 
-	public static String getNationFlag(String nation, NationCache cache, Connection conn) throws SQLException {
-		int id = cache.getNationId(nation);
-		if (id > -1) {
-			PreparedStatement statement = conn.prepareStatement("SELECT flag from assembly.nation WHERE id = ?");
-			statement.setInt(1, id);
-			ResultSet result = statement.executeQuery();
-			result.next();
+	public static String getNationFlag(String nation, Connection conn) throws SQLException {
+		PreparedStatement statement = conn.prepareStatement("SELECT flag from assembly.nation WHERE name = ?");
+		statement.setString(1, sanitizeName(nation));
+		ResultSet result = statement.executeQuery();
+		if (result.next()) {
 			return result.getString(1);
 		}
 		return "http://www.nationstates.net/images/flags/default.jpg";
@@ -144,22 +146,26 @@ public class Utils {
 		}
 	}
 
-	public static Result validateRequest(Http.Request request, Http.Response response, NationStates api, NationCache cache) {
+	public static Result validateRequest(Http.Request request, Http.Response response, NationStates api, DatabaseAccess access) {
 		String authToken = Utils.getPostValue(request, "auth-token");
 		String nation = Utils.getPostValue(request, "nation");
 		String auth = Utils.getPostValue(request, "auth");
-		final int nationId = cache.getNationId(nation);
-		if (nation != null && nationId != -1) {
-			if (authToken != null && cache.isValidAuthToken(nationId, authToken)) {
-				response.setHeader("Access-Control-Expose-Headers", "X-Auth-Token");
-				response.setHeader("X-Auth-Token", authToken);
-				return null;
+		try {
+			final int nationId = access.getNationIdCache().get(sanitizeName(nation));
+			if (nation != null && nationId != -1) {
+				if (authToken != null && access.isValidAuthToken(nationId, authToken)) {
+					response.setHeader("Access-Control-Expose-Headers", "X-Auth-Token");
+					response.setHeader("X-Auth-Token", authToken);
+					return null;
+				}
+				if (auth != null && api.verifyNation(nation, auth)) {
+					response.setHeader("Access-Control-Expose-Headers", "X-Auth-Token");
+					response.setHeader("X-Auth-Token", access.generateAuthToken(nationId));
+					return null;
+				}
 			}
-			if (auth != null && api.verifyNation(nation, auth)) {
-				response.setHeader("Access-Control-Expose-Headers", "X-Auth-Token");
-				response.setHeader("X-Auth-Token", cache.generateAuthToken(nationId));
-				return null;
-			}
+		} catch (ExecutionException e) {
+			Logger.error("Unable to validate request", e);
 		}
 		Utils.handleDefaultPostHeaders(request, response);
 		return Results.unauthorized();
