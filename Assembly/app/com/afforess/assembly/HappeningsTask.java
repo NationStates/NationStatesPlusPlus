@@ -85,6 +85,15 @@ public class HappeningsTask implements Runnable {
 
 	@Override
 	public void run() {
+		try {
+			runImpl();
+		} catch (Exception e) {
+			Logger.error("Exception processing happenings", e);
+			highActivity.incrementAndGet();
+		}
+	}
+
+	public void runImpl() {
 		HappeningData data;
 		synchronized (api) {
 			//Throttle the happening queries based on how many new happenings occurred last run

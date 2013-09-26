@@ -6,6 +6,13 @@
 			$("#content").find("input[type='checkbox']").each(function() {
 				$(this).prop("checked", isSettingEnabled($(this).attr("id"), $(this).attr("default")));
 			});
+			$("#content").find("input[type='text']").each(function() {
+				var value = localStorage.getItem($(this).attr("id"));
+				if (value != $(this).attr("default")) {
+					$(this).val(value);
+				}
+				console.log($(this).val());
+			});
 			//var blob = new Blob(["Hello, world!"], {type: "text/plain;charset=utf-8"});
 			//saveAs(blob, "hello world.txt");
 			$("#export_puppets").on("click", function(event) {
@@ -86,11 +93,19 @@
 					removePuppet(split[i]);
 				}
 				$("#clear_all_puppets").html("Clear Puppets");
-			})
+			});
 			$("#save_settings").on("click", function(event) {
 				event.preventDefault();
 				$("#content").find("input[type='checkbox']").each(function() {
 					localStorage.setItem($(this).attr("id"), $(this).prop("checked"));
+				});
+				$("#content").find("input[type='text']").each(function() {
+					if ($(this).val() != $(this).attr("default")) {
+						localStorage.setItem($(this).attr("id"), $(this).val());
+					} else {
+						localStorage.removeItem($(this).attr("id"));
+					}
+					console.log($(this).val());
 				});
 				localStorage.setItem("settings-timestamp", Date.now());
 				localStorage.removeItem("next_sync" + getUserNation());
@@ -109,6 +124,10 @@
 						localStorage.removeItem($(this).attr("id"));
 					}
 				});
+				$("#content").find("input[type='text']").each(function() {
+					localStorage.removeItem($(this).attr("id"));
+				});
+				
 				localStorage.setItem("settings-timestamp", Date.now());
 				localStorage.removeItem("next_sync" + getUserNation());
 				location.reload();

@@ -36,13 +36,15 @@
 		for (var i = 0; i < ircEnabledRegions.length; i++) {
 			var region = ircEnabledRegions[i];
 			if (region["region"] == getVisibleRegion()) {
-				var ircUrl = "https://kiwiirc.com/client/" + region["network"];
+				var networkOverride = localStorage.getItem("irc_network_override");
+				var nickOverride = localStorage.getItem("irc_username_override");
+				var ircUrl = "https://kiwiirc.com/client/" + (networkOverride == null ? region["network"] : networkOverride);
 				if (document.head.innerHTML.indexOf("ns.dark") != -1) {
 					ircUrl += "/?theme=cli&nick=";
 				} else {
 					ircUrl += "/?theme=relaxed&nick=";
 				}
-				ircUrl += getUserNation().replaceAll("_", " ").toTitleCase().replaceAll(" ", "_") + "&" + region["channel"];
+				ircUrl += (nickOverride == null ? getUserNation().replaceAll("_", " ").toTitleCase().replaceAll(" ", "_") : nickOverride) + "&" + region["channel"];
 				$("<h2 style='display: inline-block; margin-bottom: 0;'>Regional IRC</h2>" + 
 				"<div style='display: inline; margin-left: 10px;'>" +
 				"<a id='irc-link' href='javascript:void(0)' onclick=toggleIRC(this)>(Hide)</a></div>" + 
