@@ -154,8 +154,10 @@
 			$.get("page=dossier?start=" + (currentNationPage * 15) + "&rstart=" + (currentRegionPage * 15), function(html) {
 				var dossierHtml = "";
 				if (region) {
-					$(html).find("table").find("tbody").find("tr").each(function() {
-						if ($(this).children().length == 4) {
+					var regionTable = $(html).find("table").find("thead").find("th:contains('Region')");
+					if (regionTable.length > 0) {
+						regionTable = regionTable.parent().parent().parent();
+						regionTable.find("tr").each(function() {
 							var regionElement = $($(this).children()[1]);
 							var region = regionElement.text();
 							if (regionElement.find("a").length > 0) {
@@ -163,6 +165,7 @@
 							}
 							region = region.toLowerCase().replaceAll(" ", "_");
 							var nations = $($(this).children()[2]).html();
+							nations = (typeof nations == "undefined" ? "0" : nations);
 							var delegate = "None";
 							var delegateFlag = "";
 							try {
@@ -172,51 +175,43 @@
 								}
 							} catch (error) { }
 							if ($("#region_dossier").find("#" + region).length == 0) {
-								dossierHtml += "<div id='" + region + "' class='dossier_element'" + (animate ? "style='display:none; min-height:28px;'" : "style='min-height:28px'") + "><div><img id='remove-" + region + "' src='http://capitalistparadise.com/nationstates/static/remove.png' class='remove-dossier' title='Remove from Dossier'><a style='font-weight:bold' target='_blank' href='http://nationstates.net/region=" + region + "'>" + region.replaceAll("_", " ").toTitleCase() + "</a><div class='last_activity'>Nations: " + nations + "</div>";
+								dossierHtml += "<div id='" + region + "' class='dossier_element'" + (animate ? "style='display:none; min-height:28px;'" : "style='min-height:28px'") + "><div><img id='remove-" + region + "' src='http://capitalistparadise.com/nationstates/static/remove.png' class='remove-dossier' title='Remove from Dossier'><img class='smallflag' src='http://capitalistparadise.com/api/flag/region/?region=" + region + "'><a style='font-weight:bold' target='_blank' href='http://nationstates.net/region=" + region + "'>" + region.replaceAll("_", " ").toTitleCase() + "</a><div class='last_activity'>Nations: " + nations + "</div>";
 								if (delegateFlag.length > 0) {
 									dossierHtml += "<div class='region_activity'><b>Delegate:</b><img class='smallflag' src='" + delegateFlag + "'><a target='_blank' href='/nation=" + delegate + "'>" + delegate.replaceAll("_", " ").toTitleCase() + "</a></div>";
 								}
 								targets.push(region);
-								$.get("http://capitalistparadise.com/api/regionflag/?region=" + region, function(json) {
-									for (var regionName in json) {
-										var flag = json[regionName];
-										if (flag != null && flag.length > 0) {
-											var regionDiv = $("#region_dossier").find("#" + regionName).find(".last_activity").parent();
-											if (regionDiv.find(".smallflag").length <= 1) {
-												$("<img class='smallflag' src='" + flag + "'/>").insertAfter(regionDiv.find(".remove-dossier"));
-											}
-										}
-									}
-								});
 								dossierHtml += "</div></div>";
 							}
-						}
-					});
+						});
+					}
 				} else {
-					$(html).find("table:first").find("tbody").find("tr").each(function() {
-						//They have no nations in their dossier!
-						if ($(this).children().length == 4) {
-							dossierHtml = "<div id='last_nation_element' style='cursor: default;text-align: center;font-weight: bold;' class='dossier_element'>Your Dossier is Empty!</div>";
-							endNationDossier = true;
-							return true;
-						}
+					var nationTable = $(html).find("table").find("thead").find("th:contains('WA Category')");
+					if (nationTable.length == 0) {
+						dossierHtml = "<div id='last_nation_element' style='cursor: default;text-align: center;font-weight: bold;' class='dossier_element'>Your Dossier is Empty!</div>";
+						endNationDossier = true;
+						return true;
+					}
+					nationTable = nationTable.parent().parent().parent();
+					nationTable.find("tbody").find("tr").each(function() {
 						var nation;
 						var flag;
 						var waMember = $(this).html().contains("WA Delegate") || $(this).html().contains("WA Member");
-						if ($(this).children().length == 3) {
-							nation = $($(this).children()[2]).html().replaceAll(" ", "_").toLowerCase();
+						if ($(this).children().length == 2) {
+							nation = $($(this).children()[1]).html().replaceAll(" ", "_").toLowerCase();
 							flag = "http://www.nationstates.net/images/flags/exnation.png";
 						} else {
+							console.log($(this));
+							console.log($(this).find(".nlink"));
 							nation = $(this).find(".nlink").attr("href").substring(7)
 							flag = $(this).find(".smallflag").attr("src");
 						}
+						console.log(nation);
+						console.log(flag);
 						if ($("#nation_dossier").find("#" + nation).length == 0) {
 							targets.push(nation);
-							
 							var alias = getNationAlias(nation);
 
 							dossierHtml += "<div id='" + nation + "' class='dossier_element'" + (animate ? "style='display:none;'" : "") + "><div><img id='remove-" + nation + "' src='http://capitalistparadise.com/nationstates/static/remove.png' class='remove-dossier' title='Remove from Dossier'><img class='smallflag' src='" + flag + "'><a id='nation-link-" + nation + "' style='font-weight:bold; " + (alias != null ? "text-decoration:line-through;" : "") + "' target='_blank' href='http://nationstates.net/nation=" + nation + "'>" + nation.replaceAll("_", " ").toTitleCase() + "</a>";
-							
 							
 							if (alias == null) {
 								dossierHtml += "<span id='nation-alias-" + nation + "'><pre style='display: inline;'></pre></span><img src='http://capitalistparadise.com/nationstates/static/alias.png' title='Set Alias' style='height: 28px; margin-bottom: -10px; margin-left: 15px;' id='alias-" + nation + "'>";
@@ -227,27 +222,16 @@
 							if (waMember) {
 								dossierHtml += "<div class='wa_status dossier-wa'></div>";
 							}
-							if ($(this).children().length == 5) {
-								var activityHtml = $($(this).children()[4]).html();
+							if ($(this).children().length == 4) {
+								var activityHtml = $($(this).children()[3]).html();
 								var lastActivity = activityHtml.substring(0, activityHtml.indexOf("<br>"));
-								var region = $($($(this).children()[4]).children()[1]).attr("href").substring(7);
+								var region = $($($(this).children()[3]).children()[1]).attr("href").substring(7);
 								var formattedRegion = region.replaceAll(" ", "_").toLowerCase();
-								var censusType = $($(this).children()[3]).text();
+								var censusType = $($(this).children()[2]).text();
 								if ($(this).find(".aflabel").length > 0) {
 									censusType = $(this).find(".aflabel").text();
 								}
-								dossierHtml += "<div class='last_activity'>" + lastActivity + "<span style='width:50px;display: inline-block;'> </span>(" + censusType + ") </div><div class='region_activity'><a target='_blank' href='/region=" + formattedRegion + "'>" + region + "</a></div>";
-								$.get("http://capitalistparadise.com/api/regionflag/?region=" + formattedRegion, function(json) {
-									for (var regionName in json) {
-										var flag = json[regionName];
-										if (flag != null && flag.length > 0) {
-											var regionDiv = $("#nation_dossier").find("#" + nation).find(".region_activity");
-											if (regionDiv.find(".smallflag").length == 0) {
-												regionDiv.html("<img class='smallflag' src='" + flag + "'/>" + regionDiv.html());
-											}
-										}
-									}
-								});
+								dossierHtml += "<div class='last_activity'>" + lastActivity + "<span style='width:50px;display: inline-block;'> </span>(" + censusType + ") </div><div class='region_activity'><a target='_blank' href='/region=" + formattedRegion + "'><img class='smallflag' src='http://capitalistparadise.com/api/flag/region/?region=" + formattedRegion + "'>" + region + "</a></div>";
 							}
 							dossierHtml += "</div></div>";
 						}
