@@ -54,6 +54,20 @@
 			return this.replace(/\w\S*/g, function(txt){return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();});
 		};
 	}
+	
+	if (typeof String.prototype.count != 'function') {
+		String.prototype.count = function(substr,start,overlap) {
+			overlap = overlap || false;
+			start = start || 0;
+
+			var count = 0, 
+				offset = overlap ? 1 : substr.length;
+
+			while((start = this.indexOf(substr, start) + offset) !== (offset - 1))
+				++count;
+			return count;
+		};
+	}
 
 	//Add escape
 	RegExp.escape = function(text) {

@@ -275,6 +275,24 @@ function rmbpost() {
 		chkValue = $('input[name="chk"]').val(),
 		messageValue = $('textarea[name="message"]').val(),
 		url = "/page=lodgermbpost/region=" + getVisibleRegion();
+	
+	var lodgeMessage = $("button[name='lodge_message']");
+	var removeWarning = function() {
+		$(".bbcode-error").remove();
+		$("button[name='lodge_message']").removeClass("danger");
+		$("button[name='lodge_message']").html("Lodge Message");
+	};
+	if (hasInvalidBBCodes(messageValue) && lodgeMessage.html() != "Lodge Message Anyway") {
+		lodgeMessage.html("Lodge Message Anyway");
+		lodgeMessage.addClass("danger");
+		$("<p class='bbcode-error' style='color:red'>Your Message contains invalid BBCodes!</p>").insertAfter(lodgeMessage.next());
+		$('textarea[name="message"]').on("keypress", function(event) {
+			removeWarning();
+			$('textarea[name="message"]').off("keypress");
+		});
+		return;
+	}
+	removeWarning();
 
 	var posting = jQuery.ajax({
 		type: "POST",
@@ -310,6 +328,26 @@ function rmbpost() {
 			updateRMB();
 		});
 	});
+}
+
+function hasInvalidBBCodes(message) {
+	message = message.toLowerCase();
+	if (message.count("[i]") != message.count("[/i]")) {
+		return true;
+	}
+	if (message.count("[b]") != message.count("[/b]")) {
+		return true;
+	}
+	if (message.count("[u]") != message.count("[/u]")) {
+		return true;
+	}
+	if (message.count("[region]") != message.count("[/region]")) {
+		return true;
+	}
+	if (message.count("[nation") != message.count("[/nation]")) {
+		return true;
+	}
+	return false;
 }
 
 var keywords;
