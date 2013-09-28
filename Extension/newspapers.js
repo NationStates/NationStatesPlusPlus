@@ -1,5 +1,6 @@
 (function() {
-	$("<li id='regional_newspaper' style='display:none;'><a id='rnews' style='display: inline;' href='http://www.nationstates.net/page=blank/?regional_news=" + getUserRegion() + "'>REGIONAL NEWS</a></li>").insertAfter($("a[href='page=un']").parent());
+	var menu = $(".menu");
+	$("<li id='regional_newspaper' style='display:none;'><a id='rnews' style='display: inline;' href='http://www.nationstates.net/page=blank/?regional_news=" + getUserRegion() + "'>REGIONAL NEWS</a></li>").insertAfter(menu.find("a[href='page=un']").parent());
 	$("<li id='gameplay_newspaper'><a id='gnews' style='display: inline;' href='http://www.nationstates.net/page=blank/?gameplay_news'>GAMEPLAY NEWS</a></li>").insertAfter($("#regional_newspaper"));
 	$("<li id='roleplay_newspaper'><a id='rpnews' style='display: inline;' href='http://www.nationstates.net/page=blank/?roleplay_news'>ROLEPLAY NEWS</a></li>").insertAfter($("#gameplay_newspaper"));
 	if (!isSettingEnabled("show_gameplay_news")) {
