@@ -166,59 +166,6 @@ function setupRegionPage(forumViewPage) {
 	addFormattingButtons();
 }
 
-function addFormattingButtons() {
-	$(".nscodedesc").find("abbr").each(function() {
-		var text = $(this).html().substring(1, $(this).html().length - 1);
-		$(this).html(text);
-		if (text.length > 1) {
-			$(this).css("width", "53px");
-		} else {
-			$(this).css("width", "23px");
-		}
-		if (text == "b") {
-			$(this).attr("id", "bold_format");
-			$(this).css("font-weight", "bold");
-			$(this).html(text.toUpperCase());
-		} else if ($(this).html() == "i") {
-			$(this).attr("id", "italic_format");
-			$(this).css("font-style", "italic");
-		} else if ($(this).html() == "u") {
-			$(this).attr("id", "underline_format");
-			$(this).css("text-decoration", "underline");
-		} else if ($(this).html() == "nation") {
-			$(this).attr("id", "nation_format");
-			$(this).html("<option>nation</option><option>nation=short</option><option>nation=noflag</option><option>nation=short+noflag</option>");
-			$(this).css("width", "143px");
-			$(this).changeElementType("select");
-			return true;
-		} else if ($(this).html() == "region") {
-			$(this).attr("id", "region_format");
-		}
-		$(this).attr("class", "forum_bbcode_button");
-		$(this).changeElementType("button");
-	});
-	$("#bold_format").on("click", formatBBCode);
-	$("#italic_format").on("click", formatBBCode);
-	$("#underline_format").on("click", formatBBCode);
-	$("#nation_format").on("change", formatBBCode);
-	$("#nation_format").on("select", formatBBCode);
-	$("#region_format").on("click", formatBBCode);
-}
-
-function formatBBCode(event) {
-	event.preventDefault();
-	var value = ($(this).html().contains("<option>") ? $(this).val() : $(this).html());
-	getRMBTextArea().wrap_selection("[" + value + "]", "[/" + value.split("=")[0] + "]");
-}
-
-function getRMBTextArea() {
-	var form = document.forms["rmb"];
-	var widebox = $(form).children(".widebox");
-	$(widebox).attr("id","widebox-form");
-	var textArea = $(widebox).find("textarea");
-	return textArea;
-}
-
 function isForumView() {
 	return window.location.href.indexOf("/page=display_region_rmb") != -1;
 }
@@ -780,7 +727,7 @@ function quotePost(post) {
 	
 	text = $("<div></div>").html(text).text();
 
-	var textArea = getRMBTextArea();
+	var textArea = $(".widebox").find("textarea[name='message']");
 	var value = $(textArea).val();
 	if (value.length > 0) {
 		value += "\n";

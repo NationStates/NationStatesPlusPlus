@@ -6,6 +6,7 @@
 		addTelegramSearch();
 		addBlockSender();
 		addReplyToAll();
+		addFormattingButtons();
 	}
 
 	function linkifyTelegrams() {

@@ -142,9 +142,7 @@
 
 		$.fn.wrap_selection = function (left_str, right_str, sel_offset, sel_length) {
 			var the_sel_text = this.get_selection().text;
-			var selection;
-			if (the_sel_text[the_sel_text.length - 1] == " ") selection = this.replace_selection(left_str + the_sel_text.substring(0, the_sel_text.length - 2) + right_str + " ");
-			else selection = this.replace_selection(left_str + the_sel_text + right_str );
+			var selection = this.replace_selection(left_str + the_sel_text + right_str );
 			if(sel_offset !== undefined && sel_length !== undefined) 
 				selection = this.set_selection(selection.start +	sel_offset, selection.start +	sel_offset + sel_length);
 			else if(the_sel_text == '') 
@@ -743,6 +741,45 @@ function isAntiquityTheme() {
 
 function isNumber(n) {
 	return !isNaN(parseFloat(n)) && isFinite(n);
+}
+
+function addFormattingButtons() {
+	$(".nscodedesc").find("abbr").each(function() {
+		var text = $(this).html().substring(1, $(this).html().length - 1);
+		$(this).html(text);
+		if (text.length > 1) {
+			$(this).css("width", "53px");
+		} else {
+			$(this).css("width", "23px");
+		}
+		if (text == "b") {
+			$(this).attr("id", "bold_format");
+			$(this).css("font-weight", "bold");
+			$(this).html(text.toUpperCase());
+		} else if ($(this).html() == "i") {
+			$(this).attr("id", "italic_format");
+			$(this).css("font-style", "italic");
+		} else if ($(this).html() == "u") {
+			$(this).attr("id", "underline_format");
+			$(this).css("text-decoration", "underline");
+		} else if ($(this).html() == "nation") {
+			$(this).attr("id", "nation_format");
+		} else if ($(this).html() == "region") {
+			$(this).attr("id", "region_format");
+		}
+		$(this).attr("class", "forum_bbcode_button");
+		$(this).changeElementType("button");
+	});
+	var formatBBCode = function(event) {
+		event.preventDefault();
+		var value = ($(this).html().contains("<option>") ? $(this).val() : $(this).html());
+		$(".widebox").find("textarea[name='message']").wrap_selection("[" + value + "]", "[/" + value.split("=")[0] + "]");
+	}
+	$("button[id='bold_format']").on("click", formatBBCode);
+	$("button[id='italic_format']").on("click", formatBBCode);
+	$("button[id='underline_format']").on("click", formatBBCode);
+	$("button[id='nation_format']").on("click", formatBBCode);
+	$("button[id='region_format']").on("click", formatBBCode);
 }
 
 function linkify(inputText) {
