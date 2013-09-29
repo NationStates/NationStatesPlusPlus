@@ -30,7 +30,8 @@
 		{region: "new_odessa", network: "irc.uk.mibbit.net", channel: "#NewOdessa"},
 		{region: "panessos", network: "irc.esper.net", channel: "#Panessos"},
 		{region: "the_grand_northern_imperium", network: "irc.esper.net", channel: "#GNI"},
-		{region: "the_royal_alliance", network: "irc.uk.mibbit.net", channel: "#TheRoyalAlliance"}
+		{region: "the_royal_alliance", network: "irc.uk.mibbit.net", channel: "#TheRoyalAlliance"},
+		{region: "the_commonwealth_of_kings", network: "irc.esper.net", channel: "#CoK"}
 	];
 	if (getVisiblePage() == "region" && getUserNation() !== "") {
 		for (var i = 0; i < ircEnabledRegions.length; i++) {

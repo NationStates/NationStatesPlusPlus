@@ -384,10 +384,6 @@ function doRMBSearch() {
 	});
 }
 
-function isRMBPostFormVisible() {
-	return ($("#rmb-post-form").attr("style") == "");
-}
-
 function toggleRMBPostForm() {
 	if ($("#rmb-post-form").attr("style") == "") {
 		$("#rmb-post-form").attr("style", "display: none;");
@@ -653,7 +649,7 @@ $('body').on('click', 'a.rmbcomment-cancel', function(event) {
 
 function quotePost(post) {
 	//Show RMB if it is hidden
-	if (!isRMBPostFormVisible()) {
+	if ($(".widebox").find("textarea[name='message']:hidden").length > 0) {
 		toggleRMBPostForm();
 	}
 	var postId = $(post).attr("id").split("quote-btn-")[1];

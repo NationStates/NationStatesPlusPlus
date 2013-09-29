@@ -253,6 +253,7 @@
 			});
 			if (article_id > -1) {
 				$("#minor-edit-group").show();
+				$("#minor_edit-0").prop("checked", true);
 				$.get("http://capitalistparadise.com/api/newspaper/lookup/?id=" + newspaper + "&visible=false", function(json) {
 					for (var i = 0; i < json.articles.length; i++) {
 						var article = json.articles[i];
