@@ -129,11 +129,14 @@ public class Utils {
 	}
 
 	public static String getNationFlag(String nation, Connection conn) throws SQLException {
-		PreparedStatement statement = conn.prepareStatement("SELECT flag from assembly.nation WHERE name = ?");
+		PreparedStatement statement = conn.prepareStatement("SELECT flag, alive from assembly.nation WHERE name = ?");
 		statement.setString(1, sanitizeName(nation));
 		ResultSet result = statement.executeQuery();
 		if (result.next()) {
-			return result.getString(1);
+			if (result.getByte(2) == 1) {
+				return result.getString(1);
+			}
+			return "http://www.nationstates.net/images/flags/exnation.png"
 		}
 		return "http://www.nationstates.net/images/flags/default.jpg";
 	}

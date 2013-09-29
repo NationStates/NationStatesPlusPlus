@@ -78,17 +78,13 @@ public class DumpUpdateTask implements Runnable {
 			allRegions.removeAll(set);
 			Logger.info("Marking " + allRegions.size() + " regions as dead");
 			
-			PreparedStatement delete = assembly.prepareStatement("DELETE FROM assembly.region WHERE name = ?");
-			PreparedStatement deletePopulation = assembly.prepareStatement("DELETE FROM assembly.region_populations WHERE region = ?");
+			PreparedStatement markDead = assembly.prepareStatement("UPDATE assembly.region SET alive = 0 WHERE name = ?");
 			for (String region : allRegions) {
-				delete.setString(1, region);
-				delete.addBatch();
-				deletePopulation.setString(1, region);
-				deletePopulation.addBatch();
+				markDead.setString(1, region);
+				markDead.addBatch();
 			}
-			delete.executeBatch();
-			deletePopulation.executeBatch();
-			conn.prepareStatement("DROP TABLE regions");
+			markDead.executeBatch();
+			conn.prepareStatement("DROP TABLE regions").execute();
 		} catch (SQLException e) {
 			throw new RuntimeException(e);
 		} finally {
@@ -182,7 +178,7 @@ public class DumpUpdateTask implements Runnable {
 				dead.addBatch();
 			}
 			dead.executeBatch();
-			conn.prepareStatement("DROP TABLE nations");
+			conn.prepareStatement("DROP TABLE nations").execute();
 		} catch (SQLException e) {
 			throw new RuntimeException(e);
 		} finally {

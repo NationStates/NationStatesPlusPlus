@@ -34,11 +34,14 @@ public class DatabaseAccess {
 				Connection conn = null;
 				try {
 					conn = pool.getConnection();
-					PreparedStatement statement = conn.prepareStatement("SELECT flag FROM assembly.region WHERE name = ?");
+					PreparedStatement statement = conn.prepareStatement("SELECT flag, alive FROM assembly.region WHERE name = ?");
 					statement.setString(1, key);
 					ResultSet result = statement.executeQuery();
 					if (result.next()) {
-						return result.getString(1);
+						if (result.getByte(2) == 1) {
+							return result.getString(1);
+						}
+						return "http://capitalistparadise.com/nationstates/static/exregion.png";
 					}
 				} catch (SQLException e) {
 					Logger.error("Unable to look up region flag", e);
