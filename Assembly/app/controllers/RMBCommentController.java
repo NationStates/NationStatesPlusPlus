@@ -14,6 +14,7 @@ import org.apache.commons.dbutils.DbUtils;
 import org.apache.commons.lang.builder.ToStringBuilder;
 import org.codehaus.jackson.annotate.JsonProperty;
 import org.joda.time.Duration;
+import org.spout.cereal.config.yaml.YamlConfiguration;
 
 import play.libs.Json;
 import play.mvc.Result;
@@ -24,8 +25,8 @@ import com.afforess.assembly.util.Utils;
 import com.limewoodMedia.nsapi.NationStates;
 
 public class RMBCommentController extends NationStatesController {
-	public RMBCommentController(DatabaseAccess access, NationStates api) {
-		super(access, api);
+	public RMBCommentController(DatabaseAccess access, YamlConfiguration config, NationStates api) {
+		super(access, config, api);
 	}
 
 	public Result hasComments(int rmbPost) throws SQLException {

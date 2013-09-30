@@ -5,18 +5,10 @@
 # Home page
 GET     /happenings/                  @controllers.HappeningsController.happenings(nation: String ?= "", global: Boolean ?= false, excludeNewest: Boolean ?= false, start: Integer ?= 0, limit: Integer ?= 0)
 POST    /region/parseHappenings/      @controllers.HappeningsController.parseHappenings()
-POST    /region/updateFlag/           @controllers.Application.sendFlagUpdate()
 GET     /region/happenings/           @controllers.HappeningsController.retrieveHappenings(region: String ?= "", start: Integer ?= 0)
-GET     /endorsements/                @controllers.Application.getEndorsements(nation: String ?= "")
-GET     /wa/                          @controllers.Application.getWAMembers()
-GET     /nationhistory/               @controllers.Application.getNationHistory(nation: String ?= "")
-GET     /recentactivity/              @controllers.RecentActivity.getRecentActivity(refresh: Boolean ?= false)
-GET     /flag/                        @controllers.Application.flag(nation: String ?= "")
-GET     /regionflag/                  @controllers.Application.regionFlag(region: String ?= "")
-GET     /nation/livefeed/             @controllers.LiveHappeningsController.getLiveFeed()
-GET     /nation/updateStatus/         @controllers.LiveHappeningsController.getUpdateStatus()
+GET     /flag/                        @controllers.FlagController.flag(nation: String ?= "")
+GET     /regionflag/                  @controllers.FlagController.regionFlag(region: String ?= "")
 POST    /firebase/                    @controllers.FirebaseAuthenticator.requestAuthentication()
-POST    /googledoc/                   @controllers.GoogleDocumentController.getGoogleDocument()
 
 GET     /rmb/comments/exist           @controllers.RMBCommentController.hasComments(rmbPost: Integer ?= -1)
 GET     /rmb/comments/                @controllers.RMBCommentController.getComments(rmbPost: Integer ?= -1)
@@ -24,8 +16,8 @@ POST    /rmb/comments/flag            @controllers.RMBCommentController.flagComm
 POST    /rmb/comments/like            @controllers.RMBCommentController.likeComment(commentId: Integer ?= -1, like: Boolean ?= false)
 POST    /rmb/comments/add             @controllers.RMBCommentController.addComment(rmbPost: Integer ?= -1)
 
-GET    /flag/nation/                  @controllers.Application.redirectToNationFlag(nation: String ?= "")
-GET    /flag/region/                  @controllers.Application.redirectToRegionFlag(region: String ?= "")
+GET    /flag/nation/                  @controllers.FlagController.redirectToNationFlag(nation: String ?= "")
+GET    /flag/region/                  @controllers.FlagController.redirectToRegionFlag(region: String ?= "")
 
 GET     /newspaper/details/           @controllers.NewspaperController.getNewspaperDetails(id: Integer ?= 0)
 GET     /newspaper/latest/            @controllers.NewspaperController.getLatestUpdate(id: Integer ?= 0)

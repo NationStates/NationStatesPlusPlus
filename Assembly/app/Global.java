@@ -10,9 +10,8 @@ import org.spout.cereal.config.ConfigurationNode;
 import org.spout.cereal.config.yaml.YamlConfiguration;
 
 import com.afforess.assembly.DailyDumps;
+import com.afforess.assembly.EndorsementMonitoring;
 import com.afforess.assembly.HappeningsTask;
-import com.afforess.assembly.RegionMonitoring;
-import com.afforess.assembly.UpdateTask;
 import com.afforess.assembly.util.DatabaseAccess;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.google.common.collect.ObjectArrays;
@@ -37,10 +36,11 @@ public class Global extends GlobalSettings {
 	private FirebaseAuthenticator firebase;
 	private NationStates api;
 	private DatabaseAccess access;
+	private YamlConfiguration config;
 
 	@Override
 	public void onStart(Application app) {
-		YamlConfiguration config = new YamlConfiguration(new File("./config.yml"));
+		config = new YamlConfiguration(new File("./config.yml"));
 		try {
 			config.load();
 		} catch (ConfigurationException e1) {
@@ -48,7 +48,7 @@ public class Global extends GlobalSettings {
 			throw new RuntimeException(e1);
 		}
 		ConfigurationNode settings = config.getChild("settings");
-		Logger.info("Application has started");
+		Logger.info("FlagController has started");
 		try {
 			Logger.info("Initializing database connection pool to [ " + settings.getChild("jbdc").getString() + " ]");
 			Class.forName("com.mysql.jdbc.Driver");
@@ -82,10 +82,7 @@ public class Global extends GlobalSettings {
 
 		//Setup firebase
 		ConfigurationNode firebaseConfig = config.getChild("firebase");
-		firebase = new FirebaseAuthenticator(access, firebaseConfig.getChild("token").getString(), api);
-			
-		//Setup region monitoring
-		RegionMonitoring monitoring = new RegionMonitoring(api, pool);
+		firebase = new FirebaseAuthenticator(access, config, firebaseConfig.getChild("token").getString(), api);
 
 		//Setup daily dumps
 		BasicAWSCredentials awsCredentials = null;
@@ -94,20 +91,18 @@ public class Global extends GlobalSettings {
 			awsCredentials = new BasicAWSCredentials(aws.getChild("access-key").getString(), aws.getChild("secret-key").getString());
 		}
 		File dumpsDir = new File(settings.getChild("dailydumps").getString());
-		DailyDumps dumps = new DailyDumps(pool, dumpsDir, settings.getChild("User-Agent").getString(), awsCredentials);
+		DailyDumps dumps = new DailyDumps(access, dumpsDir, settings.getChild("User-Agent").getString(), awsCredentials);
 		Thread dailyDumps = new Thread(dumps);
 		dailyDumps.setDaemon(true);
 		dailyDumps.start();
 
-		HappeningsTask happenings = new HappeningsTask(access, api);
-		Akka.system().scheduler().schedule(Duration.create(15, TimeUnit.SECONDS), Duration.create(2, TimeUnit.SECONDS), happenings, Akka.system().dispatcher());
-		Akka.system().scheduler().schedule(Duration.create(120, TimeUnit.SECONDS), Duration.create(31, TimeUnit.SECONDS), new UpdateTask(api, access, happenings), Akka.system().dispatcher());
-		Akka.system().scheduler().schedule(Duration.create(60, TimeUnit.SECONDS), Duration.create(60, TimeUnit.SECONDS), monitoring, Akka.system().dispatcher());
+		Akka.system().scheduler().schedule(Duration.create(15, TimeUnit.SECONDS), Duration.create(3, TimeUnit.SECONDS), new HappeningsTask(access, api), Akka.system().dispatcher());
+		Akka.system().scheduler().schedule(Duration.create(30, TimeUnit.SECONDS), Duration.create(30, TimeUnit.SECONDS), new EndorsementMonitoring(api, access, 10), Akka.system().dispatcher());
 	}
 
 	@Override
 	public void onStop(Application app) {
-		Logger.info("Application shutdown");
+		Logger.info("FlagController shutdown");
 		pool.close();
 	}
 
@@ -166,11 +161,11 @@ public class Global extends GlobalSettings {
 		if (FirebaseAuthenticator.class.isAssignableFrom(controllerClass)) {
 			return (A) firebase;
 		} else if (NationStatesController.class.isAssignableFrom(controllerClass)) {
-			Constructor<A> cons = controllerClass.getConstructor(new Class[] {DatabaseAccess.class, NationStates.class});
-			return cons.newInstance(access, api);
+			Constructor<A> cons = controllerClass.getConstructor(new Class[] {DatabaseAccess.class, YamlConfiguration.class, NationStates.class});
+			return cons.newInstance(access, config, api);
 		} else if (DatabaseController.class.isAssignableFrom(controllerClass)) {
-			Constructor<A> cons = controllerClass.getConstructor(new Class[] {DatabaseAccess.class});
-			return cons.newInstance(access);
+			Constructor<A> cons = controllerClass.getConstructor(new Class[] {DatabaseAccess.class, YamlConfiguration.class});
+			return cons.newInstance(access, config);
 		}
 		return super.getControllerInstance(controllerClass);
 	}

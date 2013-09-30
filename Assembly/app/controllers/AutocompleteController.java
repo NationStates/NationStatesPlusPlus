@@ -10,6 +10,7 @@ import java.util.Map;
 
 import org.apache.commons.dbutils.DbUtils;
 import org.apache.commons.lang3.text.WordUtils;
+import org.spout.cereal.config.yaml.YamlConfiguration;
 
 import play.libs.Json;
 import play.mvc.Result;
@@ -20,8 +21,8 @@ import com.afforess.assembly.util.Utils;
 
 public class AutocompleteController extends DatabaseController {
 
-	public AutocompleteController(DatabaseAccess access) {
-		super(access);
+	public AutocompleteController(DatabaseAccess access, YamlConfiguration config) {
+		super(access, config);
 	}
 
 	public Result autocompleteNation(String start) throws SQLException {
@@ -61,7 +62,7 @@ public class AutocompleteController extends DatabaseController {
 		Connection conn = null;
 		try {
 			conn = getConnection();
-			PreparedStatement select = conn.prepareStatement("SELECT formatted_name FROM assembly.nation WHERE name = ?");
+			PreparedStatement select = conn.prepareStatement("SELECT full_name FROM assembly.nation WHERE name = ?");
 			select.setString(1, nation.toLowerCase().replaceAll(" ", "_"));
 			ResultSet result = select.executeQuery();
 			if (result.next()) {

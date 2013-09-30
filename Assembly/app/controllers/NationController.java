@@ -9,18 +9,20 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 import org.apache.commons.dbutils.DbUtils;
+import org.spout.cereal.config.yaml.YamlConfiguration;
 
 import com.afforess.assembly.util.DatabaseAccess;
 import com.afforess.assembly.util.Utils;
 import com.limewoodMedia.nsapi.NationStates;
+
 import play.libs.Json;
 import play.mvc.Result;
 import play.mvc.Results;
 
 public class NationController extends NationStatesController {
 
-	public NationController(DatabaseAccess access, NationStates api) {
-		super(access, api);
+	public NationController(DatabaseAccess access, YamlConfiguration config, NationStates api) {
+		super(access, config, api);
 	}
 
 	public Result retrieveSettings(String nation) throws SQLException, ExecutionException {

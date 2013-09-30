@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import org.apache.commons.dbutils.DbUtils;
 import org.apache.commons.io.IOUtils;
 import org.codehaus.jackson.annotate.JsonProperty;
+import org.spout.cereal.config.yaml.YamlConfiguration;
 
 import play.Logger;
 import play.libs.Json;
@@ -23,8 +24,8 @@ import com.limewoodMedia.nsapi.holders.RegionHappening;
 
 public class HappeningsController extends DatabaseController {
 
-	public HappeningsController(DatabaseAccess access) {
-		super(access);
+	public HappeningsController(DatabaseAccess access, YamlConfiguration config) {
+		super(access, config);
 	}
 
 	public Result parseHappenings() throws SQLException {

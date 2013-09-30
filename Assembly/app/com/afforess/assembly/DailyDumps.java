@@ -15,9 +15,9 @@ import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 
+import com.afforess.assembly.util.DatabaseAccess;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.s3.AmazonS3Client;
-import com.mchange.v2.c3p0.ComboPooledDataSource;
 
 import play.Logger;
 import play.libs.Akka;
@@ -32,11 +32,11 @@ public class DailyDumps implements Runnable{
 	private final AtomicReference<File> latestNationDump = new AtomicReference<File>();
 	private final File regionsDir;
 	private final File nationsDir;
-	private final ComboPooledDataSource pool;
+	private final DatabaseAccess access;
 	private final String userAgent;
 	private final BasicAWSCredentials awsCredentials;
-	public DailyDumps(ComboPooledDataSource pool, File directory, String userAgent, BasicAWSCredentials awsCredentials) {
-		this.pool = pool;
+	public DailyDumps(DatabaseAccess access, File directory, String userAgent, BasicAWSCredentials awsCredentials) {
+		this.access = access;
 		this.userAgent = userAgent;
 		regionsDir = new File(directory, "regions");
 		regionsDir.mkdirs();
@@ -141,7 +141,7 @@ public class DailyDumps implements Runnable{
 						client.putObject("dailydumps", "nations/" + nationsDump.getName(), nationsDump);
 						Logger.info("Successfully Uploaded nations dump to s3");
 					}
-					Akka.system().scheduler().scheduleOnce(Duration.create(60, TimeUnit.SECONDS), new DumpUpdateTask(pool, getMostRecentRegionDump(), nationsDump), Akka.system().dispatcher());
+					Akka.system().scheduler().scheduleOnce(Duration.create(60, TimeUnit.SECONDS), new DumpUpdateTask(access, getMostRecentRegionDump(), nationsDump), Akka.system().dispatcher());
 				
 				} finally {
 					IOUtils.closeQuietly(fos);

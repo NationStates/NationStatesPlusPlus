@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.dbutils.DbUtils;
@@ -18,17 +19,42 @@ import com.mchange.v2.c3p0.ComboPooledDataSource;
 
 public class DatabaseAccess {
 	private final ComboPooledDataSource pool;
-	private final LoadingCache<String, String> regionCache;
+	private final LoadingCache<String, String> regionFlagCache;
+	private final LoadingCache<String, Integer> regionIdCache;
 	private final LoadingCache<String, Integer> nationIdCache;
 	private final LoadingCache<Integer, String> reverseIdCache;
 
 	public DatabaseAccess(final ComboPooledDataSource pool) {
 		this.pool = pool;
 
-		this.regionCache = CacheBuilder.newBuilder()
+		this.regionIdCache = CacheBuilder.newBuilder()
 			.maximumSize(1000)
 			.expireAfterAccess(10, TimeUnit.MINUTES)
-			.expireAfterWrite(6, TimeUnit.HOURS)
+			.expireAfterWrite(1, TimeUnit.HOURS)
+			.build(new CacheLoader<String, Integer>() {
+			public Integer load(String key) throws SQLException {
+				Connection conn = null;
+				try {
+					conn = pool.getConnection();
+					PreparedStatement statement = conn.prepareStatement("SELECT id FROM assembly.region WHERE name = ?");
+					statement.setString(1, key);
+					ResultSet result = statement.executeQuery();
+					if (result.next()) {
+						return result.getInt(1);
+					}
+				} catch (SQLException e) {
+					Logger.error("Unable to look up region", e);
+				} finally {
+					DbUtils.closeQuietly(conn);
+				}
+				return -1;
+			}
+		});
+
+		this.regionFlagCache = CacheBuilder.newBuilder()
+			.maximumSize(1000)
+			.expireAfterAccess(10, TimeUnit.MINUTES)
+			.expireAfterWrite(1, TimeUnit.HOURS)
 			.build(new CacheLoader<String, String>() {
 			public String load(String key) throws SQLException {
 				Connection conn = null;
@@ -55,7 +81,7 @@ public class DatabaseAccess {
 		this.nationIdCache = CacheBuilder.newBuilder()
 			.maximumSize(1000)
 			.expireAfterAccess(10, TimeUnit.MINUTES)
-			.expireAfterWrite(6, TimeUnit.HOURS)
+			.expireAfterWrite(1, TimeUnit.HOURS)
 			.build(new CacheLoader<String, Integer>() {
 			public Integer load(String key) throws SQLException {
 				Connection conn = null;
@@ -79,7 +105,7 @@ public class DatabaseAccess {
 		this.reverseIdCache = CacheBuilder.newBuilder()
 			.maximumSize(1000)
 			.expireAfterAccess(10, TimeUnit.MINUTES)
-			.expireAfterWrite(6, TimeUnit.HOURS)
+			.expireAfterWrite(1, TimeUnit.HOURS)
 			.build(new CacheLoader<Integer, String>() {
 			public String load(Integer key) throws SQLException {
 				Connection conn = null;
@@ -102,7 +128,7 @@ public class DatabaseAccess {
 	}
 
 	public LoadingCache<String, String> getRegionCache() {
-		return regionCache;
+		return regionFlagCache;
 	}
 
 	public LoadingCache<String, Integer> getNationIdCache() {
@@ -163,6 +189,37 @@ public class DatabaseAccess {
 			throw new RuntimeException(e);
 		} finally {
 			DbUtils.closeQuietly(conn);
+		}
+	}
+
+	public LoadingCache<String, Integer> getRegionIdCache() {
+		return regionIdCache;
+	}
+
+	public void markNationDead(String nation, Connection conn) throws ExecutionException, SQLException {
+		markNationDead(getNationIdCache().get(nation), conn);
+	}
+
+	public void markNationDead(int nationId, Connection conn) throws SQLException {
+		final boolean givenConn = conn != null;
+		if (!givenConn) {
+			conn = pool.getConnection();
+		}
+		try {
+			PreparedStatement markDead = conn.prepareStatement("UPDATE assembly.nation SET alive = 0, wa_member = 0, cte = ? WHERE id = ?");
+			markDead.setLong(1, System.currentTimeMillis() / 1000L);
+			markDead.setInt(2, nationId);
+			markDead.executeUpdate();
+			
+			PreparedStatement hasEndorsement = conn.prepareStatement("DELETE FROM assembly.endorsements WHERE endorsed = ? OR endorser = ?");
+			hasEndorsement.setInt(1, nationId);
+			hasEndorsement.setInt(2, nationId);
+			hasEndorsement.execute();
+			hasEndorsement.close();
+		} finally {
+			if (!givenConn) {
+				DbUtils.closeQuietly(conn);
+			}
 		}
 	}
 }

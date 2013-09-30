@@ -1,5 +1,9 @@
 package controllers;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.URL;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -11,19 +15,34 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import javax.net.ssl.HttpsURLConnection;
 
 import org.apache.commons.dbutils.DbUtils;
+import org.apache.commons.io.IOUtils;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.type.TypeReference;
+import org.spout.cereal.config.ConfigurationNode;
+import org.spout.cereal.config.yaml.YamlConfiguration;
+
+import play.Logger;
 import play.libs.Json;
 import play.mvc.Result;
 import play.mvc.Results;
 
 import com.afforess.assembly.util.DatabaseAccess;
+import com.afforess.assembly.util.EncodingUtil;
 import com.afforess.assembly.util.Utils;
 import com.limewoodMedia.nsapi.NationStates;
 
 public class NewspaperController extends NationStatesController {
-	public NewspaperController(DatabaseAccess access, NationStates api) {
-		super(access, api);
+	private final String imgurClientKey;
+	public NewspaperController(DatabaseAccess access, YamlConfiguration config, NationStates api) {
+		super(access, config, api);
+		ConfigurationNode imgurAuth = getConfig().getChild("imgur");
+		imgurClientKey = imgurAuth.getChild("client-key").getString(null);
 	}
 
 	public Result foundNewspaper(String region) throws SQLException, ExecutionException {
@@ -189,7 +208,7 @@ public class NewspaperController extends NationStatesController {
 				newspaper.put("editor", result.getString(3));
 				newspaper.put("region", result.getString(4));
 			}
-			PreparedStatement editors = conn.prepareStatement("SELECT n.name, n.formatted_name FROM assembly.newspaper_editors AS e LEFT OUTER JOIN assembly.nation AS n ON n.id = e.nation_id WHERE newspaper = ?");
+			PreparedStatement editors = conn.prepareStatement("SELECT n.name, n.full_name FROM assembly.newspaper_editors AS e LEFT OUTER JOIN assembly.nation AS n ON n.id = e.nation_id WHERE newspaper = ?");
 			editors.setInt(1, id);
 			ResultSet set = editors.executeQuery();
 			ArrayList<Map<String, String>> editorNations = new ArrayList<Map<String, String>>();
@@ -478,6 +497,8 @@ public class NewspaperController extends NationStatesController {
 				return Results.unauthorized();
 			}
 			
+			article = imgurizeArticle(article, imgurClientKey);
+			
 			if (articleId == -1) {
 				PreparedStatement insert = conn.prepareStatement("INSERT INTO assembly.articles (newspaper_id, article, title, articles.timestamp, author, articles.column, articles.order, visible) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
 				insert.setInt(1, newspaper);
@@ -506,5 +527,55 @@ public class NewspaperController extends NationStatesController {
 		}
 		Utils.handleDefaultPostHeaders(request(), response());
 		return Results.ok();
+	}
+
+	private static final Pattern imgTag = Pattern.compile("\\[img\\]\\S*\\[/img\\]");
+	private static String imgurizeArticle(String article, String imgurClientKey) {
+		if (imgurClientKey != null) {
+			Matcher matcher = imgTag.matcher(article);
+			while(matcher.find()) {
+				final String match = matcher.group();
+				String url = matcher.group().substring(5, match.length() - 6);
+				if (!url.contains("imgur.com")) {
+					try {
+						String imgurUrl = uploadToImgur(url, imgurClientKey);
+						return imgurizeArticle(article.replaceAll(Pattern.quote(match), "[img]" + imgurUrl + "[/img]"), imgurClientKey);
+					} catch (IOException e) {
+						Logger.error("Unable to upload url [" + url + "] to imgur", e);
+					}
+				}
+			}
+		}
+		return article;
+	}
+
+	private static String uploadToImgur(String url, String clientKey) throws IOException {
+		HttpsURLConnection conn = (HttpsURLConnection) (new URL("https://api.imgur.com/3/image")).openConnection();
+		conn.addRequestProperty("Authorization", "Client-ID " + clientKey);
+		conn.setDoInput(true);
+		conn.setDoOutput(true);
+		conn.setUseCaches(false);
+		conn.setRequestMethod("POST");
+		OutputStream out = null;
+		try {
+			out = conn.getOutputStream();
+			IOUtils.write("image=" + EncodingUtil.encodeURIComponent(url) + "&type=URL", out);
+			out.flush();
+		} finally {
+			IOUtils.closeQuietly(out);
+		}
+
+		InputStream stream = null;
+		try {
+			stream = conn.getInputStream();
+			Map<String, Object> result = new ObjectMapper().readValue(stream, new TypeReference<HashMap<String,Object>>() {});
+			@SuppressWarnings("unchecked")
+			Map<String, Object> data = (Map<String, Object>) result.get("data");
+			String link = (String) data.get("link");
+			return link;
+		} finally {
+			IOUtils.closeQuietly(stream);
+			conn.disconnect();
+		}
 	}
 }

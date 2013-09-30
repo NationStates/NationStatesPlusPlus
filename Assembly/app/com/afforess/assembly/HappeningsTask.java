@@ -101,7 +101,7 @@ public class HappeningsTask implements Runnable {
 				final int activity = this.highActivity.get();
 				if (newEvents >= 25 || activity > 0) {
 					Logger.info("Very high happenings activity, running at 2s intervals");
-					this.highActivity.set(newEvents > 25 ? 10 : activity - 1);
+					this.highActivity.set(newEvents >= 25 ? 10 : activity - 1);
 				} else {
 					Logger.debug("Skipping happening run, little activity, last run was " + (System.currentTimeMillis() - lastRun) + " ms ago");
 					return;
@@ -135,16 +135,17 @@ public class HappeningsTask implements Runnable {
 				final long timestamp = happening.timestamp * 1000;
 				Matcher match = Utils.NATION_PATTERN.matcher(text);
 				if (match.find()) {
-					String nation = Utils.sanitizeName(text.substring(match.start() + 2, match.end() - 2));
+					String title = text.substring(match.start() + 2, match.end() - 2);
+					String nation = Utils.sanitizeName(title);
 					final long lastUpdate = getLastUpdate(conn, nation);
 					if (timestamp > lastUpdate) {
 						int nationId = access.getNationIdCache().get(nation);
 						if (nationId == -1) {
-							PreparedStatement insert = conn.prepareStatement("INSERT INTO assembly.nation (name, formatted_name, region, needs_update, first_seen) VALUES (?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);
+							PreparedStatement insert = conn.prepareStatement("INSERT INTO assembly.nation (name, title, full_name, region, first_seen) VALUES (?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);
 							insert.setString(1, nation);
-							insert.setString(2, WordUtils.capitalizeFully(nation.replaceAll("_", " ")));
-							insert.setString(3, "");
-							insert.setByte(4, (byte) 1);
+							insert.setString(2, title);
+							insert.setString(3, WordUtils.capitalizeFully(nation.replaceAll("_", " ")));
+							insert.setInt(4, -1);
 							insert.setLong(5, happening.timestamp);
 							insert.executeUpdate();
 							ResultSet keys = insert.getGeneratedKeys();

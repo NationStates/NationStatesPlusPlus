@@ -1,12 +1,14 @@
 package controllers;
 
+import org.spout.cereal.config.yaml.YamlConfiguration;
+
 import com.afforess.assembly.util.DatabaseAccess;
 import com.limewoodMedia.nsapi.NationStates;
 
 public abstract class NationStatesController extends DatabaseController{
 	private final NationStates api;
-	public NationStatesController(DatabaseAccess access, NationStates api) {
-		super(access);
+	public NationStatesController(DatabaseAccess access, YamlConfiguration config, NationStates api) {
+		super(access, config);
 		this.api = api;
 	}
 
