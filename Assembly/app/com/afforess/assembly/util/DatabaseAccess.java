@@ -79,7 +79,7 @@ public class DatabaseAccess {
 		});
 
 		this.nationIdCache = CacheBuilder.newBuilder()
-			.maximumSize(1000)
+			.maximumSize(100000)
 			.expireAfterAccess(10, TimeUnit.MINUTES)
 			.expireAfterWrite(1, TimeUnit.HOURS)
 			.build(new CacheLoader<String, Integer>() {

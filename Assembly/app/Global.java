@@ -2,9 +2,12 @@ import java.beans.PropertyVetoException;
 import java.io.File;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.apache.commons.dbutils.DbUtils;
 import org.spout.cereal.config.ConfigurationException;
 import org.spout.cereal.config.ConfigurationNode;
 import org.spout.cereal.config.yaml.YamlConfiguration;
@@ -12,6 +15,7 @@ import org.spout.cereal.config.yaml.YamlConfiguration;
 import com.afforess.assembly.DailyDumps;
 import com.afforess.assembly.EndorsementMonitoring;
 import com.afforess.assembly.HappeningsTask;
+import com.afforess.assembly.model.HappeningType;
 import com.afforess.assembly.util.DatabaseAccess;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.google.common.collect.ObjectArrays;
@@ -74,6 +78,17 @@ public class Global extends GlobalSettings {
 			Logger.error("No Database driver found!", e);
 			return;
 		}
+		
+		Connection conn = null;
+		try {
+			conn = pool.getConnection();
+			HappeningType.initialize(conn);
+		} catch (SQLException e) {
+			Logger.error("Unable to initialize happening types", e);
+		} finally {
+			DbUtils.closeQuietly(conn);
+		}
+		
 		api = new NationStates();
 		api.setRateLimit(47);
 		api.setUserAgent(settings.getChild("User-Agent").getString());
@@ -97,7 +112,7 @@ public class Global extends GlobalSettings {
 		dailyDumps.start();
 
 		Akka.system().scheduler().schedule(Duration.create(15, TimeUnit.SECONDS), Duration.create(3, TimeUnit.SECONDS), new HappeningsTask(access, api), Akka.system().dispatcher());
-		Akka.system().scheduler().schedule(Duration.create(30, TimeUnit.SECONDS), Duration.create(30, TimeUnit.SECONDS), new EndorsementMonitoring(api, access, 10), Akka.system().dispatcher());
+		Akka.system().scheduler().schedule(Duration.create(30, TimeUnit.SECONDS), Duration.create(30, TimeUnit.SECONDS), new EndorsementMonitoring(api, access, 15), Akka.system().dispatcher());
 	}
 
 	@Override

@@ -25,9 +25,9 @@ public class NationController extends NationStatesController {
 		super(access, config, api);
 	}
 
-	public Result retrieveSettings(String nation) throws SQLException, ExecutionException {
+	public Result retrieveSettings(String name) throws SQLException, ExecutionException {
 		Utils.handleDefaultPostHeaders(request(), response());
-		final int nationId = getDatabase().getNationIdCache().get(Utils.sanitizeName(nation));
+		final int nationId = getDatabase().getNationIdCache().get(Utils.sanitizeName(name));
 		if (nationId == -1) {
 			return Results.badRequest();
 		}
@@ -49,9 +49,9 @@ public class NationController extends NationStatesController {
 		return Results.noContent();
 	}
 
-	public Result getLastSettingsUpdate(String nation) throws SQLException, ExecutionException {
+	public Result getLastSettingsUpdate(String name) throws SQLException, ExecutionException {
 		Utils.handleDefaultPostHeaders(request(), response());
-		final int nationId = getDatabase().getNationIdCache().get(Utils.sanitizeName(nation));
+		final int nationId = getDatabase().getNationIdCache().get(Utils.sanitizeName(name));
 		if (nationId == -1) {
 			return Results.badRequest();
 		}

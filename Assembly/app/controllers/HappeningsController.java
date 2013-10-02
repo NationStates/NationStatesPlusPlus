@@ -5,6 +5,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.concurrent.ExecutionException;
 
 import org.apache.commons.dbutils.DbUtils;
 import org.apache.commons.io.IOUtils;
@@ -114,7 +115,7 @@ public class HappeningsController extends DatabaseController {
 		return ok(Json.toJson(happenings)).as("application/json");
 	}
 
-	public Result happenings(String nation, boolean global, boolean excludeNewest, int start, int limit) throws SQLException {
+	public Result happenings(String nation, boolean global, boolean excludeNewest, int start, int limit) throws SQLException, ExecutionException {
 		if (excludeNewest) start = 10;
 		if (limit <= 0 && start > 0) {
 			limit = Integer.MAX_VALUE;
@@ -125,7 +126,7 @@ public class HappeningsController extends DatabaseController {
 			Connection conn = getConnection();
 			try {
 				PreparedStatement statement = conn.prepareStatement("SELECT happening, timestamp FROM " + (global ? "assembly.global_happenings" : "assembly.nation_happenings") + " WHERE nation = ?  ORDER BY timestamp DESC" + (limit > 0 ? " LIMIT " + start + ", " + limit : ""));
-				statement.setString(1, nation);
+				statement.setInt(1, getDatabase().getNationIdCache().get(nation));
 				ResultSet result = statement.executeQuery();
 				
 				while(result.next()) {

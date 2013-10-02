@@ -32,11 +32,14 @@ POST    /newspaper/disband/           @controllers.NewspaperController.disbandNe
 
 GET     /autocomplete/nation/         @controllers.AutocompleteController.autocompleteNation(start: String ?= "")
 GET     /nation/title/                @controllers.AutocompleteController.getFullName(name: String ?= "")
-GET     /nation/latest_update/        @controllers.NationController.getLastSettingsUpdate(nation: String ?= "")
+GET     /nation/latest_update/        @controllers.NationController.getLastSettingsUpdate(name: String ?= "")
 GET     /nation/settings/             @controllers.NationController.retrieveSettings(name: String ?= "")
 GET     /nation/issues/               @controllers.NationController.retrieveIssues(name: String ?= "")
 POST    /nation/settings/             @controllers.NationController.updateSettings()
 POST    /nation/issues/               @controllers.NationController.updateIssues()
+GET     /nation/endorsements/         @controllers.WorldAssemblyController.getEndorsements(name: String ?= "")
+
+GET    /region/wa/                    @controllers.WorldAssemblyController.getWAMembers(region: String ?= "")
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.at(path="/public", file)

@@ -15,6 +15,7 @@ import org.joda.time.Duration;
 
 import play.Logger;
 
+import com.afforess.assembly.model.HappeningType;
 import com.afforess.assembly.util.DatabaseAccess;
 import com.afforess.assembly.util.Utils;
 import com.limewoodMedia.nsapi.NationStates;
@@ -129,17 +130,21 @@ public class HappeningsTask implements Runnable {
 		Connection conn = null;
 		try {
 			conn = pool.getConnection();
-			PreparedStatement batchInsert = conn.prepareStatement("INSERT INTO assembly.global_happenings (nation, happening, timestamp) VALUES (?, ?, ?)");
+			PreparedStatement batchInsert = conn.prepareStatement("INSERT INTO assembly.global_happenings (nation, happening, timestamp, type) VALUES (?, ?, ?, ?)");
 			for (EventHappening happening : data.happenings) {
 				final String text = happening.text;
 				final long timestamp = happening.timestamp * 1000;
 				Matcher match = Utils.NATION_PATTERN.matcher(text);
+				int nationId = -1;
+				boolean valid = true;
 				if (match.find()) {
 					String title = text.substring(match.start() + 2, match.end() - 2);
 					String nation = Utils.sanitizeName(title);
 					final long lastUpdate = getLastUpdate(conn, nation);
+					valid = false;
 					if (timestamp > lastUpdate) {
-						int nationId = access.getNationIdCache().get(nation);
+						nationId = access.getNationIdCache().get(nation);
+						valid = true;
 						if (nationId == -1) {
 							PreparedStatement insert = conn.prepareStatement("INSERT INTO assembly.nation (name, title, full_name, region, first_seen) VALUES (?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);
 							insert.setString(1, nation);
@@ -153,13 +158,44 @@ public class HappeningsTask implements Runnable {
 							nationId = keys.getInt(1);
 							access.getNationIdCache().put(nation, nationId);
 						}
-						batchInsert.setString(1, nation);
-						batchInsert.setString(2, parseHappening(text));
-						batchInsert.setLong(3, timestamp);
-						batchInsert.addBatch();
 						
 						setLastUpdate(conn, nation, timestamp);
 					}
+				}
+				if (valid) {
+					final int happeningType = HappeningType.match(text);
+
+					if (happeningType == HappeningType.getType("ENDORSEMENT").getId()) {
+						if (match.find(match.end())) {
+							String title = text.substring(match.start() + 2, match.end() - 2);
+							String nation = Utils.sanitizeName(title);
+							addEndorsement(conn, access.getNationIdCache().get(nation), nationId);
+						}
+					} else if (happeningType == HappeningType.getType("WITHDREW_ENDORSEMENT").getId()) {
+						if (match.find(match.end())) {
+							String title = text.substring(match.start() + 2, match.end() - 2);
+							String nation = Utils.sanitizeName(title);
+							removeEndorsement(conn, access.getNationIdCache().get(nation), nationId);
+						}
+					} else if (happeningType == HappeningType.getType("LOST_ENDORSEMENT").getId()) {
+						if (match.find(match.end())) {
+							String title = text.substring(match.start() + 2, match.end() - 2);
+							String nation = Utils.sanitizeName(title);
+							removeEndorsement(conn, nationId, access.getNationIdCache().get(nation));
+						}
+					} else if (happeningType == HappeningType.getType("RESIGNED_FROM_WORLD_ASSEMBLY").getId()) {
+						resignFromWorldAssembly(conn, nationId, false);
+					} else if (happeningType == HappeningType.getType("ADMITTED_TO_WORLD_ASSEMBLY").getId()) {
+						joinWorldAssembly(conn, nationId);
+					} else if (happeningType == HappeningType.getType("EJECTED_FOR_RULE_VIOLATIONS").getId()) {
+						resignFromWorldAssembly(conn, nationId, true);
+					}
+
+					batchInsert.setInt(1, nationId);
+					batchInsert.setString(2, parseHappening(text));
+					batchInsert.setLong(3, timestamp);
+					batchInsert.setInt(4, happeningType);
+					batchInsert.addBatch();
 				}
 			}
 			batchInsert.executeBatch();
@@ -170,5 +206,41 @@ public class HappeningsTask implements Runnable {
 		} finally {
 			DbUtils.closeQuietly(conn);
 		}
+	}
+
+	private void addEndorsement(Connection conn, int endorsed, int endorser) throws SQLException {
+		PreparedStatement selectDuplicates = conn.prepareStatement("SELECT endorsed FROM assembly.endorsements WHERE endorsed = ? AND endorser = ?");
+		selectDuplicates.setInt(1, endorsed);
+		selectDuplicates.setInt(2, endorser);
+		if (!selectDuplicates.executeQuery().next()) {
+			PreparedStatement endorsements = conn.prepareStatement("INSERT INTO assembly.endorsements (endorser, endorsed) VALUES (?, ?)");
+			endorsements.setInt(1, endorser);
+			endorsements.setInt(2, endorsed);
+			endorsements.executeUpdate();
+			DbUtils.closeQuietly(endorsements);
+		}
+		DbUtils.closeQuietly(selectDuplicates);
+	}
+
+	private void removeEndorsement(Connection conn, int endorsed, int endorser) throws SQLException {
+		PreparedStatement endorsements = conn.prepareStatement("DELETE FROM assembly.endorsements WHERE endorsed = ? AND endorser = ?");
+		endorsements.setInt(1, endorsed);
+		endorsements.setInt(2, endorser);
+		endorsements.executeUpdate();
+		DbUtils.closeQuietly(endorsements);
+	}
+
+	private void resignFromWorldAssembly(Connection conn, int nationId, boolean banned) throws SQLException {
+		PreparedStatement endorsements = conn.prepareStatement("UPDATE assembly.nation SET wa_member = " + (banned ? "0" : "2") + " WHERE id = ?");
+		endorsements.setInt(1, nationId);
+		endorsements.executeUpdate();
+		DbUtils.closeQuietly(endorsements);
+	}
+
+	private void joinWorldAssembly(Connection conn, int nationId) throws SQLException {
+		PreparedStatement endorsements = conn.prepareStatement("UPDATE assembly.nation SET wa_member = 1 WHERE id = ?");
+		endorsements.setInt(1, nationId);
+		endorsements.executeUpdate();
+		DbUtils.closeQuietly(endorsements);
 	}
 }
