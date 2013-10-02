@@ -153,7 +153,7 @@
 					var regionTable = $(html).find("table").find("thead").find("th:contains('Region')");
 					if (regionTable.length > 0) {
 						regionTable = regionTable.parent().parent().parent();
-						regionTable.find("tr").each(function() {
+						regionTable.find("tbody").find("tr").each(function() {
 							var regionElement = $($(this).children()[1]);
 							var region = regionElement.text();
 							if (regionElement.find("a").length > 0) {
