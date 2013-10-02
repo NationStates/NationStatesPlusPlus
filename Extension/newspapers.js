@@ -359,6 +359,8 @@
 		text = text.replaceAll("[normal]", "<span style='font-size:14px'>").replaceAll("[/normal]", "</span>");
 		text = text.replaceAll("[u]", "<u>").replaceAll("[/u]", "</u>");
 		text = text.replaceAll("[blockquote]", "<blockquote class='news_quote'>").replaceAll("[/blockquote]", "</blockquote>");
+		text = text.replaceAll("[list]", "<ul>").replaceAll("[/list]", "</ul>");
+		text = text.replaceAll("[*]", "</li><li>");
 		text = parseUrls(text);
 		text = parseImages(text);
 		text = updateTextLinks("nation", text);
