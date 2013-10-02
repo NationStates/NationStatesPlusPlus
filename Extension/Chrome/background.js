@@ -78,9 +78,9 @@ $.get(urlPrefix + "cache_buster.txt?time=" + Date.now() , function(value) {
 		$(".bigflag").remove();
 	}
 
-	addJavascript("//d3nslu0hdya83q.cloudfront.net/dist/1.0/raven.min.js");
 	addJavascript('https://cdn.firebase.com/v0/firebase.js');
 	addJavascript('https://cdn.firebase.com/v0/firebase-simple-login.js');
+	addJavascript("http://d3js.org/d3.v3.min.js");
 
 	addStylesheet(staticUrlPrefix + 'nouislider.fox.css');
 	addStylesheet(staticUrlPrefix + 'bootstrap-button.css');

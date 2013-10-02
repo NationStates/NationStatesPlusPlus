@@ -51,53 +51,76 @@
 			$(".smalltext:first").html($(".smalltext:first").html() + $('<div/>').html(" &#8226; ").text() + "<a id='wa_stats_link' href='nation=" + getVisibleNation() + "/detail=wa_stats'>World Assembly</a>");
 		}
 	}
+	
+	function loadRegionEndorsements(region) {
+		$.get("http://capitalistparadise.com/api/region/wa/?region=" + region, function(data) {
+			var categoryTitles = [];
+			var dataPoints = [];
+			for (var nation in data) {
+				 categoryTitles.push(nation);   
+				 dataPoints.push(data[nation].endorsements);
+			}
+			var sortNames = function(a, b) {
+				return data[b].endorsements - data[a].endorsements;
+			};
+			var sortEndorsements = function(a, b) {
+				return b - a;
+			};
+			categoryTitles.sort(sortNames);
+			dataPoints.sort(sortEndorsements);
+			chart = new Highcharts.Chart({
+				chart: {
+					type: 'bar',
+					renderTo: 'all_endorsements',
+					height: (dataPoints.length * 26)
+				},
+				title: {
+					text: 'World Assembly Endorsements'
+				},
+				subtitle: {
+					text: 'Region: ' + region.replaceAll("_", " ").toTitleCase()
+				},
+				xAxis: {
+					categories: categoryTitles,
+					title: {
+						text: null
+					}
+				},
+				yAxis: {
+					min: 0,
+					title: {
+						text: 'Endorsements',
+						align: 'high'
+					},
+					labels: {
+						overflow: 'justify'
+					}
+				},
+				plotOptions: {
+					bar: {
+						dataLabels: {
+							enabled: true
+						}
+					}
+				},
+				credits: {
+					enabled: false
+				},
+				series: [{
+					name: 'Endorsements',
+					data: dataPoints
+				}]
+			});
+		});
+	};
 
 	function openWorldAssemblyStats() {
 		if ($(".wa_status").length == 0) {
 			$("#wa_stats").html("<h3>World Assembly Stats</h3><p><b>Not A World Assembly Member!</b></p>");
 			return;
 		}
-		$("#wa_stats").html("<h3>World Assembly Stats</h3><div id='all_nations'><h4>All World Assembly Nations</h4></div><div id='endorsements'><h4>Endorsements</h4></div>");
-		$("#all_nations").append("<button id='calculate_wa' class='button'>Calculate</button><div id='all_wa'></div>");
-		$("#endorsements").append($(".unbox").find("p").clone());
-		$("#all_wa").hide();
-		$("#calculate_wa").on("click", function() {
-			$("#calculate_wa").html("Calculating - 0%");
-			$("#calculate_wa").toggleDisabled();
-			
-			var region = $('.rlink:first').attr("href").substring(7);
-			getNationStatesAPI().doRequest("http://www.nationstates.net/cgi-bin/api.cgi?region=" + region + "&q=nations").done(function(data) {
-				var xml = (new window.DOMParser()).parseFromString(data, "text/xml");
-				var nations = xml.getElementsByTagName("NATIONS")[0].textContent;
-				var calculateWA = function(nations, index, callback) {
-					console.log("Calculating WA, Index: " + index);
-					var nationArr = nations.split(":");
-					for (var i = index; i < Math.min(index + 40, nationArr.length); i++) {
-						getNationStatesAPI().doRequest("http://www.nationstates.net/cgi-bin/api.cgi?nation=" + nationArr[i] + "&q=wa+flag+name").done(function(waData) {
-							if (waData.indexOf("Non-member") == -1) {
-								var xml = (new window.DOMParser()).parseFromString(waData, "text/xml");
-								var flag = xml.getElementsByTagName("FLAG")[0].textContent;
-								var nation = xml.getElementsByTagName("NATION")[0].getAttribute("id");
-								var name = xml.getElementsByTagName("NAME")[0].textContent;
-								console.log("nation: " + nation);
-								console.log("name: " + name);
-								console.log("flag: " + flag);
-								$("#all_wa").append("<a href='nation=" + nation + "' class='nlink'><img src='" + flag + "' class='miniflag' alt='' title='" + name + "'><span>" + name + "<span></a>, ");
-							}
-						});
-					}
-					$("#calculate_wa").html("Calculating: " + (((index + 40) / nationArr.length) * 100).toFixed(3) + "%");
-					if (index + 40 < nationArr.length) {
-						setTimeout(callback, 60000, nations, index + 40, callback);
-					} else {
-						$("#all_wa").html($("#all_wa").html().substring(0, $("#all_wa").html().length - 2));
-						$("#all_wa").show();
-						$("#calculate_wa").remove();
-					}
-				}
-				calculateWA(nations, 0, calculateWA);
-			});
-		})
+		$("#wa_stats").html("<h3>World Assembly Stats</h3><div id='all_endorsements'></div>");
+		loadRegionEndorsements($(".rlink:first").attr("href").substring(7));
 	}
 
 	function displaySoftPowerScore() {

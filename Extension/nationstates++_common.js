@@ -772,15 +772,17 @@ function addFormattingButtons() {
 	});
 	var formatBBCode = function(event) {
 		event.preventDefault();
+		var widebox = $(this).parent().prev();
 		var value = ($(this).html().contains("<option>") ? $(this).val() : $(this).html());
-		$(".widebox").find("textarea[name='message']").wrap_selection("[" + value + "]", "[/" + value.split("=")[0] + "]");
+		widebox.find("textarea[name='message']").wrap_selection("[" + value + "]", "[/" + value.split("=")[0] + "]");
 	}
-	$("button[id='bold_format']").on("click", formatBBCode);
-	$("button[id='italic_format']").on("click", formatBBCode);
-	$("button[id='underline_format']").on("click", formatBBCode);
-	$("button[id='nation_format']").on("click", formatBBCode);
-	$("button[id='region_format']").on("click", formatBBCode);
+	$('body').on('click', "button[id='bold_format']", formatBBCode);
+	$('body').on('click', "button[id='italic_format']", formatBBCode);
+	$('body').on('click', "button[id='underline_format']", formatBBCode);
+	$('body').on('click', "button[id='nation_format']", formatBBCode);
+	$('body').on('click', "button[id='region_format']", formatBBCode);
 }
+
 
 function linkify(inputText) {
 	var replacedText, replacePattern1, replacePattern2, replacePattern3;
