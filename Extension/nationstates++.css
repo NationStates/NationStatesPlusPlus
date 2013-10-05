@@ -516,3 +516,34 @@ fieldset.preview {
 	margin-left: auto;
 	margin-right: auto;
 }
+
+.post-ratings {
+	min-height: 19px;
+	font-size: 70%;
+	padding: 5px;
+	margin-top: 10px;
+#	border: 1px solid rgba(0, 83, 139, 1);
+#	border-radius: 5px;
+#	background: rgba(151, 211, 253, 0.4);
+}
+
+.post-rating-desc  {
+	margin-left:6px;
+	margin-right: 6px;
+	opacity: 0.4;
+	font-weight: bold;
+}
+
+.post-rating-list {
+	display: block;
+	cursor: default;
+	float: right;
+	font-size: 11px;
+	margin: 0;
+	padding: 0;
+}
+
+.post-rating-list li {
+	list-style: none;
+	display: inline;
+}

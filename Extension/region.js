@@ -1,4 +1,4 @@
-var quote = '<button id="quote-btn-${id}" class="button QuoteButton" onclick="quotePost(this);">Quote</button><a href="javascript:void(0)" class="QuoteButton rmbcomment" id="view-comment-link-${id}" style="margin-right: 5px; display:none;">View Comments</a><a href="javascript:void(0)" class="QuoteButton rmbcomment" id="comment-link-${id}" style="margin-right: 5px; display:none;">Add Comment</a><a href="javascript:void(0)" class="QuoteButton rmbcomment-submit" id="submit-comment-link-${id}" style="margin-right: 5px; display:none;">Submit</a><a href="javascript:void(0)" class="QuoteButton rmbcomment-cancel" id="cancel-comment-link-${id}" style="display:none;">Cancel</a><textarea id="comment-rmb-${id}" style="width: 100%; height: 8em; display:none;" wrap="soft"></textarea>';
+var quote = '<a href="javascript:void(0)" class="QuoteButton rmbcomment" id="view-comment-link-${id}" style="margin-right: 5px; display:none;">View Comments</a><a href="javascript:void(0)" class="QuoteButton rmbcomment" id="comment-link-${id}" style="margin-right: 5px; display:none;">Add Comment</a><a href="javascript:void(0)" class="QuoteButton rmbcomment-submit" id="submit-comment-link-${id}" style="margin-right: 5px; display:none;">Submit</a><a href="javascript:void(0)" class="QuoteButton rmbcomment-cancel" id="cancel-comment-link-${id}" style="display:none;">Cancel</a><textarea id="comment-rmb-${id}" style="width: 100%; height: 8em; display:none;" wrap="soft"></textarea>';
 (function() {
 	if (getVisiblePage() == "region" || getVisiblePage() == "display_region") {
 		setupRegionPage(false);
@@ -39,6 +39,118 @@ function setupRegionPage(forumViewPage) {
 		});
 		$("tbody:last").html(html);
 	} else {
+
+		$(window).on("rmb/update", function(event, post) {
+			var id = post.attr("id").split("-")[post.attr("id").split("-").length - 1];
+			post.find(".rmbmsg2").append("<div postid='" + id + "' class='post-ratings'><ul class='post-rating-list' style='opacity: 0;'><li class='undo-rating' style='display:none;'><a href='javascript:void(0)'>Undo Rating</a></li><li name='like'><a href='javascript:void(0)'><img style='margin-right: 3px;' src='http://capitalistparadise.com/nationstates/static/like.png' alt='Like'></a></li><li name='dislike'><a href='javascript:void(0)'><img style='margin-right: 3px;' src='http://capitalistparadise.com/nationstates/static/dislike2.png' alt='Dislike'></a></li></ul></div>");
+			setTimeout(function(post) {
+				var authorHeight = post.find(".rmbauthor2").height() + 17;
+				var msgHeight = post.find(".rmbmsg2").height();
+				if (authorHeight > msgHeight) {
+					post.find(".post-ratings").attr("style", "margin-top: " + (authorHeight - msgHeight) + "px;");
+				}
+			}, 500, post);
+			var calculateRatings = function(post, id, cacheBuster) {
+				$.get("http://capitalistparadise.com/api/rmb/rate/get/?rmbPost=" + id + cacheBuster, function(data) {
+					var likes = 0;
+					var dislikes = 0;
+					var rating = -1;
+					for (var i = 0; i < data.length; i++) {
+						if (data[i].type == 0) dislikes += 1;
+						else if (data[i].type == 1) likes += 1;
+						if (data[i].nation.toLowerCase().replaceAll(" ", "_") == getUserNation()) {
+							rating = data[i].type;
+						}
+					}
+					post.find(".post-ratings").find("span[name='rating-container']").remove();
+					post.find(".post-ratings").prepend("<span name='rating-container'></span>");
+					if (rating > -1) {
+						post.find(".post-rating-list").find("li").hide();
+						post.find(".undo-rating").show();
+					}
+					if (dislikes > 0) {
+						post.find("span[name='rating-container']").prepend("<img src='http://capitalistparadise.com/nationstates/static/dislike2.png' alt='Dislike'><span amt='" + dislikes + "' " + (rating == 0 ? "rated='1'" : "") + " class='post-rating-desc'>Dislike x " + dislikes + "</span>");
+					}
+					if (likes > 0) {
+						post.find("span[name='rating-container']").prepend("<img src='http://capitalistparadise.com/nationstates/static/like.png' alt='Like'><span amt='" + likes + "' " + (rating == 1 ? "rated='1'" : "") + " class='post-rating-desc'>Like x " + likes + "</span>");
+					}
+				});
+			};
+			calculateRatings(post, id, "");
+			if (getUserRegion() != getVisibleRegion()) {
+				return;
+			}
+			post.on("mouseenter", function(e){
+				$(e.currentTarget).find(".post-rating-list").stop().animate({opacity:"1.0"},200);
+			});
+			post.on("mouseleave", function(e){
+				$(e.currentTarget).find(".post-rating-list").stop().animate({opacity:"0"},200);
+			});
+			post.find("li[name='like']").find("a").on("click", function (e) {
+				e.preventDefault();
+				var id = $(this).parents(".post-ratings:first").attr("postid");
+				var post = $("#rmb-post-" + id);
+				getNationStatesAuth(function(authCode) {
+					var authToken = localStorage.getItem(getUserNation() + "-auth-token");
+					var postData = "nation=" + getUserNation() + "&auth=" + authCode + (authToken != null ? "&auth-token=" + authToken : "");
+					$.post("http://capitalistparadise.com/api/rmb/rate/set/?rmbPost=" + id + "&rating=1", postData, function(data, textStatus, jqXHR) {
+						var authToken = jqXHR.getResponseHeader("X-Auth-Token");
+						if (authToken != null) {
+							localStorage.setItem(getUserNation() + "-auth-token", authToken);
+							console.log(id);
+							console.log(post);
+							calculateRatings(post, id, "&time=" + Date.now());
+						}
+					});
+				});
+			});
+			post.find("li[name='dislike']").find("a").on("click", function (e) {
+				e.preventDefault();
+				var id = $(this).parents(".post-ratings:first").attr("postid");
+				var post = $("#rmb-post-" + id);
+				getNationStatesAuth(function(authCode) {
+					var authToken = localStorage.getItem(getUserNation() + "-auth-token");
+					var postData = "nation=" + getUserNation() + "&auth=" + authCode + (authToken != null ? "&auth-token=" + authToken : "");
+					$.post("http://capitalistparadise.com/api/rmb/rate/set/?rmbPost=" + id + "&rating=0", postData, function(data, textStatus, jqXHR) {
+						var authToken = jqXHR.getResponseHeader("X-Auth-Token");
+						if (authToken != null) {
+							localStorage.setItem(getUserNation() + "-auth-token", authToken);
+							console.log(id);
+							console.log(post);
+							calculateRatings(post, id, "&time=" + Date.now());
+						}
+					});
+				});
+			});
+			post.find(".undo-rating").find("a").on("click", function(event) {
+				event.preventDefault();
+				var id = $(this).parents(".post-ratings:first").attr("postid");
+				console.log("Undo Rating " + id);
+				var post = $("#rmb-post-" + id);
+				var rating = post.find("span[rated='1']");
+				var amt = rating.attr("amt");
+				if (amt == 1) {
+					rating.prev().remove();
+					rating.remove();
+				} else {
+					rating.html(rating.html().replaceAll(amt, amt - 1));
+				}
+				post.find(".post-rating-list").find("li").show();
+				post.find(".undo-rating").hide();
+				getNationStatesAuth(function(authCode) {	
+					var authToken = localStorage.getItem(getUserNation() + "-auth-token");
+					var postData = "nation=" + getUserNation() + "&auth=" + authCode + (authToken != null ? "&auth-token=" + authToken : "");
+					$.post("http://capitalistparadise.com/api/rmb/rate/set/?rmbPost=" + id + "&rating=-1", postData, function(data, textStatus, jqXHR) {
+						var authToken = jqXHR.getResponseHeader("X-Auth-Token");
+						if (authToken != null) {
+							localStorage.setItem(getUserNation() + "-auth-token", authToken);
+						}
+					});
+				});
+			});
+			
+		});
+
 		var html = "";
 		var children;
 		if (isSettingEnabled("infinite_scroll")) {
@@ -46,13 +158,19 @@ function setupRegionPage(forumViewPage) {
 		} else {
 			children = $(".rmbtable2").children().get();
 		}
+		var postIds = []
 		$(children).each( function() {
+			postIds.push(getRMBPostId($(this).html()));
 			html += parseRMBPost($(this).html(), quote, $(this).attr('class'));
 		});
 		$(".rmbtable2").html(html);
 	
 		$(".small").attr("class", "button");
 		$(".hilite").attr("class", "button");
+		
+		for (var i = 0; i < postIds.length; i++) {
+			$(window).trigger("rmb/update", [ $("#rmb-post-" + postIds[i]) ]);
+		}
 	}
 
 	if (isSettingEnabled("infinite_scroll") || isSettingEnabled("search_rmb")) {
@@ -271,6 +389,7 @@ function rmbpost() {
 				$("#rmb").html($(data).find("#rmb").html());
 			}
 			$('textarea[name="message"]').val("");
+			$('textarea[name="message"]').height(120);
 			$("#previewcontent").html("");
 			updateRMB();
 		});
@@ -400,16 +519,8 @@ function toggleRMBPostForm() {
 	$('.rmbtable2:last').attr("style", "display: block;");
 }
 
-function isSearchFormVisible() {
-	return ($("#searchbox").attr("style") == "");
-}
-
 function isSearchResultsVisible() {
-	var results = document.getElementById("rmb-search-results");
-	if (results != null) {
-		return $(results).attr("style") != "display: none;";
-	}
-	return false;
+	return $("#rmb-search-results:visible").length > 0;
 }
 
 function toggleSearchForm() {
@@ -463,14 +574,19 @@ function handleInfiniteScroll() {
 			if (data.length > 1) {
 				//Format HTML
 				var html = "";
+				var newPosts = [];
 				$($(data).get().reverse()).each( function() {
 					var postId = getRMBPostId($(this).html());
 					var rmbPost = document.getElementById("rmb-post-" + postId);
 					if (rmbPost === null) {
+						newPosts.push(postId);
 						html += parseRMBPost($(this).html(), quote, $(this).attr('class'));
 					}
 				});
 				$(html).insertAfter('.rmbrow:last').hide().show('slow');
+				for (var i = 0; i < newPosts.length; i++) {
+					$(window).trigger("rmb/update", [ $("#rmb-post-" + newPosts[i]) ]);
+				}
 			} else if (!atEarliestMessage) {
 				atEarliestMessage = true;
 				$("<div class='rmbolder'>At Earliest Message</div>").insertAfter('.rmbrow:last').hide().show('slow');
@@ -511,18 +627,17 @@ function updateRMB() {
 	$.get('/page=ajax/a=rmb/region=' + getVisibleRegion() + '/offset=0', function(data) {
 		if (data.length > 1 && !isSearchResultsVisible()) {
 			var html = "";
+			var newPosts = [];
 			//Check for new posts
-			$($(data).get().reverse()).each( function() {
+			$($(data).get().reverse()).each(function() {
 				if ($(this).find(".rmbsuppressed").length == 0) {
 					var postId = getRMBPostId($(this).html());
 					var rmbPost = document.getElementById("rmb-post-" + postId);
 					if (rmbPost === null) {
+						newPosts.push(postId);
 						html += parseRMBPost($(this).html(), quote, $(this).attr('class'));
-					} else {
-						//Update timestamps
-						if ($(rmbPost).find(".rmbdate").html() != "undefinied") {
-							$(rmbPost).find(".rmbdate").html($(this).find(".rmbdate").html());
-						}
+					} else if ($(rmbPost).find(".rmbdate").html() != "undefinied") {
+						$(rmbPost).find(".rmbdate").html($(this).find(".rmbdate").html());
 					}
 				}
 			});
@@ -532,6 +647,9 @@ function updateRMB() {
 					$(html).insertBefore('.rmbrow:first').hide().show('slow');
 				} else {
 					$(html).insertAfter('.rmbrow:last').hide().show('slow');
+				}
+				for (var i = 0; i < newPosts.length; i++) {
+					$(window).trigger("rmb/update", [ $("#rmb-post-" + newPosts[i]) ]);
 				}
 			}
 		}
@@ -647,91 +765,17 @@ $('body').on('click', 'a.rmbcomment-cancel', function(event) {
 	$("#comment-rmb-" + postId).show().animate({height: 'toggle'}, 500);
 });
 
-function quotePost(post) {
-	//Show RMB if it is hidden
+$('body').on('click', 'a.rmbquote', function(event) {
 	if ($(".widebox").find("textarea[name='message']:hidden").length > 0) {
 		toggleRMBPostForm();
 	}
-	var postId = $(post).attr("id").split("quote-btn-")[1];
-	var nation = "";
-	var author;
-	if (isAntiquityTheme()) {
-		author = $("#rmb-post-" + postId).children()[1];
-	} else {
-		author = $("#rmb-inner-body-" + postId).children(".rmbauthor2");
-	}
-	
-	var fullName = $(author).find("a").attr("href");
-	if (typeof fullName == 'undefined') {
-		nation = "[b]" + $(author).html() + "[/b]";
-	} else if (fullName.indexOf("page=help") > -1) {
-		nation = "[b]NationStates Moderators[/b]";
-	} else if (fullName.indexOf("page=rmb") > -1) {
-		nation = "[b]" + $(author).find("p").html() + "[/b]";
-	} else {
-		nation = "[nation=short]" + fullName.substring(7) + "[/nation]";
-	}
-	
-	var message;
-	if (isAntiquityTheme()) {
-		message = $("#rmb-post-" + postId).children()[2];
-	} else {
-		message = $("#rmb-inner-body-" + postId).children(".rmbmsg2");
-	}
-	
-	var text = "";
-	//TODO: make this less horrible
-	$(message).children().each(function() {
-		if ($(this).html().indexOf("rmbbdelete.png") == -1) {
-			if ($(this).get(0).tagName == "BUTTON") {
-				return;
-			}
-			if (text.length > 0) {
-				text += "\n\n";
-			}
-			if (this.children.length == 0) {
-				text += $(this).html();
-			} else {
-				$(this).contents().each(function() {
-					if (typeof $(this).attr("href") != 'undefined') {
-						if ($(this).attr("href").indexOf("nation=") > -1) {
-							var nationName = $(this).attr("href").substring(7);
-							text += "[nation";
-							var shortName = $(this).html().toLowerCase().indexOf("<span>" + nationName.split("_").join(" ") + "</span>") > -1;
-							var noFlag = (typeof $(this).parent().find("img[class='miniflag']").html() == 'undefined');
-							if (shortName && noFlag) {
-								text += "=short+noflag]";
-							} else if (shortName) {
-								text += "=short]";
-							} else if (noFlag) {
-								text += "=noflag]";
-							} else {
-								text += "]";
-							}
-							text += nationName + "[/nation]"
-						} else if ($(this).attr("href").indexOf("region=") > -1) {
-							var regionName = $(this).attr("href").substring(8);
-							text += "[region]" + regionName.split("_").join(" ").toTitleCase() + "[/region]";
-						}
-					} else {
-						text += $(this).text();
-					}
-				});
-			}
-		}
-	});
-	
-	text = $("<div></div>").html(text).text();
-
-	var textArea = $(".widebox").find("textarea[name='message']");
-	var value = $(textArea).val();
-	if (value.length > 0) {
-		value += "\n";
-	}
-	value += "[b]>[/b] " + nation + " said:\n";
-	value += "[i]" + text + "[/i]";
-	$(textArea).val(value + "\n----------------------------------\n\n");
-	$('body,html').animate({scrollTop: $("#widebox-form").offset().top - 100});
-	$(textArea).focus();
-	$(textArea).caretToEnd();
-}
+	var quotedPost = $(this).parents(".rmbmsg2");
+	var textArea = $("textarea[name='message']");
+	setTimeout(function(quotedPost) {
+		var textArea = $("textarea[name='message']");
+		textArea.val($('<div />').html(textArea.val()).text());
+		var height = quotedPost.height();
+		textArea.height(Math.max(textArea.height(), height + 150));
+	}, 250, quotedPost);
+	$('body,html').animate({scrollTop: textArea.offset().top}, 1000);
+});
