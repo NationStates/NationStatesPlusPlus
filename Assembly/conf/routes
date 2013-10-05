@@ -10,11 +10,13 @@ GET     /flag/                        @controllers.FlagController.flag(nation: S
 GET     /regionflag/                  @controllers.FlagController.regionFlag(region: String ?= "")
 POST    /firebase/                    @controllers.FirebaseAuthenticator.requestAuthentication()
 
-GET     /rmb/comments/exist           @controllers.RMBCommentController.hasComments(rmbPost: Integer ?= -1)
-GET     /rmb/comments/                @controllers.RMBCommentController.getComments(rmbPost: Integer ?= -1)
-POST    /rmb/comments/flag            @controllers.RMBCommentController.flagComment(commentId: Integer ?= -1, flag: Boolean ?= false)
-POST    /rmb/comments/like            @controllers.RMBCommentController.likeComment(commentId: Integer ?= -1, like: Boolean ?= false)
-POST    /rmb/comments/add             @controllers.RMBCommentController.addComment(rmbPost: Integer ?= -1)
+GET     /rmb/comments/exist           @controllers.RMBController.hasComments(rmbPost: Integer ?= -1)
+GET     /rmb/comments/                @controllers.RMBController.getComments(rmbPost: Integer ?= -1)
+POST    /rmb/comments/flag            @controllers.RMBController.flagComment(commentId: Integer ?= -1, flag: Boolean ?= false)
+POST    /rmb/comments/like            @controllers.RMBController.likeComment(commentId: Integer ?= -1, like: Boolean ?= false)
+POST    /rmb/comments/add             @controllers.RMBController.addComment(rmbPost: Integer ?= -1)
+POST    /rmb/rate/set/                @controllers.RMBController.ratePost(rmbPost: Integer ?= -1, rating: Integer ?= -1)
+GET     /rmb/rate/get/                @controllers.RMBController.getPostRatings(rmbPost: Integer ?= -1)
 
 GET    /flag/nation/                  @controllers.FlagController.redirectToNationFlag(nation: String ?= "")
 GET    /flag/region/                  @controllers.FlagController.redirectToRegionFlag(region: String ?= "")

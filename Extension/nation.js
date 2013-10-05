@@ -52,6 +52,7 @@
 		}
 	}
 	
+	var activeChart = null;
 	function loadRegionEndorsements(region) {
 		$.get("http://capitalistparadise.com/api/region/wa/?region=" + region, function(data) {
 			var categoryTitles = [];
@@ -68,10 +69,20 @@
 			};
 			categoryTitles.sort(sortNames);
 			dataPoints.sort(sortEndorsements);
+			var playerIndex = -1;
+			for (var i = 0; i < categoryTitles.length; i++) {
+				if (categoryTitles[i].toLowerCase().replaceAll(" ", "_") == getVisibleNation()) {
+					playerIndex = i;
+					break;
+				}
+			}
+			if (activeChart != null) {
+				activeChart.destroy();
+			}
 			chart = new Highcharts.Chart({
 				chart: {
 					type: 'bar',
-					renderTo: 'all_endorsements',
+					renderTo: 'power',
 					height: (dataPoints.length * 26)
 				},
 				title: {
@@ -103,6 +114,13 @@
 						}
 					}
 				},
+				tooltips: {
+					useHTML: true,
+					formatter: function() { 
+						console.log(data);
+						return 'Endorsements: '+ this.y + '\nInfluence: ' + data[this.y].influence_desc + ' (' +  data[this.y].influence + ')';
+					}
+				},
 				credits: {
 					enabled: false
 				},
@@ -111,16 +129,47 @@
 					data: dataPoints
 				}]
 			});
+			activeChart = chart;
+			if (playerIndex > -1) {
+				chart.series[0].data[playerIndex].update({
+					color: "#FF0000"
+				})
+			}
 		});
 	};
 
 	function openWorldAssemblyStats() {
-		if ($(".wa_status").length == 0) {
-			$("#wa_stats").html("<h3>World Assembly Stats</h3><p><b>Not A World Assembly Member!</b></p>");
-			return;
+		$("#wa_stats").html("<h3><a name='wa_stats' href='/nation=" + getVisibleNation() + "/detail=wa_stats/stats=power'>Regional Power</a> - <a name='wa_stats' href='/nation=" + getVisibleNation() + "/detail=wa_stats/stats=endorsements'>Endorsments</a></h3><div name='wa_stats' id='power'></div><div name='wa_stats' id='endorsements'></div>");
+		$("a[name='wa_stats']").on("click", function(event) {
+			event.preventDefault();
+			stats = getDetailStats($(this).attr("href"));
+			loadWAStats(stats);
+		});
+		var stat = getDetailStats();
+		if (stat == "") stat = "power";
+		loadWAStats(stat);
+	}
+
+	function loadWAStats(stats) {
+		$("div[name='wa_stats']").hide();
+		$("#" + stats).html("");
+		$("#" + stats).show();
+		if (stats == "power") {
+			loadRegionEndorsements($(".rlink:first").attr("href").substring(7));
+		} else if (stats == "endorsements") {
+		
 		}
-		$("#wa_stats").html("<h3>World Assembly Stats</h3><div id='all_endorsements'></div>");
-		loadRegionEndorsements($(".rlink:first").attr("href").substring(7));
+	}
+
+	function getDetailStats(url) {
+		url = url || window.location.href;
+		var split = url.split(/[/#/?]/);
+		for (var i = 0; i < split.length; i++) {
+			if (split[i].startsWith("stats=")) {
+				return split[i].substring(6);
+			}
+		}
+		return "";
 	}
 
 	function displaySoftPowerScore() {

@@ -6,6 +6,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -75,4 +76,67 @@ public class WorldAssemblyController extends DatabaseController {
 		return ok(Json.toJson(nations)).as("application/json");
 	}
 
+	public Result getMissingEndorsements(String name) throws SQLException, ExecutionException {
+		List<String> nations = new ArrayList<String>();
+		Connection conn = null; 
+		try {
+			int nationId = getDatabase().getNationIdCache().get(Utils.sanitizeName(name));
+			HashSet<Integer> endorsements = new HashSet<Integer>();
+			conn = getConnection();
+			PreparedStatement statement = conn.prepareStatement("SELECT endorsed FROM assembly.endorsements WHERE endorser = ?");
+			statement.setInt(1, nationId);
+			ResultSet result = statement.executeQuery();
+			while(result.next()) {
+				endorsements.add(result.getInt(1));
+			}
+			statement = conn.prepareStatement("SELECT id, title FROM assembly.nation WHERE wa_member = 1 AND region = (SELECT region FROM assembly.nation WHERE id = ?)");
+			statement.setInt(1, nationId);
+			result = statement.executeQuery();
+			while(result.next()) {
+				if (!endorsements.contains(result.getInt(1))) {
+					nations.add(result.getString(2));
+				}
+			}
+		} finally {
+			DbUtils.closeQuietly(conn);
+		}
+
+		Result result = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(nations.hashCode()));
+		if (result != null) {
+			return result;
+		}
+		return ok(Json.toJson(nations)).as("application/json");
+	}
+
+	public Result getUnreturnedEndorsements(String name) throws SQLException, ExecutionException {
+		List<String> nations = new ArrayList<String>();
+		Connection conn = null; 
+		try {
+			int nationId = getDatabase().getNationIdCache().get(Utils.sanitizeName(name));
+			HashSet<Integer> endorsements = new HashSet<Integer>();
+			conn = getConnection();
+			PreparedStatement statement = conn.prepareStatement("SELECT endorsed FROM assembly.endorsements WHERE endorser = ?");
+			statement.setInt(1, nationId);
+			ResultSet result = statement.executeQuery();
+			while(result.next()) {
+				endorsements.add(result.getInt(1));
+			}
+			statement = conn.prepareStatement("SELECT id, title FROM assembly.nation WHERE wa_member = 1 AND region = (SELECT region FROM assembly.nation WHERE id = ?)");
+			statement.setInt(1, nationId);
+			result = statement.executeQuery();
+			while(result.next()) {
+				if (!endorsements.contains(result.getInt(1))) {
+					nations.add(result.getString(2));
+				}
+			}
+		} finally {
+			DbUtils.closeQuietly(conn);
+		}
+
+		Result result = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(nations.hashCode()));
+		if (result != null) {
+			return result;
+		}
+		return ok(Json.toJson(nations)).as("application/json");
+	}
 }

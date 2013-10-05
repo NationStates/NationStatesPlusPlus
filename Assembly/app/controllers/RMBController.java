@@ -24,9 +24,69 @@ import com.afforess.assembly.util.DatabaseAccess;
 import com.afforess.assembly.util.Utils;
 import com.limewoodMedia.nsapi.NationStates;
 
-public class RMBCommentController extends NationStatesController {
-	public RMBCommentController(DatabaseAccess access, YamlConfiguration config, NationStates api) {
+public class RMBController extends NationStatesController {
+	public RMBController(DatabaseAccess access, YamlConfiguration config, NationStates api) {
 		super(access, config, api);
+	}
+
+	public Result ratePost(int rmbPost, int rating) throws SQLException, ExecutionException {
+		Result ret = Utils.validateRequest(request(), response(), getAPI(), getDatabase());
+		if (ret != null) {
+			return ret;
+		}
+		if (rmbPost < 12 || rating > 1) {
+			return Results.badRequest();
+		}
+		String nation = Utils.sanitizeName(Utils.getPostValue(request(), "nation"));
+		Connection conn = null;
+		try {
+			conn =  getConnection();
+			if (rating < 0) {
+				PreparedStatement delete = conn.prepareStatement("DELETE FROM assembly.rmb_post_ratings WHERE nation = ? AND rmb_post = ?");
+				delete.setInt(1, getDatabase().getNationIdCache().get(nation));
+				delete.setInt(2, rmbPost);
+				delete.executeUpdate();
+			} else {
+				PreparedStatement update = conn.prepareStatement("UPDATE assembly.rmb_post_ratings SET rating_type = ? WHERE nation = ? AND rmb_post = ?");
+				update.setInt(1, rating);
+				update.setInt(2, getDatabase().getNationIdCache().get(nation));
+				update.setInt(3, rmbPost);
+				if (update.executeUpdate() == 0) {
+					PreparedStatement insert = conn.prepareStatement("INSERT INTO assembly.rmb_post_ratings (nation, rating_type, rmb_post) VALUES (?, ?, ?)");
+					insert.setInt(1, getDatabase().getNationIdCache().get(nation));
+					insert.setInt(2, rating);
+					insert.setInt(3, rmbPost);
+					insert.executeUpdate();
+				}
+			}
+		} finally {
+			DbUtils.closeQuietly(conn);
+		}
+		Utils.handleDefaultPostHeaders(request(), response());
+		return Results.ok();
+	}
+
+	public Result getPostRatings(int rmbPost) throws SQLException, ExecutionException {
+		Connection conn = getConnection();
+		List<Map<String, String>> list = new ArrayList<Map<String, String>>();
+		try {
+			PreparedStatement select = conn.prepareStatement("SELECT title, rating_type FROM assembly.rmb_post_ratings AS r LEFT OUTER JOIN assembly.nation AS n ON n.id = r.nation WHERE rmb_post = ?");
+			select.setInt(1, rmbPost);
+			ResultSet result = select.executeQuery();
+			while(result.next()) {
+				Map<String, String> ratings = new HashMap<String, String>(2);
+				ratings.put("nation", result.getString(1));
+				ratings.put("type", String.valueOf(result.getInt(2)));
+				list.add(ratings);
+			}
+		} finally {
+			DbUtils.closeQuietly(conn);
+		}
+		Result result = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(list.hashCode()), "10");
+		if (result != null) {
+			return result;
+		}
+		return Results.ok(Json.toJson(list)).as("application/json");
 	}
 
 	public Result hasComments(int rmbPost) throws SQLException {

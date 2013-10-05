@@ -32,8 +32,8 @@ public class EndorsementMonitoring implements Runnable {
 		Connection conn = null;
 		try {
 			conn = access.getPool().getConnection();
-			PreparedStatement select = conn.prepareStatement("SELECT id, name FROM assembly.nation WHERE alive = 1 AND wa_member = 1 AND last_endorsement_baseline < ? ORDER BY last_endorsement_baseline ASC LIMIT 0, " + limit);
-			select.setLong(1, System.currentTimeMillis() - Duration.standardHours(24).getMillis());
+			PreparedStatement select = conn.prepareStatement("SELECT id, name FROM assembly.nation WHERE alive = 1 AND wa_member <> 0 AND last_endorsement_baseline < ? ORDER BY last_endorsement_baseline ASC LIMIT 0, " + limit);
+			select.setLong(1, System.currentTimeMillis() - Duration.standardHours(12).getMillis());
 			ResultSet result = select.executeQuery();
 			while(result.next()) {
 				final int id = result.getInt(1);
@@ -84,11 +84,18 @@ public class EndorsementMonitoring implements Runnable {
 
 			PreparedStatement hasEndorsement = conn.prepareStatement("DELETE FROM assembly.endorsements WHERE endorsed = ?");
 			hasEndorsement.setInt(1, nationId);
-			hasEndorsement.execute();
-			hasEndorsement.close();
+			hasEndorsement.executeUpdate();
+			DbUtils.closeQuietly(hasEndorsement);
 			
 			endorsements.executeBatch();
-			endorsements.close();
+			DbUtils.closeQuietly(endorsements);
+			
+			PreparedStatement updateEndorsementTrends = conn.prepareStatement("INSERT INTO assembly.nation_endorsement_trends (nation, endorsements, timestamp) VALUES (?, ?, ?)");
+			updateEndorsementTrends.setInt(1, nationId);
+			updateEndorsementTrends.setInt(2, data.endorsements.length);
+			updateEndorsementTrends.setLong(3, System.currentTimeMillis());
+			updateEndorsementTrends.executeUpdate();
+			DbUtils.closeQuietly(updateEndorsementTrends);
 			
 			conn.commit();
 			conn.releaseSavepoint(save);

@@ -121,7 +121,7 @@ public class DumpUpdateTask implements Runnable {
 
 			PreparedStatement update = null;
 			if (regionId == -1) {
-				update = conn.prepareStatement("INSERT INTO assembly.region (name, title, flag, delegate, founder) VALUES (?, ?, ?, ?)");
+				update = conn.prepareStatement("INSERT INTO assembly.region (name, title, flag, delegate, founder) VALUES (?, ?, ?, ?, ?)");
 				update.setString(1, region);
 				update.setString(2, title);
 				update.setString(3, flag);
