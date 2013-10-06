@@ -40,6 +40,8 @@ GET     /nation/issues/               @controllers.NationController.retrieveIssu
 POST    /nation/settings/             @controllers.NationController.updateSettings()
 POST    /nation/issues/               @controllers.NationController.updateIssues()
 GET     /nation/endorsements/         @controllers.WorldAssemblyController.getEndorsements(name: String ?= "")
+GET     /nation/unreturnedendo/       @controllers.WorldAssemblyController.getUnreturnedEndorsements(name: String ?= "")
+GET     /nation/missingendo/          @controllers.WorldAssemblyController.getMissingEndorsements(name: String ?= "")
 
 GET    /region/wa/                    @controllers.WorldAssemblyController.getWAMembers(region: String ?= "")
 

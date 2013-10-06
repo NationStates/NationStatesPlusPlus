@@ -177,6 +177,8 @@ public class HappeningsTask implements Runnable {
 					joinWorldAssembly(conn, nationId);
 				} else if (happeningType == HappeningType.getType("EJECTED_FOR_RULE_VIOLATIONS").getId()) {
 					resignFromWorldAssembly(conn, nationId, true);
+				} else if (happeningType == HappeningType.getType("RELOCATED").getId()) {
+					relocateNation(conn, nationId, nation, text);
 				}
 
 				batchInsert.setInt(1, nationId);
@@ -192,6 +194,48 @@ public class HappeningsTask implements Runnable {
 			Logger.error("Unable to update happenings", e);
 		} finally {
 			DbUtils.closeQuietly(conn);
+		}
+	}
+
+	private void relocateNation(Connection conn, int nationId, String nation, String happening) throws SQLException {
+		Matcher match = Utils.REGION_PATTERN.matcher(happening);
+		String prevRegion = null;
+		String newRegion = null;
+		if (match.find()) {
+			String title = happening.substring(match.start() + 2, match.end() - 2);
+			prevRegion = Utils.sanitizeName(title);
+		}
+		if (match.find()) {
+			String title = happening.substring(match.start() + 2, match.end() - 2);
+			newRegion = Utils.sanitizeName(title);
+		}
+		Logger.info("Relocating " + nation + " from " + prevRegion + " to " + newRegion);
+		if (prevRegion != null && newRegion != null) {
+			//Double check they are still at their prev region before setting their new region!
+			PreparedStatement update = conn.prepareStatement("UPDATE assembly.nation SET region = ? WHERE id = ? AND region = ?");
+			update.setInt(1, getOrCreateRegion(conn, nation, newRegion));
+			update.setInt(2, nationId);
+			update.setInt(3, getOrCreateRegion(conn, nation, prevRegion));
+			update.executeUpdate();
+		}
+	}
+
+	private int getOrCreateRegion(Connection conn, String nation, String region) throws SQLException {
+		PreparedStatement select = conn.prepareStatement("SELECT id FROM assembly.region WHERE name = ?");
+		select.setString(1, region);
+		ResultSet result = select.executeQuery();
+		if (result.next()) {
+			return result.getInt(1);
+		} else {
+			PreparedStatement insert = conn.prepareStatement("INSERT INTO assembly.region (name, flag, founder, title) VALUES (?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);
+			insert.setString(1, region);
+			insert.setString(2, "");
+			insert.setString(3, nation);
+			insert.setString(4, Utils.formatName(region));
+			insert.executeUpdate();
+			ResultSet keys = insert.getGeneratedKeys();
+			keys.next();
+			return keys.getInt(1);
 		}
 	}
 

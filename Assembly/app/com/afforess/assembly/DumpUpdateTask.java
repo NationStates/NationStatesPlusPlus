@@ -186,6 +186,13 @@ public class DumpUpdateTask implements Runnable {
 				}
 			}
 			conn.prepareStatement("DROP TABLE nations").execute();
+			int cleanupNations = 0;
+			result = assembly.prepareStatement("SELECT id FROM assembly.nation WHERE alive = 0 AND wa_member = 1").executeQuery();
+			while(result.next()) {
+				access.markNationDead(result.getInt(1), assembly);
+				cleanupNations++;
+			}
+			Logger.info("Cleaned up " + cleanupNations + " who were dead World Assembly Member nations!");
 		} catch (SQLException e) {
 			throw new RuntimeException(e);
 		} finally {
