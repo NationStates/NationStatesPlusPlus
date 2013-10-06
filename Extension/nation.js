@@ -53,37 +53,54 @@
 	}
 	
 	var activeChart = null;
-	function loadRegionEndorsements(region) {
+	function loadRegionEndorsements(region, showInfluence) {
+		var snarkyComments = ["Bribing World Assembly Bureaucrats", "Reticulating Splines", "Expanding the Bureau of Bureaucracies",
+								  "Greasing Palms", "Wandering World Assembly Halls Without A Map", "Redefining Success", "Running With Scissors",
+								  "Being Corrupted By Power, Absolutely", "Watching Lightning Strike Twice", "Gazing Into The Abyss", "Loading",
+								  "Wearing A Guy Fawkes Mask", "Making Faces At Delegates While Their Backs Are Turned", "Wondering Aloud", 
+								  "Admiring TBR Banners", "Running, Not Walking", "Drawing Nazi Flags On Passed World Assembly Resolutions",
+								  "Drafting Resolutions In Crayon", "Hiding 'The Rejected Realms' Name Placard", "Scrawling 'I <3 UDL' Into Bathroom Stalls",
+								  "Switching Your Vote While No One Is Looking", "Spinning In A Wheeled Office Chair", "Saving The Rainforest", "Watching Big Brother",
+								  "Building A Metropolis", "Taking Just One More Turn", "Watching Paint Dry"]
+		$("#" + (showInfluence ? 'influence' : 'power')).html("<div id='snark' style='text-align:center; font-weight: bold; font-size: 16px;'><img style='margin-bottom: -2px; margin-right: 4px;' src='/images/loading1.gif'>" + snarkyComments[Math.floor(Math.random() * snarkyComments.length)] + "</div>");
 		$.get("http://capitalistparadise.com/api/region/wa/?region=" + region, function(data) {
 			var categoryTitles = [];
-			var dataPoints = [];
+			var endorsements = [];
+			var influence = [];
+			var playerIndex = -1;
 			for (var nation in data) {
-				 categoryTitles.push(nation);   
-				 dataPoints.push(data[nation].endorsements);
+				categoryTitles.push(nation );   
 			}
 			var sortNames = function(a, b) {
 				return data[b].endorsements - data[a].endorsements;
 			};
-			var sortEndorsements = function(a, b) {
-				return b - a;
-			};
 			categoryTitles.sort(sortNames);
-			dataPoints.sort(sortEndorsements);
-			var playerIndex = -1;
-			for (var i = 0; i < categoryTitles.length; i++) {
-				if (categoryTitles[i].toLowerCase().replaceAll(" ", "_") == getVisibleNation()) {
+    		for (var i = 0; i < categoryTitles.length; i++) {
+				var nation = data[categoryTitles[i]];
+				endorsements.push(nation.endorsements);
+				influence.push(nation.influence);
+				if (playerIndex == -1 && categoryTitles[i].toLowerCase().replaceAll(" ", "_") == getVisibleNation()) {
 					playerIndex = i;
-					break;
 				}
+				categoryTitles[i] = "<b>" + categoryTitles[i] + "</b>";
 			}
 			if (activeChart != null) {
 				activeChart.destroy();
 			}
+			var series;
+			if (showInfluence) {
+				series = [{	name: 'Influence', data: influence, color: '#AA4643' },{
+							name: 'Endorsements', data: endorsements, color: '#4572A7' }]
+			} else {
+				series = [{ name: 'Endorsements', data: endorsements, color: '#4572A7' }]
+			}
+			var container = $('<div>');
 			chart = new Highcharts.Chart({
 				chart: {
 					type: 'bar',
-					renderTo: 'power',
-					height: (dataPoints.length * 26)
+					renderTo: container[0],
+					width: $("#" + (showInfluence ? 'influence' : 'power')).width(),
+					height: (categoryTitles.length * 26 * (showInfluence ? 2 : 1))
 				},
 				title: {
 					text: 'World Assembly Endorsements'
@@ -104,7 +121,8 @@
 						align: 'high'
 					},
 					labels: {
-						overflow: 'justify'
+						overflow: 'justify',
+						useHTML: true
 					}
 				},
 				plotOptions: {
@@ -112,34 +130,92 @@
 						dataLabels: {
 							enabled: true
 						}
-					}
-				},
-				tooltips: {
-					useHTML: true,
-					formatter: function() { 
-						console.log(data);
-						return 'Endorsements: '+ this.y + '\nInfluence: ' + data[this.y].influence_desc + ' (' +  data[this.y].influence + ')';
+					},
+					series: {
+						cursor: 'pointer',
+						point: {
+							events: {
+								click: function() {
+									var nation = this.category.substring(3, this.category.length - 4);
+									window.location.href = "http://www.nationstates.net/nation=" + nation.toLowerCase().replaceAll(" ", "_") + "/detail=wa_stats/stats=" + (showInfluence ? 'influence' : 'power');
+								}
+							}
+						}
 					}
 				},
 				credits: {
 					enabled: false
 				},
-				series: [{
-					name: 'Endorsements',
-					data: dataPoints
-				}]
+				series: series
 			});
 			activeChart = chart;
 			if (playerIndex > -1) {
-				chart.series[0].data[playerIndex].update({
-					color: "#FF0000"
-				})
+				for (var i = 0; i < chart.series.length; i++) {
+					chart.series[i].data[playerIndex].update({
+						color: "#FF0000"
+					});
+				}
 			}
+			setTimeout(function() { $("#snark").remove(); container.appendTo($("#" + (showInfluence ? 'influence' : 'power')));}, 2000);
 		});
 	};
+	
+	function loadEndorsementStats(region) {
+		var nation = getVisibleNation().replaceAll("_", " ").toTitleCase();
+		$("#endorsements").html("<h4>World Assembly Member Nations without " + nation + "'s Endorsement</h4><div id='missingendo'>Loading...</div><hr></hr>" + 
+								"<h4>World Assembly Member Nations who have not given " + nation + " an Endorsement</h4><div id='unreturnedendo'>Loading...</div>" + 
+								"<h4>Endorsements given by " + nation + "</h4><div id='endorsements-given'>Loading...</div>");
+								
+		$.get("http://capitalistparadise.com/api/nation/missingendo/?name=" + getVisibleNation(), function(data) {
+			var html = "";
+			for (var i = 0; i < data.length; i++) {
+				var nation = data[i];
+				var formatted = nation.toLowerCase().replaceAll(" ", "_");
+				if (i > 0) html += ", ";
+				html += "<a href='nation=" + formatted + "' class='nlink'><img class='miniflag' alt='" + nation + 
+				"' src='http://capitalistparadise.com/api/flag/nation/?nation=" + formatted + "'>" + nation + "</a>";
+			}
+			if (html.length == 0) {
+				html = getVisibleNation().replaceAll("_", " ").toTitleCase() + " has endorsed all the nations in " + $(".rlink:first").attr("href").substring(7).replaceAll("_", " ").toTitleCase();
+			}
+			$("#missingendo").html(html);
+		});
+		$.get("http://capitalistparadise.com/api/nation/unreturnedendo/?name=" + getVisibleNation(), function(data) {
+			var html = "";
+			for (var i = 0; i < data.length; i++) {
+				var nation = data[i];
+				var formatted = nation.toLowerCase().replaceAll(" ", "_");
+				if (i > 0) html += ", ";
+				html += "<a href='nation=" + formatted + "' class='nlink'><img class='miniflag' alt='" + nation + 
+				"' src='http://capitalistparadise.com/api/flag/nation/?nation=" + formatted + "'>" + nation + "</a>";
+			}
+			if (html.length == 0) {
+				html = getVisibleNation().replaceAll("_", " ").toTitleCase() + " has been mutually endorsed by every nation.";
+			}
+			$("#unreturnedendo").html(html);
+		});
+		$.get("http://capitalistparadise.com/api/nation/endorsements/?name=" + getVisibleNation(), function(data) {
+			var html = "";
+			for (var i = 0; i < data.length; i++) {
+				var nation = data[i];
+				var formatted = nation.toLowerCase().replaceAll(" ", "_");
+				if (i > 0) html += ", ";
+				html += "<a href='nation=" + formatted + "' class='nlink'><img class='miniflag' alt='" + nation + 
+				"' src='http://capitalistparadise.com/api/flag/nation/?nation=" + formatted + "'>" + nation + "</a>";
+			}
+			if (html.length == 0) {
+				html = getVisibleNation().replaceAll("_", " ").toTitleCase() + " has not endorsed any World Assembly Member Nations!";
+			}
+			$("#endorsements-given").html(html);
+		});
+	}
 
 	function openWorldAssemblyStats() {
-		$("#wa_stats").html("<h3><a name='wa_stats' href='/nation=" + getVisibleNation() + "/detail=wa_stats/stats=power'>Regional Power</a> - <a name='wa_stats' href='/nation=" + getVisibleNation() + "/detail=wa_stats/stats=endorsements'>Endorsments</a></h3><div name='wa_stats' id='power'></div><div name='wa_stats' id='endorsements'></div>");
+		$("#wa_stats").html("<h3 style='text-align:center;'>" +
+							"<a name='wa_stats' href='nation=" + getVisibleNation() + "/detail=wa_stats/stats=power'>Regional Power</a> - " +
+							"<a name='wa_stats' href='nation=" + getVisibleNation() + "/detail=wa_stats/stats=influence'>Regional Influence</a> - " +
+							"<a name='wa_stats' href='nation=" + getVisibleNation() + "/detail=wa_stats/stats=endorsements'>Endorsments</a>" +
+							"</h3><div name='wa_stats' id='power'></div><div name='wa_stats' id='influence'></div><div name='wa_stats' id='endorsements'></div>");
 		$("a[name='wa_stats']").on("click", function(event) {
 			event.preventDefault();
 			stats = getDetailStats($(this).attr("href"));
@@ -155,9 +231,11 @@
 		$("#" + stats).html("");
 		$("#" + stats).show();
 		if (stats == "power") {
-			loadRegionEndorsements($(".rlink:first").attr("href").substring(7));
+			loadRegionEndorsements($(".rlink:first").attr("href").substring(7), false);
+		} else if (stats == "influence") {
+			loadRegionEndorsements($(".rlink:first").attr("href").substring(7), true);
 		} else if (stats == "endorsements") {
-		
+			loadEndorsementStats($(".rlink:first").attr("href").substring(7));
 		}
 	}
 
