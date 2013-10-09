@@ -6,6 +6,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 
@@ -18,6 +19,8 @@ import play.Logger;
 import com.afforess.assembly.model.HappeningType;
 import com.afforess.assembly.util.DatabaseAccess;
 import com.afforess.assembly.util.Utils;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import com.limewoodMedia.nsapi.NationStates;
 import com.limewoodMedia.nsapi.exceptions.RateLimitReachedException;
 import com.limewoodMedia.nsapi.holders.HappeningData;
@@ -31,6 +34,7 @@ public class HappeningsTask implements Runnable {
 	private int maxEventId = -1;
 	private int newEvents = 0;
 	private long lastRun = 0L;
+	private final Cache<Integer, Boolean> updateCache = CacheBuilder.newBuilder().maximumSize(250).expireAfterWrite(1, TimeUnit.MINUTES).build();
 	/**
 	 * A counter, when set > 0, runs happening update polls at 2s intervals, otherwise at 10s intervals.
 	 */
@@ -179,6 +183,17 @@ public class HappeningsTask implements Runnable {
 					resignFromWorldAssembly(conn, nationId, true);
 				} else if (happeningType == HappeningType.getType("RELOCATED").getId()) {
 					relocateNation(conn, nationId, nation, text);
+				} else if (updateCache.getIfPresent(nationId) == null && happeningType == HappeningType.getType("NEW_LEGISLATION").getId()) {
+					setRegionUpdateTime(conn, nationId, timestamp);
+					updateCache.put(nationId, true);
+				} else if (nationId > -1 && happeningType == HappeningType.getType("REFOUNDED").getId()) {
+					//Ensure nation is dead
+					access.markNationDead(nationId, conn);
+					PreparedStatement alive = conn.prepareStatement("UPDATE assembly.nation SET alive = 0 WHERE id = ?");
+					alive.setInt(1, nationId);
+					alive.executeUpdate();
+				} else if (nationId > -1 && happeningType == HappeningType.getType("CEASED_TO_EXIST").getId()) {
+					access.markNationDead(nationId, conn);
 				}
 
 				batchInsert.setInt(1, nationId);
@@ -194,6 +209,29 @@ public class HappeningsTask implements Runnable {
 			Logger.error("Unable to update happenings", e);
 		} finally {
 			DbUtils.closeQuietly(conn);
+		}
+	}
+
+	private void setRegionUpdateTime(Connection conn, int nationId, long timestamp) throws SQLException {
+		PreparedStatement select = conn.prepareStatement("SELECT region FROM assembly.nation WHERE id = ?");
+		select.setInt(1, nationId);
+		ResultSet result = select.executeQuery();
+		if (result.next()) {
+			int region = result.getInt(1);
+			PreparedStatement update = conn.prepareStatement("UPDATE assembly.region_updates SET end = ? WHERE region = ? AND start BETWEEN ? AND ?");
+			update.setLong(1, timestamp);
+			update.setInt(2, region);
+			update.setLong(3, timestamp - Duration.standardHours(1).getMillis());
+			update.setLong(4, timestamp + Duration.standardMinutes(1).getMillis());
+			if (update.executeUpdate() == 0) {
+				PreparedStatement insert = conn.prepareStatement("INSERT INTO assembly.region_updates (region, start, end) VALUES (?, ?, ?)");
+				insert.setLong(1, region);
+				insert.setLong(2, timestamp);
+				insert.setLong(3, timestamp);
+				insert.executeUpdate();
+			}
+		} else {
+			Logger.info("Can not set region update time for nation [" + nationId + "], unknown region!");
 		}
 	}
 

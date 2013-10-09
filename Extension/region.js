@@ -775,7 +775,7 @@ $('body').on('click', 'a.rmbquote', function(event) {
 		var textArea = $("textarea[name='message']");
 		textArea.val($('<div />').html(textArea.val()).text());
 		var height = quotedPost.height();
-		textArea.height(Math.max(textArea.height(), height + 150));
+		textArea.height(Math.max(textArea.height(), height / 2 + 50));
 	}, 250, quotedPost);
 	$('body,html').animate({scrollTop: textArea.offset().top}, 1000);
 });

@@ -100,7 +100,7 @@
 					type: 'bar',
 					renderTo: container[0],
 					width: $("#" + (showInfluence ? 'influence' : 'power')).width(),
-					height: (categoryTitles.length * 26 * (showInfluence ? 2 : 1))
+					height: Math.max(300, 100 + (categoryTitles.length * 26 * (showInfluence ? 2 : 1)))
 				},
 				title: {
 					text: 'World Assembly Endorsements'
@@ -163,7 +163,7 @@
 	function loadEndorsementStats(region) {
 		var nation = getVisibleNation().replaceAll("_", " ").toTitleCase();
 		$("#endorsements").html("<h4>World Assembly Member Nations without " + nation + "'s Endorsement</h4><div id='missingendo'>Loading...</div><hr></hr>" + 
-								"<h4>World Assembly Member Nations who have not given " + nation + " an Endorsement</h4><div id='unreturnedendo'>Loading...</div>" + 
+								"<h4>World Assembly Member Nations who have not given " + nation + " an Endorsement</h4><div id='unreturnedendo'>Loading...</div><hr></hr>" + 
 								"<h4>Endorsements given by " + nation + "</h4><div id='endorsements-given'>Loading...</div>");
 								
 		$.get("http://capitalistparadise.com/api/nation/missingendo/?name=" + getVisibleNation(), function(data) {

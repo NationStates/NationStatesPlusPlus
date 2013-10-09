@@ -29,10 +29,12 @@
 				var parent = $("button[name=choice-" + i + "]").parent();
 				var split = previous.split(",");
 				var date = new Date(parseInt(split[split.length - 1]) * 1000);
-				if (split.length == 1) {
-					$(parent).html($(parent).html() + "<div style='display:inline; font-style:italic; font-size:11px; margin-left: 10px;'>Your goverment previously enacted this option on " + date.customFormat("#MMM# #DD#, #YYYY#") + "</div>");
-				} else {
-					$(parent).html($(parent).html() + "<div style='display:inline; font-style:italic; font-size:11px; margin-left: 10px;'>Your goverment previously enacted this option " + split.length + " times, most recently on " + date.customFormat("#MMM# #DD#, #YYYY#") + "</div>");
+				if (date.getTime() + 24 * 60 * 60 * 1000 < Date.now()) {
+					if (split.length == 1) {
+						$(parent).html($(parent).html() + "<div style='display:inline; font-style:italic; font-size:11px; margin-left: 10px;'>Your goverment previously enacted this option on " + date.customFormat("#MMM# #DD#, #YYYY#") + "</div>");
+					} else {
+						$(parent).html($(parent).html() + "<div style='display:inline; font-style:italic; font-size:11px; margin-left: 10px;'>Your goverment previously enacted this option " + split.length + " times, most recently on " + date.customFormat("#MMM# #DD#, #YYYY#") + "</div>");
+					}
 				}
 			}
 		}
