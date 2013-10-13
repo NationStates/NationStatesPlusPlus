@@ -121,7 +121,7 @@ public class DumpUpdateTask implements Runnable {
 
 			PreparedStatement update = null;
 			if (regionId == -1) {
-				update = conn.prepareStatement("INSERT INTO assembly.region (name, title, flag, delegate, founder) VALUES (?, ?, ?, ?, ?)");
+				update = conn.prepareStatement("INSERT INTO assembly.region (name, title, flag, delegate, founder, alive) VALUES (?, ?, ?, ?, ?, 1)");
 				update.setString(1, region);
 				update.setString(2, title);
 				update.setString(3, flag);
@@ -130,7 +130,7 @@ public class DumpUpdateTask implements Runnable {
 				update.executeUpdate();
 				return 1;
 			} else {
-				update = conn.prepareStatement("UPDATE assembly.region SET title = ?, flag = ?, delegate = ?, founder = ? WHERE id = ?");
+				update = conn.prepareStatement("UPDATE assembly.region SET alive = 1, title = ?, flag = ?, delegate = ?, founder = ? WHERE id = ?");
 				update.setString(1, title);
 				update.setString(2, flag);
 				update.setString(3, delegate);
@@ -235,7 +235,7 @@ public class DumpUpdateTask implements Runnable {
 				insert.executeUpdate();
 				return 1;
 			} else {
-				insert = conn.prepareStatement("UPDATE assembly.nation SET full_name = ?, title = ?, flag = ?, region = ?, influence_desc = ?, last_login = ?, wa_member = ? WHERE id = ?");
+				insert = conn.prepareStatement("UPDATE assembly.nation SET alive = 1, full_name = ?, title = ?, flag = ?, region = ?, influence_desc = ?, last_login = ?, wa_member = ? WHERE id = ?");
 				insert.setString(1, fullName);
 				insert.setString(2, title);
 				insert.setString(3, flag);

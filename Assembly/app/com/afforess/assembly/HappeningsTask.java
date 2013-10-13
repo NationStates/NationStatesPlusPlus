@@ -5,6 +5,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -122,7 +124,7 @@ public class HappeningsTask implements Runnable {
 			state.setInt(1, maxEventId);
 			state.executeUpdate();
 			
-			PreparedStatement batchInsert = conn.prepareStatement("INSERT INTO assembly.global_happenings (nation, happening, timestamp, type) VALUES (?, ?, ?, ?)");
+			PreparedStatement happeningInsert = conn.prepareStatement("INSERT INTO assembly.global_happenings (nation, happening, timestamp, type) VALUES (?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);
 			for (EventHappening happening : data.happenings) {
 				final String text = happening.text;
 				final long timestamp = happening.timestamp * 1000;
@@ -149,6 +151,7 @@ public class HappeningsTask implements Runnable {
 				}
 
 				final int happeningType = HappeningType.match(text);
+				final HappeningType type = HappeningType.getType(happeningType);
 
 				if (happeningType == HappeningType.getType("ENDORSEMENT").getId()) {
 					if (match.find()) {
@@ -157,11 +160,11 @@ public class HappeningsTask implements Runnable {
 						addEndorsement(conn, access.getNationIdCache().get(otherNation), nationId);
 
 						//Add *was endorsed by* to db
-						batchInsert.setInt(1, access.getNationIdCache().get(otherNation));
-						batchInsert.setString(2, "@@" + otherNation + "@@ was endorsed by @@" + nation + "@@.");
-						batchInsert.setLong(3, timestamp);
-						batchInsert.setInt(4, happeningType);
-						batchInsert.addBatch();
+						happeningInsert.setInt(1, access.getNationIdCache().get(otherNation));
+						happeningInsert.setString(2, "@@" + otherNation + "@@ was endorsed by @@" + nation + "@@.");
+						happeningInsert.setLong(3, timestamp);
+						happeningInsert.setInt(4, happeningType);
+						happeningInsert.executeUpdate();
 					}
 				} else if (happeningType == HappeningType.getType("WITHDREW_ENDORSEMENT").getId()) {
 					if (match.find()) {
@@ -196,13 +199,18 @@ public class HappeningsTask implements Runnable {
 					access.markNationDead(nationId, conn);
 				}
 
-				batchInsert.setInt(1, nationId);
-				batchInsert.setString(2, parseHappening(text));
-				batchInsert.setLong(3, timestamp);
-				batchInsert.setInt(4, happeningType);
-				batchInsert.addBatch();
+				happeningInsert.setInt(1, nationId);
+				happeningInsert.setString(2, parseHappening(text));
+				happeningInsert.setLong(3, timestamp);
+				happeningInsert.setInt(4, happeningType);
+				happeningInsert.executeUpdate();
+				ResultSet keys = happeningInsert.getGeneratedKeys();
+				keys.next();
+				int happeningId = keys.getInt(1);
+				if (type != null) {
+					updateRegionHappenings(conn, happeningId, text, type);
+				}
 			}
-			batchInsert.executeBatch();
 		} catch (SQLException e) {
 			Logger.error("Unable to update happenings", e);
 		}  catch (ExecutionException e) {
@@ -212,18 +220,50 @@ public class HappeningsTask implements Runnable {
 		}
 	}
 
-	private void setRegionUpdateTime(Connection conn, int nationId, long timestamp) throws SQLException {
+	private void updateRegionHappenings(Connection conn, int happeningId, String happening, HappeningType type) throws SQLException, ExecutionException {
+		String region1Happening = type.transformToRegion1Happening(happening);
+		String region2Happening = type.transformToRegion2Happening(happening);
+		List<Integer> regionIds = new ArrayList<Integer>(2);
+		Matcher regions = Utils.REGION_PATTERN.matcher(happening);
+		while(regions.find()) {
+			regionIds.add(access.getRegionIdCache().get(happening.substring(regions.start() + 2, regions.end() - 2)));
+		}
+		PreparedStatement insert = conn.prepareStatement("INSERT INTO assembly.regional_happenings (global_id, region, happening) VALUES (?, ?, ?)");
+		if (region1Happening != null && regionIds.size() > 0) {
+			insert.setInt(1, happeningId);
+			insert.setInt(2, regionIds.get(0));
+			insert.setString(3, region1Happening);
+			insert.executeUpdate();
+		}
+		if (region2Happening != null && regionIds.size() > 1) {
+			insert.setInt(1, happeningId);
+			insert.setInt(2, regionIds.get(1));
+			insert.setString(3, region2Happening);
+			insert.executeUpdate();
+		}
+	}
+
+	private synchronized void setRegionUpdateTime(Connection conn, int nationId, long timestamp) throws SQLException {
 		PreparedStatement select = conn.prepareStatement("SELECT region FROM assembly.nation WHERE id = ?");
 		select.setInt(1, nationId);
 		ResultSet result = select.executeQuery();
 		if (result.next()) {
 			int region = result.getInt(1);
-			PreparedStatement update = conn.prepareStatement("UPDATE assembly.region_updates SET end = ? WHERE region = ? AND start BETWEEN ? AND ?");
-			update.setLong(1, timestamp);
-			update.setInt(2, region);
-			update.setLong(3, timestamp - Duration.standardHours(1).getMillis());
-			update.setLong(4, timestamp + Duration.standardMinutes(1).getMillis());
-			if (update.executeUpdate() == 0) {
+			select = conn.prepareStatement("SELECT id, start, end FROM assembly.region_updates WHERE region = ? AND start BETWEEN ? AND ?");
+			select.setInt(1, region);
+			select.setLong(2, timestamp - Duration.standardHours(1).getMillis());
+			select.setLong(3, timestamp + Duration.standardMinutes(1).getMillis());
+			result = select.executeQuery();
+			if (result.next()) {
+				final int id = result.getInt(1);
+				final long start = result.getLong(2);
+				final long end = result.getLong(3);
+				PreparedStatement update = conn.prepareStatement("UPDATE assembly.region_updates SET start = ?, end = ? WHERE id = ?");
+				update.setLong(1, Math.min(start, timestamp));
+				update.setLong(2, Math.max(end, timestamp));
+				update.setInt(3, id);
+				update.executeUpdate();
+			} else {
 				PreparedStatement insert = conn.prepareStatement("INSERT INTO assembly.region_updates (region, start, end) VALUES (?, ?, ?)");
 				insert.setLong(1, region);
 				insert.setLong(2, timestamp);

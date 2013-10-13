@@ -38,14 +38,13 @@ public class HappeningsController extends DatabaseController {
 		return Results.status(BAD_REQUEST);
 	}
 	
-	public Result retrieveHappenings(String region, int start) throws SQLException {
+	public Result retrieveHappenings(String region, int start) throws SQLException, ExecutionException {
 		start = Math.max(0, start);
 		ArrayList<HappeningData> happenings = new ArrayList<HappeningData>();
-		long time = System.nanoTime();
 		Connection conn = getConnection();
 		try {
-			PreparedStatement statement = conn.prepareStatement("SELECT happening, timestamp FROM assembly.region_happenings WHERE region = ?  ORDER BY timestamp DESC LIMIT " + start + ", 20");
-			statement.setString(1, region);
+			PreparedStatement statement = conn.prepareStatement("SELECT happening, timestamp FROM assembly.regional_happenings_time WHERE region = ?  ORDER BY timestamp DESC LIMIT " + start + ", 20");
+			statement.setInt(1, this.getDatabase().getRegionIdCache().get(Utils.sanitizeName(region)));
 			ResultSet result = statement.executeQuery();
 			
 			while(result.next()) {
@@ -61,9 +60,6 @@ public class HappeningsController extends DatabaseController {
 		
 		String calculatedEtag = String.valueOf(happenings.hashCode());
 		Result result = Utils.handleDefaultGetHeaders(request(), response(), calculatedEtag);
-		
-		Logger.info("Time to retrieve happenings for region [" + region + "] was: " + (System.currentTimeMillis() - time) + " ms");
-		
 		if (happenings.isEmpty()) {
 			HappeningData data = new HappeningData();
 			data.happening = "Unknown region: " + region;

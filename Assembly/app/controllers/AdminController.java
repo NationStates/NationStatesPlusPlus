@@ -25,7 +25,7 @@ public class AdminController extends DatabaseController {
 		adminCode = config.getChild("admin").getChild("code").getString();
 	}
 
-	public Result recalculateHappenings(String code) throws SQLException {
+	public Result recalculateHappenings(String code, int happeningType) throws SQLException {
 		if (!code.equals(adminCode)) {
 			return Results.badRequest();
 		}
@@ -35,7 +35,8 @@ public class AdminController extends DatabaseController {
 		try {
 			conn = getConnection();
 			PreparedStatement update = conn.prepareStatement("UPDATE assembly.global_happenings SET type = ? WHERE id = ?");
-			PreparedStatement select = conn.prepareStatement("SELECT id, happening FROM assembly.global_happenings WHERE type = -1");
+			PreparedStatement select = conn.prepareStatement("SELECT id, happening FROM assembly.global_happenings WHERE type = ?");
+			select.setInt(1, happeningType);
 			ResultSet result = select.executeQuery();
 			while(result.next()) {
 				total++;

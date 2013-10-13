@@ -46,7 +46,7 @@ GET     /nation/missingendo/          @controllers.WorldAssemblyController.getMi
 GET    /region/wa/                    @controllers.WorldAssemblyController.getWAMembers(region: String ?= "")
 GET    /region/population/            @controllers.RegionController.getPopulationTrends(region: String ?= "")
 
-GET    /admin/happenings/             @controllers.AdminController.recalculateHappenings(code: String ?= "")
+GET    /admin/happenings/             @controllers.AdminController.recalculateHappenings(code: String ?= "", happeningType: Integer ?= -1)
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.at(path="/public", file)
