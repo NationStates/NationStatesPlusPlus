@@ -45,6 +45,7 @@ GET     /nation/missingendo/          @controllers.WorldAssemblyController.getMi
 
 GET    /region/wa/                    @controllers.WorldAssemblyController.getWAMembers(region: String ?= "")
 GET    /region/population/            @controllers.RegionController.getPopulationTrends(region: String ?= "")
+GET    /region/updatetime/            @controllers.RegionController.getUpdateTime(region: String ?= "")
 
 GET    /admin/happenings/             @controllers.AdminController.recalculateHappenings(code: String ?= "", happeningType: Integer ?= -1)
 

@@ -282,6 +282,15 @@ function setupRegionPage(forumViewPage) {
 	}
 
 	addFormattingButtons();
+	addUpdateTime();
+}
+
+function addUpdateTime() {
+	$.get("http://capitalistparadise.com/api/region/updatetime/?region=" + getVisibleRegion(), function(data) {
+		var nextUpdate = (Math.floor(Date.now() / (24 * 60 * 60 * 1000)) * 24 * 60 * 60 * 1000) + data.mean;
+		var text = "<i style='font-size:16px; margin-left:20px;'>Next Update: " +  (new Date(nextUpdate)).customFormat("#hh#:#mm#:#ss# #AMPM#") + " [ &plusmn; " + Math.floor(data.std * 2 / 1000) + " s]</i>"
+		$("h1:first").html($("h1:first").html() + text);
+	});
 }
 
 function isForumView() {

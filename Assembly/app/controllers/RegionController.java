@@ -11,12 +11,14 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 import org.apache.commons.dbutils.DbUtils;
+import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 import org.codehaus.jackson.annotate.JsonProperty;
 import org.joda.time.Duration;
 import org.spout.cereal.config.yaml.YamlConfiguration;
 
 import play.libs.Json;
 import play.mvc.Result;
+import play.mvc.Results;
 
 import com.afforess.assembly.util.DatabaseAccess;
 import com.afforess.assembly.util.Utils;
@@ -25,6 +27,41 @@ public class RegionController extends DatabaseController {
 
 	public RegionController(DatabaseAccess access, YamlConfiguration config) {
 		super(access, config);
+	}
+
+	public Result getUpdateTime(String region) throws SQLException, ExecutionException {
+		Connection conn = null; 
+		final int regionId = getDatabase().getRegionIdCache().get(Utils.sanitizeName(region));
+		if (regionId == -1) {
+			return Results.badRequest();
+		}
+		try {
+			final long normalized = System.currentTimeMillis() - (System.currentTimeMillis() / (Duration.standardDays(1).getMillis())) * Duration.standardDays(1).getMillis();
+			conn = getConnection();
+			PreparedStatement updateTime = conn.prepareStatement("SELECT normalized_start FROM assembly.region_update_calculations WHERE region = ? AND major = ? ORDER BY start DESC LIMIT 0, 30");
+			updateTime.setInt(1, regionId);
+			updateTime.setInt(2, ((normalized > 10000000 && normalized < 10000000) ? 0 : 1));
+			ResultSet times = updateTime.executeQuery();
+			SummaryStatistics startStats = new SummaryStatistics();
+			while(times.next()) {
+				startStats.addValue(times.getLong(1));
+			}
+			Map<String, Object> data = new HashMap<String, Object>();
+			data.put("mean", Double.valueOf(startStats.getMean()).longValue());
+			data.put("std", Double.valueOf(startStats.getStandardDeviation()).longValue());
+			data.put("max", Double.valueOf(startStats.getMax()).longValue());
+			data.put("min", Double.valueOf(startStats.getMin()).longValue());
+			data.put("geomean", Double.valueOf(startStats.getGeometricMean()).longValue());
+			data.put("variance", Double.valueOf(startStats.getVariance()).longValue());
+			
+			Result result = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(data.hashCode()));
+			if (result != null) {
+				return result;
+			}
+			return ok(Json.toJson(data)).as("application/json");
+		} finally {
+			DbUtils.closeQuietly(conn);
+		}
 	}
 
 	public Result getPopulationTrends(String region) throws SQLException, ExecutionException {
