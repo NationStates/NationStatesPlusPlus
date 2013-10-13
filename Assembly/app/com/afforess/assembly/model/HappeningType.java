@@ -12,8 +12,6 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import play.Logger;
-
 import com.afforess.assembly.util.Utils;
 
 public class HappeningType {
@@ -89,7 +87,7 @@ public class HappeningType {
 		for (Pattern regex : region1Regex) {
 			Matcher matcher = regex.matcher(happening);
 			while(matcher.find()) {
-				regexMatches.add(happening.substring(matcher.start() + 2, matcher.end() - 2));
+				regexMatches.add(happening.substring(matcher.start(), matcher.end()));
 			}
 		}
 		String regionHappening = regionTransform;

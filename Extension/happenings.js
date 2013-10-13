@@ -43,9 +43,6 @@
 	}
 	$(window).on("page/update", checkPageHappenings);
 	
-	if (getVisiblePage() == "region" && $("p:contains('Gargantuan')").length == 0) {
-		return;
-	}
 	var happeningsIndex = 10;
 	var endHappenings = false;
 	function addInfiniteHappenings() {
@@ -61,14 +58,20 @@
 			$("#loading_happenings").show();
 			var url;
 			if (getVisiblePage() == "nation") {
-				url = "http://capitalistparadise.com/api/happenings/?nation=" + getVisibleNation() + "&global=true&start=" + happeningsIndex + "&limit=20";
+				url = "http://capitalistparadise.com/api/nation/happenings/?nation=" + getVisibleNation() + "&start=" + happeningsIndex;
 			} else {
 				url = "http://capitalistparadise.com/api/region/happenings/?region=" + getVisibleRegion() + "&start=" + happeningsIndex;
 			}
-			$.get(url, function(json) {
-				$("#more_happenings").find("span").hide();
-				$("#load_more_happenings").show();
-				parseHappenings(json, getVisiblePage() == "nation");
+			$.get(url, function(json, textStatus, xhr) {
+				if (xhr.status != 204) {
+					$("#more_happenings").find("span").hide();
+					$("#load_more_happenings").show();
+					parseHappenings(json, getVisiblePage() == "nation");
+				} else {
+					endHappenings = true;
+					$("#more_happenings").find("span").hide();
+					$("#end_of_happenings").show();
+				}
 			}).fail(function() {
 				$("#more_happenings").find("span").hide();
 				$("#error_happenings").show();
@@ -83,7 +86,7 @@
 			if (i == 0 && (data.happening.contains("Unknown nation:") || data.happening.contains("Unknown region:"))) {
 				break;
 			}
-			happenings.append("<li style='display:none;' class='happenings_" + happeningsIndex + "'>" + timestampToTimeAgo(data.timestamp * (national ? 1 : 1000)) + " ago: " + data.happening + "</li>");
+			happenings.append("<li style='display:none;' class='happenings_" + happeningsIndex + "'>" + timestampToTimeAgo(data.timestamp) + " ago: " + data.happening + "</li>");
 		}
 		$(".happenings_" + happeningsIndex).hide().animate({ height: 'toggle' }, 800);
 		happeningsIndex += 20;

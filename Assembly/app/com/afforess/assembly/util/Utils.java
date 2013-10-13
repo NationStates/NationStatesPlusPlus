@@ -34,7 +34,6 @@ public class Utils {
 			.appendMinuteOfHour(2).appendLiteral(':')
 			.appendSecondOfMinute(2).appendLiteral(" GMT").toFormatter();
 
-
 	public static Result handleDefaultGetHeaders(Request request, Response response, String calculatedEtag) {
 		return handleDefaultGetHeaders(request, response, calculatedEtag, "60");
 	}
@@ -64,16 +63,14 @@ public class Utils {
 		response.setHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
 	}
 
-	public static String formatHappeningText(String text, Connection conn, boolean longNames, String owner) throws SQLException {
+	public static String formatHappeningText(String text, Connection conn, String owner) throws SQLException {
 		text = text.replaceAll("%%capitalist_paradise%rmb%%", "<a href=\"http://www.nationstates.net/region=capitalist_paradise#rmb \">Regional Message Board</a>");
-		boolean firstName = true;
 		do {
 			Matcher match = NATION_PATTERN.matcher(text);
 			if (match.find()) {
 				String nation = text.substring(match.start() + 2, match.end() - 2);
-				String replacement = "<a href=\"http://www.nationstates.net/nation=" + nation + "\">" + (longNames ? formatFullName(nation, conn, firstName || owner.equals(nation)) : formatName(nation)) + "</a>";
+				String replacement = formatFullName(nation, conn, !owner.equals(nation));
 				text = match.replaceFirst(replacement);
-				firstName = false;
 			} else {
 				break;
 			}
@@ -104,28 +101,31 @@ public class Utils {
 		return text;
 	}
 
-	public static String formatFullName(String nation, Connection conn, boolean shortName) throws SQLException {
-		String fullName = shortName ? formatName(nation) : getFullName(nation, conn);
-		String flag = getNationFlag(nation, conn);
-		return "<img src=\"" + flag + "\" class=\"miniflag\" alt=\"\" title=\"" + fullName + "\">" + fullName;
-	}
-
-	public static String getFullName(String nation, Connection conn) throws SQLException {
-		PreparedStatement statement = conn.prepareStatement("SELECT full_name from assembly.nation WHERE name = ?");
+	public static String formatFullName(String nation, Connection conn, boolean fullName) throws SQLException {
+		PreparedStatement statement = conn.prepareStatement("SELECT full_name, flag, alive, title from assembly.nation WHERE name = ?");
 		statement.setString(1, sanitizeName(nation));
 		ResultSet result = statement.executeQuery();
 		if (result.next()) {
-			return result.getString(1);
+			//Dead, return just full title
+			if (result.getByte(3) != 1) {
+				return result.getString(1);
+			} else {
+				return "<a href=\"http://www.nationstates.net/nation=" + nation + "\"><img src=\"" + result.getString(2) + "\" class=\"miniflag\" alt=\"\" title=\"" + result.getString(1) + "\">" + (fullName ? result.getString(1) : result.getString(4)) + "</a>";
+			}
 		}
-		return formatName(nation);
+		return formatNationLink(nation);
 	}
 
 	public static String sanitizeName(String name) {
 		return name.toLowerCase().replaceAll(" ", "_");
 	}
 
-	public static String formatName(String nation) {
-		return WordUtils.capitalizeFully(nation.replaceAll("_", " "));
+	public static String formatName(String name) {
+		return WordUtils.capitalizeFully(name.replaceAll("_", " "));
+	}
+
+	public static String formatNationLink(String nation) {
+		return "<a href=\"http://www.nationstates.net/nation=" + nation + "\">" + formatName(nation) + "</a>";
 	}
 
 	public static String getNationFlag(String nation, Connection conn) throws SQLException {

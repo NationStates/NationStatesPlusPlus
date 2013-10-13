@@ -192,7 +192,7 @@ public class HappeningsTask implements Runnable {
 				} else if (nationId > -1 && happeningType == HappeningType.getType("REFOUNDED").getId()) {
 					//Ensure nation is dead
 					access.markNationDead(nationId, conn);
-					PreparedStatement alive = conn.prepareStatement("UPDATE assembly.nation SET alive = 0 WHERE id = ?");
+					PreparedStatement alive = conn.prepareStatement("UPDATE assembly.nation SET alive = 1 WHERE id = ?");
 					alive.setInt(1, nationId);
 					alive.executeUpdate();
 				} else if (nationId > -1 && happeningType == HappeningType.getType("CEASED_TO_EXIST").getId()) {
@@ -208,7 +208,7 @@ public class HappeningsTask implements Runnable {
 				keys.next();
 				int happeningId = keys.getInt(1);
 				if (type != null) {
-					updateRegionHappenings(conn, happeningId, text, type);
+					updateRegionHappenings(conn, access, nationId, happeningId, text, type);
 				}
 			}
 		} catch (SQLException e) {
@@ -220,13 +220,21 @@ public class HappeningsTask implements Runnable {
 		}
 	}
 
-	private void updateRegionHappenings(Connection conn, int happeningId, String happening, HappeningType type) throws SQLException, ExecutionException {
+	public static void updateRegionHappenings(Connection conn, DatabaseAccess access, int nationId, int happeningId, String happening, HappeningType type) throws SQLException, ExecutionException {
 		String region1Happening = type.transformToRegion1Happening(happening);
 		String region2Happening = type.transformToRegion2Happening(happening);
 		List<Integer> regionIds = new ArrayList<Integer>(2);
 		Matcher regions = Utils.REGION_PATTERN.matcher(happening);
 		while(regions.find()) {
 			regionIds.add(access.getRegionIdCache().get(happening.substring(regions.start() + 2, regions.end() - 2)));
+		}
+		if (regionIds.size() == 0 && nationId > -1) {
+			PreparedStatement select = conn.prepareStatement("SELECT region FROM assembly.nation WHERE id = ?");
+			select.setInt(1, nationId);
+			ResultSet result = select.executeQuery();
+			if (result.next()) {
+				regionIds.add(result.getInt(1));
+			}
 		}
 		PreparedStatement insert = conn.prepareStatement("INSERT INTO assembly.regional_happenings (global_id, region, happening) VALUES (?, ?, ?)");
 		if (region1Happening != null && regionIds.size() > 0) {

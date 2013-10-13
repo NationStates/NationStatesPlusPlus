@@ -3,9 +3,9 @@
 # ~~~~
 
 # Home page
-GET     /happenings/                  @controllers.HappeningsController.happenings(nation: String ?= "", global: Boolean ?= false, excludeNewest: Boolean ?= false, start: Integer ?= 0, limit: Integer ?= 0)
+GET     /nation/happenings/           @controllers.HappeningsController.nationHappenings(nation: String ?= "", start: Integer ?= 0)
 POST    /region/parseHappenings/      @controllers.HappeningsController.parseHappenings()
-GET     /region/happenings/           @controllers.HappeningsController.retrieveHappenings(region: String ?= "", start: Integer ?= 0)
+GET     /region/happenings/           @controllers.HappeningsController.regionHappenings(region: String ?= "", start: Integer ?= 0)
 GET     /flag/                        @controllers.FlagController.flag(nation: String ?= "")
 GET     /regionflag/                  @controllers.FlagController.regionFlag(region: String ?= "")
 POST    /firebase/                    @controllers.FirebaseAuthenticator.requestAuthentication()

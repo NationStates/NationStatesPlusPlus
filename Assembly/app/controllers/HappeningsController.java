@@ -37,8 +37,8 @@ public class HappeningsController extends DatabaseController {
 		}
 		return Results.status(BAD_REQUEST);
 	}
-	
-	public Result retrieveHappenings(String region, int start) throws SQLException, ExecutionException {
+
+	public Result regionHappenings(String region, int start) throws SQLException, ExecutionException {
 		start = Math.max(0, start);
 		ArrayList<HappeningData> happenings = new ArrayList<HappeningData>();
 		Connection conn = getConnection();
@@ -48,7 +48,7 @@ public class HappeningsController extends DatabaseController {
 			ResultSet result = statement.executeQuery();
 			
 			while(result.next()) {
-				final String happening = Utils.formatHappeningText(result.getString(1), conn, true, "");
+				final String happening = Utils.formatHappeningText(result.getString(1), conn, "");
 				HappeningData data = new HappeningData();
 				data.happening = happening;
 				data.timestamp = result.getLong(2);
@@ -76,12 +76,11 @@ public class HappeningsController extends DatabaseController {
 		NationStates api = new NationStates();
 		Connection conn = null;
 		ArrayList<HappeningData> happenings = new ArrayList<HappeningData>();
-		final long start = System.nanoTime();
 		try {
 			RegionData regionData = api.getRegionInfo(api.getInfo(IOUtils.toInputStream(xml)), region);
 			conn = getConnection();
 			for (RegionHappening happening : regionData.happenings) {
-				String text = Utils.formatHappeningText(happening.text, conn, true, "");
+				String text = Utils.formatHappeningText(happening.text, conn, "");
 				HappeningData data = new HappeningData();
 				data.happening = text;
 				data.timestamp = happening.timestamp;
@@ -97,13 +96,8 @@ public class HappeningsController extends DatabaseController {
 		String calculatedEtag = String.valueOf(happenings.hashCode());
 		Result result = Utils.handleDefaultGetHeaders(request(), response(), calculatedEtag);
 
-		Logger.info("Time to parse happenings for region [" + region + "] was: " + (System.nanoTime() - start) / 1E6D + " ms");
-		
 		if (happenings.isEmpty()) {
-			HappeningData data = new HappeningData();
-			data.happening = "Unknown region: " + region;
-			data.timestamp = System.currentTimeMillis() / 1000;
-			happenings.add(data);
+			return Results.noContent();
 		} else	if (result != null) {
 			return result;
 		}
@@ -111,22 +105,18 @@ public class HappeningsController extends DatabaseController {
 		return ok(Json.toJson(happenings)).as("application/json");
 	}
 
-	public Result happenings(String nation, boolean global, boolean excludeNewest, int start, int limit) throws SQLException, ExecutionException {
-		if (excludeNewest) start = 10;
-		if (limit <= 0 && start > 0) {
-			limit = Integer.MAX_VALUE;
-		}
+	public Result nationHappenings(String nation, int start) throws SQLException, ExecutionException {
 		ArrayList<HappeningData> happenings = new ArrayList<HappeningData>();
 		if (nation != null && nation.length() > 0) {
 			long time = System.nanoTime();
 			Connection conn = getConnection();
 			try {
-				PreparedStatement statement = conn.prepareStatement("SELECT happening, timestamp FROM " + (global ? "assembly.global_happenings" : "assembly.nation_happenings") + " WHERE nation = ?  ORDER BY timestamp DESC" + (limit > 0 ? " LIMIT " + start + ", " + limit : ""));
+				PreparedStatement statement = conn.prepareStatement("SELECT happening, timestamp FROM assembly.global_happenings WHERE nation = ?  ORDER BY timestamp DESC LIMIT " + start + ", 20");
 				statement.setInt(1, getDatabase().getNationIdCache().get(nation));
 				ResultSet result = statement.executeQuery();
 				
 				while(result.next()) {
-					final String happening = Utils.formatHappeningText(result.getString(1), conn, global, nation);
+					final String happening = Utils.formatHappeningText(result.getString(1), conn, nation);
 					HappeningData data = new HappeningData();
 					data.happening = happening;
 					data.timestamp = result.getLong(2);
@@ -141,10 +131,7 @@ public class HappeningsController extends DatabaseController {
 		Result result = Utils.handleDefaultGetHeaders(request(), response(), calculatedEtag);
 
 		if (happenings.isEmpty()) {
-			HappeningData data = new HappeningData();
-			data.happening = "Unknown nation: " + nation;
-			data.timestamp = System.currentTimeMillis() / 1000;
-			happenings.add(data);
+			return Results.noContent();
 		} else	if (result != null) {
 			return result;
 		}

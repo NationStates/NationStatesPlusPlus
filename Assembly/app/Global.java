@@ -62,11 +62,11 @@ public class Global extends GlobalSettings {
 			pool.setMaxPoolSize(50);
 			pool.setMinPoolSize(1);
 			pool.setMaxIdleTime(600);
-			pool.setMaxConnectionAge(60 * 60);
+			pool.setMaxConnectionAge(2 * 60 * 60);
 			pool.setDebugUnreturnedConnectionStackTraces(true);
-			pool.setUnreturnedConnectionTimeout(300);
+			pool.setUnreturnedConnectionTimeout(60 * 60);
 			pool.setAcquireRetryAttempts(60);
-			pool.setIdleConnectionTestPeriod(60);
+			pool.setIdleConnectionTestPeriod(600);
 			pool.setMaxStatementsPerConnection(25);
 			Logger.info("Authenticating database connection pool with user [ " + settings.getChild("user").getString() + " ]");
 			pool.setUser(settings.getChild("user").getString());
