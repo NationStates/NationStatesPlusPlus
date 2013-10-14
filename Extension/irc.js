@@ -52,7 +52,7 @@
 				"<div style='display: inline; margin-left: 10px;'>" +
 				"<a id='irc-link' href='javascript:void(0)' onclick=toggleIRC(this)>(Hide)</a></div>" + 
 				"<iframe seamless='seamless' id='irc-frame' src='" + ircUrl + 
-				"' style='border:2px solid; width:100%; height:500px;'></iframe><div class='hzln'></div>").insertBefore("h2");
+				"' style='border:2px solid; width:100%; height:500px;'></iframe><div class='hzln'></div>").insertBefore($("h2:contains('Today's World Census Report')"));
 				if (localStorage.getItem("show_irc") == "false") {
 					toggleIRC($("#irc-link"));
 				}

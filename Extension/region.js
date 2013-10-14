@@ -283,13 +283,114 @@ function setupRegionPage(forumViewPage) {
 
 	addFormattingButtons();
 	addUpdateTime();
+	
+	var census = $("h2:contains('Today's World Census Report')");
+	$("<div id='census_report_container'></div>").insertAfter(census);
+	$("#census_report_container").next().appendTo($("#census_report_container"));
+	$("#census_report_container").next().appendTo($("#census_report_container"));
+	$("#census_report_container").next().appendTo($("#census_report_container"));
+	$("#census_report_container").next().appendTo($("#census_report_container"));
+	$("h6").appendTo($("#census_report_container"));
+	census.html(census.html() + "<a style='font-family: Verdana,Tahoma; font-size: 10pt; margin-left: 10px;' class='toggle-census-report' href='#'>(Hide)</a>");
+	$("a.toggle-census-report").click(function(event) {
+		event.preventDefault();
+		if ($("#census_report_container:visible").length == 0) {
+			$("#census_report_container").show();
+			$("a.toggle-census-report").html("(Hide)");
+			localStorage.removeItem("show_world_census");
+		} else {
+			$("#census_report_container").hide();
+			$("a.toggle-census-report").html("(Show)");
+			localStorage.setItem("show_world_census", false);
+		}
+	});
+	if (!isSettingEnabled("show_world_census")) {
+		$("#census_report_container").hide();
+		$("a.toggle-census-report").html("(Show)");
+	}
+	$("<h2>Regional Population <a style='font-family: Verdana,Tahoma; font-size: 10pt; margin-left: 10px;' class='toggle-pop-report' href='#'>(Hide)</a></h2><div id='regional-pop'></div><div class='hzln'></div>").insertAfter($("#census_report_container").next());
+	$.get("http://capitalistparadise.com/api/region/population/?region=" + getVisibleRegion(), function(data) {
+		var populations = [];
+		for (var i = data.region.length - 1; i >= 0; i--) {
+			var element = [];
+			element.push(data.region[i].timestamp);
+			element.push(data.region[i].population);
+			populations.push(element);
+		}
+		chart = new Highcharts.Chart({
+			chart: {
+				type: 'line',
+				renderTo: 'regional-pop'
+			},
+			title: {
+				text: 'Regional Population'
+			},
+			subtitle: {
+				text: getVisibleRegion().replaceAll("_", " ").toTitleCase()
+			},
+			xAxis: {
+				dateTimeLabelFormats: {
+					month: '%e. %b',
+					year: '%b'
+				},
+				type: 'datetime',
+				title: {
+					text: null
+				}
+			},
+			yAxis: {
+				min: 0,
+				title: {
+					text: 'Population',
+					align: 'high'
+				},
+				labels: {
+					overflow: 'justify',
+					useHTML: true
+				}
+			},
+			credits: {
+				enabled: false
+			},
+			series:  [{ name: 'Population', data: populations, color: '#4572A7' }]
+		});
+	});
+	$("a.toggle-pop-report").click(function(event) {
+		event.preventDefault();
+		if ($("#regional-pop:visible").length == 0) {
+			$("#regional-pop").show();
+			$("a.toggle-pop-report").html("(Hide)");
+			localStorage.removeItem("show_regional_population");
+		} else {
+			$("#regional-pop").hide();
+			$("a.toggle-pop-report").html("(Show)");
+			localStorage.setItem("show_regional_population", false);
+		}
+	});
+	if (!isSettingEnabled("show_regional_population")) {
+		$("#regional-pop").hide();
+		$("a.toggle-pop-report").html("(Show)");
+	}
 }
 
 function addUpdateTime() {
 	$.get("http://capitalistparadise.com/api/region/updatetime/?region=" + getVisibleRegion(), function(data) {
-		var nextUpdate = (Math.floor(Date.now() / (24 * 60 * 60 * 1000)) * 24 * 60 * 60 * 1000) + data.mean;
-		var text = "<i style='font-size:16px; margin-left:20px;'>Next Update: " +  (new Date(nextUpdate)).customFormat("#hh#:#mm#:#ss# #AMPM#") + " [ &plusmn; " + Math.floor(data.std * 2 / 1000) + " s]</i>"
+		var text;
+		var update;
+		if (Date.now() > data.minor.mean + (Math.floor(Date.now() / (24 * 60 * 60 * 1000)) * 24 * 60 * 60 * 1000)) {
+			update = data.major;
+		} else {
+			update = data.minor;
+		}
+		if (update.mean != 0) {
+			var nextUpdate = (Math.floor(Date.now() / (24 * 60 * 60 * 1000)) * 24 * 60 * 60 * 1000) + update.mean;
+			text = "<i style='font-size:16px; margin-left:20px;'>Next Update: " +  (new Date(nextUpdate)).customFormat("#hh#:#mm#:#ss# #AMPM#") + " [ &plusmn; " + Math.floor(update.std * 2 / 1000) + " s]</i>"
+		} else {
+			text = "<i style='font-size:16px; margin-left:20px;'>Next Update: UNKNOWN [NO DATA]</i>";
+		}
 		$("h1:first").html($("h1:first").html() + text);
+	}).fail(function() {
+		$("h1:first").html($("h1:first").html() + "<i style='font-size:16px; margin-left:20px;'>Next Update: UNKNOWN - NO DATA - </i>");
 	});
 }
 
@@ -298,35 +399,35 @@ function isForumView() {
 }
 
 function toWindows1252(string, replacement) {
-    var ret = new Array(string.length);    
-    var i, ch;
+	var ret = new Array(string.length);	
+	var i, ch;
 
-    replacement = typeof replacement === "string" && replacement.length > 0 ? replacement.charCodeAt(0) : 0;
+	replacement = typeof replacement === "string" && replacement.length > 0 ? replacement.charCodeAt(0) : 0;
 
-    for (i = 0; i < string.length; i++) {
+	for (i = 0; i < string.length; i++) {
 		ch = string.charCodeAt(i);
-        if (ch <= 0x7F || (ch >= 0xA0 && ch <= 0xFF)) {
-            ret[i] = ch;
-        } else {
-            ret[i] = toWindows1252.table[string[i]];
-            if (typeof ret[i] === "undefined") {
-                ret[i] = replacement;
-            }
-        }
-    }
+		if (ch <= 0x7F || (ch >= 0xA0 && ch <= 0xFF)) {
+			ret[i] = ch;
+		} else {
+			ret[i] = toWindows1252.table[string[i]];
+			if (typeof ret[i] === "undefined") {
+				ret[i] = replacement;
+			}
+		}
+	}
 
-    return ret;
+	return ret;
 }
 
 toWindows1252.table = {
-    '\x81': 129, '\x8d': 141, '\x8f': 143, '\x90': 144, 
-    '\x9d': 157, '\u0152': 140, '\u0153': 156, '\u0160': 138, 
-    '\u0161': 154, '\u0178': 159, '\u017d': 142, '\u017e': 158, 
-    '\u0192': 131, '\u02c6': 136, '\u02dc': 152, '\u2013': 150, 
-    '\u2014': 151, '\u2018': 145, '\u2019': 146, '\u201a': 130, 
-    '\u201c': 147, '\u201d': 148, '\u201e': 132, '\u2020': 134, 
-    '\u2021': 135, '\u2022': 149, '\u2026': 133, '\u2030': 137, 
-    '\u2039': 139, '\u203a': 155, '\u20ac': 128, '\u2122': 153
+	'\x81': 129, '\x8d': 141, '\x8f': 143, '\x90': 144, 
+	'\x9d': 157, '\u0152': 140, '\u0153': 156, '\u0160': 138, 
+	'\u0161': 154, '\u0178': 159, '\u017d': 142, '\u017e': 158, 
+	'\u0192': 131, '\u02c6': 136, '\u02dc': 152, '\u2013': 150, 
+	'\u2014': 151, '\u2018': 145, '\u2019': 146, '\u201a': 130, 
+	'\u201c': 147, '\u201d': 148, '\u201e': 132, '\u2020': 134, 
+	'\u2021': 135, '\u2022': 149, '\u2026': 133, '\u2030': 137, 
+	'\u2039': 139, '\u203a': 155, '\u20ac': 128, '\u2122': 153
 };
 
 function d2h(d) {return d.toString(16);}
