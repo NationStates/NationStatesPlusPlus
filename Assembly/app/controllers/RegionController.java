@@ -36,25 +36,38 @@ public class RegionController extends DatabaseController {
 			return Results.badRequest();
 		}
 		try {
-			final long normalized = System.currentTimeMillis() - (System.currentTimeMillis() / (Duration.standardDays(1).getMillis())) * Duration.standardDays(1).getMillis();
 			conn = getConnection();
-			PreparedStatement updateTime = conn.prepareStatement("SELECT normalized_start FROM assembly.region_update_calculations WHERE region = ? AND major = ? ORDER BY start DESC LIMIT 0, 30");
+			PreparedStatement updateTime = conn.prepareStatement("SELECT normalized_start, major FROM assembly.region_update_calculations WHERE region = ? AND update_time < 75000 ORDER BY start DESC LIMIT 0, 60");
 			updateTime.setInt(1, regionId);
-			updateTime.setInt(2, ((normalized > 10000000 && normalized < 10000000) ? 0 : 1));
 			ResultSet times = updateTime.executeQuery();
-			SummaryStatistics startStats = new SummaryStatistics();
+			SummaryStatistics minor = new SummaryStatistics();
+			SummaryStatistics major = new SummaryStatistics();
 			while(times.next()) {
-				startStats.addValue(times.getLong(1));
+				if (times.getInt(2) == 1) 
+					major.addValue(times.getLong(1));
+				else
+					minor.addValue(times.getLong(1));
 			}
 			Map<String, Object> data = new HashMap<String, Object>();
-			data.put("mean", Double.valueOf(startStats.getMean()).longValue());
-			data.put("std", Double.valueOf(startStats.getStandardDeviation()).longValue());
-			data.put("max", Double.valueOf(startStats.getMax()).longValue());
-			data.put("min", Double.valueOf(startStats.getMin()).longValue());
-			data.put("geomean", Double.valueOf(startStats.getGeometricMean()).longValue());
-			data.put("variance", Double.valueOf(startStats.getVariance()).longValue());
+			Map<String, Long> majorUpdate = new HashMap<String, Long>();
+			majorUpdate.put("mean", Double.valueOf(major.getMean()).longValue());
+			majorUpdate.put("std", Double.valueOf(major.getStandardDeviation()).longValue());
+			majorUpdate.put("max", Double.valueOf(major.getMax()).longValue());
+			majorUpdate.put("min", Double.valueOf(major.getMin()).longValue());
+			majorUpdate.put("geomean", Double.valueOf(major.getGeometricMean()).longValue());
+			majorUpdate.put("variance", Double.valueOf(major.getVariance()).longValue());
+			data.put("major", majorUpdate);
 			
-			Result result = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(data.hashCode()));
+			Map<String, Long> minorUpdate = new HashMap<String, Long>();
+			minorUpdate.put("mean", Double.valueOf(minor.getMean()).longValue());
+			minorUpdate.put("std", Double.valueOf(minor.getStandardDeviation()).longValue());
+			minorUpdate.put("max", Double.valueOf(minor.getMax()).longValue());
+			minorUpdate.put("min", Double.valueOf(minor.getMin()).longValue());
+			minorUpdate.put("geomean", Double.valueOf(minor.getGeometricMean()).longValue());
+			minorUpdate.put("variance", Double.valueOf(minor.getVariance()).longValue());
+			data.put("minor", minorUpdate);
+			
+			Result result = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(data.hashCode()), "60");
 			if (result != null) {
 				return result;
 			}
