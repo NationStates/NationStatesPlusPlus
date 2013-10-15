@@ -100,13 +100,16 @@
 					type: 'bar',
 					renderTo: container[0],
 					width: $("#" + (showInfluence ? 'influence' : 'power')).width(),
-					height: Math.max(300, 100 + (categoryTitles.length * 26 * (showInfluence ? 2 : 1)))
+					height: Math.max(300, 100 + (categoryTitles.length * 26 * (showInfluence ? 2 : 1))),
+					backgroundColor: 'rgba(255, 255, 255, ' + (document.head.innerHTML.indexOf("ns.dark") != -1 ? '0.1' : '1.0') + ')'
 				},
 				title: {
-					text: 'World Assembly Endorsements'
+					text: 'World Assembly Endorsements',
+					color: (document.head.innerHTML.indexOf("ns.dark") != -1 ? '#D0D0D0' : '#000000')
 				},
 				subtitle: {
-					text: 'Region: ' + region.replaceAll("_", " ").toTitleCase()
+					text: 'Region: ' + region.replaceAll("_", " ").toTitleCase(),
+					color: (document.head.innerHTML.indexOf("ns.dark") != -1 ? '#D0D0D0' : '#000000')
 				},
 				xAxis: {
 					categories: categoryTitles,
@@ -123,7 +126,7 @@
 					labels: {
 						overflow: 'justify',
 						useHTML: true
-					}
+					},
 				},
 				plotOptions: {
 					bar: {

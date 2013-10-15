@@ -2,6 +2,10 @@ h1 {
 	text-shadow: 2px 2px 1px #5A5858;
 }
 
+h1, h2, h3, h4, h5, h6 {
+	color: #FFFFFF;
+}
+
 .news_quote {
 	background-color: #1F1F1F;
 }
@@ -63,4 +67,10 @@ h1 {
 
 #inner-content fieldset, #target fieldset {
 	background-color: black;
+}
+
+.updatetime {
+	background: #2A2A2A;
+	border: 1px solid #383838;
+	color: #D0D0D0 !important;
 }

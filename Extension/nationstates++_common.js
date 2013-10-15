@@ -188,6 +188,18 @@
 	if (getUserNation() == "glen-rhodes") {
 		localStorage.setItem("ignore_theme_warning", true);
 	}
+	if (getUserNation() != "" && localStorage.getItem("ns_fall_survey") == null && !window.location.href.contains("forum.nationstates")) {
+		var banner = $("#banner, #nsbanner");
+		var bannerStyle = "position:absolute; top:0px; margin:6px 60px 0px 0px; z-index:98; font-weight:bold; color: white !important; font-weight: bold; font-size: 8pt; padding: 2px 8px 2px 8px; background: black; 	background-color: rgba(0,0,0,0.2); 	border-radius: 8px;";
+		if (document.head.innerHTML.indexOf("ns.dark") != -1) {
+			bannerStyle += "background: #2A2A2A; border: 1px solid #383838;"
+		}
+		$(banner).append("<a class='ns-survey' href='http://www.surveymonkey.com/s/L8ZJMWD' style='" + bannerStyle + " right: 258px;'>NS++ Survey</a>");
+		$("a.ns-survey").click(function() {
+			localStorage.setItem("ns_fall_survey", Date.now());
+			$(".ns-survey").hide();
+		});
+	}
 	update(1);
 })();
 
@@ -419,6 +431,27 @@ function getNationStatesAuth(callback) {
 		//Regenerate localid if nessecary
 		$(window).trigger("page/update");
 		callback(authCode);
+	});
+}
+
+function doAuthorizedPostRequest(url, postData, success, failure) {
+	getNationStatesAuth(function(authCode) {
+		var authToken = localStorage.getItem(getUserNation() + "-auth-token");
+		postData = "nation=" + getUserNation() + "&auth=" + authCode + (authToken != null ? "&auth-token=" + authToken : "") + (postData.length > 0 ? "&" + postData : "");
+		console.log("Posting:" + postData + " to " + url);
+		$.post(url, postData, function(data, textStatus, jqXHR) {
+			var authToken = jqXHR.getResponseHeader("X-Auth-Token");
+			if (authToken != null) {
+				localStorage.setItem(getUserNation() + "-auth-token", authToken);
+				if (typeof success != "undefined" && success != null) {
+					success(data, textStatus, jqXHR);
+				}
+			}
+		}).fail(function() {
+			if (typeof failure != "undefined" && failure != null) {
+				failure();
+			}
+		});
 	});
 }
 

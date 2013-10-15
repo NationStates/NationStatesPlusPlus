@@ -39,7 +39,8 @@ function setupRegionPage(forumViewPage) {
 		});
 		$("tbody:last").html(html);
 	} else {
-
+		$("input[type='submit'].button").html($("input[type='submit'].button").val()).changeElementType("button")
+		
 		$(window).on("rmb/update", function(event, post) {
 			var id = post.attr("id").split("-")[post.attr("id").split("-").length - 1];
 			post.find(".rmbmsg2").append("<div postid='" + id + "' class='post-ratings'><ul class='post-rating-list' style='opacity: 0;'><li class='undo-rating' style='display:none;'><a href='javascript:void(0)'>Undo Rating</a></li><li name='like'><a href='javascript:void(0)'><img style='margin-right: 3px;' src='http://capitalistparadise.com/nationstates/static/like.png' alt='Like'></a></li><li name='dislike'><a href='javascript:void(0)'><img style='margin-right: 3px;' src='http://capitalistparadise.com/nationstates/static/dislike2.png' alt='Dislike'></a></li></ul></div>");
@@ -90,36 +91,16 @@ function setupRegionPage(forumViewPage) {
 				e.preventDefault();
 				var id = $(this).parents(".post-ratings:first").attr("postid");
 				var post = $("#rmb-post-" + id);
-				getNationStatesAuth(function(authCode) {
-					var authToken = localStorage.getItem(getUserNation() + "-auth-token");
-					var postData = "nation=" + getUserNation() + "&auth=" + authCode + (authToken != null ? "&auth-token=" + authToken : "");
-					$.post("http://capitalistparadise.com/api/rmb/rate/set/?rmbPost=" + id + "&rating=1", postData, function(data, textStatus, jqXHR) {
-						var authToken = jqXHR.getResponseHeader("X-Auth-Token");
-						if (authToken != null) {
-							localStorage.setItem(getUserNation() + "-auth-token", authToken);
-							console.log(id);
-							console.log(post);
-							calculateRatings(post, id, "&time=" + Date.now());
-						}
-					});
+				doAuthorizedPostRequest("http://capitalistparadise.com/api/rmb/rate/set/?rmbPost=" + id + "&rating=1", "", function(data, textStatus, jqXHR) {
+					calculateRatings(post, id, "&time=" + Date.now());
 				});
 			});
 			post.find("li[name='dislike']").find("a").on("click", function (e) {
 				e.preventDefault();
 				var id = $(this).parents(".post-ratings:first").attr("postid");
 				var post = $("#rmb-post-" + id);
-				getNationStatesAuth(function(authCode) {
-					var authToken = localStorage.getItem(getUserNation() + "-auth-token");
-					var postData = "nation=" + getUserNation() + "&auth=" + authCode + (authToken != null ? "&auth-token=" + authToken : "");
-					$.post("http://capitalistparadise.com/api/rmb/rate/set/?rmbPost=" + id + "&rating=0", postData, function(data, textStatus, jqXHR) {
-						var authToken = jqXHR.getResponseHeader("X-Auth-Token");
-						if (authToken != null) {
-							localStorage.setItem(getUserNation() + "-auth-token", authToken);
-							console.log(id);
-							console.log(post);
-							calculateRatings(post, id, "&time=" + Date.now());
-						}
-					});
+				doAuthorizedPostRequest("http://capitalistparadise.com/api/rmb/rate/set/?rmbPost=" + id + "&rating=0", "", function(data, textStatus, jqXHR) {
+					calculateRatings(post, id, "&time=" + Date.now());
 				});
 			});
 			post.find(".undo-rating").find("a").on("click", function(event) {
@@ -137,18 +118,8 @@ function setupRegionPage(forumViewPage) {
 				}
 				post.find(".post-rating-list").find("li").show();
 				post.find(".undo-rating").hide();
-				getNationStatesAuth(function(authCode) {	
-					var authToken = localStorage.getItem(getUserNation() + "-auth-token");
-					var postData = "nation=" + getUserNation() + "&auth=" + authCode + (authToken != null ? "&auth-token=" + authToken : "");
-					$.post("http://capitalistparadise.com/api/rmb/rate/set/?rmbPost=" + id + "&rating=-1", postData, function(data, textStatus, jqXHR) {
-						var authToken = jqXHR.getResponseHeader("X-Auth-Token");
-						if (authToken != null) {
-							localStorage.setItem(getUserNation() + "-auth-token", authToken);
-						}
-					});
-				});
+				doAuthorizedPostRequest("http://capitalistparadise.com/api/rmb/rate/set/?rmbPost=" + id + "&rating=-1", "");
 			});
-			
 		});
 
 		var html = "";
@@ -320,13 +291,16 @@ function setupRegionPage(forumViewPage) {
 		chart = new Highcharts.Chart({
 			chart: {
 				type: 'line',
-				renderTo: 'regional-pop'
+				renderTo: 'regional-pop',
+				backgroundColor: 'rgba(255, 255, 255, ' + (document.head.innerHTML.indexOf("ns.dark") != -1 ? '0.1' : '1.0') + ')'
 			},
 			title: {
-				text: 'Regional Population'
+				text: 'Regional Population',
+				color: (document.head.innerHTML.indexOf("ns.dark") != -1 ? '#D0D0D0' : '#000000')
 			},
 			subtitle: {
-				text: getVisibleRegion().replaceAll("_", " ").toTitleCase()
+				text: getVisibleRegion().replaceAll("_", " ").toTitleCase(),
+				color: (document.head.innerHTML.indexOf("ns.dark") != -1 ? '#D0D0D0' : '#000000')
 			},
 			xAxis: {
 				dateTimeLabelFormats: {
@@ -384,9 +358,9 @@ function addUpdateTime() {
 		}
 		if (update.mean != 0) {
 			var nextUpdate = (Math.floor(Date.now() / (24 * 60 * 60 * 1000)) * 24 * 60 * 60 * 1000) + update.mean;
-			text = "<i style='font-size:16px; margin-left:20px;'>Next Update: " +  (new Date(nextUpdate)).customFormat("#hh#:#mm#:#ss# #AMPM#") + " [ &plusmn; " + Math.floor(update.std * 2 / 1000) + " s]</i>"
+			text = "<span class='updatetime'>Next Update: " +  (new Date(nextUpdate)).customFormat("#hh#:#mm#:#ss# #AMPM#") + " [&plusmn; " + Math.floor(update.std * 2 / 1000) + " s]</span>"
 		} else {
-			text = "<i style='font-size:16px; margin-left:20px;'>Next Update: UNKNOWN [NO DATA]</i>";
+			text = "<span class='updatetime'>Next Update: UNKNOWN [NO DATA]</span>";
 		}
 		$("h1:first").html($("h1:first").html() + text);
 	}).fail(function() {

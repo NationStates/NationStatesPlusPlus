@@ -547,3 +547,16 @@ fieldset.preview {
 	list-style: none;
 	display: inline;
 }
+
+.updatetime {
+	font-size: 12px;
+	margin-left: 20px;
+	font-family: Verdana,Tahoma;
+	text-shadow: none;
+	box-shadow: 2px 2px 6px #CCC;
+	padding: 2px 6px 2px 6px;
+	background-color: #FFF;
+	border: 2px solid #CCC;
+	font-weight: bold;
+	border-radius: 5px;
+}
