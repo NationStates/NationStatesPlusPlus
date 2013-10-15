@@ -334,13 +334,14 @@ function addUpdateTime() {
 	$.get("http://capitalistparadise.com/api/region/updatetime/?region=" + getVisibleRegion() + "&v=1", function(data) {
 		var text;
 		var update;
-		if (Date.now() > data.minor.mean + (Math.floor(Date.now() / (24 * 60 * 60 * 1000)) * 24 * 60 * 60 * 1000)) {
+		var hours = (Math.floor(Date.now() / (24 * 60 * 60 * 1000)) * 24 * 60 * 60 * 1000);
+		if (Math.abs(Date.now() - (hours + data.major.mean)) < Math.abs(Date.now() - (hours + data.minor.mean))) {
 			update = data.major;
 		} else {
 			update = data.minor;
 		}
 		if (update.mean != 0) {
-			var nextUpdate = (Math.floor(Date.now() / (24 * 60 * 60 * 1000)) * 24 * 60 * 60 * 1000) + update.mean;
+			var nextUpdate = hours + update.mean;
 			text = "<span class='updatetime'>Next Update: " +  (new Date(nextUpdate)).customFormat("#hh#:#mm#:#ss# #AMPM#") + " [&plusmn; " + Math.floor(update.std * 2 / 1000) + " s]</span>"
 		} else {
 			text = "<span class='updatetime'>Next Update: UNKNOWN [NO DATA]</span>";
