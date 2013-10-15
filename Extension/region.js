@@ -133,7 +133,10 @@ function setupRegionPage() {
 	
 		$(".small").attr("class", "button");
 		$(".hilite").attr("class", "button");
-		$("input[type='submit'].button").html($("input[type='submit'].button").val()).changeElementType("button")
+		var dossier = $("input[type='submit'].button");
+		if (dossier.length > 0) {
+			dossier.html(dossier.val()).changeElementType("button")
+		}
 		
 		for (var i = 0; i < postIds.length; i++) {
 			$(window).trigger("rmb/update", [ $("#rmb-post-" + postIds[i]) ]);
