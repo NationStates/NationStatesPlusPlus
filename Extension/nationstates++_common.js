@@ -438,7 +438,6 @@ function doAuthorizedPostRequest(url, postData, success, failure) {
 	getNationStatesAuth(function(authCode) {
 		var authToken = localStorage.getItem(getUserNation() + "-auth-token");
 		postData = "nation=" + getUserNation() + "&auth=" + authCode + (authToken != null ? "&auth-token=" + authToken : "") + (postData.length > 0 ? "&" + postData : "");
-		console.log("Posting:" + postData + " to " + url);
 		$.post(url, postData, function(data, textStatus, jqXHR) {
 			var authToken = jqXHR.getResponseHeader("X-Auth-Token");
 			if (authToken != null) {
@@ -836,7 +835,7 @@ function linkify(inputText) {
 	replacePattern3 = /(\w+@[a-zA-Z_]+?\.[a-zA-Z]{2,6})/gim;
 	replacedText = replacedText.replace(replacePattern3, '<a href="mailto:$1">$1</a>');
 
-		return replacedText;
+	return replacedText;
 }
 
 function isInRange(min, value, max) {

@@ -1,31 +1,28 @@
-var quote = '<a href="javascript:void(0)" class="QuoteButton rmbcomment" id="view-comment-link-${id}" style="margin-right: 5px; display:none;">View Comments</a><a href="javascript:void(0)" class="QuoteButton rmbcomment" id="comment-link-${id}" style="margin-right: 5px; display:none;">Add Comment</a><a href="javascript:void(0)" class="QuoteButton rmbcomment-submit" id="submit-comment-link-${id}" style="margin-right: 5px; display:none;">Submit</a><a href="javascript:void(0)" class="QuoteButton rmbcomment-cancel" id="cancel-comment-link-${id}" style="display:none;">Cancel</a><textarea id="comment-rmb-${id}" style="width: 100%; height: 8em; display:none;" wrap="soft"></textarea>';
 (function() {
 	if (getVisiblePage() == "region" || getVisiblePage() == "display_region") {
-		setupRegionPage(false);
+		setupRegionPage();
 	} else if (getVisiblePage() == "display_region_rmb") {
-		setupRegionPage(true);
+		$('[name="lodge_message"]').attr("class", "button icon approve primary");
+		$('[name="lodge_message"]').attr("value", "1");
+		$('[name="lodge_message"]').changeElementType("button");
+		$('[name="lodge_message"]').html("Lodge Message");
+		$('[name="preview"]').attr("class", "previewbutton button search icon");
+		$('[name="preview"]').removeAttr("value");
+		$('[name="preview"]').changeElementType("button");
+		$('[name="preview"]').html("Preview");
 	}
 })();
 
-function setupRegionPage(forumViewPage) {
+function setupRegionPage() {
 	if (isSettingEnabled("auto_update")) {
 		checkForRMBUpdates(10000);
 	}
-	
-	if (!forumViewPage) {
-		if (isSettingEnabled("infinite_scroll")) {
-			$(".rmbolder").remove();
-		}
-	} else {
-		$("h6[align='center']").remove();
-		$("#toplink").remove();
-	}
 
-	var rmbPost = document.forms["rmb"];
-	if (typeof rmbPost == 'undefined') {
-		quote = "";
+	if (isSettingEnabled("infinite_scroll")) {
+		$(".rmbolder").remove();
 	}
-	
+	addUpdateTime();
+
 	if (isAntiquityTheme()) {
 		var html = "<tr>" + $("tbody:last").children(":first").html() + "</tr>";
 		var children;
@@ -35,12 +32,10 @@ function setupRegionPage(forumViewPage) {
 			children = $("tbody:last").children(":not(:first)").get();
 		}
 		$(children).each( function() {
-			html += parseRMBPost($(this).html(), quote, $(this).attr('class'));
+			html += parseRMBPost($(this).html(), $(this).attr('class'));
 		});
 		$("tbody:last").html(html);
 	} else {
-		$("input[type='submit'].button").html($("input[type='submit'].button").val()).changeElementType("button")
-		
 		$(window).on("rmb/update", function(event, post) {
 			var id = post.attr("id").split("-")[post.attr("id").split("-").length - 1];
 			post.find(".rmbmsg2").append("<div postid='" + id + "' class='post-ratings'><ul class='post-rating-list' style='opacity: 0;'><li class='undo-rating' style='display:none;'><a href='javascript:void(0)'>Undo Rating</a></li><li name='like'><a href='javascript:void(0)'><img style='margin-right: 3px;' src='http://capitalistparadise.com/nationstates/static/like.png' alt='Like'></a></li><li name='dislike'><a href='javascript:void(0)'><img style='margin-right: 3px;' src='http://capitalistparadise.com/nationstates/static/dislike2.png' alt='Dislike'></a></li></ul></div>");
@@ -132,12 +127,13 @@ function setupRegionPage(forumViewPage) {
 		var postIds = []
 		$(children).each( function() {
 			postIds.push(getRMBPostId($(this).html()));
-			html += parseRMBPost($(this).html(), quote, $(this).attr('class'));
+			html += parseRMBPost($(this).html(), $(this).attr('class'));
 		});
 		$(".rmbtable2").html(html);
 	
 		$(".small").attr("class", "button");
 		$(".hilite").attr("class", "button");
+		$("input[type='submit'].button").html($("input[type='submit'].button").val()).changeElementType("button")
 		
 		for (var i = 0; i < postIds.length; i++) {
 			$(window).trigger("rmb/update", [ $("#rmb-post-" + postIds[i]) ]);
@@ -147,6 +143,7 @@ function setupRegionPage(forumViewPage) {
 	if (isSettingEnabled("infinite_scroll") || isSettingEnabled("search_rmb")) {
 		var formHtml = "<div id='rmb-post-form' style='display: none;'><div style='text-align:center;'><p>You need to " + (getUserNation().length > 0 ?  "move to the region" : "login to NationStates") + " first!</p></div></div>";
 		//Move the RMB reply area to the top
+		var rmbPost = document.forms["rmb"];
 		if (typeof rmbPost != 'undefined') {
 			//Remove the "From:" line
 			$(rmbPost).children().each( function() {
@@ -156,7 +153,7 @@ function setupRegionPage(forumViewPage) {
 			});
 
 			//Move the post form to the top
-			var formHtml = "<div id='rmb-post-form' " + (forumViewPage || !isSettingEnabled("search_rmb") ? "" : "style='display: none;'") + "><form onsubmit='rmbpost(); return false;' id='rmb'>" + rmbPost.innerHTML + "</form></div>";
+			var formHtml = "<div id='rmb-post-form' " + (!isSettingEnabled("search_rmb") ? "" : "style='display: none;'") + "><form onsubmit='rmbpost(); return false;' id='rmb'>" + rmbPost.innerHTML + "</form></div>";
 			$(rmbPost).remove();
 		}
 		var widebox = $('.widebox:last');
@@ -184,7 +181,7 @@ function setupRegionPage(forumViewPage) {
 						var postId = getRMBPostId($(this).html());
 						var rmbPost = document.getElementById("rmb-post-" + postId);
 						if (rmbPost === null) {
-							html += parseRMBPost($(this).html(), quote, $(this).attr('class'));
+							html += parseRMBPost($(this).html(), $(this).attr('class'));
 						}
 					});
 					$(html).insertBefore('.rmbrow:first').hide().show('slow');
@@ -201,18 +198,6 @@ function setupRegionPage(forumViewPage) {
 				$('.rmbolder .notloading').show();
 			});
 		});
-	}
-
-	//Forum view has old/bad buttons, have to fix them
-	if (forumViewPage && typeof rmbPost != 'undefined') {
-		$('[name="lodge_message"]').attr("class", "button icon approve primary");
-		$('[name="lodge_message"]').attr("value", "1");
-		$('[name="lodge_message"]').changeElementType("button");
-		$('[name="lodge_message"]').html("Lodge Message");
-		$('[name="preview"]').attr("class", "previewbutton button search icon");
-		$('[name="preview"]').removeAttr("value");
-		$('[name="preview"]').changeElementType("button");
-		$('[name="preview"]').html("Preview");
 	}
 
 	//Move "Switch to Forum View" to top of RMB posts
@@ -235,10 +220,6 @@ function setupRegionPage(forumViewPage) {
 	//Setup infinite scroll
 	$(window).scroll(handleInfiniteScroll);
 
-	if (forumViewPage) {
-		return;
-	}
-
 	if (isSettingEnabled("search_rmb")) {
 		//Add search box
 		widebox.prepend("<div id='searchbox' style='display: none;'><div style='margin-top:6px; text-align:center;'><input id='rmb-search-input' placeholder='Search' type='search' style='width:35%; height:25px;' name='googlesearch' onkeydown='if (event.keyCode == 13) { searchRMB(); } else { updateSearchText(); }'><p><input id='rmb-search-input-region' placeholder='Region' type='search' style='width:16.5%; margin-right: 2%; height:25px;' name='googlesearch' onkeydown='if (event.keyCode == 13) { searchRMB(); }'><input id='rmb-search-input-author' placeholder='Author' type='search' style='width:16.5%; height:25px;' name='googlesearch' onkeydown='if (event.keyCode == 13) { searchRMB(); }'><p></div></div>");
@@ -253,8 +234,7 @@ function setupRegionPage(forumViewPage) {
 	}
 
 	addFormattingButtons();
-	addUpdateTime();
-	
+
 	var census = $("h2:contains('Today's World Census Report')");
 	$("<div id='census_report_container'></div>").insertAfter(census);
 	$("#census_report_container").next().appendTo($("#census_report_container"));
@@ -348,7 +328,7 @@ function setupRegionPage(forumViewPage) {
 }
 
 function addUpdateTime() {
-	$.get("http://capitalistparadise.com/api/region/updatetime/?region=" + getVisibleRegion(), function(data) {
+	$.get("http://capitalistparadise.com/api/region/updatetime/?region=" + getVisibleRegion() + "&v=1", function(data) {
 		var text;
 		var update;
 		if (Date.now() > data.minor.mean + (Math.floor(Date.now() / (24 * 60 * 60 * 1000)) * 24 * 60 * 60 * 1000)) {
@@ -565,7 +545,7 @@ function doRMBSearch() {
 		if (data.length > 14) {
 			//Process RMB posts
 			$($(data).children()).each( function() {
-				var searchResult = $(searchResults).append(parseRMBPostWithId($(this).html(), quote, $(this).attr('class'), getRMBPostId($(this).html()) + "-search"));
+				var searchResult = $(searchResults).append(parseRMBPostWithId($(this).html(), $(this).attr('class'), getRMBPostId($(this).html()) + "-search"));
 				for (var i in keywords) {
 					var keyword = keywords[i];
 					if (keyword != null && keyword.length > 3) {
@@ -664,7 +644,7 @@ function handleInfiniteScroll() {
 					var rmbPost = document.getElementById("rmb-post-" + postId);
 					if (rmbPost === null) {
 						newPosts.push(postId);
-						html += parseRMBPost($(this).html(), quote, $(this).attr('class'));
+						html += parseRMBPost($(this).html(), $(this).attr('class'));
 					}
 				});
 				$(html).insertAfter('.rmbrow:last').hide().show('slow');
@@ -719,7 +699,7 @@ function updateRMB() {
 					var rmbPost = document.getElementById("rmb-post-" + postId);
 					if (rmbPost === null) {
 						newPosts.push(postId);
-						html += parseRMBPost($(this).html(), quote, $(this).attr('class'));
+						html += parseRMBPost($(this).html(), $(this).attr('class'));
 					} else if ($(rmbPost).find(".rmbdate").html() != "undefinied") {
 						$(rmbPost).find(".rmbdate").html($(this).find(".rmbdate").html());
 					}
@@ -747,17 +727,11 @@ function getRMBPostId(html) {
 	return postId;
 }
 
-function parseRMBPost(innerHTML, quoteHTML, className) {
-	return parseRMBPostWithId(innerHTML, quoteHTML, className, getRMBPostId(innerHTML));
+function parseRMBPost(innerHTML, className) {
+	return parseRMBPostWithId(innerHTML, className, getRMBPostId(innerHTML));
 }
 
-function parseRMBPostWithId(innerHTML, quoteHTML, className, postId) {
-	if (innerHTML.indexOf("rmbsuppressed") > -1 || innerHTML.indexOf(quoteHTML) > -1 || !isSettingEnabled("show_quote")) {
-		quoteHTML = "";
-	} else {
-		quoteHTML = quoteHTML.replaceAll("${id}", postId);
-	}
-
+function parseRMBPostWithId(innerHTML, className, postId) {
 	if (isSettingEnabled("clickable_links")) {
 		innerHTML = linkify(innerHTML);
 	}
@@ -778,16 +752,15 @@ function parseRMBPostWithId(innerHTML, quoteHTML, className, postId) {
 
 		if (localStorage.getItem("ignored-post-" + postId) == "true") {
 			innerHTML += "<div id='rmb-ignored-body-" + postId + "' class='rmbsuppressed' style='margin-top:-16px; padding-bottom:6px;'>Ignored post.</div>";
-			quoteHTML = "";
 		}
 	}
-	
+
 	if (isAntiquityTheme()) {
 		var index = innerHTML.lastIndexOf("</td>");
 		innerHTML = innerHTML.substring(0, index) + quoteHTML + "</td>" + innerHTML.substring(index + 4);
 		return ("<tr id='rmb-post-" + postId + "' class='" + className + "'>" + innerHTML + "</tr>");
 	}
-	return ("<div id='rmb-post-" + postId + "' class='" + className + "' style='display: block;'>" + innerHTML + quoteHTML + "</div>");
+	return ("<div id='rmb-post-" + postId + "' class='" + className + "' style='display: block;'>" + innerHTML + "</div>");
 }
 
 //Ignore post click handler
