@@ -37,7 +37,7 @@ public class RegionController extends DatabaseController {
 		}
 		try {
 			conn = getConnection();
-			PreparedStatement updateTime = conn.prepareStatement("SELECT normalized_start, major FROM assembly.region_update_calculations WHERE region = ? AND update_time < 75000 ORDER BY start DESC LIMIT 0, 60");
+			PreparedStatement updateTime = conn.prepareStatement("SELECT normalized_start, major FROM assembly.region_update_calculations WHERE region = ? AND update_time < 200000 ORDER BY start DESC LIMIT 0, 60");
 			updateTime.setInt(1, regionId);
 			ResultSet times = updateTime.executeQuery();
 			SummaryStatistics minor = new SummaryStatistics();

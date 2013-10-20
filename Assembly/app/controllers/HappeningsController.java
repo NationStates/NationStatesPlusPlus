@@ -108,9 +108,14 @@ public class HappeningsController extends DatabaseController {
 	public Result nationHappenings(String nation, int start) throws SQLException, ExecutionException {
 		ArrayList<HappeningData> happenings = new ArrayList<HappeningData>();
 		if (nation != null && nation.length() > 0) {
-			long time = System.nanoTime();
-			Connection conn = getConnection();
+			int nationId = getDatabase().getNationIdCache().get(nation);
+			if (nationId == -1) {
+				Utils.handleDefaultPostHeaders(request(), response());
+				return Results.noContent();
+			}
+			Connection conn = null;
 			try {
+				conn = getConnection();
 				PreparedStatement statement = conn.prepareStatement("SELECT happening, timestamp FROM assembly.global_happenings WHERE nation = ?  ORDER BY timestamp DESC LIMIT " + start + ", 20");
 				statement.setInt(1, getDatabase().getNationIdCache().get(nation));
 				ResultSet result = statement.executeQuery();
@@ -125,7 +130,6 @@ public class HappeningsController extends DatabaseController {
 			} finally {
 				DbUtils.closeQuietly(conn);
 			}
-			Logger.info("Query time for all [" + nation + "] happenings: " + (System.nanoTime() - time) / 1E6D + " ms");
 		}
 		String calculatedEtag = String.valueOf(happenings.hashCode());
 		Result result = Utils.handleDefaultGetHeaders(request(), response(), calculatedEtag);

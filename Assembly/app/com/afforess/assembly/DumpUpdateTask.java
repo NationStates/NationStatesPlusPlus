@@ -205,11 +205,15 @@ public class DumpUpdateTask implements Runnable {
 		Connection conn = pool.getConnection();
 		int id = -1;
 		try {
-			PreparedStatement select = conn.prepareStatement("SELECT id FROM assembly.nation WHERE name = ?");
+			PreparedStatement select = conn.prepareStatement("SELECT id, wa_member, region FROM assembly.nation WHERE name = ?");
 			select.setString(1, nation);
 			ResultSet result = select.executeQuery();
+			int prevRegion = -1;
+			boolean wasWA = false;
 			if (result.next()) {
 				id = result.getInt(1);
+				wasWA = result.getBoolean(2);
+				prevRegion = result.getInt(3);
 			}
 			select = conn.prepareStatement("SELECT id FROM assembly.region WHERE name = ?");
 			select.setString(1, Utils.sanitizeName(region));
@@ -242,7 +246,11 @@ public class DumpUpdateTask implements Runnable {
 				insert.setInt(4, regionId);
 				insert.setString(5, influence);
 				insert.setInt(6, lastLogin);
-				insert.setByte(7, (byte)(waMember ? 1 : 0));
+				if (prevRegion != regionId && wasWA) {
+					insert.setByte(7, (byte)(2));
+				} else {
+					insert.setByte(7, (byte)(waMember ? 1 : 0));
+				}
 				insert.setInt(8, id);
 				insert.executeUpdate();
 				return 0;

@@ -136,7 +136,7 @@ public class HappeningsTask implements Runnable {
 					nation = Utils.sanitizeName(title);
 					nationId = access.getNationIdCache().get(nation);
 					if (nationId == -1) {
-						PreparedStatement insert = conn.prepareStatement("INSERT INTO assembly.nation (name, title, full_name, region, first_seen) VALUES (?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);
+						PreparedStatement insert = conn.prepareStatement("INSERT INTO assembly.nation (name, title, full_name, region, first_seen, wa_member) VALUES (?, ?, ?, ?, ?, 2)", Statement.RETURN_GENERATED_KEYS);
 						insert.setString(1, nation);
 						insert.setString(2, title);
 						insert.setString(3, WordUtils.capitalizeFully(nation.replaceAll("_", " ")));
@@ -298,7 +298,7 @@ public class HappeningsTask implements Runnable {
 		Logger.info("Relocating " + nation + " from " + prevRegion + " to " + newRegion);
 		if (prevRegion != null && newRegion != null) {
 			//Double check they are still at their prev region before setting their new region!
-			PreparedStatement update = conn.prepareStatement("UPDATE assembly.nation SET region = ? WHERE id = ? AND region = ?");
+			PreparedStatement update = conn.prepareStatement("UPDATE assembly.nation SET region = ?, wa_member = 2 WHERE id = ? AND region = ?");
 			update.setInt(1, getOrCreateRegion(conn, nation, newRegion));
 			update.setInt(2, nationId);
 			update.setInt(3, getOrCreateRegion(conn, nation, prevRegion));
