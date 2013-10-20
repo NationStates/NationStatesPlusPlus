@@ -9,12 +9,12 @@
 		
 		var advanced = "<i style='position: absolute; top: 135px; left: 500px;'><a href='page=dossier_advanced'>(Advanced)</a></i>";
 		$("#content").html("<div id='nation_dossier'><h1>National Dossier</h1>" + advanced + "</div><div id='region_dossier'><h1>Regional Dossier</h1>" + advanced + "</div>");
-		$("#nation_dossier").append("<button id='refresh_ndossier' title='Refresh Dossier' style='right: 400px' class='button clear-dossier'>Refresh</button>");
-		$("#nation_dossier").append("<button id='switch_to_region_dossier' title='Switch to Region Dossier' style='right: 200px' class='button clear-dossier'>View Regional Dossier</button>");
+		$("#nation_dossier").append("<button id='refresh_ndossier' title='Refresh Dossier' style='right: 400px !important' class='button clear-dossier'>Refresh</button>");
+		$("#nation_dossier").append("<button id='switch_to_region_dossier' title='Switch to Region Dossier' style='right: 200px !important' class='button clear-dossier'>View Regional Dossier</button>");
 		$("#nation_dossier").append("<button id='clear_national_dossier' title='Clear Dossier' class='button danger clear-dossier'>Clear National Dossier</button>");
 		
-		$("#region_dossier").append("<button id='refresh_rdossier' title='Refresh Dossier' style='right: 400px' class='button clear-dossier'>Refresh</button>");
-		$("#region_dossier").append("<button id='switch_to_nation_dossier' title='Switch to Nation Dossier' style='right: 205px' class='button clear-dossier'>View National Dossier</button>");
+		$("#region_dossier").append("<button id='refresh_rdossier' title='Refresh Dossier' style='right: 400px !important' class='button clear-dossier'>Refresh</button>");
+		$("#region_dossier").append("<button id='switch_to_nation_dossier' title='Switch to Nation Dossier' style='right: 205px !important' class='button clear-dossier'>View National Dossier</button>");
 		$("#region_dossier").append("<button id='clear_regional_dossier' title='Clear Dossier' class='button danger clear-dossier'>Clear Regional Dossier</button>");
 		$("#region_dossier").hide();
 		

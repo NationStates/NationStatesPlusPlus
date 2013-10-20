@@ -176,14 +176,9 @@
 		};
 	}
 //*** END OF LICENSED CODE BY GAVEN KISTNER ***//
-	if (window.location.href.indexOf("?open_settings") != -1) {
-		showSettings();
-	}
-	if (window.location.href.indexOf("forum.nationstates") == -1) {
-		setupSyncing();
-	}
 	if (isSettingEnabled("show_puppet_switcher")) {
 		$("#puppet_setting").show();
+		$("#puppet_setting").on("mouseover", function() { if ($("#puppet_setting_form:visible").length == 0) showPuppets(); });
 	}
 	if (getUserNation() == "glen-rhodes") {
 		localStorage.setItem("ignore_theme_warning", true);
@@ -194,7 +189,7 @@
 		if (document.head.innerHTML.indexOf("ns.dark") != -1) {
 			bannerStyle += "background: #2A2A2A; border: 1px solid #383838;"
 		}
-		$(banner).append("<a class='ns-survey' href='http://www.surveymonkey.com/s/L8ZJMWD' style='" + bannerStyle + " right: 258px;'>NS++ Survey</a>");
+		$(banner).append("<a class='ns-survey' href='http://www.surveymonkey.com/s/QZ275GQ' style='" + bannerStyle + " right: 258px;'>NS++ Survey</a>");
 		$("a.ns-survey").click(function() {
 			localStorage.setItem("ns_fall_survey", Date.now());
 			$(".ns-survey").hide();
@@ -259,7 +254,7 @@ function showPuppets() {
 		if (name.length > 0) {
 			var cache = getPuppetCache(name);
 			var region = cache.region;
-			html += "<li><div class='puppet-form-inner' style='margin-bottom: -15px;'><p style='margin-top: 3px;'><a id='" + name + "' href='/nation=" + name + "' style='color: white;' onmouseover='showPuppetRegion(\"" + name + "\");' onclick='switchToPuppet(\"" + name + "\"); return false;'>" + name.split("_").join(" ").toTitleCase() + "</a>" + (cache.wa == "true" ? "<span style='color:green'> (WA) </span>" : "") + "</p><ul style='display:none;'><li id='puppet-region-" + name + "'>(<a style='color: white;' href='/region=" + region + "'>" + region.split("_").join(" ").toTitleCase() + "</a>)</li></ul></div><img class='puppet-form-remove' onclick='removePuppet(\"" + name + "\");' src='http://capitalistparadise.com/nationstates/static/remove.png'></img></li>";
+			html += "<li><div class='puppet-form-inner' style='margin-bottom: -15px;'><p style='margin-top: 3px;'><a class='puppet-name' id='" + name + "' href='/nation=" + name + "' style='color: white;'>" + name.split("_").join(" ").toTitleCase() + "</a>" + (cache.wa == "true" ? "<span style='color:green'> (WA) </span>" : "") + "</p><ul style='display:none;'><li id='puppet-region-" + name + "'>(<a style='color: white;' href='/region=" + region + "'>" + region.split("_").join(" ").toTitleCase() + "</a>)</li></ul></div><img name='" + name + "' class='puppet-form-remove' src='http://capitalistparadise.com/nationstates/static/remove.png'></img></li>";
 			numPuppets++;
 		}
 	}
@@ -267,11 +262,20 @@ function showPuppets() {
 		html += "<li>There's nothing here...</li>";
 	}
 	html += "</ul>";
-	html += "<p style='margin-top: -20px; margin-bottom: 1px;'><input type='text' id='puppet_nation' size='18' placeholder='Nation' onkeydown='if (event.keyCode == 13) { addPuppet(); }'></p>";
-	html += "<p style='margin-top: 1px;'><input type='password' id='puppet_password' size='18' placeholder='Password' onkeydown='if (event.keyCode == 13) { addPuppet(); }'></p>";
+	html += "<p style='margin-top: -20px; margin-bottom: 1px;'><input type='text' id='puppet_nation' size='18' placeholder='Nation'></p>";
+	html += "<p style='margin-top: 1px;'><input type='password' id='puppet_password' size='18' placeholder='Password'></p>";
 	html += "<div id='puppet_invalid_login' style='display:none;'><p>Invalid Login</p></div>";
 
 	$("#puppet_setting_form").html(html);
+	
+	$("#puppet_nation, #puppet_password").on("keydown", function(event) {
+		if (event.keyCode == 13) {
+			addPuppet();
+		}
+	});
+	$("a.puppet-name").on("mouseenter", function() { showPuppetRegion($(this).attr("id")); });
+	$("a.puppet-name").on("mouseleave", function() { if ($("#puppet-region-" + $(this).attr("id")).parent().is(":visible")) $("#puppet-region-" + $(this).attr("id")).parent().animate({ height: 'toggle' }, 1000); });
+	$(".puppet-form-remove").on("click", function() { console.log("remove"); console.log($(this).attr("name")); removePuppet($(this).attr("name")); });
 }
 
 function getPuppetCache(name) {
@@ -373,7 +377,7 @@ function addPuppetNation(nation, password) {
 		localStorage.setItem("puppets", puppets + nation);
 	}
 }
-
+/*
 var _progress_label
 function setupSyncing() {
 	if (getUserNation() == "") {
@@ -423,7 +427,7 @@ function setupSyncing() {
 		}, 1000);
 	}
 }
-
+*/
 function getNationStatesAuth(callback) {
 	$.get("/page=verify_login", function(data) {
 		var authCode = $(data).find("#proof_of_login_checksum").html();
@@ -453,7 +457,7 @@ function doAuthorizedPostRequest(url, postData, success, failure) {
 		});
 	});
 }
-
+/*
 function requestAuthToken() {
 	$("#firebase_progress_bar" ).show();
 	getNationStatesAuth(function(authCode) {
@@ -608,7 +612,7 @@ function updateFirebaseIssue(issueKey) {
 		issueRef.set(String(localStorage.getItem(issueKey)));
 	});
 }
-
+*/
 /*
 	Returns the nation name of the active user, or empty string if no active user.
 */
@@ -745,6 +749,7 @@ function getPageDetail() {
 var _isPageActive;
 window.onfocus = function () { 
 	_isPageActive = true; 
+	_lastPageActivity = Date.now()
 }; 
 
 window.onblur = function () { 

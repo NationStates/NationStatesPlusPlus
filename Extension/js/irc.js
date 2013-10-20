@@ -32,7 +32,8 @@
 		{region: "the_grand_northern_imperium", network: "irc.esper.net", channel: "#GNI"},
 		{region: "the_royal_alliance", network: "irc.uk.mibbit.net", channel: "#TheRoyalAlliance"},
 		{region: "the_commonwealth_of_kings", network: "irc.esper.net", channel: "#CoK"},
-		{region: "confederation_of_nations", network: "irc.esper.net", channel: "#Confederation_of_Nations"}
+		{region: "confederation_of_nations", network: "irc.esper.net", channel: "#Confederation_of_Nations"},
+		{region: "inceptum", network: "irc.esper.net", channel: "#Inceptum"}
 
 	];
 	if (getVisiblePage() == "region" && getUserNation() !== "") {
@@ -50,11 +51,25 @@
 				ircUrl += (nickOverride == null ? getUserNation().replaceAll("_", " ").toTitleCase().replaceAll(" ", "_") : nickOverride) + "&" + region["channel"];
 				$("<h2 style='display: inline-block; margin-bottom: 0;'>Regional IRC</h2>" + 
 				"<div style='display: inline; margin-left: 10px;'>" +
-				"<a id='irc-link' href='javascript:void(0)' onclick=toggleIRC(this)>(Hide)</a></div>" + 
+				"<a class='irc-link' href='javascript:void(0)'>(Hide)</a></div>" + 
 				"<iframe seamless='seamless' id='irc-frame' src='" + ircUrl + 
 				"' style='border:2px solid; width:100%; height:500px;'></iframe><div class='hzln'></div>").insertBefore($("h2:contains('Today's World Census Report')"));
+				var toggleIRC = function() {
+					var irc = $("a.irc-link");
+					if ($(irc).html() == "(Hide)") {
+						$(irc).html("(Show)");
+						$("#irc-frame").hide();
+						localStorage.setItem("show_irc", false);
+					} else {
+						$(irc).html("(Hide)");
+						$("#irc-frame").show();
+						localStorage.setItem("show_irc", true);
+					}
+				}
+				$("a.irc-link").on("click", toggleIRC);
+
 				if (localStorage.getItem("show_irc") == "false") {
-					toggleIRC($("#irc-link"));
+					toggleIRC();
 				}
 				break;
 			}
@@ -62,14 +77,3 @@
 	}
 })();
 
-function toggleIRC(irc) {
-	if ($(irc).html() == "(Hide)") {
-		$(irc).html("(Show)");
-		$("#irc-frame").hide();
-		localStorage.setItem("show_irc", false);
-	} else {
-		$(irc).html("(Hide)");
-		$("#irc-frame").show();
-		localStorage.setItem("show_irc", true);
-	}
-}

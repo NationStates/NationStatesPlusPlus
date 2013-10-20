@@ -4,7 +4,6 @@
 			linkifyTelegrams();
 		}
 		addTelegramSearch();
-		addBlockSender();
 		addReplyToAll();
 		addFormattingButtons();
 	}
@@ -13,34 +12,6 @@
 		$(".tgcontent").children("p").each(function() {
 			if ($(this).attr('class') != "replyline") {
 				$(this).html(linkify($(this).html()));
-			}
-		});
-	}
-	
-	function addBlockSender() {
-		$(".tg").each(function() {
-			if ($(this).find(".tgreplybutton").length > 0) {
-				var replyLine = $(this).find(".replyline");
-				if (typeof replyLine.find(".tgreplybutton").attr("href") != "undefined") {
-				
-					var replyTo = replyLine.find(".tgreplybutton").attr("href").split("=");
-					replyTo = replyTo[replyTo.length - 1];
-					
-					var sender = $(this).find(".tg_headers").find(".nlink:first").attr("href").substring(7);
-					var deleteTg = $(this).find(".tgdelete");
-
-					$("<button id='blocksender-" + replyTo + "-" + sender + "' class='button icon remove danger'>Block Sender</button>").insertBefore(deleteTg);
-					$("#blocksender-" + replyTo + "-" + sender).click(function() {
-						var nation = $(this).attr("id").split("blocksender-" + replyTo + "-")[1];
-						console.log("Block Sender: " + nation);
-						$.get("http://www.nationstates.net/page=tgsettings?block_sender=" + nation, function(html) {
-							var info = $(html).find(".info").html();
-							$("<p id='" + replyTo + "' class='info'>" + info + "</p>").insertAfter("h1:first");
-							setTimeout(function() { $("#" + replyTo).remove(); }, 6000);
-							$("html, body").animate({ scrollTop: 0 }, "slow");
-						});
-					});
-				}
 			}
 		});
 	}

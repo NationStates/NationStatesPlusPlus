@@ -63,104 +63,13 @@
 								  "Switching Your Vote While No One Is Looking", "Spinning In A Wheeled Office Chair", "Saving The Rainforest", "Watching Big Brother",
 								  "Building A Metropolis", "Taking Just One More Turn", "Watching Paint Dry"]
 		$("#" + (showInfluence ? 'influence' : 'power')).html("<div id='snark' style='text-align:center; font-weight: bold; font-size: 16px;'><img style='margin-bottom: -2px; margin-right: 4px;' src='/images/loading1.gif'>" + snarkyComments[Math.floor(Math.random() * snarkyComments.length)] + "</div>");
-		$.get("http://capitalistparadise.com/api/region/wa/?region=" + region, function(data) {
-			var categoryTitles = [];
-			var endorsements = [];
-			var influence = [];
-			var playerIndex = -1;
-			for (var nation in data) {
-				categoryTitles.push(nation );   
+		var listener = function(event) {
+			if (event.data.method == "highcharts-adapter-enabled") {
+				window.postMessage({ method: "draw_national_power", region: region, title: region.replaceAll("_", " ").toTitleCase(), visibleNation: getVisibleNation(), showInfluence: showInfluence}, "*");
+				window.removeEventListener('message', listener, false);
 			}
-			var sortNames = function(a, b) {
-				return data[b].endorsements - data[a].endorsements;
-			};
-			categoryTitles.sort(sortNames);
-    		for (var i = 0; i < categoryTitles.length; i++) {
-				var nation = data[categoryTitles[i]];
-				endorsements.push(nation.endorsements);
-				influence.push(nation.influence);
-				if (playerIndex == -1 && categoryTitles[i].toLowerCase().replaceAll(" ", "_") == getVisibleNation()) {
-					playerIndex = i;
-				}
-				categoryTitles[i] = "<b>" + categoryTitles[i] + "</b>";
-			}
-			if (activeChart != null) {
-				activeChart.destroy();
-			}
-			var series;
-			if (showInfluence) {
-				series = [{	name: 'Influence', data: influence, color: '#AA4643' },{
-							name: 'Endorsements', data: endorsements, color: '#4572A7' }]
-			} else {
-				series = [{ name: 'Endorsements', data: endorsements, color: '#4572A7' }]
-			}
-			var container = $('<div>');
-			chart = new Highcharts.Chart({
-				chart: {
-					type: 'bar',
-					renderTo: container[0],
-					width: $("#" + (showInfluence ? 'influence' : 'power')).width(),
-					height: Math.max(300, 100 + (categoryTitles.length * 26 * (showInfluence ? 2 : 1))),
-					backgroundColor: 'rgba(255, 255, 255, ' + (document.head.innerHTML.indexOf("ns.dark") != -1 ? '0.1' : '1.0') + ')'
-				},
-				title: {
-					text: 'World Assembly Endorsements',
-					color: (document.head.innerHTML.indexOf("ns.dark") != -1 ? '#D0D0D0' : '#000000')
-				},
-				subtitle: {
-					text: 'Region: ' + region.replaceAll("_", " ").toTitleCase(),
-					color: (document.head.innerHTML.indexOf("ns.dark") != -1 ? '#D0D0D0' : '#000000')
-				},
-				xAxis: {
-					categories: categoryTitles,
-					title: {
-						text: null
-					}
-				},
-				yAxis: {
-					min: 0,
-					title: {
-						text: 'Endorsements',
-						align: 'high'
-					},
-					labels: {
-						overflow: 'justify',
-						useHTML: true
-					},
-				},
-				plotOptions: {
-					bar: {
-						dataLabels: {
-							enabled: true
-						}
-					},
-					series: {
-						cursor: 'pointer',
-						point: {
-							events: {
-								click: function() {
-									var nation = this.category.substring(3, this.category.length - 4);
-									window.location.href = "http://www.nationstates.net/nation=" + nation.toLowerCase().replaceAll(" ", "_") + "/detail=wa_stats/stats=" + (showInfluence ? 'influence' : 'power');
-								}
-							}
-						}
-					}
-				},
-				credits: {
-					enabled: false
-				},
-				series: series
-			});
-			activeChart = chart;
-			if (playerIndex > -1) {
-				for (var i = 0; i < chart.series.length; i++) {
-					chart.series[i].data[playerIndex].update({
-						color: "#FF0000"
-					});
-				}
-			}
-			setTimeout(function() { $("#snark").remove(); container.appendTo($("#" + (showInfluence ? 'influence' : 'power')));}, 2000);
-		});
+		};
+		window.addEventListener("message", listener);
 	};
 	
 	function loadEndorsementStats(region) {
@@ -220,9 +129,13 @@
 							"<a name='wa_stats' href='nation=" + getVisibleNation() + "/detail=wa_stats/stats=endorsements'>Endorsments</a>" +
 							"</h3><div name='wa_stats' id='power'></div><div name='wa_stats' id='influence'></div><div name='wa_stats' id='endorsements'></div>");
 		$("a[name='wa_stats']").on("click", function(event) {
+			if (event.ctrlKey && event.button == 0 || event.button != 0) {
+				return;
+			}
 			event.preventDefault();
 			stats = getDetailStats($(this).attr("href"));
 			loadWAStats(stats);
+			window.postMessage({ method: "reset_highcharts_adapter"}, "*");
 		});
 		var stat = getDetailStats();
 		if (stat == "") stat = "power";

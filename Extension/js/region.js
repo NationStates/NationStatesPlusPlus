@@ -134,10 +134,10 @@ function setupRegionPage() {
 		$(".small").attr("class", "button");
 		$(".hilite").attr("class", "button");
 		var dossier = $("input[type='submit'].button");
-		if (dossier.length > 0) {
-			dossier.html(dossier.val()).changeElementType("button")
-		}
-		
+		$("input[type='submit'].button").each(function() {
+			$(this).html($(this).val()).changeElementType("button")
+		});
+
 		for (var i = 0; i < postIds.length; i++) {
 			$(window).trigger("rmb/update", [ $("#rmb-post-" + postIds[i]) ]);
 		}
@@ -225,10 +225,14 @@ function setupRegionPage() {
 
 	if (isSettingEnabled("search_rmb")) {
 		//Add search box
-		widebox.prepend("<div id='searchbox' style='display: none;'><div style='margin-top:6px; text-align:center;'><input id='rmb-search-input' placeholder='Search' type='search' style='width:35%; height:25px;' name='googlesearch' onkeydown='if (event.keyCode == 13) { searchRMB(); } else { updateSearchText(); }'><p><input id='rmb-search-input-region' placeholder='Region' type='search' style='width:16.5%; margin-right: 2%; height:25px;' name='googlesearch' onkeydown='if (event.keyCode == 13) { searchRMB(); }'><input id='rmb-search-input-author' placeholder='Author' type='search' style='width:16.5%; height:25px;' name='googlesearch' onkeydown='if (event.keyCode == 13) { searchRMB(); }'><p></div></div>");
+		widebox.prepend("<div id='searchbox' style='display: none;'><div style='margin-top:6px; text-align:center;'><input id='rmb-search-input' placeholder='Search' type='search' style='width:35%; height:25px;' name='googlesearch'><p><input id='rmb-search-input-region' placeholder='Region' type='search' style='width:16.5%; margin-right: 2%; height:25px;' name='googlesearch'><input id='rmb-search-input-author' placeholder='Author' type='search' style='width:16.5%; height:25px;' name='googlesearch'><p></div></div>");
 
 		//Add rmb menu area
-		widebox.prepend("<div id='rmb-menu' style='text-align: center;'><button class='button RoundedButton' onclick='toggleRMBPostForm();'>Leave a message</button> <button class='button RoundedButton' onclick='toggleSearchForm();'>Search messages</button></div");
+		widebox.prepend("<div id='rmb-menu' style='text-align: center;'><button class='button RoundedButton rmb-message'>Leave a message</button> <button class='button RoundedButton search-rmb'>Search messages</button></div");
+		
+		$("button.rmb-message").on("click", toggleRMBPostForm);
+		$("button.search-rmb").on("click", toggleSearchForm);
+		$("#rmb-search-input, #rmb-search-input-region, #rmb-search-input-author").on("keydown", searchRMB);
 		
 		if (isAntiquityTheme()) {
 			$("#rmb-menu").css("margin-bottom", "20px");
@@ -263,61 +267,22 @@ function setupRegionPage() {
 		$("a.toggle-census-report").html("(Show)");
 	}
 	$("<h2>Regional Population <a style='font-family: Verdana,Tahoma; font-size: 10pt; margin-left: 10px;' class='toggle-pop-report' href='#'>(Hide)</a></h2><div id='regional-pop'></div><div class='hzln'></div>").insertAfter($("#census_report_container").next());
-	$.get("http://capitalistparadise.com/api/region/population/?region=" + getVisibleRegion(), function(data) {
-		var populations = [];
-		for (var i = data.region.length - 1; i >= 0; i--) {
-			var element = [];
-			element.push(data.region[i].timestamp);
-			element.push(data.region[i].population);
-			populations.push(element);
+	var listener = function(event) {
+		if (event.data.method == "highcharts-adapter-enabled") {
+			window.postMessage({ method: "draw_region_chart", region: getVisibleRegion(), title: getVisibleRegion().replaceAll("_", " ").toTitleCase()}, "*");
+			window.removeEventListener('message', listener, false);
 		}
-		chart = new Highcharts.Chart({
-			chart: {
-				type: 'line',
-				renderTo: 'regional-pop',
-				backgroundColor: 'rgba(255, 255, 255, ' + (document.head.innerHTML.indexOf("ns.dark") != -1 ? '0.1' : '1.0') + ')'
-			},
-			title: {
-				text: 'Regional Population',
-				color: (document.head.innerHTML.indexOf("ns.dark") != -1 ? '#D0D0D0' : '#000000')
-			},
-			subtitle: {
-				text: getVisibleRegion().replaceAll("_", " ").toTitleCase(),
-				color: (document.head.innerHTML.indexOf("ns.dark") != -1 ? '#D0D0D0' : '#000000')
-			},
-			xAxis: {
-				dateTimeLabelFormats: {
-					month: '%e. %b',
-					year: '%b'
-				},
-				type: 'datetime',
-				title: {
-					text: null
-				}
-			},
-			yAxis: {
-				min: 0,
-				title: {
-					text: 'Population',
-					align: 'high'
-				},
-				labels: {
-					overflow: 'justify',
-					useHTML: true
-				}
-			},
-			credits: {
-				enabled: false
-			},
-			series:  [{ name: 'Population', data: populations, color: '#4572A7' }]
-		});
-	});
+	};
+	window.addEventListener("message", listener);
+
 	$("a.toggle-pop-report").click(function(event) {
 		event.preventDefault();
 		if ($("#regional-pop:visible").length == 0) {
 			$("#regional-pop").show();
 			$("a.toggle-pop-report").html("(Hide)");
 			localStorage.removeItem("show_regional_population");
+			//Highcharts.charts[0].setSize($("#regional-pop").width(), 400, true);
+			window.postMessage({ method: "set_chart_size", chartIndex: 0, width: $("#regional-pop").width(), height: 400}, "*");
 		} else {
 			$("#regional-pop").hide();
 			$("a.toggle-pop-report").html("(Show)");
@@ -335,7 +300,7 @@ function addUpdateTime() {
 		var text;
 		var update;
 		var hours = (Math.floor(Date.now() / (24 * 60 * 60 * 1000)) * 24 * 60 * 60 * 1000);
-		if (Math.abs(Date.now() - (hours + data.major.mean)) < Math.abs(Date.now() - (hours + data.minor.mean))) {
+		if ((Date.now() - hours) > data.minor.mean || (Date.now() - hours) < data.major.mean){
 			update = data.major;
 		} else {
 			update = data.minor;
@@ -343,10 +308,9 @@ function addUpdateTime() {
 		if (update.mean != 0) {
 			var nextUpdate = hours + update.mean;
 			text = "<span class='updatetime'>Next Update: " +  (new Date(nextUpdate)).customFormat("#hh#:#mm#:#ss# #AMPM#") + " [&plusmn; " + Math.floor(update.std * 2 / 1000) + " s]</span>"
-		} else {
-			text = "<span class='updatetime'>Next Update: UNKNOWN [NO DATA]</span>";
+			$("h1:first").html($("h1:first").html() + text);
 		}
-		$("h1:first").html($("h1:first").html() + text);
+		
 	}).fail(function() {
 		$("h1:first").html($("h1:first").html() + "<i style='font-size:16px; margin-left:20px;'>Next Update: UNKNOWN - NO DATA - </i>");
 	});
@@ -488,7 +452,10 @@ var keywords;
 var lastSearchSuccessful = false;
 var searchOffset = 0;
 var cancelled = false;
-function searchRMB() {
+function searchRMB(event) {
+	if (event.keyCode != 13) {
+		return;
+	}
 	var searchWords = document.getElementById("rmb-search-input").value;
 	_gaq.push(['_trackEvent', 'RMB', 'Search', searchWords]);
 	keywords = searchToKeywords(searchWords);
