@@ -40,13 +40,18 @@ public class HappeningsController extends DatabaseController {
 
 	public Result regionHappenings(String region, int start) throws SQLException, ExecutionException {
 		start = Math.max(0, start);
+		int regionId = getDatabase().getRegionIdCache().get(Utils.sanitizeName(region));
+		if (regionId == -1) {
+			Utils.handleDefaultPostHeaders(request(), response());
+			return Results.noContent();
+		}
 		ArrayList<HappeningData> happenings = new ArrayList<HappeningData>();
-		Connection conn = getConnection();
+		Connection conn = null;
 		try {
+			conn = getConnection();
 			PreparedStatement statement = conn.prepareStatement("SELECT happening, timestamp FROM assembly.regional_happenings_time WHERE region = ?  ORDER BY timestamp DESC LIMIT " + start + ", 20");
-			statement.setInt(1, this.getDatabase().getRegionIdCache().get(Utils.sanitizeName(region)));
+			statement.setInt(1, regionId);
 			ResultSet result = statement.executeQuery();
-			
 			while(result.next()) {
 				final String happening = Utils.formatHappeningText(result.getString(1), conn, "");
 				HappeningData data = new HappeningData();
@@ -106,6 +111,7 @@ public class HappeningsController extends DatabaseController {
 	}
 
 	public Result nationHappenings(String nation, int start) throws SQLException, ExecutionException {
+		start = Math.max(0, start);
 		ArrayList<HappeningData> happenings = new ArrayList<HappeningData>();
 		if (nation != null && nation.length() > 0) {
 			int nationId = getDatabase().getNationIdCache().get(nation);
@@ -113,6 +119,7 @@ public class HappeningsController extends DatabaseController {
 				Utils.handleDefaultPostHeaders(request(), response());
 				return Results.noContent();
 			}
+			
 			Connection conn = null;
 			try {
 				conn = getConnection();
