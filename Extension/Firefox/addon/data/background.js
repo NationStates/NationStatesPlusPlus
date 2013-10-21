@@ -1,5 +1,6 @@
+
 //versioned files are checked for modifications each page hit (slow)
-var urlPrefix = "http://direct.capitalistparadise.com/nationstates/v2_0/";
+var urlPrefix = "http://direct.capitalistparadise.com/nationstates/v2_1/";
 //static files are cached by browser for 1 week, not checked for modifications (fast)
 var staticUrlPrefix = "http://direct.capitalistparadise.com/nationstates/static/";
 
@@ -11,6 +12,7 @@ $.get(urlPrefix + "cache_buster.txt?time=" + Date.now() , function(value) {
 		localStorage.setItem("cache_buster", value);
 	}
 });
+
 
 (function() {
 	//Have to remove this one
@@ -26,6 +28,9 @@ $.get(urlPrefix + "cache_buster.txt?time=" + Date.now() , function(value) {
 		$("#maxad").remove();
 		$("#regionadbox").remove();
 		$("#dilemmasadbox").remove();
+		$("#google_image_div").remove();
+		$("iframe[name='google_osd_static_frame']").remove();
+		$("#panelad").remove();
 	}
 	
 	if (pageUrl.indexOf("template-overall=none") != -1) {
@@ -64,7 +69,7 @@ $.get(urlPrefix + "cache_buster.txt?time=" + Date.now() , function(value) {
 			var banner = $("#banner, #nsbanner");
 			$(banner).append("<div id='ns_setting'><a href='http://www.nationstates.net/page=blank?ns_settings=true' style='" + bannerStyle + " right: 78px;'>NS++ Settings</a></div>");
 			if (pageUrl.indexOf('http://forum.nationstates.net/') == -1 ) {
-				$(banner).append("<div id='puppet_setting' style='display:none;'><a href='javascript:void(0)' style='" + bannerStyle + " right: 188px;' onmouseover='return showPuppets();'>Puppets</a></div>");
+				$(banner).append("<div id='puppet_setting' style='display:none;'><a href='javascript:void(0)' style='" + bannerStyle + " right: 188px;'>Puppets</a></div>");
 			}
 		}
 	}
@@ -80,30 +85,17 @@ $.get(urlPrefix + "cache_buster.txt?time=" + Date.now() , function(value) {
 		$(".bigflag").remove();
 	}
 
-	addJavascript('https://cdn.firebase.com/v0/firebase.js');
-	addJavascript('https://cdn.firebase.com/v0/firebase-simple-login.js');
-	addJavascript("http://d3js.org/d3.v3.min.js");
-
-	addStylesheet(staticUrlPrefix + 'nouislider.fox.css');
-	addStylesheet(staticUrlPrefix + 'bootstrap-button.css');
-	addStylesheet(staticUrlPrefix + 'two_column.css');
-	addStylesheet(staticUrlPrefix + 'nprogress.css');
-	addStylesheet(urlPrefix + 'nationstates++.css');
-
 	if (document.head.innerHTML.indexOf("ns.dark") != -1) {
 		addStylesheet(urlPrefix + 'nationstates++_dark.css');
 	}
-	
+
 	if (pageUrl.indexOf("page=blank") != -1) {
 		addStylesheet(staticUrlPrefix + 'newspaper_bootstrap.min.css');
 		addJavascript(staticUrlPrefix + "bootstrap-dropdown.min.js");
 		addStylesheet(staticUrlPrefix + "bootstrap-fileupload.min.css");
 		addJavascript(staticUrlPrefix + "bootstrap-fileupload.min.js");
 	}
-	
-	addJavascript(staticUrlPrefix + "Blob.js");
-	addJavascript(staticUrlPrefix + "FileSaver.js");
-	
+
 	if (document.head.innerHTML.indexOf("//ajax.googleapis.com/ajax/libs/jquery") == -1) {
 		addJavascript("//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js", function() {
 			addJavascript("//ajax.googleapis.com/ajax/libs/jqueryui/1.10.2/jquery-ui.min.js", loadJavascript);
@@ -114,60 +106,32 @@ $.get(urlPrefix + "cache_buster.txt?time=" + Date.now() , function(value) {
 })();
 
 function loadJavascript() {
-	addJavascript(staticUrlPrefix + 'jquery.caret.js');
-	addJavascript(staticUrlPrefix + 'jquery.highlight.js');
-	addJavascript(staticUrlPrefix + 'jquery.nouislider.min.js');
-	addJavascript(staticUrlPrefix + 'textFit.min.js');
-	addJavascript(staticUrlPrefix + 'nprogress.js');
+	if (pageUrl.indexOf('http://www.nationstates.net/') > -1 && isSettingEnabled("gameplay_enhancements")) {
+		console.log('[NationStates++] Detected NationStates Page. Loading...');
 
-	addJavascript(urlPrefix + 'nationstates++_common.js', function() {
-		if (pageUrl.indexOf('http://www.nationstates.net/') > -1 && isSettingEnabled("gameplay_enhancements")) {
-			console.log('[NationStates++] Detected NationStates Page. Loading...');
-
-			if (document.head.innerHTML.indexOf("antiquity") != -1) {
-				addStylesheet(staticUrlPrefix + "prefix-ghbuttons_v2.css");
-			}
-
-			addJavascript(urlPrefix + 'nationstates.js');
-			addJavascript(urlPrefix + 'region.js');
-			addJavascript(urlPrefix + 'nation.js');
-			addJavascript(urlPrefix + 'newspapers.js');
-
-			addJavascript(urlPrefix + 'happenings.js');
-			if (isSettingEnabled("scroll_nation_lists")) {
-				addJavascript(urlPrefix + 'census_slider.js');
-			}
-
-			if (isSettingEnabled("embassy_flags")) {
-				addJavascript(urlPrefix + 'embassy_flags.js');
-			}
-			addJavascript(urlPrefix + 'telegrams.js');
-			addJavascript(urlPrefix + 'issues.js');
-			addJavascript(urlPrefix + 'help.js');
-			addJavascript(urlPrefix + 'irc.js');
-			addJavascript(urlPrefix + 'dossier.js');
-			addJavascript(urlPrefix + 'reports.js');
-			addJavascript(urlPrefix + 'administration.js');
-			addJavascript(urlPrefix + 'settings.js');
-
-			console.log('[NationStates++] Loading Completed Successfully.');
-		} else if (pageUrl.indexOf('http://forum.nationstates.net/') > -1 ) {
-			console.log('[NationStates++] Detected NationStates Forum Page. Loading...');
-			addStylesheet("http://www.nationstates.net/ghbuttons_v2.css");
-			addStylesheet(urlPrefix + 'forum.css');
-
-			if (isSettingEnabled("forum_enhancements")) {
-				if (isSettingEnabled("egosearch_ignore")) {
-					addJavascript(urlPrefix + 'forum_ego_posts.js');
-				}
-				if (isSettingEnabled("post_ids")) {
-					addJavascript(urlPrefix + 'forum_post_id.js');
-				}
-			}
-
-			console.log('[NationStates++] Loading Completed Successfully.');
+		if (document.head.innerHTML.indexOf("antiquity") != -1) {
+			addStylesheet(staticUrlPrefix + "prefix-ghbuttons_v2.css");
 		}
-	});
+		
+		addJavascript(urlPrefix + 'highcharts-adapter.js');
+
+		console.log('[NationStates++] Loading Completed Successfully.');
+	} else if (pageUrl.indexOf('http://forum.nationstates.net/') > -1 ) {
+		console.log('[NationStates++] Detected NationStates Forum Page. Loading...');
+		addStylesheet("http://www.nationstates.net/ghbuttons_v2.css");
+		addStylesheet(urlPrefix + 'forum.css');
+
+		if (isSettingEnabled("forum_enhancements")) {
+			if (isSettingEnabled("egosearch_ignore")) {
+				addJavascript(urlPrefix + 'forum_ego_posts.js');
+			}
+			if (isSettingEnabled("post_ids")) {
+				addJavascript(urlPrefix + 'forum_post_id.js');
+			}
+		}
+
+		console.log('[NationStates++] Loading Completed Successfully.');
+	}
 }
 
 window.addEventListener("message", function(event) {

@@ -1,18 +1,22 @@
 (function() {
-	window.postMessage({ method: "highcharts-adapter-enabled"}, "*");
-	window.addEventListener("message", function(event) {
-		console.log("Highcharts Adaptor received:");
-		console.log(event);
-		if (event.data.method == "draw_region_chart") {
-			drawRegionPopulationChart(event.data.region, event.data.title);
-		} else if (event.data.method == "set_chart_size") {
-			updateChartSize(event.data.chartIndex, event.data.width, event.data.height);
-		} else if (event.data.method == "draw_national_power") {
-			drawNationalPowerChart(event.data.region, event.data.title, event.data.visibleNation, event.data.showInfluence);
-		} else if (event.data.method == "reset_highcharts_adapter") {
-			window.postMessage({ method: "highcharts-adapter-enabled"}, "*");
+	//This polling localStorage sucks, but window.postMessage does
+	//not work in Firefox extensions :(
+	checkUpdates();
+	function checkUpdates() {
+		var chart = localStorage.getItem("chart");
+		if (chart != null) {
+			chart = JSON.parse(chart);
+			if (chart.type == "region_chart") {
+				drawRegionPopulationChart(chart.region, chart.title);
+			} else if (chart.type == "set_chart_size") {
+				updateChartSize(chart.width, chart.height);
+			} else if (chart.type == "national_power") {
+				drawNationalPowerChart(chart.region, chart.title, chart.visibleNation, chart.showInfluence);
+			}
+			localStorage.removeItem("chart");
 		}
-	});
+		setTimeout(checkUpdates, 100);
+	}
 
 	var activeChart = null;
 	function drawNationalPowerChart(region, title, visibleNation, showInfluence) {
@@ -116,8 +120,11 @@
 		});
 	}
 
-	function updateChartSize(chartIndex, width, height) {
-		Highcharts.charts[chartIndex].setSize(width, height, true);
+	function updateChartSize(width, height) {
+		for (var i = 0; i < Highcharts.charts.length; i++) {
+			if (Highcharts.charts[i] != null)
+				Highcharts.charts[i].setSize(width, height, true);
+		}
 	}
 
 	function drawRegionPopulationChart(region, title) {
@@ -172,4 +179,3 @@
 		});
 	}
 })();
-

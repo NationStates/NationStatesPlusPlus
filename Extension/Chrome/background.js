@@ -28,6 +28,9 @@ $.get(urlPrefix + "cache_buster.txt?time=" + Date.now() , function(value) {
 		$("#maxad").remove();
 		$("#regionadbox").remove();
 		$("#dilemmasadbox").remove();
+		$("#google_image_div").remove();
+		$("iframe[name='google_osd_static_frame']").remove();
+		$("#panelad").remove();
 	}
 	
 	if (pageUrl.indexOf("template-overall=none") != -1) {

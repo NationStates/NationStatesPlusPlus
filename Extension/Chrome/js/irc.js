@@ -33,7 +33,8 @@
 		{region: "the_royal_alliance", network: "irc.uk.mibbit.net", channel: "#TheRoyalAlliance"},
 		{region: "the_commonwealth_of_kings", network: "irc.esper.net", channel: "#CoK"},
 		{region: "confederation_of_nations", network: "irc.esper.net", channel: "#Confederation_of_Nations"},
-		{region: "inceptum", network: "irc.esper.net", channel: "#Inceptum"}
+		{region: "inceptum", network: "irc.esper.net", channel: "#Inceptum"},
+		{region: "versutian_federation", network: "irc.esper.net", "#Versutian"}
 
 	];
 	if (getVisiblePage() == "region" && getUserNation() !== "") {

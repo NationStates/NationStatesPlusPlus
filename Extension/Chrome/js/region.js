@@ -101,7 +101,6 @@ function setupRegionPage() {
 			post.find(".undo-rating").find("a").on("click", function(event) {
 				event.preventDefault();
 				var id = $(this).parents(".post-ratings:first").attr("postid");
-				console.log("Undo Rating " + id);
 				var post = $("#rmb-post-" + id);
 				var rating = post.find("span[rated='1']");
 				var amt = rating.attr("amt");
@@ -130,7 +129,7 @@ function setupRegionPage() {
 			html += parseRMBPost($(this).html(), $(this).attr('class'));
 		});
 		$(".rmbtable2").html(html);
-	
+
 		$(".small").attr("class", "button");
 		$(".hilite").attr("class", "button");
 		var dossier = $("input[type='submit'].button");
@@ -156,11 +155,10 @@ function setupRegionPage() {
 			});
 
 			//Move the post form to the top
-			var formHtml = "<div id='rmb-post-form' " + (!isSettingEnabled("search_rmb") ? "" : "style='display: none;'") + "><form onsubmit='rmbpost(); return false;' id='rmb'>" + rmbPost.innerHTML + "</form></div>";
+			var formHtml = "<div id='rmb-post-form' " + (!isSettingEnabled("search_rmb") ? "" : "style='display: none;'") + "><form id='rmb'>" + rmbPost.innerHTML + "</form></div>";
 			$(rmbPost).remove();
 		}
-		var widebox = $('.widebox:last');
-		widebox.prepend(formHtml);
+		$('.widebox:last').prepend(formHtml);
 	}
 	if (!isSettingEnabled("infinite_scroll")) {
 		//Override older rmb click
@@ -224,16 +222,16 @@ function setupRegionPage() {
 	$(window).scroll(handleInfiniteScroll);
 
 	if (isSettingEnabled("search_rmb")) {
-		//Add search box
-		widebox.prepend("<div id='searchbox' style='display: none;'><div style='margin-top:6px; text-align:center;'><input id='rmb-search-input' placeholder='Search' type='search' style='width:35%; height:25px;' name='googlesearch'><p><input id='rmb-search-input-region' placeholder='Region' type='search' style='width:16.5%; margin-right: 2%; height:25px;' name='googlesearch'><input id='rmb-search-input-author' placeholder='Author' type='search' style='width:16.5%; height:25px;' name='googlesearch'><p></div></div>");
-
 		//Add rmb menu area
-		widebox.prepend("<div id='rmb-menu' style='text-align: center;'><button class='button RoundedButton rmb-message'>Leave a message</button> <button class='button RoundedButton search-rmb'>Search messages</button></div");
-		
+		$("<div id='rmb-menu' style='text-align: center;'><button class='button RoundedButton rmb-message'>Leave a message</button> <button class='button RoundedButton search-rmb'>Search messages</button></div").insertBefore($(".widebox")[1]);
+
+		//Add search box
+		$("<div id='searchbox' style='display: none;'><div style='margin-top:6px; text-align:center;'><input id='rmb-search-input' placeholder='Search' type='search' style='width:35%; height:25px;' name='googlesearch'><p><input id='rmb-search-input-region' placeholder='Region' type='search' style='width:16.5%; margin-right: 2%; height:25px;' name='googlesearch'><input id='rmb-search-input-author' placeholder='Author' type='search' style='width:16.5%; height:25px;' name='googlesearch'><p></div></div>").insertBefore($(".widebox")[1]);
+
 		$("button.rmb-message").on("click", toggleRMBPostForm);
 		$("button.search-rmb").on("click", toggleSearchForm);
 		$("#rmb-search-input, #rmb-search-input-region, #rmb-search-input-author").on("keydown", searchRMB);
-		
+		$("button[name='lodge_message']").on("click", doRMBPost);
 		if (isAntiquityTheme()) {
 			$("#rmb-menu").css("margin-bottom", "20px");
 			$("#rmb-search-input").css("margin-bottom", "20px");
@@ -267,13 +265,8 @@ function setupRegionPage() {
 		$("a.toggle-census-report").html("(Show)");
 	}
 	$("<h2>Regional Population <a style='font-family: Verdana,Tahoma; font-size: 10pt; margin-left: 10px;' class='toggle-pop-report' href='#'>(Hide)</a></h2><div id='regional-pop'></div><div class='hzln'></div>").insertAfter($("#census_report_container").next());
-	var listener = function(event) {
-		if (event.data.method == "highcharts-adapter-enabled") {
-			window.postMessage({ method: "draw_region_chart", region: getVisibleRegion(), title: getVisibleRegion().replaceAll("_", " ").toTitleCase()}, "*");
-			window.removeEventListener('message', listener, false);
-		}
-	};
-	window.addEventListener("message", listener);
+
+	localStorage.setItem("chart", JSON.stringify({ type: "region_chart", region: getVisibleRegion(), title: getVisibleRegion().replaceAll("_", " ").toTitleCase()}));
 
 	$("a.toggle-pop-report").click(function(event) {
 		event.preventDefault();
@@ -281,8 +274,7 @@ function setupRegionPage() {
 			$("#regional-pop").show();
 			$("a.toggle-pop-report").html("(Hide)");
 			localStorage.removeItem("show_regional_population");
-			//Highcharts.charts[0].setSize($("#regional-pop").width(), 400, true);
-			window.postMessage({ method: "set_chart_size", chartIndex: 0, width: $("#regional-pop").width(), height: 400}, "*");
+			localStorage.setItem("chart", JSON.stringify({ type: "set_chart_size", width: $("#regional-pop").width(), height: 400}));
 		} else {
 			$("#regional-pop").hide();
 			$("a.toggle-pop-report").html("(Show)");
@@ -310,51 +302,38 @@ function addUpdateTime() {
 			text = "<span class='updatetime'>Next Update: " +  (new Date(nextUpdate)).customFormat("#hh#:#mm#:#ss# #AMPM#") + " [&plusmn; " + Math.floor(update.std * 2 / 1000) + " s]</span>"
 			$("h1:first").html($("h1:first").html() + text);
 		}
-		
 	}).fail(function() {
 		$("h1:first").html($("h1:first").html() + "<i style='font-size:16px; margin-left:20px;'>Next Update: UNKNOWN - NO DATA - </i>");
 	});
 }
 
-function isForumView() {
-	return window.location.href.indexOf("/page=display_region_rmb") != -1;
-}
-
-function toWindows1252(string, replacement) {
-	var ret = new Array(string.length);	
-	var i, ch;
-
-	replacement = typeof replacement === "string" && replacement.length > 0 ? replacement.charCodeAt(0) : 0;
-
-	for (i = 0; i < string.length; i++) {
-		ch = string.charCodeAt(i);
-		if (ch <= 0x7F || (ch >= 0xA0 && ch <= 0xFF)) {
-			ret[i] = ch;
-		} else {
-			ret[i] = toWindows1252.table[string[i]];
-			if (typeof ret[i] === "undefined") {
-				ret[i] = replacement;
+function encodeRMBPost(message) {
+	var d2h = function(d) {return d.toString(16);}
+	var toWindows1252 = function(string) {
+		table = {
+			'\x81': 129, '\x8d': 141, '\x8f': 143, '\x90': 144, 
+			'\x9d': 157, '\u0152': 140, '\u0153': 156, '\u0160': 138, 
+			'\u0161': 154, '\u0178': 159, '\u017d': 142, '\u017e': 158, 
+			'\u0192': 131, '\u02c6': 136, '\u02dc': 152, '\u2013': 150, 
+			'\u2014': 151, '\u2018': 145, '\u2019': 146, '\u201a': 130, 
+			'\u201c': 147, '\u201d': 148, '\u201e': 132, '\u2020': 134, 
+			'\u2021': 135, '\u2022': 149, '\u2026': 133, '\u2030': 137, 
+			'\u2039': 139, '\u203a': 155, '\u20ac': 128, '\u2122': 153
+		};
+		var ret = new Array(string.length);	
+		for (var i = 0; i < string.length; i++) {
+			var ch = string.charCodeAt(i);
+			if (ch <= 0x7F || (ch >= 0xA0 && ch <= 0xFF)) {
+				ret[i] = ch;
+			} else {
+				ret[i] = table[string[i]];
+				if (typeof ret[i] === "undefined") {
+					ret[i] = 0;
+				}
 			}
 		}
+		return ret;
 	}
-
-	return ret;
-}
-
-toWindows1252.table = {
-	'\x81': 129, '\x8d': 141, '\x8f': 143, '\x90': 144, 
-	'\x9d': 157, '\u0152': 140, '\u0153': 156, '\u0160': 138, 
-	'\u0161': 154, '\u0178': 159, '\u017d': 142, '\u017e': 158, 
-	'\u0192': 131, '\u02c6': 136, '\u02dc': 152, '\u2013': 150, 
-	'\u2014': 151, '\u2018': 145, '\u2019': 146, '\u201a': 130, 
-	'\u201c': 147, '\u201d': 148, '\u201e': 132, '\u2020': 134, 
-	'\u2021': 135, '\u2022': 149, '\u2026': 133, '\u2030': 137, 
-	'\u2039': 139, '\u203a': 155, '\u20ac': 128, '\u2122': 153
-};
-
-function d2h(d) {return d.toString(16);}
-
-function encodeRMBPost(message) {
 	var chars = toWindows1252(message);
 	var result = "";
 	for (var i = 0; i < chars.length; i++) {
@@ -367,7 +346,8 @@ function encodeRMBPost(message) {
 	return result;
 }
 
-function rmbpost() {
+function doRMBPost(event) {
+	event.preventDefault();
 	var $form = $( this ),
 		chkValue = $('input[name="chk"]').val(),
 		messageValue = $('textarea[name="message"]').val(),
@@ -403,10 +383,6 @@ function rmbpost() {
 	});
 
 	$("#rmb-post-form").animate({ height: 'toggle' }, 1200, function() { $(this).hide(); });
-	//Have to reopen the form for the Forum View
-	if (isForumView()) {
-		$("#rmb-post-form").animate({ height: 'toggle' }, 1200, function() { $(this).show(); });
-	}
 	posting.done(function( data ) {
 		var error = ($(data).find("p[class='error']")).text();
 		if (typeof error != 'undefined' && error.length > 0) {
@@ -415,11 +391,7 @@ function rmbpost() {
 			return;
 		}
 		$.get('/region=' + getVisibleRegion(), function(data) {
-			if (isForumView()) {
-				$("#rmb").html($(data).find("#rmb:last").html());
-			} else {
-				$("#rmb").html($(data).find("#rmb").html());
-			}
+			$("#rmb").html($(data).find("#rmb").html());
 			$('textarea[name="message"]').val("");
 			$('textarea[name="message"]').height(120);
 			$("#previewcontent").html("");

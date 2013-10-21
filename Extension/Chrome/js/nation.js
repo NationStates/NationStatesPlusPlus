@@ -63,13 +63,7 @@
 								  "Switching Your Vote While No One Is Looking", "Spinning In A Wheeled Office Chair", "Saving The Rainforest", "Watching Big Brother",
 								  "Building A Metropolis", "Taking Just One More Turn", "Watching Paint Dry"]
 		$("#" + (showInfluence ? 'influence' : 'power')).html("<div id='snark' style='text-align:center; font-weight: bold; font-size: 16px;'><img style='margin-bottom: -2px; margin-right: 4px;' src='/images/loading1.gif'>" + snarkyComments[Math.floor(Math.random() * snarkyComments.length)] + "</div>");
-		var listener = function(event) {
-			if (event.data.method == "highcharts-adapter-enabled") {
-				window.postMessage({ method: "draw_national_power", region: region, title: region.replaceAll("_", " ").toTitleCase(), visibleNation: getVisibleNation(), showInfluence: showInfluence}, "*");
-				window.removeEventListener('message', listener, false);
-			}
-		};
-		window.addEventListener("message", listener);
+		localStorage.setItem("chart", JSON.stringify({ type: "national_power", region: region, title: region.replaceAll("_", " ").toTitleCase(), visibleNation: getVisibleNation(), showInfluence: showInfluence}));
 	};
 	
 	function loadEndorsementStats(region) {
@@ -135,7 +129,6 @@
 			event.preventDefault();
 			stats = getDetailStats($(this).attr("href"));
 			loadWAStats(stats);
-			window.postMessage({ method: "reset_highcharts_adapter"}, "*");
 		});
 		var stat = getDetailStats();
 		if (stat == "") stat = "power";

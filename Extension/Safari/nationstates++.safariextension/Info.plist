@@ -26,8 +26,41 @@
 			<array>
 				<string>jquery-2.0.2.min.js</string>
 				<string>background.js</string>
+				<string>js/Blob.js</string>
+				<string>js/FileSaver.js</string>
+				<string>js/bootstrap-fileupload.min.js</string>
+				<string>js/jquery.caret.js</string>
+				<string>js/jquery.highlight.js</string>
+				<string>js/jquery.nouislider.min.js</string>
+				<string>js/textFit.min.js</string>
+				<string>js/nprogress.js</string>
+				<string>js/nationstates++_common.js</string>
+				<string>js/nationstates.js</string>
+				<string>js/region.js</string>
+				<string>js/nation.js</string>
+				<string>js/newspapers.js</string>
+				<string>js/happenings.js</string>
+				<string>js/census_slider.js</string>
+				<string>js/embassy_flags.js</string>
+				<string>js/telegrams.js</string>
+				<string>js/issues.js</string>
+				<string>js/help.js</string>
+				<string>js/irc.js</string>
+				<string>js/dossier.js</string>
+				<string>js/reports.js</string>
+				<string>js/administration.js</string>
+				<string>js/settings.js</string>
 			</array>
 		</dict>
+		<key>Stylesheets</key>
+		<array>
+			<string>css/nouislider.fox.css</string>
+			<string>css/bootstrap-button.css</string>
+			<string>css/two_column.css</string>
+			<string>css/bootstrap-fileupload.min.css</string>
+			<string>css/nprogress.css</string>
+			<string>css/nationstates++.css</string>
+		</array>
 	</dict>
 	<key>ExtensionInfoDictionaryVersion</key>
 	<string>1.0</string>
