@@ -34,7 +34,7 @@
 		{region: "the_commonwealth_of_kings", network: "irc.esper.net", channel: "#CoK"},
 		{region: "confederation_of_nations", network: "irc.esper.net", channel: "#Confederation_of_Nations"},
 		{region: "inceptum", network: "irc.esper.net", channel: "#Inceptum"},
-		{region: "versutian_federation", network: "irc.esper.net", "#Versutian"}
+		{region: "versutian_federation", network: "irc.esper.net", channel: "#Versutian"}
 
 	];
 	if (getVisiblePage() == "region" && getUserNation() !== "") {

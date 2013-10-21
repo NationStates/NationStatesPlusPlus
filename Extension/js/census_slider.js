@@ -1,4 +1,8 @@
 (function() {
+	if (!isSettingEnabled("scroll_nation_lists")) {
+		return;
+	}
+
 	if (getVisiblePage() == "list_regions" || getVisiblePage() == "tag_search") {
 		addRegionFlags();
 	}
@@ -37,10 +41,10 @@
 				$("button[name='next-shiny-page']").on("click", function(event) {
 					event.preventDefault();
 					if (shinyRangePage < maxPage - 1) {
-						updatePageSlider(shinyRangePage + 1);
+						updatePageSlider(shinyRangePage + 1, maxPage);
 						$("button[name='prev-shiny-page']").attr("disabled", false);
 					} else if (shinyRangePage == maxPage - 1) {
-						updatePageSlider(maxPage);
+						updatePageSlider(maxPage, maxPage);
 						$("button[name='next-shiny-page']").attr("disabled", true);
 						$("button[name='prev-shiny-page']").attr("disabled", false);
 					}
@@ -48,10 +52,10 @@
 				$("button[name='prev-shiny-page']").on("click", function(event) {
 					event.preventDefault();
 					if (shinyRangePage > 2) {
-						updatePageSlider(shinyRangePage - 1);
+						updatePageSlider(shinyRangePage - 1, maxPage);
 						$("button[name='next-shiny-page']").attr("disabled", false);
 					} else if (shinyRangePage == 2) {
-						updatePageSlider(1);
+						updatePageSlider(1, maxPage);
 						$("button[name='prev-shiny-page']").attr("disabled", true);
 						$("button[name='next-shiny-page']").attr("disabled", false);
 					}
@@ -68,7 +72,7 @@
 		var lastSlide = 0;
 		$(".noUiSlider").noUiSlider({
 			range: [1, maxPage], start: 1, step: 1, handles: 1, slide: function() {
-				updatePageSlider($(this).val());
+				updatePageSlider($(this).val(), maxPage);
 				lastSlide = (new Date()).getTime();
 		   }
 		});
@@ -77,9 +81,9 @@
 				if (lastSlide + 1000 * 10 > (new Date()).getTime()) {
 					lastSlide = (new Date()).getTime();
 					if (e.which == 39 && ((shinyRangePage + 1) <= maxPage)) {
-						updatePageSlider(shinyRangePage + 1);
+						updatePageSlider(shinyRangePage + 1, maxPage);
 					} else if (e.which == 37 && ((shinyRangePage - 1) >=  1)) {
-						updatePageSlider(shinyRangePage - 1);
+						updatePageSlider(shinyRangePage - 1, maxPage);
 					}
 				}
 			}
@@ -92,7 +96,7 @@
 			});
 			shinyTableBottomRows = html;
 		}
-		updatePageSlider(1);
+		updatePageSlider(1, maxPage);
 	}
 
 	var shinyTableBottomRows;
@@ -100,9 +104,12 @@
 	var shinyRangePage = 1;
 	var requestNum = 1;
 	//Caches census pages we have already seen
-	function updatePageSlider(page) {
+	function updatePageSlider(page, maxPage) {
 		$(".noUiSlider").val(page);
-		$("div[id^=handle-id]").html("Page " + page);
+		$("div[id^=handle-id]").html("Page " + page + "/" + maxPage);
+		if (maxPage > 99) {
+			$("#handle-id").css("width", "100px");
+		}
 		requestNum += 1;
 		if (page != shinyRangePage) {
 			updateShinyPage(page, requestNum);

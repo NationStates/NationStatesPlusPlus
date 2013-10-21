@@ -5,6 +5,16 @@
 	checkPanelAlerts();
 	addCustomAlerts();
 	
+	if ($(".STANDOUT").length > 0) {
+		$("<a href='www.nationstates.net/nation=" + getUserNation() + "'><img src='" + $(".STANDOUT:first").find("img").attr("src").substring(0, $(".STANDOUT").find("img").attr("src").length - 6) + "' style='width:192px;'></a>").insertBefore($("#createdby"));
+		$("#createdby").remove();
+		$(".STANDOUT:first").find("img").remove();
+		$("#panel").css("position", "fixed");
+		$( window ).scroll(function() {
+			$("#panel").css("margin-top", "-" + Math.min($(window).scrollTop(), 100) + "px");
+		});
+	}
+	
 	if (getVisiblePage() == "blank" && document.head.innerHTML.indexOf("antiquity") != -1) {
 		$("#main").append("<div id='content'></div>");
 	}

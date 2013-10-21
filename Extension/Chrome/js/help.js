@@ -7,10 +7,17 @@
 			for (var request in requests) {
 				var requestBody = requests[request];
 				var date = new Date(parseInt(requestBody['timestamp']));
-				html += "<li style='font-style: italic;'><a href='javascript:void(0)' onclick='return showItem(" + requestBody['timestamp'] + ");'>Your report on " + date.customFormat("#MMM# #DD#, #YYYY# #h#:#m# #AMPM#") + "</a><fieldset id='" + requestBody['timestamp'] + "' class='wfe' style='margin-top:10px; display:none;'><h3 style='line-height: 0;'>Problem: " + requestBody['problem'] + "</h3><b>Description:</b><p>" + requestBody['body'] + "</p><p><b>Region: " + requestBody['region'] + "</b></p></fieldset></li>";
+				html += "<li style='font-style: italic;'><a class='" + requestBody['timestamp'] + "' href='javascript:void(0)'>Your report on " + date.customFormat("#MMM# #DD#, #YYYY# #h#:#m# #AMPM#") + "</a><fieldset id='" + requestBody['timestamp'] + "' class='wfe' style='margin-top:10px; display:none;'><h3 style='line-height: 0;'>Problem: " + requestBody['problem'] + "</h3><b>Description:</b><p>" + requestBody['body'] + "</p><p><b>Region: " + requestBody['region'] + "</b></p></fieldset></li>";
 			}
 			html += "</ul>";
 			$(html).insertBefore(".hzln");
+			for (var request in requests) {
+				var requestBody = requests[request];
+				$("a." + requestBody['timestamp']).on("click", function(event) {
+					event.preventDefault();
+					$("#" + $(this).attr("class")).animate({ height: 'toggle' });
+				})
+			}
 		}
 
 		//Add click handler
@@ -32,8 +39,4 @@
 			localStorage.setItem("previous-problems-" + getUserNation(), JSON.stringify(previousRequests));
 		});
 	}
-
 })();
-function showItem(item) {
-	$("#" + item).animate({ height: 'toggle' });
-}

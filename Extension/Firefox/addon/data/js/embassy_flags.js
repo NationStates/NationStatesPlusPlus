@@ -1,4 +1,7 @@
 (function() {
+	if (!isSettingEnabled("embassy_flags")) {
+		return;
+	}
 	(function() {
 		var wfe = $("fieldset[class='wfe']");
 		wfe.css("min-height", "135px");

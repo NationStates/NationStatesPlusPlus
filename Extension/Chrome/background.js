@@ -112,7 +112,7 @@ function loadJavascript() {
 		if (document.head.innerHTML.indexOf("antiquity") != -1) {
 			addStylesheet(staticUrlPrefix + "prefix-ghbuttons_v2.css");
 		}
-		
+
 		addJavascript(urlPrefix + 'highcharts-adapter.js');
 
 		console.log('[NationStates++] Loading Completed Successfully.');
@@ -120,19 +120,63 @@ function loadJavascript() {
 		console.log('[NationStates++] Detected NationStates Forum Page. Loading...');
 		addStylesheet("http://www.nationstates.net/ghbuttons_v2.css");
 		addStylesheet(urlPrefix + 'forum.css');
+		
+		$( window ).scroll(function() {
+			$("#nssidebar").css("margin-top", "-" + Math.min($(window).scrollTop(), 100) + "px");
+		});
+		$("#nssidebar").css("position", "fixed");
 
-		if (isSettingEnabled("forum_enhancements")) {
-			if (isSettingEnabled("egosearch_ignore")) {
-				addJavascript(urlPrefix + 'forum_ego_posts.js');
-			}
-			if (isSettingEnabled("post_ids")) {
-				addJavascript(urlPrefix + 'forum_post_id.js');
+		if (isSettingEnabled("egosearch_ignore")) {
+			showForumEgoposts();
+		}
+		if (isSettingEnabled("post_ids")) {
+			if (window.location.href.indexOf("viewtopic.php") != -1) {
+				$("div.post").each(function() {
+					var marginLeft = 11 + (8 - $(this).attr("id").substring(1).length) * 4.4;
+					$(this).find(".profile-icons").prepend("<li class='post-id-icon'><a href=" + window.location.href.split("#")[0] + "#" + $(this).attr("id") + " title='Post Number' target='_blank'><span class='post-id-text' style='margin-left:" + marginLeft + "px;'>" + $(this).attr("id").substring(1) + "</span></a></li>");
+				});
 			}
 		}
-
+		$(".icon-logout").hide();
 		console.log('[NationStates++] Loading Completed Successfully.');
 	}
 }
+
+function showForumEgoposts() {
+	var pageUrl = window.location.href.indexOf("#") > -1 ? window.location.href.substring(0, window.location.href.indexOf("#")) : window.location.href;
+	var nation = "";
+	var nationSelector = $("a:contains('Logout'):last");
+	if (nationSelector.length > 0) {
+		nation = nationSelector.text().substring(9, nationSelector.text().length - 2);
+	}
+
+	//Search page
+	if (pageUrl.indexOf("/search.php?") > -1) {
+		$(".lastpost:not(:first)").parent().append("<button class='ignore-egopost btn'><div class='ignore-egopost-body'>Ignore</div></button>");
+		$(".lastpost:not(:first)").each(function() {
+			var postName = $(this).parent().parent().find(".topictitle").html();
+			if (localStorage.getItem(postName) == "true") {
+				$(this).parent().parent().hide();
+			}
+		});
+		$(".lastpost:first").parent().append("<button class='showall-egopost btn'><div class='showall-egopost-body'>Show All Posts</div></button>");
+		$("button.ignore-egopost").on("click", function(event) {
+			event.preventDefault();
+			$(this).parent().parent().animate({ height: 'toggle' }, 500);
+			var postName = $(this).parent().parent().find(".topictitle").html();
+			localStorage.setItem(postName, "true");
+		});
+		$("button.showall-egopost").on("click", function(event) {
+			$(".lastpost").each(function() {
+				if ($(this).parent().parent().is(':hidden')) {
+					$(this).parent().parent().animate({ height: 'toggle' }, 500);
+				}
+				var postName = $(this).parent().parent().find(".topictitle").html();
+				localStorage.removeItem(postName);
+			});
+		});
+	}
+};
 
 window.addEventListener("message", function(event) {
 	if (event.data.method == "unread_forum_posts") {
