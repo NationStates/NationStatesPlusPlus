@@ -25,7 +25,7 @@
 				//console.log("Reply to all for: " + replyTo);
 				
 				//$(this).find(".replyline").find(".tgreplybutton").
-				$(this).find(".replyline").prepend("<button id='reply_to_all_" + replyTo + "' class='tgreplybutton button icon chat'>Reply to All</button>");
+				$(this).find(".replyline").prepend("<button id='reply_to_all_" + replyTo + "' class='button icon chat'>Reply to All</button>");
 				$("#reply_to_all_" + replyTo).click(function() {
 					var tgid = $(this).attr("id").split("_")[$(this).attr("id").split("_").length - 1];
 					var existingReplyBox = $('#tgreply-' + tgid);
@@ -95,7 +95,6 @@
 							}
 						});
 					}
-					$("#tgreply-" + tgid).animate({toggle: 'height'}, 'fast');
 				});
 			}
 		});
