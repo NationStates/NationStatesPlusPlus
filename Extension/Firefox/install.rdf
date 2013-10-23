@@ -4,7 +4,7 @@
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. --><RDF xmlns="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:em="http://www.mozilla.org/2004/em-rdf#">
   <Description about="urn:mozilla:install-manifest">
     <em:id>afforess@gmail.com</em:id>
-    <em:version>2.0.2</em:version>
+    <em:version>2.0.8</em:version>
     <em:type>2</em:type>
     <em:bootstrap>true</em:bootstrap>
     <em:unpack>false</em:unpack>
@@ -22,7 +22,7 @@
     <em:name>NationStates++</em:name>
     <em:description>Improves the NationStates.net Regional Message Board experience</em:description>
     <em:creator>Afforess</em:creator>
-    <em:updateURL>http://www.capitalistparadise.com/nationstates/update.rdf</em:updateURL>
+    <em:updateURL>http://direct.capitalistparadise.com/nationstates/update.rdf</em:updateURL>
 	<em:updateKey>MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDUMDxmO/nqJBL9Pum8iNF1toKJfBcG1Sukfw5blQs9kAYfaWVAYZobd43E0yzDEoHk8S8D8P4WDOiNiK5yZPO3gq/HtO+3+nrGgOzfO6S3abAIuTQ1YCWE4XPWYdzW80P6v1kUwX/QMD+jiDkYSiALISv/N1cLjY8OdaalD5KUQwIDAQAB</em:updateKey>
   </Description>
 </RDF>

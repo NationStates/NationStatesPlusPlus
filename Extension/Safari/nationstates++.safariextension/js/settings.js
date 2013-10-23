@@ -1,4 +1,18 @@
 (function() {
+	/*
+	{
+		settings: [
+		
+		],
+		last_update: timestamp,
+		dossier: [
+		
+		],
+		newspapers: [
+		
+		],
+	}
+	*/
 	if (getVisiblePage() == "blank" && window.location.href.indexOf("ns_settings") != -1) {
 		window.document.title = "NationStates++ Settings"
 		$.get("http://capitalistparadise.com/nationstates/v2_0/settings.html", function(html) {

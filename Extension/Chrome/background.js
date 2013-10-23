@@ -119,8 +119,8 @@ function loadJavascript() {
 	} else if (pageUrl.indexOf('http://forum.nationstates.net/') > -1 ) {
 		console.log('[NationStates++] Detected NationStates Forum Page. Loading...');
 		addStylesheet("http://www.nationstates.net/ghbuttons_v2.css");
-		addStylesheet(urlPrefix + 'forum.css');
 		
+		$("#nssidebar").css("margin-top", "-" + Math.min($(window).scrollTop(), 100) + "px");
 		$( window ).scroll(function() {
 			$("#nssidebar").css("margin-top", "-" + Math.min($(window).scrollTop(), 100) + "px");
 		});

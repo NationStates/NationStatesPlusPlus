@@ -6,7 +6,8 @@ var self = require("sdk/self");
 pageMod.PageMod({
   include: ["http://forum.nationstates.net/*"],
   contentScriptWhen: "ready",
-  contentScriptFile: [self.data.url("jquery-2.0.2.min.js"), self.data.url("background.js")]
+  contentScriptFile: [self.data.url("jquery-2.0.2.min.js"), self.data.url("background.js")],
+  contentStyleFile: [ self.data.url("css/bootstrap-button.css"), self.data.url("css/nationstates++.css"), self.data.url("css/forum.css")],
 });
 
 pageMod.PageMod({

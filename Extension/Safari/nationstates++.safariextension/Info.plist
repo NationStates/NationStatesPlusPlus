@@ -13,9 +13,9 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleShortVersionString</key>
-	<string>2.0.0</string>
+	<string>2.0.8</string>
 	<key>CFBundleVersion</key>
-	<string>2.0.0</string>
+	<string>2.0.8</string>
 	<key>Chrome</key>
 	<dict/>
 	<key>Content</key>
@@ -77,6 +77,6 @@
 		</dict>
 	</dict>
 	<key>Update Manifest URL</key>
-	<string>http://capitalistparadise.com/nationstates/safari.plist</string>
+	<string>http://direct.capitalistparadise.com/nationstates/safari.plist</string>
 </dict>
 </plist>

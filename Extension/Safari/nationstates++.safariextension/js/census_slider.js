@@ -107,9 +107,7 @@
 	function updatePageSlider(page, maxPage) {
 		$(".noUiSlider").val(page);
 		$("div[id^=handle-id]").html("Page " + page + "/" + maxPage);
-		if (maxPage > 99) {
-			$("#handle-id").css("width", "100px");
-		}
+		if (maxPage > 999) { $("#handle-id").css("width", "130px"); } else if (maxPage > 99) { $("#handle-id").css("width", "100px"); }
 		requestNum += 1;
 		if (page != shinyRangePage) {
 			updateShinyPage(page, requestNum);

@@ -183,18 +183,6 @@
 	if (getUserNation() == "glen-rhodes") {
 		localStorage.setItem("ignore_theme_warning", true);
 	}
-	if (getUserNation() != "" && localStorage.getItem("ns_fall_survey") == null && !window.location.href.contains("forum.nationstates")) {
-		var banner = $("#banner, #nsbanner");
-		var bannerStyle = "position:absolute; top:0px; margin:6px 60px 0px 0px; z-index:98; font-weight:bold; color: white !important; font-weight: bold; font-size: 8pt; padding: 2px 8px 2px 8px; background: black; 	background-color: rgba(0,0,0,0.2); 	border-radius: 8px;";
-		if (document.head.innerHTML.indexOf("ns.dark") != -1) {
-			bannerStyle += "background: #2A2A2A; border: 1px solid #383838;"
-		}
-		$(banner).append("<a class='ns-survey' href='http://www.surveymonkey.com/s/QZ275GQ' style='" + bannerStyle + " right: 258px;'>NS++ Survey</a>");
-		$("a.ns-survey").click(function() {
-			localStorage.setItem("ns_fall_survey", Date.now());
-			$(".ns-survey").hide();
-		});
-	}
 	update(1);
 })();
 
@@ -636,20 +624,14 @@ function getUserNation() {
 	Returns the region name of the active user, or empty string if no active user.
 */
 function getUserRegion() {
-	if ($(".STANDOUT:eq(1)").attr("href")) {
-		return $(".STANDOUT:eq(1)").attr("href").substring(7);
-	}
-	return "";
+	return $(".STANDOUT:eq(1)").attr("href") ? $(".STANDOUT:eq(1)").attr("href").substring(7) : "";
 }
 
 /*
 	Returns the name of the nation the user is currently viewing, or empty string if none.
 */
 function getVisibleNation() {
-	if ($(".nationname > a").attr("href")) {
-		return $(".nationname > a").attr("href").trim().substring(8);
-	}
-	return "";
+	return $(".nationname > a").attr("href") ? $(".nationname > a").attr("href").trim().substring(8) : "";
 }
 
 /*
@@ -688,7 +670,8 @@ function getVisibleRegion() {
 			return split[i].substring(7).toLowerCase().replaceAll(" ", "_");
 		}
 	}
-	return "";}
+	return "";
+}
 
 /*
 	Returns the visible page the user is viewing.

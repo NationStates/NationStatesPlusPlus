@@ -1,4 +1,35 @@
 (function() {
+	//Add string.startsWith
+	String.prototype.startsWith = function (str){
+		return this.slice(0, str.length) == str;
+	};
+	//Add string.contains
+	String.prototype.contains = function (str){
+		return this.indexOf(str) != -1;
+	};
+	//Add regex escape
+	RegExp.escape = function(text) {
+		return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
+	}
+	//Add replaceAll
+	String.prototype.replaceAll = function(search, replace) {
+		return this.replace(new RegExp(RegExp.escape(search),'g'), replace);
+	};
+
+	function getVisibleRegion() {
+		var split = window.location.href.split(/[/#/?]/);
+		for (var i = 0; i < split.length; i++) {
+			if (split[i].startsWith("region=")) {
+				return split[i].substring(7).toLowerCase().replaceAll(" ", "_");
+			}
+		}
+		return "";
+	}
+
+	function getVisibleNation() {
+		return $(".nationname > a").attr("href") ? $(".nationname > a").attr("href").trim().substring(8) : "";
+	}
+
 	//This polling localStorage sucks, but window.postMessage does
 	//not work in Firefox extensions :(
 	checkUpdates();
@@ -6,11 +37,11 @@
 		var chart = localStorage.getItem("chart");
 		if (chart != null) {
 			chart = JSON.parse(chart);
-			if (chart.type == "region_chart") {
+			if (chart.type == "region_chart" && getVisibleRegion() == chart.region) {
 				drawRegionPopulationChart(chart.region, chart.title);
 			} else if (chart.type == "set_chart_size") {
 				updateChartSize(chart.width, chart.height);
-			} else if (chart.type == "national_power") {
+			} else if (chart.type == "national_power" && getVisibleNation() == chart.visibleNation) {
 				drawNationalPowerChart(chart.region, chart.title, chart.visibleNation, chart.showInfluence);
 			}
 			localStorage.removeItem("chart");
