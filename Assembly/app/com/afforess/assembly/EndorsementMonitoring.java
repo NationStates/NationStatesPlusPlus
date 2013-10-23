@@ -11,6 +11,7 @@ import org.joda.time.Duration;
 import play.Logger;
 
 import com.afforess.assembly.util.DatabaseAccess;
+import com.afforess.assembly.util.Utils;
 import com.limewoodMedia.nsapi.NationStates;
 import com.limewoodMedia.nsapi.enums.WAStatus;
 import com.limewoodMedia.nsapi.exceptions.UnknownNationException;
@@ -41,9 +42,9 @@ public class EndorsementMonitoring implements Runnable {
 				NationData.Shards.CENSUS_SCORE.clearIds();
 				NationData.Shards.CENSUS_SCORE.addIds(65);
 				try {
-					NationData data = api.getNationInfo(name, Shards.ENDORSEMENTS, Shards.WA_STATUS, Shards.INFLUENCE, Shards.CENSUS_SCORE, Shards.FLAG, Shards.FULL_NAME, Shards.NAME, Shards.LAST_LOGIN);
-					
-					PreparedStatement updateNation = conn.prepareStatement("UPDATE assembly.nation SET influence = ?, influence_desc = ?, flag = ?, full_name = ?, title = ?, last_login = ?, last_endorsement_baseline = ?, wa_member = ? WHERE id = ?");
+					NationData data = api.getNationInfo(name, Shards.ENDORSEMENTS, Shards.WA_STATUS, Shards.INFLUENCE, Shards.CENSUS_SCORE, Shards.FLAG, Shards.FULL_NAME, Shards.NAME, Shards.LAST_LOGIN, Shards.REGION);
+
+					PreparedStatement updateNation = conn.prepareStatement("UPDATE assembly.nation SET influence = ?, influence_desc = ?, flag = ?, full_name = ?, title = ?, last_login = ?, last_endorsement_baseline = ?, wa_member = ?, region = ? WHERE id = ?");
 					updateNation.setInt(1, data.censusScore.get(65).intValue());
 					updateNation.setString(2, data.influence);
 					updateNation.setString(3, data.flagURL);
@@ -52,7 +53,8 @@ public class EndorsementMonitoring implements Runnable {
 					updateNation.setLong(6, data.lastLogin);
 					updateNation.setLong(7, System.currentTimeMillis());
 					updateNation.setByte(8, (byte)(data.worldAssemblyStatus != WAStatus.NON_MEMBER ? 1 : 0));
-					updateNation.setInt(9, id);
+					updateNation.setInt(9, access.getRegionIdCache().get(Utils.sanitizeName(data.region)));
+					updateNation.setInt(10, id);
 					updateNation.executeUpdate();
 					
 					updateEndorsements(conn, data, id);

@@ -76,7 +76,7 @@ public class DumpUpdateTask implements Runnable {
 			Logger.info("Added " + newRegions + " regions to the database");
 			assembly = pool.getConnection();
 			HashSet<String> allRegions = new HashSet<String>(20000);
-			select = assembly.prepareStatement("SELECT name FROM assembly.region");
+			select = assembly.prepareStatement("SELECT name FROM assembly.region WHERE alive = 1");
 			result = select.executeQuery();
 			while (result.next()) {
 				allRegions.add(result.getString(1));
@@ -91,8 +91,8 @@ public class DumpUpdateTask implements Runnable {
 			}
 			markDead.executeBatch();
 			conn.prepareStatement("DROP TABLE regions").execute();
-		} catch (SQLException e) {
-			throw new RuntimeException(e);
+		} catch (Exception e) {
+			Logger.error("unable to update region dumps", e);
 		} finally {
 			DbUtils.closeQuietly(conn);
 			DbUtils.closeQuietly(assembly);
@@ -194,7 +194,7 @@ public class DumpUpdateTask implements Runnable {
 			}
 			Logger.info("Cleaned up " + cleanupNations + " who were dead World Assembly Member nations!");
 		} catch (SQLException e) {
-			throw new RuntimeException(e);
+			Logger.error("unable to update nation dumps", e);
 		} finally {
 			DbUtils.closeQuietly(conn);
 			DbUtils.closeQuietly(assembly);

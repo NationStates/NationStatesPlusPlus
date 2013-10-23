@@ -492,15 +492,28 @@ public class NewspaperController extends NationStatesController {
 				}
 			}
 			
-			if (!validEditor) {
-				Utils.handleDefaultPostHeaders(request(), response());
-				return Results.unauthorized();
+			int submitterId = getDatabase().getNationIdCache().get(Utils.sanitizeName(nation));
+			
+			if (!validEditor || submitterId == -1) {
+				if (Integer.parseInt(visible) != Visibility.SUBMITTED.getType()) {
+					Utils.handleDefaultPostHeaders(request(), response());
+					return Results.unauthorized();
+				} else {
+					PreparedStatement submissions = conn.prepareStatement("SELECT article_id FROM assembly.articles WHERE newspaper_id = ? AND submitter = ?");
+					submissions.setInt(1, newspaper);
+					submissions.setInt(2, submitterId);
+					set = submissions.executeQuery();
+					if (set.next() && set.getInt(1) != articleId) {
+						Utils.handleDefaultPostHeaders(request(), response());
+						return Results.unauthorized();
+					}
+				}
 			}
 			
 			article = imgurizeArticle(article, imgurClientKey);
 			
 			if (articleId == -1) {
-				PreparedStatement insert = conn.prepareStatement("INSERT INTO assembly.articles (newspaper_id, article, title, articles.timestamp, author, articles.column, articles.order, visible) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+				PreparedStatement insert = conn.prepareStatement("INSERT INTO assembly.articles (newspaper_id, article, title, articles.timestamp, author, articles.column, articles.order, visible, submitter) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
 				insert.setInt(1, newspaper);
 				insert.setString(2, article);
 				insert.setString(3, title);
@@ -509,6 +522,7 @@ public class NewspaperController extends NationStatesController {
 				insert.setInt(6, Integer.parseInt(column));
 				insert.setInt(7, Integer.parseInt(order));
 				insert.setInt(8, Integer.parseInt(visible));
+				insert.setInt(9, submitterId);
 				insert.executeUpdate();
 			} else {
 				PreparedStatement insert = conn.prepareStatement("UPDATE assembly.articles SET article = ?, title = ?, articles.timestamp = ?, author = ?, articles.column = ?, articles.order = ?, visible = ? WHERE article_id = ?");
@@ -527,6 +541,21 @@ public class NewspaperController extends NationStatesController {
 		}
 		Utils.handleDefaultPostHeaders(request(), response());
 		return Results.ok();
+	}
+
+	private static enum Visibility {
+		DRAFT(0),
+		VISIBLE(1),
+		RETIRED(2),
+		SUBMITTED(3);
+		int type;
+		Visibility(int type) {
+			this.type = type;
+		}
+
+		public int getType() {
+			return type;
+		}
 	}
 
 	private static final Pattern imgTag = Pattern.compile("\\[img\\]\\S*\\[/img\\]");
