@@ -262,7 +262,6 @@ function showPuppets() {
 		}
 	});
 	$("a.puppet-name").on("mouseenter", function() { showPuppetRegion($(this).attr("id")); });
-	$("a.puppet-name").on("mouseleave", function() { if ($("#puppet-region-" + $(this).attr("id")).parent().is(":visible")) $("#puppet-region-" + $(this).attr("id")).parent().animate({ height: 'toggle' }, 1000); });
 	$(".puppet-form-remove").on("click", function() { console.log("remove"); console.log($(this).attr("name")); removePuppet($(this).attr("name")); });
 	$("a.puppet-name").on("click", function(event) {
 		switchToPuppet($(this).attr("id"));

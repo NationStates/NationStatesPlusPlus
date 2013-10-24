@@ -302,8 +302,6 @@ function addUpdateTime() {
 			text = "<span class='updatetime'>Next Update: " +  (new Date(nextUpdate)).customFormat("#hh#:#mm#:#ss# #AMPM#") + " [&plusmn; " + Math.floor(update.std * 2 / 1000) + " s]</span>"
 			$("h1:first").html($("h1:first").html() + text);
 		}
-	}).fail(function() {
-		$("h1:first").html($("h1:first").html() + "<i style='font-size:16px; margin-left:20px;'>Next Update: UNKNOWN - NO DATA - </i>");
 	});
 }
 
