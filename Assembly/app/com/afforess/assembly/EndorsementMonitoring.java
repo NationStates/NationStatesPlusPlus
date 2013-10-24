@@ -22,10 +22,12 @@ public class EndorsementMonitoring implements Runnable {
 	private final NationStates api;
 	private final DatabaseAccess access;
 	private final int limit;
-	public EndorsementMonitoring(NationStates api, DatabaseAccess access, int limit) {
+	private final HealthMonitor monitor;
+	public EndorsementMonitoring(NationStates api, DatabaseAccess access, int limit, HealthMonitor health) {
 		this.api = api;
 		this.access = access;
 		this.limit = limit;
+		this.monitor = health;
 	}
 
 	@Override
@@ -68,6 +70,7 @@ public class EndorsementMonitoring implements Runnable {
 			Logger.error("Unable to update endorsements", e);
 		} finally {
 			DbUtils.closeQuietly(conn);
+			if (monitor != null) monitor.endorsementHeartbeat();
 		}
 	}
 

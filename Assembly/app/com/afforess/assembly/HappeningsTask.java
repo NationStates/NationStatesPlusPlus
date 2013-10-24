@@ -41,10 +41,12 @@ public class HappeningsTask implements Runnable {
 	 * A counter, when set > 0, runs happening update polls at 2s intervals, otherwise at 10s intervals.
 	 */
 	private final AtomicInteger highActivity = new AtomicInteger(0);
-	public HappeningsTask(DatabaseAccess access, NationStates api) {
+	private final HealthMonitor monitor;
+	public HappeningsTask(DatabaseAccess access, NationStates api, HealthMonitor health) {
 		this.api = api;
 		this.pool = access.getPool();
 		this.access = access;
+		this.monitor = health;
 		Connection conn = null;
 		try {
 			conn = pool.getConnection();
@@ -84,6 +86,7 @@ public class HappeningsTask implements Runnable {
 	}
 
 	public void runImpl() {
+		if (monitor != null) monitor.happeningHeartbeat();
 		HappeningData data;
 		synchronized (api) {
 			//Throttle the happening queries based on how many new happenings occurred last run
@@ -321,7 +324,9 @@ public class HappeningsTask implements Runnable {
 			insert.executeUpdate();
 			ResultSet keys = insert.getGeneratedKeys();
 			keys.next();
-			return keys.getInt(1);
+			int id = keys.getInt(1);
+			access.getRegionIdCache().put(region, id);
+			return id;
 		}
 	}
 

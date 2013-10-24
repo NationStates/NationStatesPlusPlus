@@ -15,6 +15,7 @@ import org.spout.cereal.config.yaml.YamlConfiguration;
 import com.afforess.assembly.DailyDumps;
 import com.afforess.assembly.EndorsementMonitoring;
 import com.afforess.assembly.HappeningsTask;
+import com.afforess.assembly.HealthMonitor;
 import com.afforess.assembly.model.HappeningType;
 import com.afforess.assembly.util.DatabaseAccess;
 import com.amazonaws.auth.BasicAWSCredentials;
@@ -52,22 +53,34 @@ public class Global extends GlobalSettings {
 			throw new RuntimeException(e1);
 		}
 		ConfigurationNode settings = config.getChild("settings");
-		Logger.info("FlagController has started");
 		try {
 			Logger.info("Initializing database connection pool to [ " + settings.getChild("jbdc").getString() + " ]");
+			//Connection Driver
 			Class.forName("com.mysql.jdbc.Driver");
 			pool = new ComboPooledDataSource();
 			pool.setDriverClass("com.mysql.jdbc.Driver");
 			pool.setJdbcUrl(settings.getChild("jbdc").getString());
+
+			//Connection Pooling
 			pool.setMaxPoolSize(50);
 			pool.setMinPoolSize(1);
-			pool.setMaxIdleTime(600);
-			pool.setMaxConnectionAge(2 * 60 * 60);
+
+			pool.setMaxIdleTime(600); // 10 min after being unused, conn is closed
+			pool.setMaxConnectionAge(60 * 60); //1 hr after connection is open, it is closed
+
+			//Connection Debugging
 			pool.setDebugUnreturnedConnectionStackTraces(true);
 			pool.setUnreturnedConnectionTimeout(60 * 60);
-			pool.setAcquireRetryAttempts(60);
-			pool.setIdleConnectionTestPeriod(600);
+
+			//Statement caching
 			pool.setMaxStatementsPerConnection(25);
+
+			//Connection testing
+			pool.setTestConnectionOnCheckin(true);
+			pool.setTestConnectionOnCheckout(true);
+			pool.setPreferredTestQuery("SELECT 1");
+
+			//Connection Auth
 			Logger.info("Authenticating database connection pool with user [ " + settings.getChild("user").getString() + " ]");
 			pool.setUser(settings.getChild("user").getString());
 			pool.setPassword(settings.getChild("password").getString());
@@ -94,6 +107,17 @@ public class Global extends GlobalSettings {
 		api.setUserAgent(settings.getChild("User-Agent").getString());
 		api.setRelaxed(true);
 		this.access = new DatabaseAccess(pool);
+		
+		//Setup health monitoring
+		HealthMonitor health = null;
+		if (config.getChild("health").getChild("monitor").getBoolean()) {
+			Logger.info("Application Health Monitoring - ENABLED");
+			health = new HealthMonitor(config.getChild("health"), access);
+			health.start();
+		} else {
+			Logger.info("Application Health Monitoring - DISABLED");
+		}
+		
 
 		//Setup firebase
 		ConfigurationNode firebaseConfig = config.getChild("firebase");
@@ -111,13 +135,12 @@ public class Global extends GlobalSettings {
 		dailyDumps.setDaemon(true);
 		dailyDumps.start();
 
-		Akka.system().scheduler().schedule(Duration.create(2, TimeUnit.SECONDS), Duration.create(3, TimeUnit.SECONDS), new HappeningsTask(access, api), Akka.system().dispatcher());
-		Akka.system().scheduler().schedule(Duration.create(30, TimeUnit.SECONDS), Duration.create(30, TimeUnit.SECONDS), new EndorsementMonitoring(api, access, 15), Akka.system().dispatcher());
+		Akka.system().scheduler().schedule(Duration.create(2, TimeUnit.SECONDS), Duration.create(3, TimeUnit.SECONDS), new HappeningsTask(access, api, health), Akka.system().dispatcher());
+		Akka.system().scheduler().schedule(Duration.create(30, TimeUnit.SECONDS), Duration.create(30, TimeUnit.SECONDS), new EndorsementMonitoring(api, access, 15, health), Akka.system().dispatcher());
 	}
 
 	@Override
 	public void onStop(Application app) {
-		Logger.info("FlagController shutdown");
 		pool.close();
 	}
 

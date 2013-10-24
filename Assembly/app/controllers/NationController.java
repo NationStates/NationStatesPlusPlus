@@ -109,16 +109,22 @@ public class NationController extends NationStatesController {
 		}
 	}
 
-	public Result retrieveIssues(String nation) throws SQLException, ExecutionException {
+	public Result retrieveData() throws SQLException, ExecutionException {
+		Result result = Utils.validateRequest(request(), response(), getAPI(), getDatabase());
+		if (result != null) {
+			return result;
+		}
 		Utils.handleDefaultPostHeaders(request(), response());
+		final String nation = Utils.getPostValue(request(), "nation");
+		final String settings = Utils.getPostValue(request(), "data");
 		final int nationId = getDatabase().getNationIdCache().get(Utils.sanitizeName(nation));
-		if (nationId == -1) {
+		if (nationId == -1 || settings == null) {
 			return Results.badRequest();
 		}
 		Connection conn = null;
 		try {
 			conn = getConnection();
-			PreparedStatement select = conn.prepareStatement("SELECT issues FROM assembly.ns_settings WHERE id = ?");
+			PreparedStatement select = conn.prepareStatement("SELECT data FROM assembly.ns_settings WHERE id = ?");
 			select.setInt(1, nationId);
 			ResultSet set = select.executeQuery();
 			if (set.next()) {
@@ -133,14 +139,14 @@ public class NationController extends NationStatesController {
 		return Results.noContent();
 	}
 
-	public Result updateIssues() throws SQLException, ExecutionException {
+	public Result updateData() throws SQLException, ExecutionException {
 		Result result = Utils.validateRequest(request(), response(), getAPI(), getDatabase());
 		if (result != null) {
 			return result;
 		}
 		Utils.handleDefaultPostHeaders(request(), response());
 		final String nation = Utils.getPostValue(request(), "nation");
-		final String issues = Utils.getPostValue(request(), "issues");
+		final String issues = Utils.getPostValue(request(), "data");
 		final int nationId = getDatabase().getNationIdCache().get(Utils.sanitizeName(nation));
 		if (nationId == -1 || issues == null) {
 			return Results.badRequest();
@@ -152,7 +158,7 @@ public class NationController extends NationStatesController {
 			select.setInt(1, nationId);
 			ResultSet set = select.executeQuery();
 			if (set.next()) {
-				PreparedStatement update = conn.prepareStatement("UPDATE assembly.ns_settings SET issues = ?, last_update = ? WHERE id = ?");
+				PreparedStatement update = conn.prepareStatement("UPDATE assembly.ns_settings SET data = ?, last_update = ? WHERE id = ?");
 				update.setString(1, issues);
 				update.setLong(2, System.currentTimeMillis());
 				update.setInt(3, nationId);
