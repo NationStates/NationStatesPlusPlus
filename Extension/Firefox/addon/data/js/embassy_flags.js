@@ -1,5 +1,5 @@
 (function() {
-	if (!isSettingEnabled("embassy_flags")) {
+	if (!getSettings().isEnabled("embassy_flags")) {
 		return;
 	}
 	(function() {

@@ -34,11 +34,15 @@ POST    /newspaper/disband/           @controllers.NewspaperController.disbandNe
 
 GET     /autocomplete/nation/         @controllers.AutocompleteController.autocompleteNation(start: String ?= "")
 GET     /nation/title/                @controllers.AutocompleteController.getFullName(name: String ?= "")
+
 GET     /nation/latest_update/        @controllers.NationController.getLastSettingsUpdate(name: String ?= "")
 GET     /nation/settings/             @controllers.NationController.retrieveSettings(name: String ?= "")
-POST    /nation/data/get/             @controllers.NationController.retrieveData()
 POST    /nation/settings/             @controllers.NationController.updateSettings()
+
+POST    /nation/data/get/             @controllers.NationController.retrieveData()
 POST    /nation/data/set/             @controllers.NationController.updateData()
+GET     /nation/data/                 @controllers.NationController.getLastDataUpdate(name: String ?= "")
+
 GET     /nation/endorsements/         @controllers.WorldAssemblyController.getEndorsements(name: String ?= "")
 GET     /nation/unreturnedendo/       @controllers.WorldAssemblyController.getUnreturnedEndorsements(name: String ?= "")
 GET     /nation/missingendo/          @controllers.WorldAssemblyController.getMissingEndorsements(name: String ?= "")

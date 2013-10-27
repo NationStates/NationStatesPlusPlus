@@ -69,10 +69,13 @@ public class NewspaperController extends NationStatesController {
 			result = select.executeQuery();
 			boolean regionAdministrator = true;
 			if (result.next()) {
+				Logger.info("Attempting to found paper for " + region + ", nation: " + nation);
+				Logger.info("Delegate: " + result.getString(1) + " | Founder: " + result.getString(2));
 				if (!nation.equals(result.getString(1)) && !nation.equals(result.getString(2))) {
 					regionAdministrator = false;
 				}
 			} else {
+				Logger.info("Attempting to found paper for " + region + ", no region found!");
 				regionAdministrator = false;
 			}
 			if (!regionAdministrator) {

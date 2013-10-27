@@ -14,11 +14,11 @@
 })();
 
 function setupRegionPage() {
-	if (isSettingEnabled("auto_update")) {
+	if (getSettings().isEnabled("auto_update")) {
 		checkForRMBUpdates(10000);
 	}
 
-	if (isSettingEnabled("infinite_scroll")) {
+	if (getSettings().isEnabled("infinite_scroll")) {
 		$(".rmbolder").remove();
 	}
 	addUpdateTime();
@@ -26,7 +26,7 @@ function setupRegionPage() {
 	if (isAntiquityTheme()) {
 		var html = "<tr>" + $("tbody:last").children(":first").html() + "</tr>";
 		var children;
-		if (isSettingEnabled("infinite_scroll")) {
+		if (getSettings().isEnabled("infinite_scroll")) {
 			children = $("tbody:last").children(":not(:first)").get().reverse();
 		} else {
 			children = $("tbody:last").children(":not(:first)").get();
@@ -118,7 +118,7 @@ function setupRegionPage() {
 
 		var html = "";
 		var children;
-		if (isSettingEnabled("infinite_scroll")) {
+		if (getSettings().isEnabled("infinite_scroll")) {
 			children = $(".rmbtable2").children().get().reverse();
 		} else {
 			children = $(".rmbtable2").children().get();
@@ -142,7 +142,7 @@ function setupRegionPage() {
 		}
 	}
 
-	if (isSettingEnabled("infinite_scroll") || isSettingEnabled("search_rmb")) {
+	if (getSettings().isEnabled("infinite_scroll") || getSettings().isEnabled("search_rmb")) {
 		var formHtml = "<div id='rmb-post-form' style='display: none;'><div style='text-align:center;'><p>You need to " + (getUserNation().length > 0 ?  "move to the region" : "login to NationStates") + " first!</p></div></div>";
 		//Move the RMB reply area to the top
 		var rmbPost = document.forms["rmb"];
@@ -155,12 +155,12 @@ function setupRegionPage() {
 			});
 
 			//Move the post form to the top
-			var formHtml = "<div id='rmb-post-form' " + (!isSettingEnabled("search_rmb") ? "" : "style='display: none;'") + "><form id='rmb'>" + rmbPost.innerHTML + "</form></div>";
+			var formHtml = "<div id='rmb-post-form' " + (!getSettings().isEnabled("search_rmb") ? "" : "style='display: none;'") + "><form id='rmb'>" + rmbPost.innerHTML + "</form></div>";
 			$(rmbPost).remove();
 		}
 		$('.widebox:last').prepend(formHtml);
 	}
-	if (!isSettingEnabled("infinite_scroll")) {
+	if (!getSettings().isEnabled("infinite_scroll")) {
 		//Override older rmb click
 		var olderRMB = $('#olderrmb').prop('outerHTML')
 		var olderParent = $('#olderrmb').parent();
@@ -202,7 +202,7 @@ function setupRegionPage() {
 	}
 
 	//Move "Switch to Forum View" to top of RMB posts
-	if (isSettingEnabled("infinite_scroll")) {
+	if (getSettings().isEnabled("infinite_scroll")) {
 		if (isAntiquityTheme()) {
 			var forumView = $('.rmbview');
 			var forumViewHTML = forumView.html();
@@ -214,14 +214,14 @@ function setupRegionPage() {
 			forumView.remove();
 			$("<p class='rmbview'>" + forumViewHTML + "</p>").insertBefore(".rmbtable2:first");
 		}
-	} else if (isSettingEnabled("search_rmb")) {
+	} else if (getSettings().isEnabled("search_rmb")) {
 		$('.rmbolder').css("margin-top", "20px");
 	}
 
 	//Setup infinite scroll
 	$(window).scroll(handleInfiniteScroll);
 
-	if (isSettingEnabled("search_rmb")) {
+	if (getSettings().isEnabled("search_rmb")) {
 		//Add rmb menu area
 		$("<div id='rmb-menu' style='text-align: center;'><button class='button RoundedButton rmb-message'>Leave a message</button> <button class='button RoundedButton search-rmb'>Search messages</button></div").insertBefore($(".widebox")[1]);
 
@@ -253,35 +253,35 @@ function setupRegionPage() {
 		if ($("#census_report_container:visible").length == 0) {
 			$("#census_report_container").show();
 			$("a.toggle-census-report").html("(Hide)");
-			localStorage.removeItem("show_world_census");
+			getSettings(true).setValue("show_world_census", true);
 		} else {
 			$("#census_report_container").hide();
 			$("a.toggle-census-report").html("(Show)");
-			localStorage.setItem("show_world_census", false);
+			getSettings(true).setValue("show_world_census", false);
 		}
 	});
-	if (!isSettingEnabled("show_world_census")) {
+	if (!getSettings().isEnabled("show_world_census")) {
 		$("#census_report_container").hide();
 		$("a.toggle-census-report").html("(Show)");
 	}
 	$("<h2>Regional Population <a style='font-family: Verdana,Tahoma; font-size: 10pt; margin-left: 10px;' class='toggle-pop-report' href='#'>(Hide)</a></h2><div id='regional-pop'></div><div class='hzln'></div>").insertAfter($("#census_report_container").next());
 
-	localStorage.setItem("chart", JSON.stringify({ type: "region_chart", region: getVisibleRegion(), title: getVisibleRegion().replaceAll("_", " ").toTitleCase()}));
+	$("<div id='highcharts_graph' graph='region_chart' region='" + getVisibleRegion() + "' title='" + getVisibleRegion().replaceAll("_", " ").toTitleCase() + "'></div>").insertAfter($("#census_report_container"));
 
 	$("a.toggle-pop-report").click(function(event) {
 		event.preventDefault();
 		if ($("#regional-pop:visible").length == 0) {
 			$("#regional-pop").show();
 			$("a.toggle-pop-report").html("(Hide)");
-			localStorage.removeItem("show_regional_population");
-			localStorage.setItem("chart", JSON.stringify({ type: "set_chart_size", width: $("#regional-pop").width(), height: 400}));
+			getSettings(true).setValue("show_regional_population", true);
+			$("<div id='highcharts_graph' graph='set_chart_size' width='" + $("#regional-pop").width() + "' height='" + 400 + "'></div>").insertAfter($("#census_report_container"));
 		} else {
 			$("#regional-pop").hide();
 			$("a.toggle-pop-report").html("(Show)");
-			localStorage.setItem("show_regional_population", false);
+			getSettings(true).setValue("show_regional_population", false);
 		}
 	});
-	if (!isSettingEnabled("show_regional_population")) {
+	if (!getSettings().isEnabled("show_regional_population")) {
 		$("#regional-pop").hide();
 		$("a.toggle-pop-report").html("(Show)");
 	}
@@ -427,7 +427,6 @@ function searchRMB(event) {
 		return;
 	}
 	var searchWords = document.getElementById("rmb-search-input").value;
-	_gaq.push(['_trackEvent', 'RMB', 'Search', searchWords]);
 	keywords = searchToKeywords(searchWords);
 	//Hide RMB
 	var rmb = $('.rmbtable2:last');
@@ -571,7 +570,7 @@ function handleInfiniteScroll() {
 			$(searchPaused).remove();
 			doRMBSearch();
 		}
-	} else if (isSettingEnabled("infinite_scroll") && !processingRMB) {
+	} else if (getSettings().isEnabled("infinite_scroll") && !processingRMB) {
 		processingRMB = true;
 		lastRMBScroll = Date.now();
 		//Infinite RMB post scroll
@@ -648,7 +647,7 @@ function updateRMB() {
 			});
 			//Insert new posts
 			if (html.length > 0) {
-				if (isSettingEnabled("infinite_scroll") || isSettingEnabled("search_rmb")) {
+				if (getSettings().isEnabled("infinite_scroll") || getSettings().isEnabled("search_rmb")) {
 					$(html).insertBefore('.rmbrow:first').hide().show('slow');
 				} else {
 					$(html).insertAfter('.rmbrow:last').hide().show('slow');
@@ -673,7 +672,7 @@ function parseRMBPost(innerHTML, className) {
 }
 
 function parseRMBPostWithId(innerHTML, className, postId) {
-	if (isSettingEnabled("clickable_links")) {
+	if (getSettings().isEnabled("clickable_links")) {
 		innerHTML = linkify(innerHTML);
 	}
 
@@ -681,13 +680,13 @@ function parseRMBPostWithId(innerHTML, className, postId) {
 	var innerBody = innerHTML.indexOf('<div class="rmbspacer"></div>');
 
 	var isPostVisible = postId.indexOf("-search") == -1 && innerHTML.indexOf('rmbbuttons') == -1 && innerHTML.indexOf('rmbsuppressed') == -1;
-	if (isPostVisible && localStorage.getItem("ignored-post-" + postId) == "true" && isSettingEnabled("show_ignore")) {
+	if (isPostVisible && localStorage.getItem("ignored-post-" + postId) == "true" && getSettings().isEnabled("show_ignore")) {
 		innerHTML = "<div id='rmb-inner-body-" + postId + "' style='display:none;'>" + innerHTML.substring(0, innerBody) + "</div>" + innerHTML.substring(innerBody);
 	} else {
 		innerHTML = "<div id='rmb-inner-body-" + postId + "'>" + innerHTML.substring(0, innerBody) + "</div>" + innerHTML.substring(innerBody);
 	}
 
-	if (isPostVisible && isSettingEnabled("show_ignore")) {
+	if (isPostVisible && getSettings().isEnabled("show_ignore")) {
 		//Add ignore button
 		innerHTML = '<div style="margin-top:6px;" class="rmbbuttons"><a href="" class="forumpaneltoggle rmbignore"><img src="http://capitalistparadise.com/nationstates/static/rmb_ignore.png" alt="Ignore" title="Ignore Post"></a></div>' + innerHTML;
 

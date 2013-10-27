@@ -41,15 +41,16 @@
 		for (var i = 0; i < ircEnabledRegions.length; i++) {
 			var region = ircEnabledRegions[i];
 			if (region["region"] == getVisibleRegion()) {
-				var networkOverride = localStorage.getItem("irc_network_override");
-				var nickOverride = localStorage.getItem("irc_username_override");
-				var ircUrl = "https://kiwiirc.com/client/" + (networkOverride == null ? region["network"] : networkOverride);
+				var settings = getSettings();
+				var network = settings.getValue("irc_network_override", region["network"]);
+				var nick = settings.getValue("irc_username_override", getUserNation().replaceAll("_", " ").toTitleCase().replaceAll(" ", "_"));
+				var ircUrl = "https://kiwiirc.com/client/" + network;
 				if (document.head.innerHTML.indexOf("ns.dark") != -1) {
 					ircUrl += "/?theme=cli&nick=";
 				} else {
 					ircUrl += "/?theme=relaxed&nick=";
 				}
-				ircUrl += (nickOverride == null ? getUserNation().replaceAll("_", " ").toTitleCase().replaceAll(" ", "_") : nickOverride) + "&" + region["channel"];
+				ircUrl += nick + "&" + region["channel"];
 				$("<h2 style='display: inline-block; margin-bottom: 0;'>Regional IRC</h2>" + 
 				"<div style='display: inline; margin-left: 10px;'>" +
 				"<a class='irc-link' href='javascript:void(0)'>(Hide)</a></div>" + 
@@ -60,16 +61,16 @@
 					if ($(irc).html() == "(Hide)") {
 						$(irc).html("(Show)");
 						$("#irc-frame").hide();
-						localStorage.setItem("show_irc", false);
+						getSettings(true).setValue("show_irc", false);
 					} else {
 						$(irc).html("(Hide)");
 						$("#irc-frame").show();
-						localStorage.setItem("show_irc", true);
+						getSettings(true).setValue("show_irc", true);
 					}
 				}
 				$("a.irc-link").on("click", toggleIRC);
 
-				if (localStorage.getItem("show_irc") == "false") {
+				if (!getSettings().isEnabled("show_irc")) {
 					toggleIRC();
 				}
 				break;

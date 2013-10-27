@@ -1,5 +1,5 @@
 (function() {
-	if (!isSettingEnabled("scroll_nation_lists")) {
+	if (getSettings().isEnabled("scroll_nation_lists", true)) {
 		return;
 	}
 
@@ -107,7 +107,7 @@
 	function updatePageSlider(page, maxPage) {
 		$(".noUiSlider").val(page);
 		$("div[id^=handle-id]").html("Page " + page + "/" + maxPage);
-		if (maxPage > 999) { $("#handle-id").css("width", "130px"); } else if (maxPage > 99) { $("#handle-id").css("width", "100px"); }
+		if (maxPage > 999) { $("div[id^=handle-id]").css("width", "130px"); } else if (maxPage > 99) { $("div[id^=handle-id]").css("width", "100px"); }
 		requestNum += 1;
 		if (page != shinyRangePage) {
 			updateShinyPage(page, requestNum);
@@ -154,6 +154,9 @@
 				pageUrl = '/page=list_regions';
 				if (getVisibleSorting() != "") {
 					pageUrl += "/sort=" + getVisibleSorting();
+				}
+				if (getVisibleRegion() != "") {
+					pageUrl += "/region=" + getVisibleRegion();
 				}
 				pageUrl += '?start=' + (getVisibleSorting() == "alpha" ?  (page * 15 - 15) : (page * 10 - 10));
 			} else {

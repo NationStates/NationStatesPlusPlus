@@ -153,6 +153,7 @@ public class Utils {
 		String authToken = Utils.getPostValue(request, "auth-token");
 		String nation = Utils.getPostValue(request, "nation");
 		String auth = Utils.getPostValue(request, "auth");
+		String reason = "UNKNOWN NATION ID";
 		try {
 			final int nationId = access.getNationIdCache().get(sanitizeName(nation));
 			if (nation != null && nationId != -1) {
@@ -160,17 +161,22 @@ public class Utils {
 					response.setHeader("Access-Control-Expose-Headers", "X-Auth-Token");
 					response.setHeader("X-Auth-Token", authToken);
 					return null;
+				} else {
+					reason = "INVALID AUTH TOKEN";
 				}
 				if (auth != null && api.verifyNation(nation, auth)) {
 					response.setHeader("Access-Control-Expose-Headers", "X-Auth-Token");
 					response.setHeader("X-Auth-Token", access.generateAuthToken(nationId));
 					return null;
+				} else {
+					reason = "INVALID NS AUTH CODE";
 				}
 			}
 		} catch (ExecutionException e) {
 			Logger.error("Unable to validate request", e);
+			reason = "UNKNOWN REASON";
 		}
 		Utils.handleDefaultPostHeaders(request, response);
-		return Results.unauthorized();
+		return Results.unauthorized(reason);
 	}
 }

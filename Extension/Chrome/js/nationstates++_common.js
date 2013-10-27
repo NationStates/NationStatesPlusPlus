@@ -40,6 +40,13 @@
 			return this.slice(0, str.length) == str;
 		};
 	}
+	
+	//Add string.endsWith
+	if (typeof String.prototype.endsWith != 'function') {
+		String.prototype.endsWith = function (s) {
+			return this.length >= s.length && this.substr(this.length - s.length) == s;
+		}
+	}
 
 	//Add string.contains
 	if (typeof String.prototype.contains != 'function') {
@@ -176,15 +183,188 @@
 		};
 	}
 //*** END OF LICENSED CODE BY GAVEN KISTNER ***//
-	if (isSettingEnabled("show_puppet_switcher")) {
+	if (getSettings().isEnabled("show_puppet_switcher")) {
 		$("#puppet_setting").show();
 		$("#puppet_setting").on("mouseover", function() { if ($("#puppet_setting_form:visible").length == 0) showPuppets(); });
 	}
 	if (getUserNation() == "glen-rhodes") {
 		localStorage.setItem("ignore_theme_warning", true);
 	}
-	update(1);
 })();
+
+function getSettings(autoupdate) {
+	autoupdate = autoupdate || false;
+	var SettingsContainer = function() {
+		var data = {};
+		data.last_update = 0;
+		data.settings = {};
+		return data;
+	}
+
+	var api = {};
+	api.autoupdate = autoupdate;
+	api.refresh = function() {
+		var data = null;
+		try {
+			data = localStorage.getItem("settings");
+			data = data != null ? JSON.parse(data) : new SettingsContainer();
+		} catch(err) {
+			data = new SettingsContainer();
+			console.log(err);
+			console.log(JSON.stringify(localStorage.getItem("settings")));
+			localStorage.removeItem("settings");
+		}
+		api.last_update = data.last_update;
+		api.settings = data.settings;
+	}
+	api.refresh();
+
+	api.getValue = function(option, defVal) {
+		var value = this.settings[option];
+		if (value == null) {
+			if (typeof defVal != "undefined") {
+				this.settings[option] = defVal;
+				return defVal;
+			}
+			return null;
+		}
+		return value;
+	}
+
+	api.isEnabled = function(option, defVal) {
+		var value = this.getValue(option, (typeof defVal == "undefined") ? true : defVal);
+		return (typeof value === "string") ? ("true" === value) : value;
+	}
+
+	api.setValue = function(option, value) {
+		if (value != null) {
+			this.settings[option] = value;
+		} else {
+			delete this.settings[option];
+		}
+		if (this.autoupdate) {
+			this.pushUpdate();
+		}
+	}
+
+	api.update = function(callback) {
+		var api = this;
+		$.get("http://capitalistparadise.com/api/nation/latest_update/?name=" + getUserNation(), function(data, textStatus, xhr) {
+			if (xhr.status != 204 && data.timestamp > api.last_update) {
+				api.last_update = data.timestamp;
+				$.get("http://capitalistparadise.com/api/nation/settings/?name=" + getUserNation(), function(data, textStatus, xhr) {
+					api.settings = data;
+					api.save();
+					if (typeof callback != undefined) callback(data, textStatus, xhr);
+				});
+			} else if (data.timestamp < api.last_update) {
+				api.pushUpdate(callback);
+			} else {
+				if (typeof callback != undefined) callback();
+			}
+		});
+	}
+
+	api.save = function() {
+		var data = {};
+		data.settings = this.settings;
+		data.last_update = this.last_update;
+		localStorage.setItem("settings", JSON.stringify(data));
+	}
+
+	api.pushUpdate = function(callback) {
+		this.save();
+		var api = this;
+		doAuthorizedPostRequest("http://capitalistparadise.com/api/nation/settings/", "settings=" + encodeURIComponent(JSON.stringify(this.settings)), function(data, textStatus, xhr) {
+			api.last_update = Date.now();
+			if (typeof callback != "undefined") callback(data, textStatus, xhr);
+		});
+	}
+
+	return api;
+}
+
+function getUserData(autoupdate) {
+	autoupdate = autoupdate || false;
+	var DataContainer = function() {
+		var data = {};
+		data.last_update = 0;
+		data.userData = {};
+		return data;
+	}
+
+	var api = {};
+	api.autoupdate = autoupdate;
+	api.refresh = function() {
+		var data = null;
+		try {
+			data = localStorage.getItem(getUserNation() + "-data");
+			data = data != null ? JSON.parse(data) : new DataContainer();
+		} catch(err) {
+			data = new DataContainer();
+			console.log(err);
+			console.log(JSON.stringify(localStorage.getItem(getUserNation() + "-data")));
+			localStorage.removeItem(getUserNation() + "-data");
+		}
+		api.last_update = data.last_update;
+		api.userData = data.userData;
+	}
+	api.refresh();
+
+	api.getValue = function(option, defVal) {
+		var value = this.userData[option];
+		if (value == null) {
+			if (typeof defVal != "undefined") {
+				this.userData[option] = defVal;
+				return defVal;
+			}
+			return null;
+		}
+		return value;
+	}
+
+	api.setValue = function(option, value) {
+		if (value != null) {
+			this.userData[option] = value;
+		} else {
+			delete this.userData[option];
+		}
+		if (this.autoupdate) {
+			this.save();
+		}
+	}
+
+	api.update = function(callback) {
+		var api = this;
+		$.get("http://capitalistparadise.com/api/nation/data/?name=" + getUserNation(), function(data, textStatus, xhr) {
+			if (xhr.status != 204 && data.timestamp > api.last_update) {
+				api.last_update = data.timestamp;
+				doAuthorizedPostRequest("http://capitalistparadise.com/api/nation/data/get/", "", function(data) {
+					api.userData = data;
+					api.save();
+					if (typeof callback != undefined) callback();
+				});
+			} else if (data.timestamp < api.last_update) {
+				api.pushUpdate(callback);
+			}
+		});
+	}
+
+	api.save = function() {
+		var data = {};
+		data.userData = this.userData;
+		data.last_update = this.last_update;
+		localStorage.setItem(getUserNation() + "-data", JSON.stringify(data));
+	}
+
+	api.pushUpdate = function(callback) {
+		this.last_update = Date.now();
+		this.save();
+		doAuthorizedPostRequest("http://capitalistparadise.com/api/nation/data/set/", "data=" + encodeURIComponent(JSON.stringify(this.userData)), callback);
+	}
+
+	return api;
+}
 
 /**
 	Converts a search input into an array of keywords to search for.
@@ -224,7 +404,7 @@ function searchToKeywords(search) {
 }
 
 function showPuppets() {
-	if (!isSettingEnabled("show_puppet_switcher")) {
+	if (!getSettings().isEnabled("show_puppet_switcher")) {
 		return;
 	}
 	if ($("#puppet_setting_form").length == 0) {
@@ -274,7 +454,7 @@ function getPuppetCache(name) {
 	localStorage.removeItem("puppet-" + name + "-region");
 	if (cache != null) {
 		cache = JSON.parse(cache);
-		if (parseInt(cache['timestamp']) > Date.now()) {
+		if (cache.timestamp > Date.now()) {
 			return cache;
 		}
 	}
@@ -282,21 +462,21 @@ function getPuppetCache(name) {
 		if (typeof $(data).find(".rlink:first").attr('href') != "undefined") {
 			var region = $(data).find(".rlink:first").attr('href').substring(7);
 			$("#puppet-region-" + name).html("(<a style='color: white;' href='/region=" + region + "'>" + region.split("_").join(" ").toTitleCase() + "</a>)");
-			var cache = new Object();
-			cache['region'] = region;
-			cache['wa'] = $(data).find(".wa_status").length > 0 ? "true" : "false";
-			cache['timestamp'] = (Date.now() + 24 * 60 * 60 * 1000);
+			var cache = {}
+			cache.region = region;
+			cache.wa = $(data).find(".wa_status").length > 0 ? "true" : "false";
+			cache.timestamp = (Date.now() + 60 * 60 * 1000);
 			localStorage.setItem("puppet-" + name + "-cache", JSON.stringify(cache));
 		}
 	});
 	var cache = new Object();
-	cache['region'] = "UNKNOWN REGION";
-	cache['wa'] = false;
+	cache.region = "UNKNOWN REGION";
+	cache.wa = false;
 	return cache;
 }
 
 function showPuppetRegion(name) {
-	if (localStorage.getItem("show-region-on-hover") == "true") {
+	if (getSettings().isEnabled("show-region-on-hover") == "true") {
 		if (!$("#puppet-region-" + name).parent().is(":visible")) {
 			$("#puppet-region-" + name).parent().animate({ height: 'toggle' }, 500);
 		}
@@ -305,11 +485,11 @@ function showPuppetRegion(name) {
 
 function switchToPuppet(name) {
 	localStorage.removeItem("puppet-" + name + "-region");
-	$.post("http://www.nationstates.net/", "logging_in=1&nation=" + encodeURIComponent(name) + "&password=" + encodeURIComponent(localStorage.getItem("puppet-" + name)) + (isSettingEnabled("autologin-puppets", false) ?"&autologin=yes" : ""), function(data) {
+	$.post("http://www.nationstates.net/", "logging_in=1&nation=" + encodeURIComponent(name) + "&password=" + encodeURIComponent(localStorage.getItem("puppet-" + name)) + (getSettings().isEnabled("autologin-puppets", false) ?"&autologin=yes" : ""), function(data) {
 		if (data.contains("Would you like to restore it?")) {
 			$("#content").html($(data).find("#content").html());
 		} else {
-			if (localStorage.getItem("redirect-puppet-page") == "true") {
+			if (getSettings().isEnabled("redirect-puppet-page")) {
 				window.location.href = "/nation=" + name;
 			} else {
 				window.location.reload(false);
@@ -368,61 +548,10 @@ function addPuppetNation(nation, password) {
 		localStorage.setItem("puppets", puppets + nation);
 	}
 }
-/*
-var _progress_label
-function setupSyncing() {
-	if (getUserNation() == "") {
-		return;
-	}
-	localStorage.removeItem("next_sync" + getUserNation());
-	var nextSync = localStorage.getItem("next_sync_" + getUserNation());
-	if (nextSync == null || nextSync < Date.now()) {
-		if (typeof Firebase == "undefined") {
-			console.log("waiting for firebase...");
-			setTimeout(setupSyncing, 250);
-			return;
-		} else {
-			console.log("Firebase ready!");
-		}
-		var banner = $("#banner, #nsbanner");
-		var progressStyle = "right: 320px; position: absolute; top: 6px; width: 150px; height: 16px; background: rgba(255, 255, 255, 0.65);";
-		$(banner).append("<div id='firebase_progress_bar' style='" + progressStyle + "' title='Syncing Settings...'><span id='progress_label' style='position: absolute; text-align: center; line-height: 1.5em; margin-left: 30px; font-size:10px; font-weight: bold;'>Syncing Settings</span></div>");
-		$("#firebase_progress_bar" ).progressbar({value: 0});
-		$("#firebase_progress_bar" ).hide();
-		_progress_label = $("#firebase_progress_bar").find('#progress_label').clone().width($("#firebase_progress_bar").width());
-		_progress_label.css("position", "relative");
-		_progress_label.css("font-weight", "bold");
-		_progress_label.css("color", "white");
-		_progress_label.css("text-align", "left");
-		_progress_label.css("display", "block");
-		_progress_label.css("overflow", "hidden");
-		_progress_label.css("width", "auto");
-		$('.ui-progressbar-value').append(_progress_label);
-		$('.ui-progressbar-value').css("background", "#425AFF");
-	
-		setTimeout(function() {
-			var oldAuthToken = localStorage.getItem("auth-" + getUserNation());
-			if (oldAuthToken != null) {
-				localStorage.setItem("firebase-auth-" + getUserNation(), oldAuthToken);
-				localStorage.removeItem("auth-" + getUserNation());
-			}
-			var authToken = localStorage.getItem("firebase-auth-" + getUserNation());
-			if (authToken != null) {
-				$("#firebase_progress_bar" ).progressbar({value: 40});
-				loginFirebase(authToken);
-				localStorage.setItem("next_sync_" + getUserNation(), Date.now() + 900 * 1000);
-			} else {
-				$("#firebase_progress_bar" ).progressbar({value: 5});
-				requestAuthToken();
-			}
-		}, 1000);
-	}
-}
-*/
+
 function getNationStatesAuth(callback) {
 	$.get("/page=verify_login", function(data) {
 		var authCode = $(data).find("#proof_of_login_checksum").html();
-		console.log("Auth code:" + authCode);
 		//Regenerate localid if nessecary
 		$(window).trigger("page/update");
 		callback(authCode);
@@ -441,169 +570,14 @@ function doAuthorizedPostRequest(url, postData, success, failure) {
 					success(data, textStatus, jqXHR);
 				}
 			}
-		}).fail(function() {
+		}).fail(function(data, textStatus, jqXHR) {
 			if (typeof failure != "undefined" && failure != null) {
-				failure();
+				failure(data, textStatus, jqXHR);
 			}
 		});
 	});
 }
-/*
-function requestAuthToken() {
-	$("#firebase_progress_bar" ).show();
-	getNationStatesAuth(function(authCode) {
-		//Verify code
-		$.post("http://capitalistparadise.com/api/firebase/", "nation=" + getUserNation() + "&auth=" + authCode, function(response) {
-			console.log("auth token: " + response['token']);
-			$("#firebase_progress_bar" ).progressbar({value: 50});
-			loginFirebase(response['token']);
-		});
-	});
-}
 
-function loginFirebase(authToken) {
-	$("#firebase_progress_bar" ).progressbar({value: 75});
-	(new Firebase("https://nationstatesplusplus.firebaseio.com")).auth(authToken, function(error) {
-		if (error) {
-			console.log("Login Failed!", error);
-			localStorage.removeItem("firebase-auth-" + getUserNation());
-			$("#firebase_progress_bar" ).progressbar({value: 0});
-			requestAuthToken();
-		} else {
-			_progress_label.html("Sync Successful!");
-			$('#progress_label').hide();
-			$("#firebase_progress_bar").progressbar({value: 100});
-			if ($("#firebase_progress_bar").is(':visible')) {
-				setTimeout(function() {
-					$("#firebase_progress_bar").animate({ width: 'toggle' }, 3000);
-				}, 2000);
-			}
-			localStorage.setItem("firebase-auth-" + getUserNation(), authToken);
-			syncFirebase();
-		}
-	});
-}
-
-function syncFirebase() {
-	var settingsTime
-	var dataRef = new Firebase("https://nationstatesplusplus.firebaseio.com/nation/" + getUserNation() + "/");
-	
-	if (localStorage.getItem("remove-issue") != null) {
-		var issue = localStorage.getItem("remove-issue");
-		dataRef.child("issues").child(issue.split(":")[0]).child(issue.split(":")[1]).remove();
-		localStorage.removeItem("remove-issue");
-	}
-	
-	dataRef.child('resync-issues').once('value', function(snapshot) {
-		if (snapshot.val()) {
-			console.log("DEBUG: RESYNCING ISSUES!!!");
-			var toRemove = new Array();
-			for (var i = 0; i < localStorage.length; i++){
-				var key = localStorage.key(i);
-				if (key.startsWith("issue-") && key.contains("-" + getUserNation() + "-")) {
-					toRemove.push(key)
-				}
-			}
-			for (var i = 0; i < toRemove.length; i++) {
-				var key = toRemove[i];
-				localStorage.removeItem(key);
-			}
-			dataRef.child('resync-issues').remove();
-		}
-	});
-	
-	dataRef.child("settings").child("settings_timestamp").on('value', function(snapshot) {
-		var lastFirebaseUpdate = 0;
-		if (snapshot.val() != null) {
-			lastFirebaseUpdate = parseInt(snapshot.val());
-		}
-		var lastSettingsUpdate = 0;
-		if (localStorage.getItem("settings-timestamp") != null) {
-			lastSettingsUpdate = parseInt(localStorage.getItem("settings-timestamp"));
-		}
-		if (lastFirebaseUpdate < lastSettingsUpdate) {
-			dataRef.child("settings").set({
-				embassy_flags: isSettingEnabled("embassy_flags"),
-				search_rmb: isSettingEnabled("search_rmb"),
-				infinite_scroll: isSettingEnabled("infinite_scroll"),
-				show_ignore: isSettingEnabled("show_ignore"),
-				show_quote: isSettingEnabled("show_quote"),
-				auto_update: isSettingEnabled("auto_update"),
-				clickable_links: isSettingEnabled("clickable_links"),
-				hide_ads: isSettingEnabled("hide_ads"),
-				scroll_nation_lists: isSettingEnabled("scroll_nation_lists"),
-				clickable_telegram_links: isSettingEnabled("clickable_telegram_links"),
-				show_puppet_switcher: isSettingEnabled("show_puppet_switcher"),
-				fancy_dossier_theme: isSettingEnabled("fancy_dossier_theme"),
-				use_nationstates_api: isSettingEnabled("use_nationstates_api"),
-				show_gameplay_news: isSettingEnabled("show_gameplay_news"),
-				show_roleplay_news: isSettingEnabled("show_roleplay_news"),
-				show_regional_news: isSettingEnabled("show_regional_news"),
-				settings_timestamp: (localStorage.getItem("settings-timestamp") == null ? Date.now() : localStorage.getItem("settings-timestamp"))
-			});
-		} else {
-			dataRef.child("settings").on('value', function(snapshot) {
-				var settings = snapshot.val();
-				for (var key in settings) {
-					localStorage.setItem(key, settings[key]);
-				}
-			});
-		}
-	});
-	for (var i = 0; i < localStorage.length; i++){
-		var key = localStorage.key(i);
-		if (key.startsWith("issue-") && key.contains("-" + getUserNation() + "-")) {
-			updateFirebaseIssue(key);
-		}
-	}
-	(new Firebase("https://nationstatesplusplus.firebaseio.com/nation/" + getUserNation() + "/")).child("issues").once('value', function(snapshot) {
-		json = snapshot.val();
-		for (var key in json) {
-			for (var choice in json[key]) {
-				var localKey = "issue-" + key + "-" + getUserNation() + "-" + choice;
-				localStorage.setItem(localKey, json[key][choice]);
-			}
-		}
-	});
-	(new Firebase("https://nationstatesplusplus.firebaseio.com/nation/" + getUserNation() + "/")).child("last-login").set(Date.now());
-	setTimeout(function() {try { var dataRef = new Firebase("https://nationstatesplusplus.firebaseio.com"); dataRef.n.od.u.ba.Hb.Ib(); } catch (error) { console.log(error); } }, 10000);
-}
-
-function updateFirebaseIssue(issueKey) {
-	var split = issueKey.split("-");
-	var choice = issueKey.substring(issueKey.indexOf("choice-"));
-	var issueRef = (new Firebase("https://nationstatesplusplus.firebaseio.com/nation/" + getUserNation() + "/")).child("issues").child(split[1]).child(choice);
-	issueRef.once('value', function(snapshot) {
-		var timestamps = snapshot.val();
-		if (timestamps != null) {
-			if (String(localStorage.getItem(issueKey)) != String(timestamps)) {
-				var remoteTimestamps = String(timestamps).split(",");
-				var localTimestamps = String(localStorage.getItem(issueKey)).split(",");
-				var mergedTimestamps = "";
-				var json = new Object();
-				for (var j = 0; j < remoteTimestamps.length; j++) {
-					if (isNumber(remoteTimestamps[j])) {
-						json[remoteTimestamps[j]] = true;
-					}
-				}
-				for (var j = 0; j < localTimestamps.length; j++) {
-					if (isNumber(localTimestamps[j])) {
-						json[localTimestamps[j]] = true;
-					}
-				}
-				for (var time in json) {
-					if (mergedTimestamps.length > 0) {
-						mergedTimestamps += ",";
-					}
-					mergedTimestamps += time;
-				}
-				localStorage.setItem(issueKey, String(mergedTimestamps));
-			}
-		}
-		issueRef.set(String(localStorage.getItem(issueKey)));
-	});
-}
-*/
 /*
 	Returns the nation name of the active user, or empty string if no active user.
 */
@@ -836,17 +810,6 @@ function isInRange(min, value, max) {
 	return false;
 }
 
-function isSettingEnabled(setting, defValue) {
-	var val = localStorage.getItem(setting);
-	if (val == null) {
-		if (typeof defValue == "undefined" || defValue === null) {
-			return true;
-		}
-		return defValue == "true";
-	}
-	return val == "true";
-}
-
 function isScrolledIntoView(elem) {
 		var docViewTop = $(window).scrollTop();
 		var docViewBottom = docViewTop + $(window).height();
@@ -895,7 +858,7 @@ function getNationStatesAPI() {
 
 	var reachedRateLimit = false;
 	api.canUseAPI = function() {
-		return isSettingEnabled("use_nationstates_api") && !reachedRateLimit;
+		return getSettings().isEnabled("use_nationstates_api") && !reachedRateLimit;
 	};
 	var doRequestInternal = function(url, result) {
 		if (result == null) {
@@ -1009,22 +972,4 @@ function timestampToTimeAgo(timestamp) {
 	}
 	time = time.substring(0, time.length - 1);
 	return time;
-}
-
-var _gaq = _gaq || [];
-function update(delay){
-	setTimeout(function() {
-		_gaq.push(['_setAccount', 'UA-41267101-1']);
-		_gaq.push(['_trackPageview']);
-		_gaq.push(['_setCustomVar', 1, 'Version', 'v2.0.0', 2]);
-
-		if (delay == 1) {
-			if (getVisibleRegion() != "") _gaq.push(['_trackEvent', 'NationStates', 'Region', getVisibleRegion()]);
-			if (getVisiblePage() != "") _gaq.push(['_trackEvent', 'NationStates', 'Page', getVisiblePage()]);
-			if (getUserNation() != "") _gaq.push(['_trackEvent', 'NationStates', 'Home_Region', getUserNation()]);
-			if (getUserRegion() != "") _gaq.push(['_trackEvent', 'NationStates', 'Nation', getUserRegion()]);
-			_gaq.push(['_trackEvent', 'NationStates', 'URL', window.location.href]);
-		}
-		update(60000);
-	}, delay);
 }

@@ -1,6 +1,6 @@
 (function() {
 	if ((getVisiblePage() == "telegrams" || getVisiblePage() == "tg") && !isAntiquityTheme()) {
-		if (isSettingEnabled("clickable_telegram_links")) {
+		if (getSettings().isEnabled("clickable_telegram_links")) {
 			linkifyTelegrams();
 		}
 		addTelegramSearch();

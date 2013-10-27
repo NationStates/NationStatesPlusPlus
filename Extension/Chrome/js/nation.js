@@ -63,7 +63,7 @@
 								  "Switching Your Vote While No One Is Looking", "Spinning In A Wheeled Office Chair", "Saving The Rainforest", "Watching Big Brother",
 								  "Building A Metropolis", "Taking Just One More Turn", "Watching Paint Dry"]
 		$("#" + (showInfluence ? 'influence' : 'power')).html("<div id='snark' style='text-align:center; font-weight: bold; font-size: 16px;'><img style='margin-bottom: -2px; margin-right: 4px;' src='/images/loading1.gif'>" + snarkyComments[Math.floor(Math.random() * snarkyComments.length)] + "</div>");
-		localStorage.setItem("chart", JSON.stringify({ type: "national_power", region: region, title: region.replaceAll("_", " ").toTitleCase(), visibleNation: getVisibleNation(), showInfluence: showInfluence}));
+		$("<div id='highcharts_graph' graph='national_power' region='" + region + "' title='" + region.replaceAll("_", " ").toTitleCase() + "' visible_nation='" + getVisibleNation() + "' show_influence='" + showInfluence + "'></div>").insertAfter($("#snark"));
 	};
 	
 	function loadEndorsementStats(region) {

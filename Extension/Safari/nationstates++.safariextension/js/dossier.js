@@ -1,7 +1,7 @@
 (function() {
 	if (getVisiblePage() == "dossier_advanced") {
 		$("input[type='submit']").attr("class", "button").css("font-size", "12px");
-	} else if (getVisiblePage() == "dossier" && isSettingEnabled("fancy_dossier_theme")) {
+	} else if (getVisiblePage() == "dossier" && getSettings().isEnabled("fancy_dossier_theme")) {
 		if (isAntiquityTheme()) {
 			$("#main").html("<div id='content'>" + $("#main").html() + "</div>");
 		}
@@ -48,6 +48,8 @@
 			endNationDossier = false;
 			$("#nation_dossier").find(".dossier_element").remove();
 			loadDossierPage(false, false);
+			currentNationPage += 1;
+			loadDossierPage(false, false);
 		});
 		
 		$("#refresh_rdossier").click(function() {
@@ -55,12 +57,16 @@
 			endRegionDossier = false;
 			$("#region_dossier").find(".dossier_element").remove();
 			loadDossierPage(true, false);
+			currentRegionPage += 1;
+			loadDossierPage(true, false);
 		});
 		
 		$("#switch_to_region_dossier").click(function() {
 			$("#nation_dossier").hide();
 			$("#region_dossier").show();
 			$("#refresh_rdossier").click();
+			currentRegionPage = 0;
+			endRegionDossier = false;
 		});
 		
 		$("#switch_to_nation_dossier").click(function() {
@@ -86,7 +92,6 @@
 					} else if (typeof $(event.target).attr("id") != "undefined" && $(event.target).attr("id").startsWith("alias-")) {
 						var nation = $(event.target).attr("id").split("alias-")[1];
 						if (getNationAlias(nation) == null) {
-							//$(event.target).attr("src", "http://capitalistparadise.com/nationstates/static/remove-alias.png");
 							if ($("#input-alias-" + nation).length == 0) {
 								$(event.target).parent().find(".wa_status, .last_activity").hide();
 								$("<input id='input-alias-" + nation + "' type='text' placeholder='Alias' style='height: 22px; font-size: 15px;width:250px;margin-left: 10px;'>").insertAfter($(event.target));
@@ -199,7 +204,6 @@
 							nation = $(this).find(".nlink").attr("href").substring(7)
 							flag = $(this).find(".smallflag").attr("src");
 						}
-						console.log("checking: " + nation + " " + $("#nation_dossier").find("div[id='" + nation + "']").length);
 						if ($("#nation_dossier").find("div[id='" + nation + "']").length == 0 && !dossierHtml.contains("<div id='" + nation + "'")) {
 							targets.push(nation);
 							var alias = getNationAlias(nation);
@@ -262,10 +266,7 @@
 				}
 			});
 		}
-		loadDossierPage(false, false);
-		currentNationPage += 1;
-		loadDossierPage(false, false);
-		
+
 		window.onresize = function() {
 			if ($("#nation_dossier:visible").length == 1) {
 				var minWidth = Math.min(400, Math.max($(window).width() - 1250, 0));
@@ -280,8 +281,13 @@
 				});
 			}
 		}
-		
-		$(window).scroll(function handleInfiniteScroll() {
+
+		loadDossierPage(false, false);
+		currentNationPage += 1;
+		loadDossierPage(false, false);
+		window.onresize();
+
+		$(window).scroll(function () {
 			if ($(window).scrollTop() + 400 > ($(document).height() - $(window).height())) {
 				if ($("#nation_dossier:visible").length == 1) {
 					currentNationPage += 1;

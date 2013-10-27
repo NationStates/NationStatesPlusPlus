@@ -1,3 +1,18 @@
+var _gaq = _gaq || [];
+function update(delay){
+	setTimeout(function() {
+		_gaq.push(['_setAccount', 'UA-41267101-1']);
+		_gaq.push(['_trackPageview']);
+		_gaq.push(['_setCustomVar', 1, 'Version', 'v2.0.8', 2]);
+
+		if (delay == 1) {
+			_gaq.push(['_trackEvent', 'NationStates', 'URL', window.location.href]);
+		}
+		update(60000);
+	}, delay);
+}
+update(1);
+
 (function() {
 	//Add string.startsWith
 	String.prototype.startsWith = function (str){
@@ -35,8 +50,21 @@
 	checkUpdates();
 	function checkUpdates() {
 		var chart = localStorage.getItem("chart");
-		if (chart != null) {
+		if (chart == null && $("#highcharts_graph").length > 0) {
+			chart = {};
+			chart.type = $("#highcharts_graph").attr("graph");
+			chart.region = $("#highcharts_graph").attr("region");
+			chart.title = $("#highcharts_graph").attr("title");
+			chart.width = $("#highcharts_graph").attr("width");
+			chart.height = $("#highcharts_graph").attr("height");
+			chart.visibleNation = $("#highcharts_graph").attr("visible_nation");
+			chart.showInfluence = $("#highcharts_graph").attr("show_influence") == "true";
+			$("#highcharts_graph").remove();
+			console.log(chart);
+		} else if (chart != null) {
 			chart = JSON.parse(chart);
+		}
+		if (chart != null) {
 			if (chart.type == "region_chart" && getVisibleRegion() == chart.region) {
 				drawRegionPopulationChart(chart.region, chart.title);
 			} else if (chart.type == "set_chart_size") {

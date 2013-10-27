@@ -13,9 +13,9 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleShortVersionString</key>
-	<string>2.0.8</string>
+	<string>2.0.9</string>
 	<key>CFBundleVersion</key>
-	<string>2.0.8</string>
+	<string>2.0.9</string>
 	<key>Chrome</key>
 	<dict/>
 	<key>Content</key>
@@ -25,6 +25,7 @@
 			<key>End</key>
 			<array>
 				<string>jquery-2.0.2.min.js</string>
+				<string>jquery-ui.min.js</string>
 				<string>background.js</string>
 				<string>js/Blob.js</string>
 				<string>js/FileSaver.js</string>
@@ -47,7 +48,6 @@
 				<string>js/help.js</string>
 				<string>js/irc.js</string>
 				<string>js/dossier.js</string>
-				<string>js/reports.js</string>
 				<string>js/administration.js</string>
 				<string>js/settings.js</string>
 			</array>

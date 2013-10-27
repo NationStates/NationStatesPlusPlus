@@ -3,9 +3,8 @@
 	$("<li><a href='http://www.nationstates.net/page=activity/view=world/filter=all'>ACTIVITY</a></li>").insertAfter(menu.find("a[href='page=dossier']").parent());
 	window.postMessage({ method: "unread_forum_posts"}, "*");
 	checkPanelAlerts();
-	addCustomAlerts();
 
-	if ($(".STANDOUT").length > 0) {
+	if ($(".STANDOUT").length > 0 && getSettings().isEnabled("floating_sidepanel")) {
 		var flag = $(".STANDOUT:first").find("img").attr("src");
 		if (flag.match(/t[0-9]?.(jpg|png|gif)/).length > 0) {
 			flag = flag.substring(0, flag.length - 6) + flag.substring(flag.length - 4);
@@ -19,15 +18,9 @@
 			$("#panel").css("margin-top", "-" + Math.min($(window).scrollTop(), 100) + "px");
 		});
 	}
-	
+
 	if (getVisiblePage() == "blank" && document.head.innerHTML.indexOf("antiquity") != -1) {
 		$("#main").append("<div id='content'></div>");
-	}
-
-	function addCustomAlerts() {
-		if (localStorage.getItem("show_admin_area") == "true") {
-		//	$(".menu").append("<li><a id='nationbot' href='http://capitalistparadise.com/api/nationbot/'>NATIONBOT ONLINE</a></li>");
-		}
 	}
 
 	function updateSecurityCodes() {

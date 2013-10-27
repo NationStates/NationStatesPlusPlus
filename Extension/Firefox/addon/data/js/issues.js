@@ -6,7 +6,7 @@
 				var index = $(this).attr('href').indexOf(search);
 				if (index > -1) {
 					var dilemma = $(this).attr('href').substring(index + search.length);
-					selectOption("choice--1", dilemma);
+					selectOption(-1, dilemma);
 				}
 			});
 		});
@@ -22,61 +22,44 @@
 			window.onresize = updateSize;
 			updateSize();
 		}
-		for (var i = -1; i <= 9; i++) {
-			var key = "issue-" + getVisibleDilemma() + "-" + getUserNation() + "-choice-" + i;
-			var previous = localStorage.getItem(key);
-			if (previous != null && $("button[name=choice-" + i + "]").length != 0) {
-				var parent = $("button[name=choice-" + i + "]").parent();
-				var split = previous.split(",");
-				var date = new Date(parseInt(split[split.length - 1]) * 1000);
-				if (date.getTime() + 24 * 60 * 60 * 1000 < Date.now()) {
-					if (split.length == 1) {
-						$(parent).html($(parent).html() + "<div style='display:inline; font-style:italic; font-size:11px; margin-left: 10px;'>Your goverment previously enacted this option on " + date.customFormat("#MMM# #DD#, #YYYY#") + "</div>");
-					} else {
-						$(parent).html($(parent).html() + "<div style='display:inline; font-style:italic; font-size:11px; margin-left: 10px;'>Your goverment previously enacted this option " + split.length + " times, most recently on " + date.customFormat("#MMM# #DD#, #YYYY#") + "</div>");
+		var nationData = getUserData();
+		nationData.update();
+		if (nationData.getValue("issues", {})[getVisibleDilemma()] != null) {
+			var choices = nationData.getValue("issues", {})[getVisibleDilemma()];
+			for (var i = 0; i < choices.length; i++) {
+				var decision = choices[i];
+				if ($("button[name=choice-" + decision.choice + "]").length != 0) {
+					var parent = $("button[name=choice-" + decision.choice + "]").parent();
+					var date = new Date(parseInt(decision.timestamp) * 1000);
+					if (date.getTime() + 24 * 60 * 60 * 1000 < Date.now()) {
+						if (parent.find("span[name='choice-" + decision.choice + "']").length == 0) {
+							$(parent).html($(parent).html() + "<span name='choice-" + decision.choice + "' style='font-style:italic; font-size:11px; margin-left: 10px;'>Your government previously enacted this option on " + date.customFormat("#MMM# #DD#, #YYYY#") + "</span>");
+						} else {
+							parent.find("span[name='choice-" + decision.choice + "']").html("Your government previously enacted this option multiple times, most recently on " + date.customFormat("#MMM# #DD#, #YYYY#"));
+						}
 					}
 				}
 			}
 		}
 		$("button").on('click', function() {
-			selectOption($(this).prop('name'), getVisibleDilemma());
+			selectOption($(this).prop('name') == "choice--1" ? -1 : parseInt($(this).prop('name').split("-")[1]), getVisibleDilemma());
 		});
 	}
 })();
 
 function selectOption(choice, issueNumber) {
-	localStorage.removeItem("next_sync" + getUserNation());
+	var nationData = getUserData();
+	var issues = nationData.getValue("issues", {});
 	var now = Math.floor(Date.now() / 1000);
-	for (var i = -1; i <= 9; i++) {
-		var key = "issue-" + issueNumber + "-" + getUserNation() + "-choice-" + i;
-		var previous = localStorage.getItem(key);
-		if (previous != null) {
-			var split = previous.split(",");
-			var rebuilt = "";
-			for (var j = 0; j < split.length; j++) {
-				var time = parseInt(split[j]);
-				if (now < (time + 12 * 60 * 60)) {
-					//console.log("cur time: " + now + " is within 12 hours of old answer, discarding: " + time);
-				} else {
-					if (rebuilt.length != 0) rebuilt += ",";
-					rebuilt += split[j];
-				}
+	if (issues[issueNumber] == null) {
+		issues[issueNumber] = [];
+	} else {
+		for (var i = 0; i < issues[issueNumber].length; i++) {
+			if (issues[issueNumber][i].timestamp + 12 * 60 * 60 > now) {
+				issues[issueNumber].splice(i, 1);
 			}
-			if (rebuilt.length != 0) {
-				localStorage.setItem(key, rebuilt);
-			} else {
-				localStorage.removeItem(key);
-			}
-			//Remove now, will be set once as clicking a button forces a navigation and thus a resync
-			localStorage.setItem("remove-issue", issueNumber + ":" + "choice-" + i);
 		}
 	}
-	var key = "issue-" + issueNumber + "-" + getUserNation() + "-" + choice;
-	var previous = localStorage.getItem(key);
-	if (previous != null) {
-		previous += "," + now;
-	} else {
-		previous = now;
-	}
-	localStorage.setItem(key, previous);
+	issues[issueNumber].push({timestamp: now, choice: choice});
+	nationData.pushUpdate();
 }
