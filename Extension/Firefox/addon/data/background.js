@@ -15,12 +15,14 @@ $.get(urlPrefix + "cache_buster.txt?time=" + Date.now() , function(value) {
 
 
 (function() {
-	//Have to remove this one
-	$("#banneradbox").remove();
-	
 	var pageUrl = window.location.href;
-
-	if (isSettingEnabled("hide_ads")) {
+	if (pageUrl.indexOf("template-overall=none") != -1) {
+		return;
+	}
+	
+	$("#banneradbox").remove();
+	var settings = localStorage.getItem("settings")
+	if (settings == null || settings.indexOf('"hide_ads":false') == -1) {
 		$("#paneladbox").remove();
 		$("#sidebaradbox").remove();
 		$("#footeradbox").remove();
@@ -32,11 +34,8 @@ $.get(urlPrefix + "cache_buster.txt?time=" + Date.now() , function(value) {
 		$("iframe[name='google_osd_static_frame']").remove();
 		$("#panelad").remove();
 	}
-	
-	if (pageUrl.indexOf("template-overall=none") != -1) {
-		return;
-	}
-	
+
+
 	if (localStorage.getItem("ignore_theme_warning") != "true" && $("#outdated").length == 0) {
 		if (document.head.innerHTML.indexOf("antiquity") != -1) {
 			$("#main").prepend("<div id='outdated' style='height: 60px; width: 100%; background-image: linear-gradient(-45deg, rgba(255, 255, 0, 1) 25%, transparent 25%, transparent 50%, rgba(255, 255, 0, 1) 50%, rgba(255, 255, 0, 1) 75%, transparent 75%, transparent); background-color: #F00; background-size: 50px 50px;font-size: 56px;font-family: impact;text-align: center;'><a style='color: black;' href='javascript:void(0)' id='fix_theme'>NationStates++ Does Not Support The Antiquity Theme</a></div>");
@@ -106,7 +105,7 @@ $.get(urlPrefix + "cache_buster.txt?time=" + Date.now() , function(value) {
 })();
 
 function loadJavascript() {
-	if (pageUrl.indexOf('http://www.nationstates.net/') > -1 && isSettingEnabled("gameplay_enhancements")) {
+	if (pageUrl.indexOf('http://www.nationstates.net/') > -1) {
 		console.log('[NationStates++] Detected NationStates Page. Loading...');
 
 		if (document.head.innerHTML.indexOf("antiquity") != -1) {
@@ -119,17 +118,20 @@ function loadJavascript() {
 	} else if (pageUrl.indexOf('http://forum.nationstates.net/') > -1 ) {
 		console.log('[NationStates++] Detected NationStates Forum Page. Loading...');
 		addStylesheet("http://www.nationstates.net/ghbuttons_v2.css");
-		
-		$("#nssidebar").css("margin-top", "-" + Math.min($(window).scrollTop(), 100) + "px");
-		$( window ).scroll(function() {
-			$("#nssidebar").css("margin-top", "-" + Math.min($(window).scrollTop(), 100) + "px");
-		});
-		$("#nssidebar").css("position", "fixed");
+		var settings = getSettings();
+		settings.update(function() { console.log("Update callback!"); });
 
-		if (isSettingEnabled("egosearch_ignore")) {
+		if (settings.isEnabled("floating_sidepanel")) {
+			$("#nssidebar").css("margin-top", "-" + Math.min($(window).scrollTop(), 100) + "px");
+			$( window ).scroll(function() {
+				$("#nssidebar").css("margin-top", "-" + Math.min($(window).scrollTop(), 100) + "px");
+			});
+			$("#nssidebar").css("position", "fixed");
+		}
+		if (settings.isEnabled("egosearch_ignore")) {
 			showForumEgoposts();
 		}
-		if (isSettingEnabled("post_ids")) {
+		if (settings.isEnabled("post_ids")) {
 			if (window.location.href.indexOf("viewtopic.php") != -1) {
 				$("div.post").each(function() {
 					var marginLeft = 11 + (8 - $(this).attr("id").substring(1).length) * 4.4;
@@ -203,10 +205,6 @@ window.addEventListener("message", function(event) {
 		window.location.href = "http://www.nationstates.net/page=news/?live_happenings=true";
 	}
 });
-
-function isSettingEnabled(setting) {
-	return localStorage.getItem(setting) == null || localStorage.getItem(setting) == "true";
-}
 
 function addStylesheet(url) {
 	var style = document.createElement('link');
