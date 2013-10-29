@@ -223,7 +223,7 @@ function setupRegionPage() {
 
 	if (getSettings().isEnabled("search_rmb")) {
 		//Add rmb menu area
-		$("<div id='rmb-menu' style='text-align: center;'><button class='button RoundedButton rmb-message'>Leave a message</button> <button class='button RoundedButton search-rmb'>Search messages</button></div").insertBefore($(".widebox")[1]);
+		$("<div id='rmb-menu' style='text-align: center;'><button class='button RoundedButton rmb-message'>Leave a message</button> <button class='button RoundedButton search-rmb'>Search messages</button></div").insertBefore($(".widebox:contains('Switch to Forum View')"));
 
 		//Add search box
 		$("<div id='searchbox' style='display: none;'><div style='margin-top:6px; text-align:center;'><input id='rmb-search-input' placeholder='Search' type='search' style='width:35%; height:25px;' name='googlesearch'><p><input id='rmb-search-input-region' placeholder='Region' type='search' style='width:16.5%; margin-right: 2%; height:25px;' name='googlesearch'><input id='rmb-search-input-author' placeholder='Author' type='search' style='width:16.5%; height:25px;' name='googlesearch'><p></div></div>").insertBefore($(".widebox")[1]);
@@ -240,6 +240,7 @@ function setupRegionPage() {
 
 	addFormattingButtons();
 
+	
 	var census = $("h2:contains('Today's World Census Report')");
 	$("<div id='census_report_container'></div>").insertAfter(census);
 	$("#census_report_container").next().appendTo($("#census_report_container"));
@@ -260,6 +261,7 @@ function setupRegionPage() {
 			getSettings(true).setValue("show_world_census", false);
 		}
 	});
+	
 	if (!getSettings().isEnabled("show_world_census")) {
 		$("#census_report_container").hide();
 		$("a.toggle-census-report").html("(Show)");
