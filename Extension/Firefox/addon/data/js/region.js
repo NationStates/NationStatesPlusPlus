@@ -222,11 +222,12 @@ function setupRegionPage() {
 	$(window).scroll(handleInfiniteScroll);
 
 	if (getSettings().isEnabled("search_rmb")) {
+		var wideboxArea = $(".widebox:contains('Switch to Forum View')");
 		//Add rmb menu area
-		$("<div id='rmb-menu' style='text-align: center;'><button class='button RoundedButton rmb-message'>Leave a message</button> <button class='button RoundedButton search-rmb'>Search messages</button></div").insertBefore($(".widebox:contains('Switch to Forum View')"));
+		$("<div id='rmb-menu' style='text-align: center;'><button class='button RoundedButton rmb-message'>Leave a message</button> <button class='button RoundedButton search-rmb'>Search messages</button></div").insertBefore(wideboxArea);
 
 		//Add search box
-		$("<div id='searchbox' style='display: none;'><div style='margin-top:6px; text-align:center;'><input id='rmb-search-input' placeholder='Search' type='search' style='width:35%; height:25px;' name='googlesearch'><p><input id='rmb-search-input-region' placeholder='Region' type='search' style='width:16.5%; margin-right: 2%; height:25px;' name='googlesearch'><input id='rmb-search-input-author' placeholder='Author' type='search' style='width:16.5%; height:25px;' name='googlesearch'><p></div></div>").insertBefore($(".widebox")[1]);
+		$("<div id='searchbox' style='display: none;'><div style='margin-top:6px; text-align:center;'><input id='rmb-search-input' placeholder='Search' type='search' style='width:35%; height:25px;' name='googlesearch'><p><input id='rmb-search-input-region' placeholder='Region' type='search' style='width:16.5%; margin-right: 2%; height:25px;' name='googlesearch'><input id='rmb-search-input-author' placeholder='Author' type='search' style='width:16.5%; height:25px;' name='googlesearch'><p></div></div>").insertBefore(wideboxArea);
 
 		$("button.rmb-message").on("click", toggleRMBPostForm);
 		$("button.search-rmb").on("click", toggleSearchForm);

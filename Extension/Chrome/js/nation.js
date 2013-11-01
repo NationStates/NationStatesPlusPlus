@@ -120,7 +120,7 @@
 		$("#wa_stats").html("<h3 style='text-align:center;'>" +
 							"<a name='wa_stats' href='nation=" + getVisibleNation() + "/detail=wa_stats/stats=power'>Regional Power</a> - " +
 							"<a name='wa_stats' href='nation=" + getVisibleNation() + "/detail=wa_stats/stats=influence'>Regional Influence</a> - " +
-							"<a name='wa_stats' href='nation=" + getVisibleNation() + "/detail=wa_stats/stats=endorsements'>Endorsments</a>" +
+							"<a name='wa_stats' href='nation=" + getVisibleNation() + "/detail=wa_stats/stats=endorsements'>Endorsements</a>" +
 							"</h3><div name='wa_stats' id='power'></div><div name='wa_stats' id='influence'></div><div name='wa_stats' id='endorsements'></div>");
 		$("a[name='wa_stats']").on("click", function(event) {
 			if (event.ctrlKey && event.button == 0 || event.button != 0) {
