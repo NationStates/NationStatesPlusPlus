@@ -123,6 +123,7 @@ function loadJavascript() {
 
 		if (settings.isEnabled("floating_sidepanel")) {
 			$("#nssidebar").css("margin-top", "-" + Math.min($(window).scrollTop(), 100) + "px");
+			$("#nssidebar").find("iframe").css("height", "800px");
 			$( window ).scroll(function() {
 				$("#nssidebar").css("margin-top", "-" + Math.min($(window).scrollTop(), 100) + "px");
 			});
@@ -146,11 +147,6 @@ function loadJavascript() {
 
 function showForumEgoposts() {
 	var pageUrl = window.location.href.indexOf("#") > -1 ? window.location.href.substring(0, window.location.href.indexOf("#")) : window.location.href;
-	var nation = "";
-	var nationSelector = $("a:contains('Logout'):last");
-	if (nationSelector.length > 0) {
-		nation = nationSelector.text().substring(9, nationSelector.text().length - 2);
-	}
 
 	//Search page
 	if (pageUrl.indexOf("/search.php?") > -1) {
