@@ -5,6 +5,17 @@
 		showNationChallenge();
 		showWorldAssemblyInfo();
 		showNationAlias();
+		loadNSPPSupporterIcon();
+	}
+
+	function loadNSPPSupporterIcon() {
+		$.get("http://capitalistparadise.com/api/nation/latest_update/?name=" + getVisibleNation(), function(data, textStatus, xhr) {
+			if (xhr.status != 204 && data.timestamp > (Date.now() - 30 * 24 * 60 * 60 * 1000)) {
+				if ($(".trophy:first").length > 0) {
+					$(".trophy:first").parent().prepend("<img src='http://capitalistparadise.com/nationstates/static/nspp.png?v' class='trophy' title='A Proud NationStates++ User!'>");
+				}
+			}
+		});
 	}
 
 	function showNationAlias() {

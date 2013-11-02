@@ -1,5 +1,5 @@
 (function() {
-	if (getSettings().isEnabled("scroll_nation_lists", true)) {
+	if (!getSettings().isEnabled("scroll_nation_lists", true)) {
 		return;
 	}
 

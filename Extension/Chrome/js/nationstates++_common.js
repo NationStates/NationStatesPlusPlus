@@ -587,7 +587,7 @@ function getUserNation() {
 	} else {
 		var nationSelector = $("a:contains('Logout'):last");
 		if (typeof nationSelector.text() != 'undefined' && nationSelector.text().length > 0) {
-			return nationSelector.text().substring(9, nationSelector.text().length - 2);
+			return nationSelector.text().substring(9, nationSelector.text().length - 2).replaceAll(" ", "_").toLowerCase();
 		}
 	}
 	return "";
