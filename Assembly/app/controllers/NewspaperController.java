@@ -469,10 +469,10 @@ public class NewspaperController extends NationStatesController {
 		Connection conn = null;
 		try {
 			conn = getConnection();
-			PreparedStatement articles = conn.prepareStatement("SELECT newspaper_id, article, title, timestamp, author, newspaper WHERE visible = 1 ORDER BY timestamp DESC LIMIT ?, ?");
+			PreparedStatement articles = conn.prepareStatement("SELECT newspaper_id, article, title, timestamp, author, newspaper FROM assembly.full_articles WHERE visible = 1 ORDER BY timestamp DESC LIMIT ?, ?");
 			articles.setInt(1, start);
 			articles.setInt(2, start + 10);
-			ResultSet set = articles.getResultSet();
+			ResultSet set = articles.executeQuery();
 			while(set.next()) {
 				Map<String, Object> article = new HashMap<String, Object>();
 				article.put("newspaper_id", set.getInt(1));
