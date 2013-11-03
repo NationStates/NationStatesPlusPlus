@@ -7,7 +7,6 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
-
 import org.apache.commons.dbutils.DbUtils;
 import org.spout.cereal.config.yaml.YamlConfiguration;
 
@@ -27,41 +26,49 @@ public class AdminController extends DatabaseController {
 		adminCode = config.getChild("admin").getChild("code").getString();
 	}
 
-	public Result recalculateHappenings(String code, int happeningType) throws SQLException, ExecutionException {
+	public Result recalculateHappenings(String code, int happeningType) throws SQLException, ExecutionException, InterruptedException {
 		if (!code.equals(adminCode)) {
 			return Results.badRequest();
 		}
 		int updated = 0;
 		int total = 0;
-		Connection conn = null;
-		try {
-			conn = getConnection();
-			PreparedStatement update = conn.prepareStatement("UPDATE assembly.global_happenings SET type = ? WHERE id = ?");
-			PreparedStatement select = conn.prepareStatement("SELECT id, happening, nation FROM assembly.global_happenings WHERE type = ?");
-			select.setInt(1, happeningType);
-			ResultSet result = select.executeQuery();
-			while(result.next()) {
-				final int id = result.getInt(1);
-				final String happenings = result.getString(2);
-				total++;
-				int type = HappeningType.match(happenings);
-				if (type > -1) {
-					update.setInt(1, type);
-					update.setInt(2, id);
-					update.addBatch();
-					updated++;
-					
-					//Recalculate regional happenings
-					HappeningType hType = HappeningType.getType(type);
-					PreparedStatement deleteRegionHappenings = conn.prepareStatement("DELETE FROM assembly.regional_happenings WHERE global_id = ?");
-					deleteRegionHappenings.setInt(1, id);
-					deleteRegionHappenings.executeUpdate();
-					HappeningsTask.updateRegionHappenings(conn, this.getDatabase(), result.getInt(3), id, happenings, hType);
+		while(true) {
+			final int startId = total;
+			Connection conn = null;
+			try {
+				conn = getConnection();
+				PreparedStatement update = conn.prepareStatement("UPDATE assembly.global_happenings SET type = ? WHERE id = ?");
+				PreparedStatement select = conn.prepareStatement("SELECT id, happening, nation FROM assembly.global_happenings WHERE type = ? LIMIT 0, 1000");
+				select.setInt(1, happeningType);
+				ResultSet result = select.executeQuery();
+				while(result.next()) {
+					final int id = result.getInt(1);
+					final String happenings = result.getString(2);
+					total++;
+					int type = HappeningType.match(happenings);
+					if (type > -1) {
+						update.setInt(1, type);
+						update.setInt(2, id);
+						update.executeUpdate();
+						updated++;
+						
+						//Recalculate regional happenings
+						HappeningType hType = HappeningType.getType(type);
+						PreparedStatement deleteRegionHappenings = conn.prepareStatement("DELETE FROM assembly.regional_happenings WHERE global_id = ?");
+						deleteRegionHappenings.setInt(1, id);
+						deleteRegionHappenings.executeUpdate();
+						HappeningsTask.updateRegionHappenings(conn, this.getDatabase(), result.getInt(3), id, happenings, hType);
+					}
 				}
+			} finally {
+				DbUtils.closeQuietly(conn);
 			}
-			update.executeBatch();
-		} finally {
-			DbUtils.closeQuietly(conn);
+			if (total == startId) {
+				break;
+			}
+			Thread.sleep(1000);
+			for (int i = 0; i < 5; i++) { System.gc(); Thread.sleep(250); }
+			Thread.sleep(1000);
 		}
 		
 		Result result = Utils.handleDefaultGetHeaders(request(), response(), null);

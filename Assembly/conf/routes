@@ -31,6 +31,7 @@ POST    /newspaper/submit/            @controllers.NewspaperController.submitArt
 POST    /newspaper/administrate/      @controllers.NewspaperController.administrateNewspaper(newspaper: Integer ?= 0)
 POST    /newspaper/found/             @controllers.NewspaperController.foundNewspaper(region: String ?= "")
 POST    /newspaper/disband/           @controllers.NewspaperController.disbandNewspaper(region: String ?= "")
+GET     /newspaper/recent/            @controllers.NewspaperController.getLatestArticles(start: Integer ?= 0)
 
 GET     /autocomplete/nation/         @controllers.AutocompleteController.autocompleteNation(start: String ?= "")
 GET     /nation/title/                @controllers.AutocompleteController.getFullName(name: String ?= "")
@@ -50,6 +51,7 @@ GET     /nation/missingendo/          @controllers.WorldAssemblyController.getMi
 GET    /region/wa/                    @controllers.WorldAssemblyController.getWAMembers(region: String ?= "")
 GET    /region/population/            @controllers.RegionController.getPopulationTrends(region: String ?= "")
 GET    /region/updatetime/            @controllers.RegionController.getUpdateTime(region: String ?= "")
+GET    /region/nations/               @controllers.RegionController.getNations(region: String ?= "")
 
 GET    /admin/happenings/             @controllers.AdminController.recalculateHappenings(code: String ?= "", happeningType: Integer ?= -1)
 

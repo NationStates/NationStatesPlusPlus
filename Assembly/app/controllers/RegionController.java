@@ -77,6 +77,28 @@ public class RegionController extends DatabaseController {
 		}
 	}
 
+	public Result getNations(String region) throws SQLException, ExecutionException {
+		List<String> nations = new ArrayList<String>();
+		Connection conn = null; 
+		try {
+			conn = getConnection();
+			PreparedStatement statement = conn.prepareStatement("SELECT name FROM assembly.nation WHERE alive = 1 AND region = ?");
+			statement.setInt(1, getDatabase().getRegionIdCache().get(Utils.sanitizeName(region)));
+			ResultSet result = statement.executeQuery();
+			while(result.next()) {
+				nations.add(result.getString(1));
+			}
+		} finally {
+			DbUtils.closeQuietly(conn);
+		}
+
+		Result result = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(nations.hashCode()), "360");
+		if (result != null) {
+			return result;
+		}
+		return ok(Json.toJson(nations)).as("application/json");
+	}
+
 	public Result getPopulationTrends(String region) throws SQLException, ExecutionException {
 		Map<String, Object> data = new HashMap<String, Object>(4);
 		Connection conn = null; 

@@ -89,6 +89,7 @@ public class HealthMonitor extends Thread {
 					builder.command(restartCommand.split(","));
 					builder.redirectOutput(Redirect.INHERIT);
 					builder.redirectError(Redirect.INHERIT);
+					builder.redirectInput(Redirect.INHERIT);
 					builder.start();
 					System.exit(0);
 				} catch (Throwable t) {

@@ -28,7 +28,7 @@ public class AutocompleteController extends DatabaseController {
 	public Result autocompleteNation(String start) throws SQLException {
 		ArrayList<String> nations = new ArrayList<String>();
 		if (start == null || start.length() < 3) {
-			Utils.handleDefaultGetHeaders(request(), response(), null);
+			Utils.handleDefaultPostHeaders(request(), response());
 			return Results.badRequest();
 		}
 		

@@ -12,6 +12,7 @@ import java.sql.Savepoint;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -460,6 +461,36 @@ public class NewspaperController extends NationStatesController {
 		}
 		Utils.handleDefaultPostHeaders(request(), response());
 		return Results.ok();
+	}
+
+	public Result getLatestArticles(int start) throws SQLException {
+		start = Math.min(0, start);
+		List<Map<String, Object>> list = new ArrayList<Map<String, Object>>();
+		Connection conn = null;
+		try {
+			conn = getConnection();
+			PreparedStatement articles = conn.prepareStatement("SELECT newspaper_id, article, title, timestamp, author, newspaper WHERE visible = 1 ORDER BY timestamp DESC LIMIT ?, ?");
+			articles.setInt(1, start);
+			articles.setInt(2, start + 10);
+			ResultSet set = articles.getResultSet();
+			while(set.next()) {
+				Map<String, Object> article = new HashMap<String, Object>();
+				article.put("newspaper_id", set.getInt(1));
+				article.put("article", set.getString(2));
+				article.put("title", set.getString(3));
+				article.put("timestamp", set.getLong(4));
+				article.put("author", set.getString(5));
+				article.put("newspaper", set.getString(6));
+				list.add(article);
+			}
+		} finally {
+			DbUtils.closeQuietly(conn);
+		}
+		Result result = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(list.hashCode()), "180");
+		if (result != null) {
+			return result;
+		}
+		return ok(Json.toJson(list)).as("application/json");
 	}
 
 	public Result submitArticle(int newspaper, int articleId) throws SQLException, ExecutionException {

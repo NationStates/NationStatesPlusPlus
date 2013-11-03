@@ -123,7 +123,7 @@ public class HappeningsController extends DatabaseController {
 			Connection conn = null;
 			try {
 				conn = getConnection();
-				PreparedStatement statement = conn.prepareStatement("SELECT happening, timestamp FROM assembly.global_happenings WHERE nation = ?  ORDER BY timestamp DESC LIMIT " + start + ", 20");
+				PreparedStatement statement = conn.prepareStatement("SELECT happening, timestamp FROM assembly.global_happenings WHERE visible = 1 AND nation = ?  ORDER BY timestamp DESC LIMIT " + start + ", 20");
 				statement.setInt(1, getDatabase().getNationIdCache().get(nation));
 				ResultSet result = statement.executeQuery();
 				
