@@ -109,7 +109,7 @@
 		window.document.title = "NationStates++ Settings"
 		$("#content").html("<div style='margin-top: 25px; margin-left:15px; font-weight:bold; font-size:16px;'><img style='margin-bottom: -2px; margin-right: 4px;' src='/images/loading1.gif'>Loading...</span>");
 		getSettings().update(function() {
-			$.get("http://capitalistparadise.com/nationstates/v2_1/settings.html", function(html) {
+			$.get("http://nationstatesplusplus.net/nationstates/v2_1/settings.html", function(html) {
 				$("#content").html(html);
 				$("#content").find("input[type='checkbox']").each(function() {
 					var settings = getSettings();

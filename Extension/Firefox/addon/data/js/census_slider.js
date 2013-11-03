@@ -175,7 +175,7 @@
 			if ($(this).find(".smallflag, .miniflag").length > 0) return true;
 			var region = $(this).attr("href").substring(7);
 			$(this).attr("id", "rflag-" + region);
-			$.get("http://capitalistparadise.com/api/regionflag/?region=" + region, function(json) {
+			$.get("http://nationstatesplusplus.net/api/regionflag/?region=" + region, function(json) {
 				for (var region in json) {
 					var flag = json[region];
 					if (flag != null && flag.length > 0) {

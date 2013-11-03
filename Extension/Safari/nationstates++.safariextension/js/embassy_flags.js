@@ -31,7 +31,7 @@
 					if (j > start) 	list += ",";
 					list += regions[j]
 				}
-				$.getJSON("http://capitalistparadise.com/api/regionflag/?region=" + list, function(jsonData) {
+				$.getJSON("http://nationstatesplusplus.net/api/regionflag/?region=" + list, function(jsonData) {
 					var maxTop = -106;
 					$(".animate-flags").each(function() {
 						if ($(this).position().top > maxTop) {

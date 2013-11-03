@@ -9,10 +9,10 @@
 	}
 
 	function loadNSPPSupporterIcon() {
-		$.get("http://capitalistparadise.com/api/nation/latest_update/?name=" + getVisibleNation(), function(data, textStatus, xhr) {
+		$.get("http://nationstatesplusplus.net/api/nation/latest_update/?name=" + getVisibleNation(), function(data, textStatus, xhr) {
 			if (xhr.status != 204 && data.timestamp > (Date.now() - 30 * 24 * 60 * 60 * 1000)) {
 				if ($(".trophy:first").length > 0) {
-					$(".trophy:first").parent().prepend("<img src='http://capitalistparadise.com/nationstates/static/nspp.png?v' class='trophy' title='A Proud NationStates++ User!'>");
+					$(".trophy:first").parent().prepend("<img src='http://nationstatesplusplus.net/nationstates/static/nspp.png?v' class='trophy' title='A Proud NationStates++ User!'>");
 				}
 			}
 		});
@@ -83,42 +83,42 @@
 								"<h4>World Assembly Member Nations who have not given " + nation + " an Endorsement</h4><div id='unreturnedendo'>Loading...</div><hr></hr>" + 
 								"<h4>Endorsements given by " + nation + "</h4><div id='endorsements-given'>Loading...</div>");
 								
-		$.get("http://capitalistparadise.com/api/nation/missingendo/?name=" + getVisibleNation(), function(data) {
+		$.get("http://nationstatesplusplus.net/api/nation/missingendo/?name=" + getVisibleNation(), function(data) {
 			var html = "";
 			for (var i = 0; i < data.length; i++) {
 				var nation = data[i];
 				var formatted = nation.toLowerCase().replaceAll(" ", "_");
 				if (i > 0) html += ", ";
 				html += "<a href='nation=" + formatted + "' class='nlink'><img class='miniflag' alt='" + nation + 
-				"' src='http://capitalistparadise.com/api/flag/nation/?nation=" + formatted + "'>" + nation + "</a>";
+				"' src='http://nationstatesplusplus.net/api/flag/nation/?nation=" + formatted + "'>" + nation + "</a>";
 			}
 			if (html.length == 0) {
 				html = getVisibleNation().replaceAll("_", " ").toTitleCase() + " has endorsed all the nations in " + $(".rlink:first").attr("href").substring(7).replaceAll("_", " ").toTitleCase();
 			}
 			$("#missingendo").html(html);
 		});
-		$.get("http://capitalistparadise.com/api/nation/unreturnedendo/?name=" + getVisibleNation(), function(data) {
+		$.get("http://nationstatesplusplus.net/api/nation/unreturnedendo/?name=" + getVisibleNation(), function(data) {
 			var html = "";
 			for (var i = 0; i < data.length; i++) {
 				var nation = data[i];
 				var formatted = nation.toLowerCase().replaceAll(" ", "_");
 				if (i > 0) html += ", ";
 				html += "<a href='nation=" + formatted + "' class='nlink'><img class='miniflag' alt='" + nation + 
-				"' src='http://capitalistparadise.com/api/flag/nation/?nation=" + formatted + "'>" + nation + "</a>";
+				"' src='http://nationstatesplusplus.net/api/flag/nation/?nation=" + formatted + "'>" + nation + "</a>";
 			}
 			if (html.length == 0) {
 				html = getVisibleNation().replaceAll("_", " ").toTitleCase() + " has been mutually endorsed by every nation.";
 			}
 			$("#unreturnedendo").html(html);
 		});
-		$.get("http://capitalistparadise.com/api/nation/endorsements/?name=" + getVisibleNation(), function(data) {
+		$.get("http://nationstatesplusplus.net/api/nation/endorsements/?name=" + getVisibleNation(), function(data) {
 			var html = "";
 			for (var i = 0; i < data.length; i++) {
 				var nation = data[i];
 				var formatted = nation.toLowerCase().replaceAll(" ", "_");
 				if (i > 0) html += ", ";
 				html += "<a href='nation=" + formatted + "' class='nlink'><img class='miniflag' alt='" + nation + 
-				"' src='http://capitalistparadise.com/api/flag/nation/?nation=" + formatted + "'>" + nation + "</a>";
+				"' src='http://nationstatesplusplus.net/api/flag/nation/?nation=" + formatted + "'>" + nation + "</a>";
 			}
 			if (html.length == 0) {
 				html = getVisibleNation().replaceAll("_", " ").toTitleCase() + " has not endorsed any World Assembly Member Nations!";

@@ -38,7 +38,7 @@ function setupRegionPage() {
 	} else {
 		$(window).on("rmb/update", function(event, post) {
 			var id = post.attr("id").split("-")[post.attr("id").split("-").length - 1];
-			post.find(".rmbmsg2").append("<div postid='" + id + "' class='post-ratings'><ul class='post-rating-list' style='opacity: 0;'><li class='undo-rating' style='display:none;'><a href='javascript:void(0)'>Undo Rating</a></li><li name='like'><a href='javascript:void(0)'><img style='margin-right: 3px;' src='http://capitalistparadise.com/nationstates/static/like.png' alt='Like'></a></li><li name='dislike'><a href='javascript:void(0)'><img style='margin-right: 3px;' src='http://capitalistparadise.com/nationstates/static/dislike2.png' alt='Dislike'></a></li></ul></div>");
+			post.find(".rmbmsg2").append("<div postid='" + id + "' class='post-ratings'><ul class='post-rating-list' style='opacity: 0;'><li class='undo-rating' style='display:none;'><a href='javascript:void(0)'>Undo Rating</a></li><li name='like'><a href='javascript:void(0)'><img style='margin-right: 3px;' src='http://nationstatesplusplus.net/nationstates/static/like.png' alt='Like'></a></li><li name='dislike'><a href='javascript:void(0)'><img style='margin-right: 3px;' src='http://nationstatesplusplus.net/nationstates/static/dislike2.png' alt='Dislike'></a></li></ul></div>");
 			setTimeout(function(post) {
 				var authorHeight = post.find(".rmbauthor2").height() + 17;
 				var msgHeight = post.find(".rmbmsg2").height();
@@ -47,7 +47,7 @@ function setupRegionPage() {
 				}
 			}, 500, post);
 			var calculateRatings = function(post, id, cacheBuster) {
-				$.get("http://capitalistparadise.com/api/rmb/rate/get/?rmbPost=" + id + cacheBuster, function(data) {
+				$.get("http://nationstatesplusplus.net/api/rmb/rate/get/?rmbPost=" + id + cacheBuster, function(data) {
 					var likes = 0;
 					var dislikes = 0;
 					var rating = -1;
@@ -65,10 +65,10 @@ function setupRegionPage() {
 						post.find(".undo-rating").show();
 					}
 					if (dislikes > 0) {
-						post.find("span[name='rating-container']").prepend("<img src='http://capitalistparadise.com/nationstates/static/dislike2.png' alt='Dislike'><span amt='" + dislikes + "' " + (rating == 0 ? "rated='1'" : "") + " class='post-rating-desc'>Dislike x " + dislikes + "</span>");
+						post.find("span[name='rating-container']").prepend("<img src='http://nationstatesplusplus.net/nationstates/static/dislike2.png' alt='Dislike'><span amt='" + dislikes + "' " + (rating == 0 ? "rated='1'" : "") + " class='post-rating-desc'>Dislike x " + dislikes + "</span>");
 					}
 					if (likes > 0) {
-						post.find("span[name='rating-container']").prepend("<img src='http://capitalistparadise.com/nationstates/static/like.png' alt='Like'><span amt='" + likes + "' " + (rating == 1 ? "rated='1'" : "") + " class='post-rating-desc'>Like x " + likes + "</span>");
+						post.find("span[name='rating-container']").prepend("<img src='http://nationstatesplusplus.net/nationstates/static/like.png' alt='Like'><span amt='" + likes + "' " + (rating == 1 ? "rated='1'" : "") + " class='post-rating-desc'>Like x " + likes + "</span>");
 					}
 				});
 			};
@@ -86,7 +86,7 @@ function setupRegionPage() {
 				e.preventDefault();
 				var id = $(this).parents(".post-ratings:first").attr("postid");
 				var post = $("#rmb-post-" + id);
-				doAuthorizedPostRequest("http://capitalistparadise.com/api/rmb/rate/set/?rmbPost=" + id + "&rating=1", "", function(data, textStatus, jqXHR) {
+				doAuthorizedPostRequest("http://nationstatesplusplus.net/api/rmb/rate/set/?rmbPost=" + id + "&rating=1", "", function(data, textStatus, jqXHR) {
 					calculateRatings(post, id, "&time=" + Date.now());
 				});
 			});
@@ -94,7 +94,7 @@ function setupRegionPage() {
 				e.preventDefault();
 				var id = $(this).parents(".post-ratings:first").attr("postid");
 				var post = $("#rmb-post-" + id);
-				doAuthorizedPostRequest("http://capitalistparadise.com/api/rmb/rate/set/?rmbPost=" + id + "&rating=0", "", function(data, textStatus, jqXHR) {
+				doAuthorizedPostRequest("http://nationstatesplusplus.net/api/rmb/rate/set/?rmbPost=" + id + "&rating=0", "", function(data, textStatus, jqXHR) {
 					calculateRatings(post, id, "&time=" + Date.now());
 				});
 			});
@@ -112,7 +112,7 @@ function setupRegionPage() {
 				}
 				post.find(".post-rating-list").find("li").show();
 				post.find(".undo-rating").hide();
-				doAuthorizedPostRequest("http://capitalistparadise.com/api/rmb/rate/set/?rmbPost=" + id + "&rating=-1", "");
+				doAuthorizedPostRequest("http://nationstatesplusplus.net/api/rmb/rate/set/?rmbPost=" + id + "&rating=-1", "");
 			});
 		});
 
@@ -291,7 +291,7 @@ function setupRegionPage() {
 }
 
 function addUpdateTime() {
-	$.get("http://capitalistparadise.com/api/region/updatetime/?region=" + getVisibleRegion() + "&v=1", function(data) {
+	$.get("http://nationstatesplusplus.net/api/region/updatetime/?region=" + getVisibleRegion() + "&v=1", function(data) {
 		var text;
 		var update;
 		var hours = (Math.floor(Date.now() / (24 * 60 * 60 * 1000)) * 24 * 60 * 60 * 1000);
@@ -691,7 +691,7 @@ function parseRMBPostWithId(innerHTML, className, postId) {
 
 	if (isPostVisible && getSettings().isEnabled("show_ignore")) {
 		//Add ignore button
-		innerHTML = '<div style="margin-top:6px;" class="rmbbuttons"><a href="" class="forumpaneltoggle rmbignore"><img src="http://capitalistparadise.com/nationstates/static/rmb_ignore.png" alt="Ignore" title="Ignore Post"></a></div>' + innerHTML;
+		innerHTML = '<div style="margin-top:6px;" class="rmbbuttons"><a href="" class="forumpaneltoggle rmbignore"><img src="http://nationstatesplusplus.net/nationstates/static/rmb_ignore.png" alt="Ignore" title="Ignore Post"></a></div>' + innerHTML;
 
 		if (localStorage.getItem("ignored-post-" + postId) == "true") {
 			innerHTML += "<div id='rmb-ignored-body-" + postId + "' class='rmbsuppressed' style='margin-top:-16px; padding-bottom:6px;'>Ignored post.</div>";

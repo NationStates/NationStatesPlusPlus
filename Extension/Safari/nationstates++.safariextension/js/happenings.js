@@ -58,9 +58,9 @@
 			$("#loading_happenings").show();
 			var url;
 			if (getVisiblePage() == "nation") {
-				url = "http://capitalistparadise.com/api/nation/happenings/?nation=" + getVisibleNation() + "&start=" + happeningsIndex;
+				url = "http://nationstatesplusplus.net/api/nation/happenings/?nation=" + getVisibleNation() + "&start=" + happeningsIndex;
 			} else {
-				url = "http://capitalistparadise.com/api/region/happenings/?region=" + getVisibleRegion() + "&start=" + happeningsIndex;
+				url = "http://nationstatesplusplus.net/api/region/happenings/?region=" + getVisibleRegion() + "&start=" + happeningsIndex;
 			}
 			$.get(url, function(json, textStatus, xhr) {
 				if (xhr.status != 204) {

@@ -249,10 +249,10 @@ function getSettings(autoupdate) {
 
 	api.update = function(callback) {
 		var api = this;
-		$.get("http://capitalistparadise.com/api/nation/latest_update/?name=" + getUserNation(), function(data, textStatus, xhr) {
+		$.get("http://nationstatesplusplus.net/api/nation/latest_update/?name=" + getUserNation(), function(data, textStatus, xhr) {
 			if (xhr.status != 204 && data.timestamp > api.last_update) {
 				api.last_update = data.timestamp;
-				$.get("http://capitalistparadise.com/api/nation/settings/?name=" + getUserNation(), function(data, textStatus, xhr) {
+				$.get("http://nationstatesplusplus.net/api/nation/settings/?name=" + getUserNation(), function(data, textStatus, xhr) {
 					api.settings = data;
 					api.save();
 					if (typeof callback != undefined) callback(data, textStatus, xhr);
@@ -275,7 +275,7 @@ function getSettings(autoupdate) {
 	api.pushUpdate = function(callback) {
 		this.save();
 		var api = this;
-		doAuthorizedPostRequest("http://capitalistparadise.com/api/nation/settings/", "settings=" + encodeURIComponent(JSON.stringify(this.settings)), function(data, textStatus, xhr) {
+		doAuthorizedPostRequest("http://nationstatesplusplus.net/api/nation/settings/", "settings=" + encodeURIComponent(JSON.stringify(this.settings)), function(data, textStatus, xhr) {
 			api.last_update = Date.now();
 			if (typeof callback != "undefined") callback(data, textStatus, xhr);
 		});
@@ -336,10 +336,10 @@ function getUserData(autoupdate) {
 
 	api.update = function(callback) {
 		var api = this;
-		$.get("http://capitalistparadise.com/api/nation/data/?name=" + getUserNation(), function(data, textStatus, xhr) {
+		$.get("http://nationstatesplusplus.net/api/nation/data/?name=" + getUserNation(), function(data, textStatus, xhr) {
 			if (xhr.status != 204 && data.timestamp > api.last_update) {
 				api.last_update = data.timestamp;
-				doAuthorizedPostRequest("http://capitalistparadise.com/api/nation/data/get/", "", function(data) {
+				doAuthorizedPostRequest("http://nationstatesplusplus.net/api/nation/data/get/", "", function(data) {
 					api.userData = data;
 					api.save();
 					if (typeof callback != undefined) callback();
@@ -360,7 +360,7 @@ function getUserData(autoupdate) {
 	api.pushUpdate = function(callback) {
 		this.last_update = Date.now();
 		this.save();
-		doAuthorizedPostRequest("http://capitalistparadise.com/api/nation/data/set/", "data=" + encodeURIComponent(JSON.stringify(this.userData)), callback);
+		doAuthorizedPostRequest("http://nationstatesplusplus.net/api/nation/data/set/", "data=" + encodeURIComponent(JSON.stringify(this.userData)), callback);
 	}
 
 	return api;
@@ -422,7 +422,7 @@ function showPuppets() {
 		if (name.length > 0) {
 			var cache = getPuppetCache(name);
 			var region = cache.region;
-			html += "<li><div class='puppet-form-inner' style='margin-bottom: -15px;'><p style='margin-top: 3px;'><a class='puppet-name' id='" + name + "' href='/nation=" + name + "' style='color: white;'>" + name.split("_").join(" ").toTitleCase() + "</a>" + (cache.wa == "true" ? "<span style='color:green'> (WA) </span>" : "") + "</p><ul style='display:none;'><li id='puppet-region-" + name + "'>(<a style='color: white;' href='/region=" + region + "'>" + region.split("_").join(" ").toTitleCase() + "</a>)</li></ul></div><img name='" + name + "' class='puppet-form-remove' src='http://capitalistparadise.com/nationstates/static/remove.png'></img></li>";
+			html += "<li><div class='puppet-form-inner' style='margin-bottom: -15px;'><p style='margin-top: 3px;'><a class='puppet-name' id='" + name + "' href='/nation=" + name + "' style='color: white;'>" + name.split("_").join(" ").toTitleCase() + "</a>" + (cache.wa == "true" ? "<span style='color:green'> (WA) </span>" : "") + "</p><ul style='display:none;'><li id='puppet-region-" + name + "'>(<a style='color: white;' href='/region=" + region + "'>" + region.split("_").join(" ").toTitleCase() + "</a>)</li></ul></div><img name='" + name + "' class='puppet-form-remove' src='http://nationstatesplusplus.net/nationstates/static/remove.png'></img></li>";
 			numPuppets++;
 		}
 	}

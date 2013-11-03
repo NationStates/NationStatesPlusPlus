@@ -101,7 +101,7 @@
 										$("#input-alias-" + nation).remove();
 										if (value.length > 0) {
 											setNationAlias(nation, value);
-											$("#alias-" + nation).attr("src", "http://capitalistparadise.com/nationstates/static/remove-alias.png");
+											$("#alias-" + nation).attr("src", "http://nationstatesplusplus.net/nationstates/static/remove-alias.png");
 											$("#alias-" + nation).attr("title", "Remove Alias");
 											$("#nation-link-" + nation).css("text-decoration", "line-through");
 											$("#nation-alias-" + nation).children("pre").html("  " + value);
@@ -114,7 +114,7 @@
 							}
 						} else {
 							setNationAlias(nation, null);
-							$(event.target).attr("src", "http://capitalistparadise.com/nationstates/static/alias.png");
+							$(event.target).attr("src", "http://nationstatesplusplus.net/nationstates/static/alias.png");
 							$(event.target).attr("title", "Set Alias");
 							$("#nation-link-" + nation).css("text-decoration", "");
 							$("#nation-alias-" + nation).children("pre").html("");
@@ -176,7 +176,7 @@
 								}
 							} catch (error) { }
 							if ($("#region_dossier").find("div[id='" + region + "']").length == 0 && !dossierHtml.contains("<div id='" + region + "'")) {
-								dossierHtml += "<div id='" + region + "' class='dossier_element'" + (animate ? "style='display:none; min-height:28px;'" : "style='min-height:28px'") + "><div><img id='remove-" + region + "' src='http://capitalistparadise.com/nationstates/static/remove.png' class='remove-dossier' title='Remove from Dossier'><img class='smallflag' src='http://capitalistparadise.com/api/flag/region/?region=" + region + "'><a style='font-weight:bold' target='_blank' href='http://nationstates.net/region=" + region + "'>" + region.replaceAll("_", " ").toTitleCase() + "</a><div class='last_activity'>Nations: " + nations + "</div>";
+								dossierHtml += "<div id='" + region + "' class='dossier_element'" + (animate ? "style='display:none; min-height:28px;'" : "style='min-height:28px'") + "><div><img id='remove-" + region + "' src='http://nationstatesplusplus.net/nationstates/static/remove.png' class='remove-dossier' title='Remove from Dossier'><img class='smallflag' src='http://nationstatesplusplus.net/api/flag/region/?region=" + region + "'><a style='font-weight:bold' target='_blank' href='http://nationstates.net/region=" + region + "'>" + region.replaceAll("_", " ").toTitleCase() + "</a><div class='last_activity'>Nations: " + nations + "</div>";
 								if (delegateFlag.length > 0) {
 									dossierHtml += "<div class='region_activity'><b>Delegate:</b><img class='smallflag' src='" + delegateFlag + "'><a target='_blank' href='/nation=" + delegate + "'>" + delegate.replaceAll("_", " ").toTitleCase() + "</a></div>";
 								}
@@ -208,12 +208,12 @@
 							targets.push(nation);
 							var alias = getNationAlias(nation);
 
-							dossierHtml += "<div id='" + nation + "' class='dossier_element'" + (animate ? "style='display:none;'" : "") + "><div><img id='remove-" + nation + "' src='http://capitalistparadise.com/nationstates/static/remove.png' class='remove-dossier' title='Remove from Dossier'><img class='smallflag' src='" + flag + "'><a id='nation-link-" + nation + "' style='font-weight:bold; " + (alias != null ? "text-decoration:line-through;" : "") + "' target='_blank' href='http://nationstates.net/nation=" + nation + "'>" + nation.replaceAll("_", " ").toTitleCase() + "</a>";
+							dossierHtml += "<div id='" + nation + "' class='dossier_element'" + (animate ? "style='display:none;'" : "") + "><div><img id='remove-" + nation + "' src='http://nationstatesplusplus.net/nationstates/static/remove.png' class='remove-dossier' title='Remove from Dossier'><img class='smallflag' src='" + flag + "'><a id='nation-link-" + nation + "' style='font-weight:bold; " + (alias != null ? "text-decoration:line-through;" : "") + "' target='_blank' href='http://nationstates.net/nation=" + nation + "'>" + nation.replaceAll("_", " ").toTitleCase() + "</a>";
 							
 							if (alias == null) {
-								dossierHtml += "<span id='nation-alias-" + nation + "'><pre style='display: inline;'></pre></span><img src='http://capitalistparadise.com/nationstates/static/alias.png' title='Set Alias' style='height: 28px; margin-bottom: -10px; margin-left: 15px;' id='alias-" + nation + "'>";
+								dossierHtml += "<span id='nation-alias-" + nation + "'><pre style='display: inline;'></pre></span><img src='http://nationstatesplusplus.net/nationstates/static/alias.png' title='Set Alias' style='height: 28px; margin-bottom: -10px; margin-left: 15px;' id='alias-" + nation + "'>";
 							} else {
-								dossierHtml += "<span id='nation-alias-" + nation + "'><pre style='display: inline;'>  " + alias + "</pre></span><img src='http://capitalistparadise.com/nationstates/static/remove-alias.png' title='Remove Alias' style='height: 28px; margin-bottom: -10px; margin-left: 15px;' id='alias-" + nation + "'>";
+								dossierHtml += "<span id='nation-alias-" + nation + "'><pre style='display: inline;'>  " + alias + "</pre></span><img src='http://nationstatesplusplus.net/nationstates/static/remove-alias.png' title='Remove Alias' style='height: 28px; margin-bottom: -10px; margin-left: 15px;' id='alias-" + nation + "'>";
 							}
 							
 							if (waMember) {
@@ -228,7 +228,7 @@
 								if ($(this).find(".aflabel").length > 0) {
 									censusType = $(this).find(".aflabel").text();
 								}
-								dossierHtml += "<div class='last_activity'>" + lastActivity + "<span style='width:50px;display: inline-block;'> </span>(" + censusType + ") </div><div class='region_activity'><a target='_blank' href='/region=" + formattedRegion + "'><img class='smallflag' src='http://capitalistparadise.com/api/flag/region/?region=" + formattedRegion + "'>" + region + "</a></div>";
+								dossierHtml += "<div class='last_activity'>" + lastActivity + "<span style='width:50px;display: inline-block;'> </span>(" + censusType + ") </div><div class='region_activity'><a target='_blank' href='/region=" + formattedRegion + "'><img class='smallflag' src='http://nationstatesplusplus.net/api/flag/region/?region=" + formattedRegion + "'>" + region + "</a></div>";
 							}
 							dossierHtml += "</div></div>";
 						}

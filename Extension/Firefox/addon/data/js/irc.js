@@ -1,6 +1,6 @@
 (function() {
 	if (getVisiblePage() == "region" && getUserNation() !== "") {
-		$.get("http://capitalistparadise.com/nationstates/irc.json", function(data) {
+		$.get("http://nationstatesplusplus.net/nationstates/irc.json", function(data) {
 			for (var i = 0; i < data.length; i++) {
 				var region = data[i];
 				if (region["region"] == getVisibleRegion()) {
