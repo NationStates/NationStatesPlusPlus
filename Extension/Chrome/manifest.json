@@ -27,7 +27,7 @@
 	{
 	  "run_at": "document_end",
       "js": [ "jquery-2.0.2.min.js", "js/nspp.js" ],
-      "matches": [ "http://nationstatesplusplus.net/*", "http://nationstatesplusplus.com/*", "http://nationstatesplusplus.org/*"],
+      "matches": [ "http://nationstatesplusplus.net/api.html", "http://nationstatesplusplus.com/api.html", "http://nationstatesplusplus.org/api.html"],
 	  "all_frames": true
 	}],
   "background": {

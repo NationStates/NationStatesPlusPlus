@@ -3,6 +3,12 @@ var pageMod = require("sdk/page-mod");
 // Import the self API
 var self = require("sdk/self");
  
+ pageMod.PageMod({
+  include: ["http://nationstatesplusplus.net/api.html", "http://nationstatesplusplus.com/api.html", "http://nationstatesplusplus.org/api.html"],
+  contentScriptWhen: "ready",
+  contentScriptFile: [self.data.url("jquery-2.0.2.min.js"), self.data.url("js/nspp.js")],
+});
+
 pageMod.PageMod({
   include: ["http://forum.nationstates.net/*"],
   contentScriptWhen: "ready",
