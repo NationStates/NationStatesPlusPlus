@@ -182,6 +182,21 @@
 			return formatString.replace("#hhh#",hhh).replace("#hh#",hh).replace("#h#",h).replace("#mm#",mm).replace("#m#",m).replace("#ss#",ss).replace("#s#",s).replace("#ampm#",ampm).replace("#AMPM#",AMPM);
 		};
 	}
+	$.fn.scrolled = function (waitTime, fn) {
+		var tag = "scrollTimer";
+		this.scroll(function () {
+			var self = $(this);
+			var timer = self.data(tag);
+			if (timer) {
+				clearTimeout(timer);
+			}
+			timer = setTimeout(function () {
+				self.data(tag, null);
+				fn();
+			}, waitTime);
+			self.data(tag, timer);
+		});
+	};
 //*** END OF LICENSED CODE BY GAVEN KISTNER ***//
 	if (getSettings().isEnabled("show_puppet_switcher")) {
 		$("#puppet_setting").show();

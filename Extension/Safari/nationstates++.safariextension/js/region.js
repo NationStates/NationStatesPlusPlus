@@ -36,6 +36,11 @@ function setupRegionPage() {
 		});
 		$("tbody:last").html(html);
 	} else {
+		
+		$(window).on("rmb/update", function(event, post) {
+			post.find(".hide").toggle(4000);
+		});
+
 		$(window).on("rmb/update", function(event, post) {
 			var id = post.attr("id").split("-")[post.attr("id").split("-").length - 1];
 			post.find(".rmbmsg2").append("<div postid='" + id + "' class='post-ratings'><ul class='post-rating-list' style='opacity: 0;'><li class='undo-rating' style='display:none;'><a href='javascript:void(0)'>Undo Rating</a></li><li name='like'><a href='javascript:void(0)'><img style='margin-right: 3px;' src='http://nationstatesplusplus.net/nationstates/static/like.png' alt='Like'></a></li><li name='dislike'><a href='javascript:void(0)'><img style='margin-right: 3px;' src='http://nationstatesplusplus.net/nationstates/static/dislike2.png' alt='Dislike'></a></li></ul></div>");
@@ -130,6 +135,7 @@ function setupRegionPage() {
 		});
 		$(".rmbtable2").html(html);
 
+		//Fix nasty css
 		$(".small").attr("class", "button");
 		$(".hilite").attr("class", "button");
 		var dossier = $("input[type='submit'].button");
@@ -137,6 +143,7 @@ function setupRegionPage() {
 			$(this).html($(this).val()).changeElementType("button")
 		});
 
+		//Trigger post event for existing posts
 		for (var i = 0; i < postIds.length; i++) {
 			$(window).trigger("rmb/update", [ $("#rmb-post-" + postIds[i]) ]);
 		}
@@ -241,7 +248,6 @@ function setupRegionPage() {
 
 	addFormattingButtons();
 
-	
 	var census = $("h2:contains('Today's World Census Report')");
 	$("<div id='census_report_container'></div>").insertAfter(census);
 	$("#census_report_container").next().appendTo($("#census_report_container"));
