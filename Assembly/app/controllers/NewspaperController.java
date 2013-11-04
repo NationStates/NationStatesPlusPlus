@@ -464,14 +464,13 @@ public class NewspaperController extends NationStatesController {
 	}
 
 	public Result getLatestArticles(int start) throws SQLException {
-		start = Math.min(0, start);
+		start = Math.max(0, start);
 		List<Map<String, Object>> list = new ArrayList<Map<String, Object>>();
 		Connection conn = null;
 		try {
 			conn = getConnection();
-			PreparedStatement articles = conn.prepareStatement("SELECT newspaper_id, article, title, timestamp, author, newspaper FROM assembly.full_articles WHERE visible = 1 ORDER BY timestamp DESC LIMIT ?, ?");
+			PreparedStatement articles = conn.prepareStatement("SELECT newspaper_id, article, title, timestamp, author, newspaper FROM assembly.full_articles WHERE visible = 1 ORDER BY timestamp DESC LIMIT ?, 10");
 			articles.setInt(1, start);
-			articles.setInt(2, start + 10);
 			ResultSet set = articles.executeQuery();
 			while(set.next()) {
 				Map<String, Object> article = new HashMap<String, Object>();
