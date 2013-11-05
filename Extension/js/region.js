@@ -10,6 +10,8 @@
 		$('[name="preview"]').removeAttr("value");
 		$('[name="preview"]').changeElementType("button");
 		$('[name="preview"]').html("Preview");
+	} else if (getVisiblePage() == "region_control") {
+		addFormattingButtons();
 	}
 })();
 
@@ -37,9 +39,11 @@ function setupRegionPage() {
 		$("tbody:last").html(html);
 	} else {
 		
-		$(window).on("rmb/update", function(event, post) {
-			post.find(".hide").show();
-		});
+		if (getSettings().isEnabled("show_all_suppressed_posts")) {
+			$(window).on("rmb/update", function(event, post) {
+				post.find(".hide").show();
+			});
+		}
 
 		$(window).on("rmb/update", function(event, post) {
 			var id = post.attr("id").split("-")[post.attr("id").split("-").length - 1];
