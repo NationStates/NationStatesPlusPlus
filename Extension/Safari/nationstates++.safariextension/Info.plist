@@ -13,9 +13,9 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleShortVersionString</key>
-	<string>2.0.9</string>
+	<string>2.1.0</string>
 	<key>CFBundleVersion</key>
-	<string>2.0.9</string>
+	<string>2.1.0</string>
 	<key>Chrome</key>
 	<dict/>
 	<key>Content</key>
@@ -50,6 +50,7 @@
 				<string>js/dossier.js</string>
 				<string>js/administration.js</string>
 				<string>js/settings.js</string>
+				<string>js/nspp.js</string>
 			</array>
 		</dict>
 		<key>Stylesheets</key>
@@ -71,12 +72,15 @@
 			<key>Allowed Domains</key>
 			<array>
 				<string>*.nationstates.net</string>
+				<string>*.nationstatesplusplus.net</string>
+				<string>*.nationstatesplusplus.org</string>
+				<string>*.nationstatesplusplus.net</string>
 			</array>
 			<key>Level</key>
 			<string>Some</string>
 		</dict>
 	</dict>
 	<key>Update Manifest URL</key>
-	<string>http://direct.capitalistparadise.com/nationstates/safari.plist</string>
+	<string>http://nationstatesplusplus.net/nationstates/safari.plist</string>
 </dict>
 </plist>

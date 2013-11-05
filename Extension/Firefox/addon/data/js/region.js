@@ -38,7 +38,7 @@ function setupRegionPage() {
 	} else {
 		
 		$(window).on("rmb/update", function(event, post) {
-			post.find(".hide").toggle(4000);
+			post.find(".hide").show();
 		});
 
 		$(window).on("rmb/update", function(event, post) {
