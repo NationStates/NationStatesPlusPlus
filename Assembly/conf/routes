@@ -51,7 +51,11 @@ GET     /nation/missingendo/          @controllers.WorldAssemblyController.getMi
 GET    /region/wa/                    @controllers.WorldAssemblyController.getWAMembers(region: String ?= "")
 GET    /region/population/            @controllers.RegionController.getPopulationTrends(region: String ?= "")
 GET    /region/updatetime/            @controllers.RegionController.getUpdateTime(region: String ?= "")
-GET    /region/nations/               @controllers.RegionController.getNations(region: String ?= "")
+GET    /region/nations/               @controllers.RegionController.getNations(region: String ?= "", xml: Boolean ?= false)
+
+POST    /region/recruitment/get       @controllers.RecruitmentController.getRecruitmentStrategies(region: String ?= "")
+POST    /region/recruitment/set       @controllers.RecruitmentController.updateRecruitmentStrategies(region: String ?= "")
+POST    /region/recruitment/success   @controllers.RecruitmentController.getRecruitmentSuccess(tgid: String ?= "", region: String ?= "")
 
 GET    /admin/happenings/             @controllers.AdminController.recalculateHappenings(code: String ?= "", happeningType: Integer ?= -1)
 

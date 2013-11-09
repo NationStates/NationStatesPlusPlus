@@ -16,6 +16,7 @@ import com.afforess.assembly.DailyDumps;
 import com.afforess.assembly.EndorsementMonitoring;
 import com.afforess.assembly.HappeningsTask;
 import com.afforess.assembly.HealthMonitor;
+import com.afforess.assembly.RecruitmentTask;
 import com.afforess.assembly.model.HappeningType;
 import com.afforess.assembly.util.DatabaseAccess;
 import com.amazonaws.auth.BasicAWSCredentials;
@@ -136,7 +137,8 @@ public class Global extends GlobalSettings {
 		dailyDumps.start();
 
 		Akka.system().scheduler().schedule(Duration.create(2, TimeUnit.SECONDS), Duration.create(3, TimeUnit.SECONDS), new HappeningsTask(access, api, health), Akka.system().dispatcher());
-		Akka.system().scheduler().schedule(Duration.create(30, TimeUnit.SECONDS), Duration.create(30, TimeUnit.SECONDS), new EndorsementMonitoring(api, access, 15, health), Akka.system().dispatcher());
+		Akka.system().scheduler().schedule(Duration.create(30, TimeUnit.SECONDS), Duration.create(30, TimeUnit.SECONDS), new EndorsementMonitoring(api, access, 20, health), Akka.system().dispatcher());
+		Akka.system().scheduler().schedule(Duration.create(30, TimeUnit.SECONDS), Duration.create(30, TimeUnit.SECONDS), new RecruitmentTask(access), Akka.system().dispatcher());
 	}
 
 	@Override

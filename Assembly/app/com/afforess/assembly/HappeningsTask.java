@@ -198,6 +198,14 @@ public class HappeningsTask implements Runnable {
 					PreparedStatement alive = conn.prepareStatement("UPDATE assembly.nation SET alive = 1 WHERE id = ?");
 					alive.setInt(1, nationId);
 					alive.executeUpdate();
+					//Update region
+					Matcher regions = Utils.REGION_PATTERN.matcher(text);
+					if(regions.find()) {
+						PreparedStatement update = conn.prepareStatement("UPDATE assembly.nation SET region = ?, wa_member = 2 WHERE id = ?");
+						update.setInt(1, access.getRegionIdCache().get(text.substring(regions.start() + 2, regions.end() - 2)));
+						update.setInt(2, nationId);
+						update.executeUpdate();
+					}
 				} else if (nationId > -1 && happeningType == HappeningType.getType("CEASED_TO_EXIST").getId()) {
 					access.markNationDead(nationId, conn);
 				}
@@ -263,7 +271,7 @@ public class HappeningsTask implements Runnable {
 			select = conn.prepareStatement("SELECT id, start, end FROM assembly.region_updates WHERE region = ? AND start BETWEEN ? AND ?");
 			select.setInt(1, region);
 			select.setLong(2, timestamp - Duration.standardHours(1).getMillis());
-			select.setLong(3, timestamp + Duration.standardMinutes(1).getMillis());
+			select.setLong(3, timestamp + Duration.standardHours(1).getMillis());
 			result = select.executeQuery();
 			if (result.next()) {
 				final int id = result.getInt(1);

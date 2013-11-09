@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
 
 import org.apache.commons.dbutils.DbUtils;
@@ -77,26 +78,55 @@ public class RegionController extends DatabaseController {
 		}
 	}
 
-	public Result getNations(String region) throws SQLException, ExecutionException {
-		List<String> nations = new ArrayList<String>();
+	public Result getNations(String regions, boolean xml) throws SQLException, ExecutionException {
+		Map<String, Object> regionData = new HashMap<String, Object>();
 		Connection conn = null; 
 		try {
 			conn = getConnection();
-			PreparedStatement statement = conn.prepareStatement("SELECT name FROM assembly.nation WHERE alive = 1 AND region = ?");
-			statement.setInt(1, getDatabase().getRegionIdCache().get(Utils.sanitizeName(region)));
-			ResultSet result = statement.executeQuery();
-			while(result.next()) {
-				nations.add(result.getString(1));
+			String[] split = regions.split(",");
+			for (int i = 0; i < split.length; i++) {
+				List<String> nations = new ArrayList<String>();
+				PreparedStatement statement = conn.prepareStatement("SELECT name FROM assembly.nation WHERE alive = 1 AND region = ?");
+				statement.setInt(1, getDatabase().getRegionIdCache().get(Utils.sanitizeName(split[i])));
+				ResultSet result = statement.executeQuery();
+				while(result.next()) {
+					nations.add(result.getString(1));
+				}
+				regionData.put(split[i], nations);
 			}
 		} finally {
 			DbUtils.closeQuietly(conn);
 		}
 
-		Result result = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(nations.hashCode()), "360");
+		Result result = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(regionData.hashCode()), "60");
 		if (result != null) {
 			return result;
 		}
-		return ok(Json.toJson(nations)).as("application/json");
+		if (xml) {
+			String data = "<REGIONS>\n\t";
+			for (Entry<String, Object> e : regionData.entrySet()) {
+				data += "<REGION id=\"" + e.getKey() + "\">\n\t\t<NATIONS>";
+				@SuppressWarnings("unchecked")
+				List<String> nations = (List<String>) e.getValue();
+				StringBuilder b = new StringBuilder();
+				int chunk = 0;
+				for (String nation : nations) {
+					if (b.length() / 30000 != chunk) {
+						chunk++;
+						b.append("</NATIONS><NATIONS>");
+					} else if (b.length() > 0) {
+						b.append(":");
+					}
+					b.append(nation);
+				}
+				b.append("</NATIONS>\n\t</REGION>");
+				data += b.toString();
+			}
+			data += "\n</REGIONS>";
+			return ok(data).as("application/xml");
+		} else {
+			return ok(Json.toJson(regionData.size() == 1 ? regionData.get(regions.split(",")[0]) : regionData)).as("application/json");
+		}
 	}
 
 	public Result getPopulationTrends(String region) throws SQLException, ExecutionException {

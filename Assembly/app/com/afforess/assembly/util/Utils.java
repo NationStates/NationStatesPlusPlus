@@ -117,7 +117,7 @@ public class Utils {
 	}
 
 	public static String sanitizeName(String name) {
-		return name.toLowerCase().replaceAll(" ", "_");
+		return name != null ? name.toLowerCase().replaceAll(" ", "_") : null;
 	}
 
 	public static String formatName(String name) {
