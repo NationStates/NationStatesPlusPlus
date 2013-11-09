@@ -16,7 +16,7 @@
 				$("#" + $(this).attr("class")).animate({ height: 'toggle' });
 			})
 		}
-
+		$("textarea").width(700);
 		//Add click handler
 		$("input[value='Lodge Request']").changeElementType("button");
 		$("button[value='Lodge Request']").html("Lodge Request").attr("class", "button").css("font-weight", "bold").on('click', function() {
@@ -31,5 +31,11 @@
 			previousRequests[time] = requestBody;
 			userData.save();
 		});
+		
+		if (window.location.href.contains("?recruitment")) {
+			$("select").val(9);
+			$("textarea").val("Hi,\n\nI'm interested in obtaining a telegram API key for my region. I plan using the API key for recruitment purposes, for my region, " + getUserRegion().replaceAll("_", " ").toTitleCase() +
+			". I will be the nation responsible for the use of the API key.\n\nThanks!\n\n" + getUserNation().replaceAll("_", " ").toTitleCase());
+		}
 	}
 })();

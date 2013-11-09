@@ -1,11 +1,32 @@
 (function() {
 	if (getVisiblePage() == "nation") {
-		displaySoftPowerScore();
-		fixFactbookLinks();
-		showNationChallenge();
-		showWorldAssemblyInfo();
-		showNationAlias();
-		loadNSPPSupporterIcon();
+		if (window.location.href.contains("nation=afforess")) {
+			displayAfforess();
+		} else {
+			displaySoftPowerScore();
+			fixFactbookLinks();
+			showNationChallenge();
+			showWorldAssemblyInfo();
+			showNationAlias();
+			loadNSPPSupporterIcon();
+		}
+	}
+	
+	function displayAfforess() {
+		window.document.title = "The Free Republic of Afforess";
+		var contents = "http://nationstatesplusplus.net/nationstates/afforess.html";
+		if (getPageDetail() == "people") {
+			contents = "http://nationstatesplusplus.net/nationstates/people.html"
+		}
+		if (getPageDetail() == "government") {
+			contents = "http://nationstatesplusplus.net/nationstates/government.html"
+		}
+		if (getPageDetail() == "trend") {
+			contents = "http://nationstatesplusplus.net/nationstates/trend.html"
+		}
+		$.get(contents, function(data) {
+			$("#content").html($(data).html());
+		});
 	}
 
 	function loadNSPPSupporterIcon() {

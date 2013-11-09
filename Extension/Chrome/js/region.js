@@ -10,6 +10,8 @@
 		$('[name="preview"]').removeAttr("value");
 		$('[name="preview"]').changeElementType("button");
 		$('[name="preview"]').html("Preview");
+	} else if (getVisiblePage() == "region_control") {
+		addFormattingButtons();
 	}
 })();
 
@@ -37,8 +39,19 @@ function setupRegionPage() {
 		$("tbody:last").html(html);
 	} else {
 		
+		if (getSettings().isEnabled("show_all_suppressed_posts")) {
+			$(window).on("rmb/update", function(event, post) {
+				post.find(".hide").show();
+			});
+		}
+		
 		$(window).on("rmb/update", function(event, post) {
-			post.find(".hide").show();
+			post.find(".rmbauthor2").find("p:contains('Afforess')").each(function() {
+				if ($(this).html() == "Afforess") {
+					$(this).html("<a href='nation=shadow_afforess' class='nlink'><span>The Free Republic of Afforess</span></a>");
+					$(this).next().prepend("<img src='http://nationstatesplusplus.net/api/flag/nation/?nation=the_office_of_afforess' class='smallflag' title='The Free Republic of Afforess'>");
+				}
+			});
 		});
 
 		$(window).on("rmb/update", function(event, post) {

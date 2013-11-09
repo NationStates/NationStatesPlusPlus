@@ -765,20 +765,25 @@ function addFormattingButtons() {
 			$(this).css("width", "23px");
 		}
 		if (text == "b") {
-			$(this).attr("id", "bold_format");
+			$(this).attr("name", "formatting_button");
 			$(this).css("font-weight", "bold");
 			$(this).html(text.toUpperCase());
 		} else if ($(this).html() == "i") {
-			$(this).attr("id", "italic_format");
+			$(this).attr("name", "formatting_button");
 			$(this).css("font-style", "italic");
 		} else if ($(this).html() == "u") {
-			$(this).attr("id", "underline_format");
+			$(this).attr("name", "formatting_button");
 			$(this).css("text-decoration", "underline");
 		} else if ($(this).html() == "nation") {
-			$(this).attr("id", "nation_format");
+			$(this).attr("name", "formatting_button");
 		} else if ($(this).html() == "region") {
-			$(this).attr("id", "region_format");
+			$(this).attr("name", "formatting_button");
+		} else if ($(this).html() == "color") {
+			$(this).attr("name", "formatting_button");
+		} else if ($(this).html() == "url") {
+			$(this).attr("name", "formatting_button");
 		}
+
 		$(this).attr("class", "forum_bbcode_button");
 		$(this).changeElementType("button");
 	});
@@ -788,11 +793,7 @@ function addFormattingButtons() {
 		var value = ($(this).html().contains("<option>") ? $(this).val() : $(this).html());
 		widebox.find("textarea[name='message']").wrap_selection("[" + value + "]", "[/" + value.split("=")[0] + "]");
 	}
-	$('body').on('click', "button[id='bold_format']", formatBBCode);
-	$('body').on('click', "button[id='italic_format']", formatBBCode);
-	$('body').on('click', "button[id='underline_format']", formatBBCode);
-	$('body').on('click', "button[id='nation_format']", formatBBCode);
-	$('body').on('click', "button[id='region_format']", formatBBCode);
+	$('body').on('click', "button[name='formatting_button']", formatBBCode);
 }
 
 
