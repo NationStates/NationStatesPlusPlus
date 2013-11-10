@@ -456,3 +456,7 @@ fieldset.preview {
 	font-weight: bold;
 	border-radius: 5px;
 }
+
+.op_posts {
+	background-color: rgba(57, 238, 0, 0.1) !important;
+}

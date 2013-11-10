@@ -97,11 +97,10 @@ $.get(urlPrefix + "cache_buster.txt?time=" + Date.now() , function(value) {
 
 	if (document.head.innerHTML.indexOf("//ajax.googleapis.com/ajax/libs/jquery") == -1) {
 		addJavascript("//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js", function() {
-			addJavascript("//ajax.googleapis.com/ajax/libs/jqueryui/1.10.2/jquery-ui.min.js", loadJavascript);
+			addJavascript("//ajax.googleapis.com/ajax/libs/jqueryui/1.10.2/jquery-ui.min.js");
 		});
-	} else {
-		loadJavascript();
 	}
+	loadJavascript();
 })();
 
 function loadJavascript() {
@@ -121,6 +120,9 @@ function loadJavascript() {
 		var settings = getSettings();
 		settings.update(function() { console.log("Update callback!"); });
 
+		if (settings.isEnabled("highlight_op_posts")) {
+			highlightAuthorPosts();
+		}
 		if (settings.isEnabled("floating_sidepanel")) {
 			$("#nssidebar").css("margin-top", "-" + Math.min($(window).scrollTop(), 100) + "px");
 			$("#nssidebar").find("iframe").css("height", "800px");
@@ -142,6 +144,31 @@ function loadJavascript() {
 		}
 		$(".icon-logout").hide();
 		console.log('[NationStates++] Loading Completed Successfully.');
+	}
+}
+
+function highlightAuthorPosts() {
+	if (window.location.href.match("t=[0-9]+") != null && $(".postprofile:first").length > 0) {
+		var highlightPosts = function(opNation) {
+			$(".post").each(function() {
+				var href = $(this).find(".postprofile:first").find("a:first").attr("href");
+				var nation = href.split("/")[href.split("/").length - 1];
+				if (nation == opNation) {
+					$(this).addClass("op_posts");
+				}
+			});
+		}
+		if (window.location.href.match("start=[[0-9]+") != null) {
+			$.get(window.location.href + "&start=0", function(data) {
+				var href = $(data).find(".postprofile:first").find("a:first").attr("href");
+				var nation = href.split("/")[href.split("/").length - 1];
+				highlightPosts(nation);
+			});
+		} else {
+			var href = $(".postprofile:first").find("a:first").attr("href");
+			var nation = href.split("/")[href.split("/").length - 1];
+			highlightPosts(nation);
+		}
 	}
 }
 
