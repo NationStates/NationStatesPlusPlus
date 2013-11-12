@@ -24,7 +24,7 @@ GET    /flag/region/                  @controllers.FlagController.redirectToRegi
 GET     /newspaper/details/           @controllers.NewspaperController.getNewspaperDetails(id: Integer ?= 0)
 GET     /newspaper/latest/            @controllers.NewspaperController.getLatestUpdate(id: Integer ?= 0)
 GET     /newspaper/region/            @controllers.NewspaperController.findNewspaper(region: String ?= "")
-GET     /newspaper/lookup/            @controllers.NewspaperController.getNewspaper(id: Integer ?= -1, visible: Boolean ?= true, hideBody: Boolean ?= false)
+GET     /newspaper/lookup/            @controllers.NewspaperController.getNewspaper(id: Integer ?= -1, visible: Integer ?= 1, hideBody: Boolean ?= false, lookupArticleId: Integer ?= -1)
 POST    /newspaper/editors/           @controllers.NewspaperController.changeEditors(newspaper: Integer ?= 0)
 POST    /newspaper/canedit/           @controllers.NewspaperController.canEdit(newspaper: Integer ?= 0)
 POST    /newspaper/submit/            @controllers.NewspaperController.submitArticle(newspaper: Integer ?= 0, articleId: Integer ?= -1)

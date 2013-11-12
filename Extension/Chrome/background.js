@@ -13,7 +13,6 @@ $.get(urlPrefix + "cache_buster.txt?time=" + Date.now() , function(value) {
 	}
 });
 
-
 (function() {
 	var pageUrl = window.location.href;
 	if (pageUrl.indexOf("template-overall=none") != -1) {
@@ -34,7 +33,6 @@ $.get(urlPrefix + "cache_buster.txt?time=" + Date.now() , function(value) {
 		$("iframe[name='google_osd_static_frame']").remove();
 		$("#panelad").remove();
 	}
-
 
 	if (localStorage.getItem("ignore_theme_warning") != "true" && $("#outdated").length == 0) {
 		if (document.head.innerHTML.indexOf("antiquity") != -1) {
@@ -119,6 +117,10 @@ function loadJavascript() {
 		addStylesheet("http://www.nationstates.net/ghbuttons_v2.css");
 		var settings = getSettings();
 		settings.update(function() { console.log("Update callback!"); });
+		
+		if (window.location.href.indexOf("posting.php?mode=post&f=15") != -1) {
+			$("#postingbox").find(".inner:first").prepend("<div style='font-size: 16px; color: red; font-weight: bold; text-align: center;'>If you are reporting a bug in NationStates, be sure you disable NationStates++ and reproduce the bug to verify that it is not a bug with the NationStates++ extension first!</div>");
+		}
 
 		if (settings.isEnabled("highlight_op_posts")) {
 			highlightAuthorPosts();
@@ -158,8 +160,8 @@ function highlightAuthorPosts() {
 				}
 			});
 		}
-		if (window.location.href.match("start=[[0-9]+") != null) {
-			$.get(window.location.href + "&start=0", function(data) {
+		if (window.location.href.match("start=[0-9]+") != null || window.location.href.match("p=[0-9]+") != null) {
+			$.get(window.location.href.split(/p=[0-9]+/g)[0] + "&start=0", function(data) {
 				var href = $(data).find(".postprofile:first").find("a:first").attr("href");
 				var nation = href.split("/")[href.split("/").length - 1];
 				highlightPosts(nation);

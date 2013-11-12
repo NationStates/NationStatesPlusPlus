@@ -148,13 +148,13 @@ public class RecruitmentController extends NationStatesController {
 						}
 						PreparedStatement insert = conn.prepareStatement("INSERT INTO assembly.recruitment (region, client_key, tgid, secret_key, percent, type, feeders_only, filter_regex, avoid_full, randomize) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 						insert.setInt(1, getDatabase().getRegionIdCache().get(region));
-						insert.setString(2, clientKey);
-						insert.setString(3, tgid);
-						insert.setString(4, secretKey);
+						insert.setString(2, clientKey.trim());
+						insert.setString(3, tgid.trim());
+						insert.setString(4, secretKey.trim());
 						insert.setInt(5, percent);
 						insert.setInt(6, type.getId());
 						insert.setByte(7, (byte)(feedersOnly ? 1 : 0));
-						insert.setString(8, filterRegex);
+						insert.setString(8, filterRegex.trim());
 						insert.setByte(9, (byte)(avoidFull ? 1 : 0));
 						insert.setByte(10, (byte)(randomize ? 1 : 0));
 						insert.executeUpdate();

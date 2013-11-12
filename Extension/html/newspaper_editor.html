@@ -17,7 +17,7 @@
   </div>
 </div>
 
-<div class="control-group">
+<div class="control-group" id="article_column_order">
   <label class="control-label" for="article_column">Article Column</label>
   <div class="controls">
     <select id="article_column" name="article_column" class="input-xlarge">
@@ -28,7 +28,7 @@
   </div>
 </div>
 
-<div class="control-group">
+<div class="control-group" id="article_placement_order">
   <label class="control-label" for="article_order">Article Order</label>
   <div class="controls">
     <select id="article_order" name="article_order" class="input-xlarge">
@@ -58,7 +58,7 @@
   </div>
 </div>
 
-<div class="control-group">
+<div class="control-group" id="visibility_controls">
   <label class="control-label" for="article_visible">Ariticle Published:</label>
   <div class="controls">
     <label class="radio" for="article_visible-0">
@@ -69,6 +69,10 @@
       <input type="radio" name="article_visible" id="article_visible-1" value="Published">
       Published <i>(Article WILL be visible)</i>
     </label>
+	<label class="radio" for="article_visible-2">
+      <input type="radio" name="article_visible" id="article_visible-2" value="Retired">
+      Retired <i>(Article will be ARCHIVED)</i>
+    </label>
   </div>
 </div>
 
@@ -76,6 +80,7 @@
   <div class="controls">
     <button id="submit_article" name="submit_article" class="btn btn-success">Submit Article</button>
     <button id="cancel_article" name="cancel_article" class="btn btn-danger">Cancel Changes</button>
+	<button id="delete_article" name="delete_article" class="btn btn-danger">Permanently Delete</button>
   </div>
 </div>
 

@@ -365,7 +365,7 @@ fieldset.preview {
 	margin-top: 8px;
 }
 
-#manage_newspaper {
+#manage_newspaper, #view_newspaper {
 	display: none;
 	position: absolute;
 	right: 20px;
@@ -405,6 +405,10 @@ fieldset.preview {
 	position: absolute;
 	margin-left: 52%;
 	width: 25%;
+}
+
+.full_article img{
+	max-width: 400px;
 }
 
 .center-img {

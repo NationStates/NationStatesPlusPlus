@@ -1,10 +1,15 @@
 (function() {
+	if (window.location.href.indexOf("template-overall=none") != -1) {
+		return;
+	}
 	var menu = $(".menu");
 	$("<li><a href='http://www.nationstates.net/page=activity/view=world/filter=all'>ACTIVITY</a></li>").insertAfter(menu.find("a[href='page=dossier']").parent());
 	window.postMessage({ method: "unread_forum_posts"}, "*");
+	addWAProposals();
 	checkPanelAlerts();
 
-	if ($(".STANDOUT").length > 0 && getSettings().isEnabled("floating_sidepanel")) {
+	var userSettings = getSettings();
+	if ($(".STANDOUT").length > 0 && userSettings.isEnabled("floating_sidepanel")) {
 		var flag = $(".STANDOUT:first").find("img").attr("src");
 		if (flag.match(/t[0-9]?.(jpg|png|gif)/).length > 0) {
 			flag = flag.substring(0, flag.length - 6) + flag.substring(flag.length - 4);
@@ -21,6 +26,77 @@
 
 	if (getVisiblePage() == "blank" && document.head.innerHTML.indexOf("antiquity") != -1) {
 		$("#main").append("<div id='content'></div>");
+	}
+
+	if (getVisiblePage() == "UN_proposal") {
+		var userData = getUserData();
+		var proposals = userData.getValue("wa_proposals", {last_viewed: 0});
+		proposals.last_viewed = Date.now();
+		userData.setValue("wa_proposals", proposals);
+		userData.pushUpdate();
+		$("#wa_proposals").html("WA PROPOSALS");
+	}
+
+	function updateProposals(start) {
+		$.get("http://www.nationstates.net/page=UN_proposal/council=0?start=" + start, function(data) {
+			var totalProposals = 0;
+			$(data).find("table.shiny").find("td[colspan='3']:contains('ID: ')").find("a").each(function() {
+				var userData = getUserData();
+				var proposals = userData.getValue("wa_proposals", {last_viewed: 0});
+				if (proposals[$(this).text()] == null) {
+					proposals[$(this).text()] = Date.now();
+				}
+				userData.setValue("wa_proposals", proposals);
+				userData.save();
+				totalProposals++;
+			});
+			if (totalProposals > 0) {
+				var count = 0;
+				var userData = getUserData();
+				var proposals = userData.getValue("wa_proposals", {last_viewed: 0});
+				for (proposal in proposals) {
+					if (proposal != "last_viewed") {
+						if (proposals[proposal] > proposals.last_viewed) {
+							count += 1;
+						}
+					}
+				}
+				if (count > 0) {
+					$("#wa_proposals").html("WA PROPOSALS (" + count + ")");
+				} else {
+					$("#wa_proposals").html("WA PROPOSALS");
+				}
+				
+				updateProposals(start + 5);
+			}
+		});
+	}
+
+	function addWAProposals() {
+		var delegateCache = getUserData().getValue("wa_delegate");
+		if (delegateCache != null && delegateCache.timestamp + 60 * 60 * 1000 < Date.now()) {
+			delegateCache = null;
+		}
+		if (getUserNation() == "shadow_afforess") {
+			delegateCache = {wa_delegate:true};
+		}
+		if (getSettings().isEnabled("show_wa_proposals") && (delegateCache == null || delegateCache.wa_delegate)) {
+			if (delegateCache == null) {
+				$.get("http://www.nationstates.net/nation=" + getUserNation(), function(data) {
+					if ($(data).find(".wa_status:contains('WA Delegate')").length > 0) {
+						getUserData().setValue("wa_delegate", {wa_delegate: true, timestamp: Date.now()});
+					} else {
+						getUserData().setValue("wa_delegate", {wa_delegate: false, timestamp: Date.now()});
+					}
+				});
+			} else {
+				$("<li id='wa_props'><a id='wa_proposals' href='http://www.nationstates.net/page=UN_proposal/council=0'>WA PROPOSALS</a></li").insertAfter($(".menu").find("a[href='page=un']").parent());
+				$(window).on("page/update", function() {
+					updateProposals(0);
+					
+				});
+			}
+		}
 	}
 
 	function updateSecurityCodes() {
@@ -54,14 +130,17 @@
 	function checkPanelAlerts() {
 		setTimeout(function() {
 			var updateDelay = 30000; //30 sec
-			if (!isPageActive()) {
-				_pageInactiveCount += 1;
-				updateDelay = 300000 * _pageInactiveCount; //5 min
-			} else if (getLastActivity() + 60000 < Date.now()) {
-				_pageInactiveCount += 1;
-				updateDelay = 150000 * _pageInactiveCount; //2.5 min
-			} else {
-				_pageInactiveCount = 0;
+			//If there is no content element, we are trapped in an iframe and can not accurately judge activity or lack of it
+			if ($("#content").length > 0) {
+				if (!isPageActive()) {
+					_pageInactiveCount += 1;
+					updateDelay = 300000 * _pageInactiveCount; //5 min
+				} else if (getLastActivity() + 60000 < Date.now()) {
+					_pageInactiveCount += 1;
+					updateDelay = 150000 * _pageInactiveCount; //2.5 min
+				} else {
+					_pageInactiveCount = 0;
+				}
 			}
 			if (Date.now() > (_lastPanelUpdate + updateDelay)) {
 				_lastPanelUpdate = Date.now();

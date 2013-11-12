@@ -86,7 +86,7 @@ public class RegionController extends DatabaseController {
 			String[] split = regions.split(",");
 			for (int i = 0; i < split.length; i++) {
 				List<String> nations = new ArrayList<String>();
-				PreparedStatement statement = conn.prepareStatement("SELECT name FROM assembly.nation WHERE alive = 1 AND region = ?");
+				PreparedStatement statement = conn.prepareStatement("SELECT name FROM assembly.nation WHERE alive = 1 AND region = ? ORDER BY update_order ASC");
 				statement.setInt(1, getDatabase().getRegionIdCache().get(Utils.sanitizeName(split[i])));
 				ResultSet result = statement.executeQuery();
 				while(result.next()) {
@@ -98,10 +98,7 @@ public class RegionController extends DatabaseController {
 			DbUtils.closeQuietly(conn);
 		}
 
-		Result result = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(regionData.hashCode()), "60");
-		if (result != null) {
-			return result;
-		}
+		Utils.handleDefaultPostHeaders(request(), response());
 		if (xml) {
 			String data = "<REGIONS>\n\t";
 			for (Entry<String, Object> e : regionData.entrySet()) {

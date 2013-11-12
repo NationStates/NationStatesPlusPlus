@@ -235,7 +235,7 @@ public class NewspaperController extends NationStatesController {
 		return ok(Json.toJson(newspaper)).as("application/json");
 	}
 
-	public Result getNewspaper(int id, boolean visible, boolean hideBody) throws SQLException {
+	public Result getNewspaper(int id, int visible, boolean hideBody, int lookupArticleId) throws SQLException {
 		Map<String, Object> newspaper = new HashMap<String, Object>();
 		ArrayList<Map<String, String>> news = new ArrayList<Map<String, String>>();
 		Connection conn = null;
@@ -254,22 +254,32 @@ public class NewspaperController extends NationStatesController {
 				return Results.notFound();
 			}
 
-			PreparedStatement articles = conn.prepareStatement("SELECT article_id, article, title, articles.timestamp, author, articles.column, articles.order, visible FROM assembly.articles WHERE newspaper_id = ? " + (visible ? "AND visible = 1" : ""));
-			articles.setInt(1, id);
+			PreparedStatement articles = conn.prepareStatement("SELECT article_id, title, articles.timestamp, author, articles.column, articles.order, visible" + (!hideBody ? ", article " : "") + " FROM assembly.articles WHERE visible <> " + Visibility.DELETED.getType() + " AND newspaper_id = ? " + (lookupArticleId != -1 ? " AND article_id = ? " : "") + (visible != -1 ? " AND visible = ?" : ""));
+			int index = 1;
+			articles.setInt(index, id);
+			index++;
+			if (lookupArticleId != -1) {
+				articles.setInt(index, lookupArticleId);
+				index++;
+			}
+			if (visible != -1) {
+				articles.setInt(index, visible);
+				index++;
+			}
 			result = articles.executeQuery();
 			while(result.next()) {
 				Map<String, String> article = new HashMap<String, String>();
 				article.put("article_id", String.valueOf(result.getInt(1)));
-				if (!hideBody) {
-					article.put("article", result.getString(2));
-				}
-				article.put("title", result.getString(3));
-				article.put("timestamp", String.valueOf(result.getLong(4)));
-				article.put("author", result.getString(5));
-				article.put("column", result.getString(6));
-				article.put("order", result.getString(7));
+				article.put("title", result.getString(2));
+				article.put("timestamp", String.valueOf(result.getLong(3)));
+				article.put("author", result.getString(4));
+				article.put("column", result.getString(5));
+				article.put("order", result.getString(6));
 				article.put("newspaper", String.valueOf(id));
-				article.put("visible", String.valueOf(result.getByte(8)));
+				article.put("visible", String.valueOf(result.getByte(7)));
+				if (!hideBody) {
+					article.put("article", result.getString(8));
+				}
 				news.add(article);
 			}
 		} finally {
@@ -531,10 +541,11 @@ public class NewspaperController extends NationStatesController {
 				if (Integer.parseInt(visible) != Visibility.SUBMITTED.getType()) {
 					Utils.handleDefaultPostHeaders(request(), response());
 					return Results.unauthorized();
-				} else {
-					PreparedStatement submissions = conn.prepareStatement("SELECT article_id FROM assembly.articles WHERE newspaper_id = ? AND submitter = ?");
-					submissions.setInt(1, newspaper);
-					submissions.setInt(2, submitterId);
+				} else if (String.valueOf(Visibility.SUBMITTED.getType()).equals(visible)) {
+					PreparedStatement submissions = conn.prepareStatement("SELECT article_id FROM assembly.articles WHERE visible = ? AND newspaper_id = ? AND submitter = ?");
+					submissions.setInt(1, Visibility.SUBMITTED.getType());
+					submissions.setInt(2, newspaper);
+					submissions.setInt(3, submitterId);
 					set = submissions.executeQuery();
 					if (set.next() && set.getInt(1) != articleId) {
 						Utils.handleDefaultPostHeaders(request(), response());
@@ -580,7 +591,8 @@ public class NewspaperController extends NationStatesController {
 		DRAFT(0),
 		VISIBLE(1),
 		RETIRED(2),
-		SUBMITTED(3);
+		SUBMITTED(3),
+		DELETED(4);
 		int type;
 		Visibility(int type) {
 			this.type = type;

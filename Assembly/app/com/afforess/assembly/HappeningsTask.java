@@ -309,10 +309,17 @@ public class HappeningsTask implements Runnable {
 		Logger.info("Relocating " + nation + " from " + prevRegion + " to " + newRegion);
 		if (prevRegion != null && newRegion != null) {
 			//Double check they are still at their prev region before setting their new region!
-			PreparedStatement update = conn.prepareStatement("UPDATE assembly.nation SET region = ?, wa_member = 2 WHERE id = ? AND region = ?");
-			update.setInt(1, getOrCreateRegion(conn, nation, newRegion));
-			update.setInt(2, nationId);
-			update.setInt(3, getOrCreateRegion(conn, nation, prevRegion));
+			int newRegionId = getOrCreateRegion(conn, nation, newRegion);
+			PreparedStatement select = conn.prepareStatement("SELECT count(id) FROM assembly.nation WHERE alive = 1 AND region = ?");
+			select.setInt(1, newRegionId);
+			ResultSet set = select.executeQuery();
+			set.next();
+			int regionPop = set.getInt(1);
+			PreparedStatement update = conn.prepareStatement("UPDATE assembly.nation SET region = ?, wa_member = 2, update_order = ? WHERE id = ? AND region = ?");
+			update.setInt(1, newRegionId);
+			update.setInt(2, regionPop);
+			update.setInt(3, nationId);
+			update.setInt(4, getOrCreateRegion(conn, nation, prevRegion));
 			update.executeUpdate();
 		}
 	}

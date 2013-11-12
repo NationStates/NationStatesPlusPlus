@@ -23,7 +23,7 @@ import com.afforess.assembly.util.DatabaseAccess;
 
 public class RecruitmentTask implements Runnable {
 	private static final String[] FEEDER_REGIONS = {"the_north_pacific", "the_pacific", "the_east_pacific", "the_west_pacific", "the_south_pacific", "the_rejected_realms", "lazarus", "osiris", "balder"};
-	private static final String[] PENALTY_NAMES = {"nazi", "[0-9]", "puppet", "dead", "fag", "test"};
+	private static final String[] PENALTY_NAMES = {"nazi", "[0-9]", "puppet", "dead", "fag", "test", "spam"};
 	private final DatabaseAccess access;
 	public RecruitmentTask(DatabaseAccess access) {
 		this.access = access;
