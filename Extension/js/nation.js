@@ -206,7 +206,14 @@
 			var end = data.indexOf('}', index);
 			var score = data.substring(index, end).trim();
 			var html = $("#rinf").html();
-			$("#rinf").html(html.substring(0, html.length - 4) + " (<a href='/page=compare/nations=" + getVisibleNation() + "?censusid=65'>" + score + "</a>)</p>");
+			
+			var nextScore = 0;
+			var endos = 1;
+			if ($(".wa_status").length > 0) {
+				endos = endos + $(".unbox").find("a.nlink").length;
+			}
+			nextScore = Math.floor(Math.sqrt((score * score)  + endos) * 100) / 100;
+			$("#rinf").html(html.substring(0, html.length - 4) + " (<a href='/page=compare/nations=" + getVisibleNation() + "?censusid=65'>" + score + (nextScore > score ? (" + " + (nextScore - score).toFixed(2)) : "") + "</a>)</p>");
 		});
 	}
 
