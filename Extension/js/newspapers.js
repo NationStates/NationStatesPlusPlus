@@ -274,10 +274,12 @@
 						$("p.error").html($("p.error").html() + "</br>You can only have one queued submission for each newspaper at a time. Wait for the article to be approved first.");
 					}
 					$(".error").hide().animate({height: "toggle"}, 600);
+					$("#submit_article").attr("disabled", false);
 				});
 			};
 			$("#submit_article").on("click", function(event) {
 				event.preventDefault();
+				$("#submit_article").attr("disabled", true);
 				submitArticle(false);
 			});
 			$("#cancel_article").on("click", function(event) {
@@ -292,6 +294,11 @@
 					return;
 				}
 				submitArticle(true);
+			});
+			$("#preview_article").on("click", function(event) {
+				event.preventDefault();
+				$("#previewcontent").html(parseBBCodes($("#article_body").val()));
+				$(".preview").show();
 			});
 			if (article_id > -1) {
 				$("#minor-edit-group").show();
@@ -403,14 +410,19 @@
 	function parseBBCodes(text) {
 		text = $("<div></div>").html(text).text();
 		text = text.replaceAll("[b]", "<b>").replaceAll("[/b]", "</b>");
+		text = text.replaceAll("[B]", "<b>").replaceAll("[/B]", "</b>");
 		text = text.replaceAll("[i]", "<i>").replaceAll("[/i]", "</i>");
+		text = text.replaceAll("[I]", "<i>").replaceAll("[/I]", "</i>");
 		text = text.replaceAll("[normal]", "<span style='font-size:14px'>").replaceAll("[/normal]", "</span>");
 		text = text.replaceAll("[u]", "<u>").replaceAll("[/u]", "</u>");
+		text = text.replaceAll("[U]", "<u>").replaceAll("[/U]", "</u>");
 		text = text.replaceAll("[blockquote]", "<blockquote class='news_quote'>").replaceAll("[/blockquote]", "</blockquote>");
 		text = text.replaceAll("[list]", "<ul>").replaceAll("[/list]", "</ul>");
 		text = text.replaceAll("[*]", "</li><li>");
-		text = parseUrls(text);
-		text = parseImages(text);
+		text = parseUrls(text, true);
+		text = parseUrls(text, false);
+		text = parseImages(text, true);
+		text = parseImages(text, false);
 		text = updateTextLinks("nation", text);
 		text = updateTextLinks("region", text);
 		text = text.replaceAll("\n", "</br>");
@@ -452,10 +464,10 @@
 		return text;
 	}
 
-	function parseUrls(text) {
-		var index = text.indexOf("[url=");
+	function parseUrls(text, lowercase) {
+		var index = text.indexOf((lowercase ? "[url=" : "[URL="));
 		while (index > -1) {
-			var endIndex = text.indexOf("[/url]", index + 6);
+			var endIndex = text.indexOf((lowercase ? "[/url]" : "[/URL]"), index + 6);
 			if (endIndex == -1) {
 				break;
 			}
@@ -463,22 +475,22 @@
 			var url = innerText.substring(0, innerText.indexOf("]"));
 			
 			text = text.substring(0, index) + "<a target='_blank' href='" + url + "'>" + innerText.substring(innerText.indexOf("]") + 1, innerText.length - 1) + "</a>" + text.substring(endIndex + 6);
-			index = text.indexOf("[url=", index);
+			index = text.indexOf((lowercase ? "[url=" : "[URL="), index);
 		}
 		return text;
 	}
 
-	function parseImages(text) {
-		var index = text.indexOf("[img]");
+	function parseImages(text, lowercase) {
+		var index = text.indexOf((lowercase ? "[img]" : "[IMG]"));
 		while (index > -1) {
-			var endIndex = text.indexOf("[/img]", index + 6);
+			var endIndex = text.indexOf((lowercase ? "[/img]" : "[/IMG]"), index + 6);
 			if (endIndex == -1) {
 				break;
 			}
 			var url = text.substring(index + 5, endIndex);
 			
 			text = text.substring(0, index) + "<img class='center-img' src='" + url + "'>" + text.substring(endIndex + 6);
-			index = text.indexOf("[img]", index);
+			index = text.indexOf((lowercase ? "[img]" : "[IMG]"), index);
 		}
 		return text;
 	}

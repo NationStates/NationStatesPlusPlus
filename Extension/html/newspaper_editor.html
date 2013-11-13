@@ -45,6 +45,17 @@
   <label class="control-label" for="article_body">Article Body</label>
   <div class="controls">                     
     <textarea id="article_body" name="article_body" style="width: 85%; height: 450px;" required="">Your article goes here!</textarea>
+	<p class="nscodedesc">Formatting tags:
+		<abbr title="Bold text: e.g. I [b]love[/b] this region!">[b]</abbr>
+		<abbr title="Underline text: e.g. I [u]really[/u] love this region!">[u]</abbr>
+		<abbr title="Italicize text: e.g. I [i]cannot express how much[/i] I love this region!">[i]</abbr>
+		<abbr title="Make nation link: e.g. Endorse your delegate, [nation]Black Widow[/nation]!">[nation]</abbr>
+		<abbr title="Make region link: e.g. Visit my region, [region]The Pacific[/region]!">[region]</abbr>
+		<abbr title="Insert a url: e.g. [url=http://google.com]Google[/url]">[url]</abbr>
+		<abbr title="Insert an image: e.g. [img]http://www.nationstates.net/images/banner3green.png[/url]">[img]</abbr>
+		<abbr title="Insert a list: e.g. [list][*]A list item! [*]Another list item! [/list]">[list]</abbr>
+		<abbr title="Insert a blockquote: e.g. [blockquote]A really long quote[/blockquote]">[blockquote]</abbr>
+	</p>
   </div>
 </div>
 
@@ -73,6 +84,18 @@
       <input type="radio" name="article_visible" id="article_visible-2" value="Retired">
       Retired <i>(Article will be ARCHIVED)</i>
     </label>
+  </div>
+</div>
+
+<div class="control-group">
+  <div class="controls">
+	<div class="hide preview newspaper_preview"><legend class="newspaper_legend">Preview</legend><div class="preview_content" id="previewcontent"></div></div>
+  </div>
+</div>
+
+<div class="control-group">
+  <div class="controls">
+    <button id="preview_article" name="preview_article" class="btn">Preview Article</button>
   </div>
 </div>
 

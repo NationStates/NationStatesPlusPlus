@@ -541,7 +541,7 @@ public class NewspaperController extends NationStatesController {
 				if (Integer.parseInt(visible) != Visibility.SUBMITTED.getType()) {
 					Utils.handleDefaultPostHeaders(request(), response());
 					return Results.unauthorized();
-				} else if (String.valueOf(Visibility.SUBMITTED.getType()).equals(visible)) {
+				} else {
 					PreparedStatement submissions = conn.prepareStatement("SELECT article_id FROM assembly.articles WHERE visible = ? AND newspaper_id = ? AND submitter = ?");
 					submissions.setInt(1, Visibility.SUBMITTED.getType());
 					submissions.setInt(2, newspaper);
@@ -555,7 +555,8 @@ public class NewspaperController extends NationStatesController {
 			}
 			
 			article = imgurizeArticle(article, imgurClientKey);
-			
+			int prevOrder = -1;
+			int prevColumn = -1;
 			if (articleId == -1) {
 				PreparedStatement insert = conn.prepareStatement("INSERT INTO assembly.articles (newspaper_id, article, title, articles.timestamp, author, articles.column, articles.order, visible, submitter) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
 				insert.setInt(1, newspaper);
@@ -569,6 +570,15 @@ public class NewspaperController extends NationStatesController {
 				insert.setInt(9, submitterId);
 				insert.executeUpdate();
 			} else {
+				PreparedStatement prevArticle = conn.prepareStatement("SELECT articles.order, articles.column FROM assembly.articles WHERE visible = ? AND article_id = ?");
+				prevArticle.setInt(1, Visibility.VISIBLE.getType());
+				prevArticle.setInt(2, articleId);
+				set = prevArticle.executeQuery();
+				if (set.next()) {
+					prevOrder = set.getInt(1);
+					prevColumn = set.getInt(2);
+				}
+				
 				PreparedStatement insert = conn.prepareStatement("UPDATE assembly.articles SET article = ?, title = ?, articles.timestamp = ?, author = ?, articles.column = ?, articles.order = ?, visible = ? WHERE article_id = ?");
 				insert.setString(1, article);
 				insert.setString(2, title);
@@ -580,6 +590,48 @@ public class NewspaperController extends NationStatesController {
 				insert.setInt(8, articleId);
 				insert.executeUpdate();
 			}
+			
+			if (Integer.parseInt(visible) == Visibility.VISIBLE.getType() && prevColumn != Integer.parseInt(column) && prevOrder != Integer.parseInt(order)) {
+				//Shifted the article to a new column
+				if (prevColumn != Integer.parseInt(column)) {
+					PreparedStatement updateOrder = conn.prepareStatement("UPDATE assembly.articles SET articles.order = articles.order - 1 WHERE newspaper_id = ? AND articles.column = ? AND visible = ? AND articles.order > ?");
+					//Shift up previous content
+					updateOrder.setInt(1, newspaper);
+					updateOrder.setInt(2, prevColumn);
+					updateOrder.setInt(3, Visibility.VISIBLE.getType());
+					updateOrder.setInt(4, prevOrder);
+					updateOrder.executeUpdate();
+				
+				}
+				//Shifted article to a new position in the same column
+				if (prevColumn == Integer.parseInt(column) && prevOrder != Integer.parseInt(order)) {
+					PreparedStatement updateOrder = conn.prepareStatement("UPDATE assembly.articles SET articles.order = ? WHERE newspaper_id = ? AND articles.column = ? AND visible = ? AND articles.order = ? AND article_id <> ?");
+					//Swap up previous content
+					updateOrder.setInt(1, prevOrder);
+					updateOrder.setInt(2, newspaper);
+					updateOrder.setInt(3, Integer.parseInt(column));
+					updateOrder.setInt(4, Visibility.VISIBLE.getType());
+					updateOrder.setInt(5, Integer.parseInt(order));
+					updateOrder.setInt(6, articleId);
+					updateOrder.executeUpdate();
+				} else {
+					PreparedStatement updateOrder = conn.prepareStatement("UPDATE assembly.articles SET articles.order = articles.order + 1 WHERE newspaper_id = ? AND articles.column = ? AND visible = ? AND articles.order >= ?");
+					//Shift down existing content
+					updateOrder.setInt(1, newspaper);
+					updateOrder.setInt(2, Integer.parseInt(column));
+					updateOrder.setInt(3, Visibility.VISIBLE.getType());
+					updateOrder.setInt(4, Integer.parseInt(order));
+					updateOrder.executeUpdate();
+					//Archive older content
+					updateOrder = conn.prepareStatement("UPDATE assembly.articles SET visible = ?, articles.order = 5 WHERE newspaper_id = ? AND articles.column = ? AND visible = ? AND articles.order > 5");
+					updateOrder.setInt(1, Visibility.RETIRED.getType());
+					updateOrder.setInt(2, newspaper);
+					updateOrder.setInt(3, Integer.parseInt(column));
+					updateOrder.setInt(4, Visibility.VISIBLE.getType());
+					updateOrder.executeUpdate();
+				}
+			}
+
 		} finally {
 			DbUtils.closeQuietly(conn);
 		}

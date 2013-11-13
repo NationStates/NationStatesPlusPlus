@@ -9,6 +9,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Random;
 import java.util.regex.Pattern;
 
 import org.apache.commons.dbutils.DbUtils;
@@ -41,24 +42,23 @@ public class RecruitmentTask implements Runnable {
 	public void runImpl() throws SQLException, IOException {
 		Connection conn = null;
 		try {
+			Random rand = new Random();
 			conn = access.getPool().getConnection();
-			HashSet<Integer> regionsRecruited = new HashSet<Integer>();
+			HashSet<Integer> completedRegions = new HashSet<Integer>();
 			List<RecruitmentAction> actions = RecruitmentAction.getAllActions(conn);
 			for (RecruitmentAction action : actions) {
-				long delay = Duration.standardSeconds((int)(180 * (100F / action.percent)) + 1).getMillis();
-				if (regionsRecruited.contains(action.region)){
-					action.lastAction = Math.max(action.lastAction,  System.currentTimeMillis() + Duration.standardSeconds(180).getMillis());
-					action.update(conn);
-					continue;
-				}
-				if (action.error == 0 && action.lastAction < System.currentTimeMillis()) {
+				if (action.error == 0 && action.lastAction < System.currentTimeMillis() && !completedRegions.contains(action.region) && rand.nextInt(100) < action.percent) {
 					Object[] nation = findTargetNation(action, conn);
 					if (nation != null) {
 						try {
 							if (sendTelegram(action, (String)nation[0]) != null) {
-								regionsRecruited.add(action.region);
-								action.lastAction = System.currentTimeMillis() + delay;
-								action.update(conn);
+								completedRegions.add(action.region);
+								List<RecruitmentAction> regionTgs = RecruitmentAction.getActions(action.region, conn);
+								for (RecruitmentAction telegram : regionTgs) {
+									telegram.lastAction = System.currentTimeMillis() + Duration.standardSeconds(180).getMillis();
+									telegram.update(conn);
+								}
+								
 								PreparedStatement update = conn.prepareStatement("INSERT INTO assembly.recruitment_history (region, nation_id, tgid) VALUES (?, ?, ?)");
 								update.setInt(1, action.region);
 								update.setInt(2, (Integer)nation[1]);
