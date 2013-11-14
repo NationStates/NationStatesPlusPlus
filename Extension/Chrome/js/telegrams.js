@@ -126,7 +126,7 @@
 		});
 		$("#cancelsearch").hide();
 
-		$("<input id='tgsearch' placeholder='Search' type='text' style='max-width:500px; min-width:150px; width:" + $(document.body).width() / 6 + "px;margin-right: 20px;height: 24px;font-size: 18px;'>").insertBefore("#composebutton");
+		$("<input id='tgsearch' class='text-input-lg' placeholder='Search' type='text' style='max-width:500px; min-width:150px; width:" + $(document.body).width() / 6 + "px;margin-right: 20px;'>").insertBefore("#composebutton");
 		window.onresize = function() {
 			$("#tgsearch").css("width",  $(document.body).width() / 6 + "px");
 		}

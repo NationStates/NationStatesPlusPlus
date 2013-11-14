@@ -205,6 +205,7 @@
 	if (getUserNation() == "glen-rhodes") {
 		localStorage.setItem("ignore_theme_warning", true);
 	}
+	$("textarea, input[type='text']").addClass("text-input");
 })();
 
 function getSettings(autoupdate) {

@@ -94,7 +94,7 @@
 						if (getNationAlias(nation) == null) {
 							if ($("#input-alias-" + nation).length == 0) {
 								$(event.target).parent().find(".wa_status, .last_activity").hide();
-								$("<input id='input-alias-" + nation + "' type='text' placeholder='Alias' style='height: 22px; font-size: 15px;width:250px;margin-left: 10px;'>").insertAfter($(event.target));
+								$("<input id='input-alias-" + nation + "' type='text' class='text-input' placeholder='Alias' style='width:250px;margin-left: 10px;'>").insertAfter($(event.target));
 								$("#input-alias-" + nation).on('keydown', function(e) {
 									if (e.which == 13) {
 										var value = $("#input-alias-" + nation).val();

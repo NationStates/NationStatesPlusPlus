@@ -205,6 +205,7 @@
 	if (getUserNation() == "glen-rhodes") {
 		localStorage.setItem("ignore_theme_warning", true);
 	}
+	$("textarea, input[type='text']").addClass("text-input");
 })();
 
 function getSettings(autoupdate) {
@@ -456,7 +457,13 @@ function showPuppets() {
 			addPuppet();
 		}
 	});
-	$("a.puppet-name").on("mouseenter", function() { showPuppetRegion($(this).attr("id")); });
+	$("a.puppet-name").on("mouseenter", function() { 
+		if (getSettings().isEnabled("show-region-on-hover")) {
+			if (!$("#puppet-region-" + $(this).attr("id")).parent().is(":visible")) {
+				$("#puppet-region-" + $(this).attr("id")).parent().animate({ height: 'toggle' }, 500);
+			}
+		}
+	});
 	$(".puppet-form-remove").on("click", function() { console.log("remove"); console.log($(this).attr("name")); removePuppet($(this).attr("name")); });
 	$("a.puppet-name").on("click", function(event) {
 		switchToPuppet($(this).attr("id"));
@@ -488,14 +495,6 @@ function getPuppetCache(name) {
 	cache.region = "UNKNOWN REGION";
 	cache.wa = false;
 	return cache;
-}
-
-function showPuppetRegion(name) {
-	if (getSettings().isEnabled("show-region-on-hover") == "true") {
-		if (!$("#puppet-region-" + name).parent().is(":visible")) {
-			$("#puppet-region-" + name).parent().animate({ height: 'toggle' }, 500);
-		}
-	}
 }
 
 function switchToPuppet(name) {
