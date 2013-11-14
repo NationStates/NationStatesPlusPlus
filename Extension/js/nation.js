@@ -213,7 +213,22 @@
 				endos = endos + $(".unbox").find("a.nlink").length;
 			}
 			nextScore = Math.floor(Math.sqrt((score * score)  + endos) * 100) / 100;
-			$("#rinf").html(html.substring(0, html.length - 4) + " (<a href='/page=compare/nations=" + getVisibleNation() + "?censusid=65'>" + score + (nextScore > score ? (" + " + (nextScore - score).toFixed(2)) : "") + "</a>)</p>");
+			
+			//Add * for GCR's
+			var gcrs = {the_south_pacific: true, the_north_pacific: true, the_pacific: true, the_west_pacific: true, the_east_pacific: true, lazarus: true, balder: true, osiris: true, the_rejected_realms: true};
+			
+			html = html.substring(0, html.length - 4)
+			html = html + " (<a href='/page=compare/nations=" + getVisibleNation() + "?censusid=65'>" + score;
+			//Gaining influence
+			if (nextScore > score) {
+				var region = $(".rlink:first").attr("href").substring(7);
+				html = html + "<span title='The amount of SPDR influence your nation will receive in the next update.'> + " + (nextScore - score).toFixed(2) + "</span>";
+				if (gcrs[region]) {
+					html = html + '<span title="Influence growth in Game Created Region\'s is not well-predictable, and this estimate may be off">*</span>';
+				}
+			}
+			html = html + "</a>)</p>"
+			$("#rinf").html(html);
 		});
 	}
 

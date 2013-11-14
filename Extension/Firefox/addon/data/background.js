@@ -83,19 +83,20 @@ $.get(urlPrefix + "cache_buster.txt?time=" + Date.now() , function(value) {
 	}
 
 	if (document.head.innerHTML.indexOf("ns.dark") != -1) {
-		addStylesheet(urlPrefix + 'nationstates++_dark.css');
+		addStylesheet(urlPrefix + 'nationstates++_dark.css', true);
 	}
+	addStylesheet("//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css", false);
 
 	if (pageUrl.indexOf("page=blank") != -1) {
-		addStylesheet(staticUrlPrefix + 'newspaper_bootstrap.min.css');
-		addJavascript(staticUrlPrefix + "bootstrap-dropdown.min.js");
-		addStylesheet(staticUrlPrefix + "bootstrap-fileupload.min.css");
-		addJavascript(staticUrlPrefix + "bootstrap-fileupload.min.js");
+		addStylesheet(staticUrlPrefix + 'newspaper_bootstrap.min.css', true);
+		addJavascript(staticUrlPrefix + "bootstrap-dropdown.min.js", false);
+		addStylesheet(staticUrlPrefix + "bootstrap-fileupload.min.css", false);
+		addJavascript(staticUrlPrefix + "bootstrap-fileupload.min.js", false);
 	}
 
 	if (document.head.innerHTML.indexOf("//ajax.googleapis.com/ajax/libs/jquery") == -1) {
-		addJavascript("//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js", function() {
-			addJavascript("//ajax.googleapis.com/ajax/libs/jqueryui/1.10.2/jquery-ui.min.js");
+		addJavascript("//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js", false, function() {
+			addJavascript("//ajax.googleapis.com/ajax/libs/jqueryui/1.10.2/jquery-ui.min.js", false);
 		});
 	}
 	loadJavascript();
@@ -106,15 +107,15 @@ function loadJavascript() {
 		console.log('[NationStates++] Detected NationStates Page. Loading...');
 
 		if (document.head.innerHTML.indexOf("antiquity") != -1) {
-			addStylesheet(staticUrlPrefix + "prefix-ghbuttons_v2.css");
+			addStylesheet(staticUrlPrefix + "prefix-ghbuttons_v2.css", false);
 		}
 
-		addJavascript(urlPrefix + 'highcharts-adapter.js');
+		addJavascript(urlPrefix + 'highcharts-adapter.js', true);
 
 		console.log('[NationStates++] Loading Completed Successfully.');
 	} else if (pageUrl.indexOf('http://forum.nationstates.net/') > -1 ) {
 		console.log('[NationStates++] Detected NationStates Forum Page. Loading...');
-		addStylesheet("http://www.nationstates.net/ghbuttons_v2.css");
+		addStylesheet("http://www.nationstates.net/ghbuttons_v2.css", false);
 		var settings = getSettings();
 		settings.update(function() { console.log("Update callback!"); });
 		
@@ -233,11 +234,11 @@ window.addEventListener("message", function(event) {
 	}
 });
 
-function addStylesheet(url) {
+function addStylesheet(url, cacheBuster) {
 	var style = document.createElement('link');
 	style.setAttribute('rel', 'stylesheet');
 	style.setAttribute('type', 'text/css');
-	style.setAttribute('href', url + (localStorage.getItem("cache_buster") != null ? ("?cache=" + localStorage.getItem("cache_buster")) : ""));
+	style.setAttribute('href', url + (cacheBuster ? (localStorage.getItem("cache_buster") != null ? ("?cache=" + localStorage.getItem("cache_buster")) : "") : ""));
 	var split = url.split("/");
 	style.id = split[split.length - 1];
 	var styles = document.head.getElementsByTagName("style");
@@ -250,9 +251,9 @@ function addStylesheet(url) {
 	document.head.appendChild(style);
 }
 
-function addJavascript(url, onLoad) {
+function addJavascript(url, cacheBuster, onLoad) {
 	var script = document.createElement('script');
-	script.src = url + (localStorage.getItem("cache_buster") != null ? ("?cache=" + localStorage.getItem("cache_buster")) : "");
+	script.src = url + (cacheBuster ? (localStorage.getItem("cache_buster") != null ? ("?cache=" + localStorage.getItem("cache_buster")) : "") : "");
 	var split = url.split("/");
 	script.id = split[split.length - 1];
 	if (onLoad) {

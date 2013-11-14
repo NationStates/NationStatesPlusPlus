@@ -755,6 +755,80 @@ function isNumber(n) {
 	return !isNaN(parseFloat(n)) && isFinite(n);
 }
 
+function parseBBCodes(text) {
+	text = $("<div></div>").html(text).text();
+	text = text.replaceAll("[b]", "<b>").replaceAll("[/b]", "</b>");
+	text = text.replaceAll("[B]", "<b>").replaceAll("[/B]", "</b>");
+	text = text.replaceAll("[i]", "<i>").replaceAll("[/i]", "</i>");
+	text = text.replaceAll("[I]", "<i>").replaceAll("[/I]", "</i>");
+	text = text.replaceAll("[normal]", "<span style='font-size:14px'>").replaceAll("[/normal]", "</span>");
+	text = text.replaceAll("[u]", "<u>").replaceAll("[/u]", "</u>");
+	text = text.replaceAll("[U]", "<u>").replaceAll("[/U]", "</u>");
+	text = text.replaceAll("[blockquote]", "<blockquote class='news_quote'>").replaceAll("[/blockquote]", "</blockquote>");
+	text = text.replaceAll("[list]", "<ul>").replaceAll("[/list]", "</ul>");
+	text = text.replaceAll("[*]", "</li><li>");
+	text = parseUrls(text, true);
+	text = parseUrls(text, false);
+	text = parseImages(text, true);
+	text = parseImages(text, false);
+	text = updateTextLinks("nation", text);
+	text = updateTextLinks("region", text);
+	text = text.replaceAll("\n", "</br>");
+	
+	//Strip align tags
+	var regex = new RegExp("\\[align=.{0,}\\]", "gi");
+	text.replace(regex, " ");
+	regex = new RegExp("\\[/align\\]", "gi");
+	text.replace(regex, " ");
+
+	return text;
+}
+
+function updateTextLinks(tag, text) {
+	var index = text.indexOf("[" + tag + "]");
+	while (index > -1) {
+		var endIndex = text.indexOf("[/" + tag + "]", index + tag.length + 2);
+		if (endIndex == -1) {
+			break;
+		}
+		var innerText = text.substring(index + tag.length + 2, endIndex);
+		text = text.substring(0, index) + "<a target='_blank' href='/" + tag + "=" + innerText.toLowerCase().replaceAll(" ", "_") + "'>" + innerText + "</a>" + text.substring(endIndex + tag.length + 3);
+		index = text.indexOf("[" + tag + "]", index);
+	}
+	return text;
+}
+
+function parseUrls(text, lowercase) {
+	var index = text.indexOf((lowercase ? "[url=" : "[URL="));
+	while (index > -1) {
+		var endIndex = text.indexOf((lowercase ? "[/url]" : "[/URL]"), index + 6);
+		if (endIndex == -1) {
+			break;
+		}
+		var innerText = text.substring(index + 5, endIndex + 1);
+		var url = innerText.substring(0, innerText.indexOf("]"));
+		
+		text = text.substring(0, index) + "<a target='_blank' href='" + url + "'>" + innerText.substring(innerText.indexOf("]") + 1, innerText.length - 1) + "</a>" + text.substring(endIndex + 6);
+		index = text.indexOf((lowercase ? "[url=" : "[URL="), index);
+	}
+	return text;
+}
+
+function parseImages(text, lowercase) {
+	var index = text.indexOf((lowercase ? "[img]" : "[IMG]"));
+	while (index > -1) {
+		var endIndex = text.indexOf((lowercase ? "[/img]" : "[/IMG]"), index + 6);
+		if (endIndex == -1) {
+			break;
+		}
+		var url = text.substring(index + 5, endIndex);
+		
+		text = text.substring(0, index) + "<img class='center-img' src='" + url + "'>" + text.substring(endIndex + 6);
+		index = text.indexOf((lowercase ? "[img]" : "[IMG]"), index);
+	}
+	return text;
+}
+	
 function addFormattingButtons() {
 	$(".nscodedesc").find("abbr").each(function() {
 		var text = $(this).html().substring(1, $(this).html().length - 1);

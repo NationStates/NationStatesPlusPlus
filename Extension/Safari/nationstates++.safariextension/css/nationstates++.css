@@ -436,6 +436,12 @@ fieldset.preview {
     width: 95%;
 }
 
+.regional_power {
+	position: absolute;
+	top: 210px;
+	right: 0.95em;
+}
+
 .preview_content {
 	width: 40%;
 	margin-left: auto;

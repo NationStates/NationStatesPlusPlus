@@ -24,6 +24,69 @@ function setupRegionPage() {
 		$(".rmbolder").remove();
 	}
 	addUpdateTime();
+	
+	//Add link to region controls
+	var rControls = $("a[href='page=region_control/region=" + getVisibleRegion() + "']");
+	if (rControls.length > 0) {
+		$("<a href='page=region_admin/region=" + getVisibleRegion() + "'>Administration</a><span> &#8226; </span>").insertBefore(rControls);
+		rControls.html("Regional Controls");
+	} else {
+		rControls = $("a[href='page=region_admin/region=" + getVisibleRegion() + "']");
+		$("<span> &#8226; </span><a href='page=region_control/region=" + getVisibleRegion() + "'>Regional Controls</a>").insertAfter(rControls);
+	}
+	//Add FA icons
+	$("strong:contains('WA Delegate'):first").html("<i class='fa fa-users'></i> WA Delegate");
+	var founder = $("strong:contains('Founder'):first");
+	if (founder.length > 0) {
+		$("strong:contains('Founder'):first").html("<i class='fa fa-star'></i> Founder");
+	} else {
+		founder = $("strong:contains('WA Delegate'):first");
+	}
+	$.get("http://nationstatesplusplus.net/api/newspaper/region/?region=" + getVisibleRegion(), function(json) {
+		$("<p><strong><img style='height: 13px;' src='http://nationstatesplusplus.net/nationstates/static/newspaper_icon.png'> Newspaper: </strong><a id='rnewspaper_link'><a></p>").insertAfter(founder.parent());
+		$("#rnewspaper_link").html(parseBBCodes(json.title)).attr("href", "/page=blank?lookup_newspaper=" + json.newspaper_id);
+		$("strong:contains('WA Delegate'):first").parent().css("min-height", "0px");
+	});
+	
+	var changeRegion = $("a[href='page=change_region']");
+	if (changeRegion.length > 0) {
+		changeRegion.addClass("button");
+	}
+	
+	var regionalPower = $("strong:contains('Regional Power:')");
+	if (regionalPower.length > 0) {
+		regionalPower.html("<i class='fa fa-bolt'></i> " + regionalPower.html().substring(9));
+		var parent = regionalPower.parent();
+		parent.addClass("regional_power");
+		parent.css("right", Math.max($("img.rflag:first").width() - parent.width() + 8, 20) + "px");
+		if ($("strong:contains('Founder'):first").length == 0) {
+			$("strong:contains('WA Delegate'):first").parent().css("min-height", "50px");
+		}
+	}
+	
+	var embassies = $("strong:contains('Embassies:')");
+	if (embassies.length > 0) {
+		embassies.html("<i class='fa fa-globe'></i> " + embassies.html());
+	}
+	
+	var tags = $("strong:contains('Tags:')");
+	if (tags.length > 0) {
+		tags.html("<i class='fa fa-cloud'></i> " + tags.html());
+	}
+	
+	var population = $("p:contains('most in the world'):first");
+	if (population.length > 0) {
+		population.html("<strong><i class='fa fa-bar-chart-o'></i> Population: </strong>" + population.html());
+	}
+	
+	$("p:contains('Construction of embassies with')").each(function() {
+		$(this).html("<i style='margin-right:4px;' class='fa fa-cog'></i>" + $(this).html());
+	});
+	$("p:contains('is being withdrawn. Closure expected in')").each(function() {
+		$(this).html("<i style='margin-right:4px;' class='fa fa-exclamation-triangle'></i>" + $(this).html());
+	});
+
+	rControls.parent().html("<i style='margin-right:4px;' class='fa fa-wrench'></i>" + rControls.parent().html());
 
 	if (isAntiquityTheme()) {
 		var html = "<tr>" + $("tbody:last").children(":first").html() + "</tr>";
@@ -154,6 +217,20 @@ function setupRegionPage() {
 		var dossier = $("input[type='submit'].button");
 		$("input[type='submit'].button").each(function() {
 			$(this).html($(this).val()).changeElementType("button")
+		});
+		//Trim off the 'Tired of life in...' crap
+		var moveRegion = $("button[name='move_region']");
+		if (moveRegion.length > 0) {
+			moveRegion.parent().html(moveRegion[0].outerHTML);
+		}
+		//Remove silly redirect
+		$("button[name='move_region']").on("click", function(event) {
+			event.preventDefault();
+			$.post("http://www.nationstates.net/page=change_region", "localid=" + $("input[name='localid']").val() + "&region_name=" + $("input[name='region_name']").val() + "&move_region=" + $(this).val(), function(data) {
+				window.location.href = "http://www.nationstates.net/region=" + $("input[name='region_name']").val();
+			}).fail(function(data) {
+				$("#content").html($(data).find("#content"));
+			});
 		});
 
 		//Trigger post event for existing posts
