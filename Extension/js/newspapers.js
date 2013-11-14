@@ -327,6 +327,7 @@
 				$("#article_column_order").hide();
 				$("#article_placement_order").hide();
 				$("#delete_article").hide();
+				$("#writing_tips, ul.hide").show();
 			}
 		});
 	}
