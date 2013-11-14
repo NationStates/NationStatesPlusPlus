@@ -154,11 +154,12 @@ public class NewspaperController extends NationStatesController {
 		Connection conn = null;
 		try {
 			conn = getConnection();
-			PreparedStatement articles = conn.prepareStatement("SELECT newspaper FROM assembly.newspapers WHERE disbanded = 0 AND region = ?");
+			PreparedStatement articles = conn.prepareStatement("SELECT newspaper, title FROM assembly.newspapers WHERE disbanded = 0 AND region = ?");
 			articles.setString(1, region);
 			ResultSet result = articles.executeQuery();
 			if (result.next()) {
 				newspaper.put("newspaper_id", result.getInt(1));
+				newspaper.put("title", result.getString(2));
 			} else {
 				Utils.handleDefaultPostHeaders(request(), response());
 				return Results.notFound();
@@ -615,12 +616,13 @@ public class NewspaperController extends NationStatesController {
 					updateOrder.setInt(6, articleId);
 					updateOrder.executeUpdate();
 				} else {
-					PreparedStatement updateOrder = conn.prepareStatement("UPDATE assembly.articles SET articles.order = articles.order + 1 WHERE newspaper_id = ? AND articles.column = ? AND visible = ? AND articles.order >= ?");
+					PreparedStatement updateOrder = conn.prepareStatement("UPDATE assembly.articles SET articles.order = articles.order + 1 WHERE newspaper_id = ? AND articles.column = ? AND visible = ? AND articles.order >= ? AND article_id <> ?");
 					//Shift down existing content
 					updateOrder.setInt(1, newspaper);
 					updateOrder.setInt(2, Integer.parseInt(column));
 					updateOrder.setInt(3, Visibility.VISIBLE.getType());
 					updateOrder.setInt(4, Integer.parseInt(order));
+					updateOrder.setInt(5, articleId);
 					updateOrder.executeUpdate();
 					//Archive older content
 					updateOrder = conn.prepareStatement("UPDATE assembly.articles SET visible = ?, articles.order = 5 WHERE newspaper_id = ? AND articles.column = ? AND visible = ? AND articles.order > 5");
