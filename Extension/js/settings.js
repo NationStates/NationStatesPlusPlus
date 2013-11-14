@@ -103,6 +103,8 @@
 			
 			var api = getSettings();
 			api.pushUpdate();
+		} else if (getSettings().last_update == 0) {
+			getSettings().update(function() {console.log("Updating settings for first use")});
 		}
 	}
 	if (getVisiblePage() == "blank" && window.location.href.indexOf("ns_settings") != -1) {
