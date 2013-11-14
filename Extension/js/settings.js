@@ -106,6 +106,9 @@
 		} else if (getSettings().last_update == 0) {
 			getSettings().update(function() {console.log("Updating settings for first use")});
 		}
+		if (getUserData().last_update == 0) {
+			getUserData().update(function() {console.log("Updating user data for first use")});
+		}
 	}
 	if (getVisiblePage() == "blank" && window.location.href.indexOf("ns_settings") != -1) {
 		window.document.title = "NationStates++ Settings"
