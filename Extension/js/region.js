@@ -219,15 +219,39 @@ function setupRegionPage() {
 			$(this).html($(this).val()).changeElementType("button")
 		});
 		//Trim off the 'Tired of life in...' crap
+		var passworded = $("img[alt='Password required']").length > 0;
+		console.log("passworded: " + passworded);
 		var moveRegion = $("button[name='move_region']");
 		if (moveRegion.length > 0) {
-			moveRegion.parent().html(moveRegion[0].outerHTML);
+			moveRegion.parent().html(moveRegion[0].outerHTML + "<input type='password' placeholder='Region Password' class='region_password text-input' style='display:none;' id='region_password_input'><span id='invalid-pass' style='display:none; margin-left: 7px; color:red;'>Invalid Password'</span>");
+			if (passworded) {
+				$("button[name='move_region']").addClass("button-warning").addClass("icon").addClass("lock");
+			}
 		}
 		//Remove silly redirect
 		$("button[name='move_region']").on("click", function(event) {
 			event.preventDefault();
-			$.post("http://www.nationstates.net/page=change_region", "localid=" + $("input[name='localid']").val() + "&region_name=" + $("input[name='region_name']").val() + "&move_region=" + $(this).val(), function(data) {
-				window.location.href = "http://www.nationstates.net/region=" + $("input[name='region_name']").val();
+			if ($(this).attr("class").contains("lock")) {
+				if ($("#region_password_input:visible").length == 0) {
+					$("#region_password_input").show();
+					return;
+				} else if ($("#region_password_input").val().length == 0) {
+					$("#invalid-pass").show();
+					return;
+				}
+			}
+			var password = $("#region_password_input").val();
+			$.post("http://www.nationstates.net/page=change_region", "localid=" + $("input[name='localid']").val() + "&region_name=" + $("input[name='region_name']").val()
+																	+ "&move_region=1" + (password.length > 0 ? "&password=" + password : ""), function(data) {
+				if (data.toLowerCase().contains("you have not entered the correct password")) {
+					$("#invalid-pass").html("Your password is incorrect!").show();
+				} else if (data.toLowerCase().contains("you have been temporarily blocked from moving into password-protected regions.")) {
+					$("#invalid-pass").html("You repeatedly entered the wrong password, so you have been temporarily blocked from password-protected regions.").show();
+					$("#region_password_input").attr("disabled", true);
+					$("button[name='move_region']").attr("disabled", true);
+				} else {
+					window.location.href = "http://www.nationstates.net/region=" + $("input[name='region_name']").val();
+				}
 			}).fail(function(data) {
 				$("#content").html($(data).find("#content"));
 			});

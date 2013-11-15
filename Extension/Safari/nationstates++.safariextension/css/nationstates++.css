@@ -485,6 +485,21 @@ fieldset.preview {
 	height: 16px;
 }
 
+.button-warning {
+	border-color: rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.25) !important;
+	text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25) !important;
+	background-image: linear-gradient(to bottom, #fbb450, #f89406) !important;
+	background-repeat: repeat-x !important;
+}
+
+.region_password {
+	height: 13px;
+	position: relative;
+	top: 1px;
+	width: 250px;
+	margin-left: 7px;
+}
+
 .post-ratings {
 	min-height: 19px;
 	font-size: 70%;
