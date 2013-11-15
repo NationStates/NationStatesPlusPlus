@@ -108,7 +108,7 @@ public class Global extends GlobalSettings {
 		api.setRateLimit(47);
 		api.setUserAgent(settings.getChild("User-Agent").getString());
 		api.setRelaxed(true);
-		this.access = new DatabaseAccess(pool);
+		this.access = new DatabaseAccess(pool, settings.getChild("cache-size").getInt(1000));
 		
 		//Setup health monitoring
 		HealthMonitor health = null;

@@ -5,6 +5,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -13,7 +14,10 @@ import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.DateTimeFormatterBuilder;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import com.limewoodMedia.nsapi.NationStates;
+import com.limewoodMedia.nsapi.exceptions.RateLimitReachedException;
 
 import play.Logger;
 import play.mvc.Http.Request;
@@ -33,6 +37,17 @@ public class Utils {
 			.appendHourOfDay(2).appendLiteral(':')
 			.appendMinuteOfHour(2).appendLiteral(':')
 			.appendSecondOfMinute(2).appendLiteral(" GMT").toFormatter();
+	private static final Cache<String, Boolean> recentAuthRequest;
+	private static final NationStates authAPI = new NationStates();
+	static {
+		authAPI.setRateLimit(47);
+		authAPI.setUserAgent("NationStates++ Authentication Server");
+		authAPI.setRelaxed(true);
+		authAPI.setProxyIP("162.243.18.166");
+		authAPI.setProxyPort(3128);
+		
+		recentAuthRequest = CacheBuilder.newBuilder().maximumSize(250).expireAfterWrite(1, TimeUnit.MINUTES).build();
+	}
 
 	public static Result handleDefaultGetHeaders(Request request, Response response, String calculatedEtag) {
 		return handleDefaultGetHeaders(request, response, calculatedEtag, "60");
@@ -164,12 +179,24 @@ public class Utils {
 				} else {
 					reason = "INVALID AUTH TOKEN";
 				}
-				if (auth != null && api.verifyNation(nation, auth)) {
-					response.setHeader("Access-Control-Expose-Headers", "X-Auth-Token");
-					response.setHeader("X-Auth-Token", access.generateAuthToken(nationId));
-					return null;
-				} else {
-					reason = "INVALID NS AUTH CODE";
+				if (auth != null && recentAuthRequest.getIfPresent(nation) == null) {
+					recentAuthRequest.put(nation, true);
+					boolean verify = false;
+					try {
+						verify = api.verifyNation(nation, auth);
+					} catch (RateLimitReachedException e) {
+						Logger.warn("Auth API Rate limited! Switching to backup...");
+						verify = authAPI.verifyNation(nation, auth);
+					}
+					if (verify) {
+						response.setHeader("Access-Control-Expose-Headers", "X-Auth-Token");
+						response.setHeader("X-Auth-Token", access.generateAuthToken(nationId));
+						Logger.info("Authenticated [" + nation + "] with NS Auth API");
+						return null;
+					} else {
+						reason = "INVALID NS AUTH CODE";
+						Logger.info("Failed to Authenticate [" + nation + "] with NS Auth API | Code: [" + auth + "]");
+					}
 				}
 			}
 		} catch (ExecutionException e) {

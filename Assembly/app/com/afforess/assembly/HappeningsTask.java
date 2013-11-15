@@ -100,7 +100,7 @@ public class HappeningsTask implements Runnable {
 					return;
 				}
 			}
-			lastRun = System.currentTimeMillis();
+			lastRun = System.currentTimeMillis() + Duration.standardSeconds(1).getMillis();
 			newEvents = 0;
 			Logger.info("Starting global happenings run. Max Event ID: " + maxEventId);
 			try {

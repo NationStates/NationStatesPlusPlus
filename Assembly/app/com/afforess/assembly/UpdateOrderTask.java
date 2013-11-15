@@ -11,6 +11,7 @@ import play.Logger;
 import com.afforess.assembly.util.DatabaseAccess;
 import com.afforess.assembly.util.Utils;
 import com.limewoodMedia.nsapi.NationStates;
+import com.limewoodMedia.nsapi.exceptions.RateLimitReachedException;
 import com.limewoodMedia.nsapi.exceptions.UnknownRegionException;
 import com.limewoodMedia.nsapi.holders.RegionData;
 
@@ -58,6 +59,8 @@ public class UpdateOrderTask implements Runnable{
 			PreparedStatement update = conn.prepareStatement("UPDATE assembly.settings SET last_update_order_region = ? WHERE id = 1");
 			update.setInt(1, lastId);
 			update.executeUpdate();
+		} catch (RateLimitReachedException e) {
+			Logger.warn("Update order task rate limited!");
 		} catch (Exception e) {
 			Logger.error("Unable to update region update order", e);
 		} finally {

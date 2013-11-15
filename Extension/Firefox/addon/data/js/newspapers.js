@@ -6,18 +6,18 @@
 	$("<li id='regional_newspaper' style='display:none;'><a id='rnews' style='display: inline;' href='http://www.nationstates.net/page=blank/?regional_news=" + getUserRegion() + "'>REGIONAL NEWS</a></li>").insertAfter($("#wa_props").length > 0 ? $("#wa_props") : menu.find("a[href='page=un']").parent());
 	$("<li id='gameplay_newspaper'><a id='gnews' style='display: inline;' href='http://www.nationstates.net/page=blank/?gameplay_news'>GAMEPLAY NEWS</a></li>").insertAfter($("#regional_newspaper"));
 	$("<li id='roleplay_newspaper'><a id='rpnews' style='display: inline;' href='http://www.nationstates.net/page=blank/?roleplay_news'>ROLEPLAY NEWS</a></li>").insertAfter($("#gameplay_newspaper"));
-	if (!getSettings().isEnabled("show_gameplay_news")) {
+	var settings = getSettings();
+	if (!settings.isEnabled("show_gameplay_news")) {
 		$("#gameplay_newspaper").hide();
 	}
-	if (!getSettings().isEnabled("show_roleplay_news")) {
+	if (!settings.isEnabled("show_roleplay_news")) {
 		$("#roleplay_newspaper").hide();
-	}
-	if (!getSettings().isEnabled("show_regional_news")) {
-		$("#regional_newspaper").hide();
 	}
 	if (getUserRegion() != "") {
 		$.get("http://nationstatesplusplus.net/api/newspaper/region/?region=" + getUserRegion(), function(json) {
-			$("#regional_newspaper").show();
+			if (getSettings().isEnabled("show_regional_news")) {
+				$("#regional_newspaper").show();
+			}
 			$("#regional_newspaper").attr("news-id", json.newspaper_id);
 		});
 	}
@@ -135,7 +135,9 @@
 	function openNewspaperAdministration(newspaper) {
 		window.document.title = "NationStates | Newspaper"
 		$("#content").html("<div id='news_header' style='text-align: center;'><h1>Newspaper Administration</h1><hr></div><div id='inner-content'></div>");
+		console.log("fetching newspaper contents...");
 		$.get("http://nationstatesplusplus.net/nationstates/v2_1/newspaper_administration.html", function(html) {
+			console.log("fetched newspaper contents:" + html);
 			$("#inner-content").hide();
 			$("#inner-content").html(html);
 			$.get("http://nationstatesplusplus.net/api/newspaper/details/?id=" + newspaper, function(data) {

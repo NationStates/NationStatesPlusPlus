@@ -24,11 +24,11 @@ public class DatabaseAccess {
 	private final LoadingCache<String, Integer> nationIdCache;
 	private final LoadingCache<Integer, String> reverseIdCache;
 
-	public DatabaseAccess(final ComboPooledDataSource pool) {
+	public DatabaseAccess(final ComboPooledDataSource pool, int cacheSize) {
 		this.pool = pool;
-
+		Logger.info("Creating Database Cache. Max Size: " + cacheSize);
 		this.regionIdCache = CacheBuilder.newBuilder()
-			.maximumSize(1000)
+			.maximumSize(cacheSize)
 			.expireAfterAccess(10, TimeUnit.MINUTES)
 			.expireAfterWrite(1, TimeUnit.HOURS)
 			.build(new CacheLoader<String, Integer>() {
@@ -52,7 +52,7 @@ public class DatabaseAccess {
 		});
 
 		this.regionFlagCache = CacheBuilder.newBuilder()
-			.maximumSize(1000)
+			.maximumSize(cacheSize)
 			.expireAfterAccess(10, TimeUnit.MINUTES)
 			.expireAfterWrite(1, TimeUnit.HOURS)
 			.build(new CacheLoader<String, String>() {
@@ -79,7 +79,7 @@ public class DatabaseAccess {
 		});
 
 		this.nationIdCache = CacheBuilder.newBuilder()
-			.maximumSize(100000)
+			.maximumSize(cacheSize * 5)
 			.expireAfterAccess(10, TimeUnit.MINUTES)
 			.expireAfterWrite(1, TimeUnit.HOURS)
 			.build(new CacheLoader<String, Integer>() {
@@ -103,7 +103,7 @@ public class DatabaseAccess {
 		});
 
 		this.reverseIdCache = CacheBuilder.newBuilder()
-			.maximumSize(1000)
+			.maximumSize(cacheSize)
 			.expireAfterAccess(10, TimeUnit.MINUTES)
 			.expireAfterWrite(1, TimeUnit.HOURS)
 			.build(new CacheLoader<Integer, String>() {
