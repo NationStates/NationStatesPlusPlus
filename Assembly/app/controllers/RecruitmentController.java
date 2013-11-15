@@ -4,7 +4,10 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 import org.apache.commons.dbutils.DbUtils;
@@ -14,6 +17,7 @@ import play.libs.Json;
 import play.mvc.Result;
 import play.mvc.Results;
 
+import com.afforess.assembly.model.HappeningType;
 import com.afforess.assembly.model.RecruitmentAction;
 import com.afforess.assembly.model.RecruitmentType;
 import com.afforess.assembly.util.DatabaseAccess;
@@ -25,6 +29,35 @@ public class RecruitmentController extends NationStatesController {
 
 	public RecruitmentController(DatabaseAccess access, YamlConfiguration config, NationStates api) {
 		super(access, config, api);
+	}
+
+	public Result getRecruitmentNations() throws SQLException {
+		Map<String, Object> nations = new HashMap<String, Object>();
+		Connection conn = null;
+		try {
+			conn = getConnection();
+			PreparedStatement select = conn.prepareStatement("SELECT name, title, region_name, timestamp, type FROM assembly.recruitment_nations LIMIT 0, 100");
+			List<Object> nationData = new ArrayList<Object>();
+			ResultSet set = select.executeQuery();
+			while (set.next()) {
+				Map<String, Object> nation = new HashMap<String, Object>();
+				nation.put("name", set.getString(1));
+				nation.put("title", set.getString(2));
+				nation.put("region", set.getString(3));
+				nation.put("timestamp", set.getLong(4));
+				nation.put("status", HappeningType.getType(set.getInt(5)).getName());
+				
+				nationData.add(nation);
+			}
+			nations.put("nations", nationData);
+		} finally {
+			DbUtils.closeQuietly(conn);
+		}
+		Result result = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(nations.hashCode()), "1");
+		if (result != null) {
+			return result;
+		}
+		return Results.ok(Json.toJson(nations)).as("application/json");
 	}
 
 	public Result getRecruitmentStrategies(String region) throws SQLException, ExecutionException {

@@ -192,12 +192,36 @@ public class HappeningsTask implements Runnable {
 				} else if (updateCache.getIfPresent(nationId) == null && happeningType == HappeningType.getType("NEW_LEGISLATION").getId()) {
 					setRegionUpdateTime(conn, nationId, timestamp);
 					updateCache.put(nationId, true);
-				} else if (nationId > -1 && happeningType == HappeningType.getType("REFOUNDED").getId()) {
-					//Ensure nation is dead
+				} else if (nationId > -1 && (happeningType == HappeningType.getType("REFOUNDED").getId() || happeningType == HappeningType.getType("FOUNDED").getId())) {
+					if (happeningType == HappeningType.getType("REFOUNDED").getId()) {
+						//Ensure nation is dead
+						access.markNationDead(nationId, conn);
+						PreparedStatement alive = conn.prepareStatement("UPDATE assembly.nation SET alive = 1 WHERE id = ?");
+						alive.setInt(1, nationId);
+						alive.executeUpdate();
+					}
+					
+					//Update region
+					Matcher regions = Utils.REGION_PATTERN.matcher(text);
+					if(regions.find()) {
+						final int regionId = access.getRegionIdCache().get(text.substring(regions.start() + 2, regions.end() - 2));
+						if (regionId > -1) {
+							PreparedStatement order = conn.prepareStatement("SELECT max(update_order) FROM assembly.nation WHERE region = ?");
+							order.setInt(1, regionId);
+							ResultSet set = order.executeQuery();
+							set.next();
+							final int updateOrder = set.getInt(1);
+							
+							PreparedStatement update = conn.prepareStatement("UPDATE assembly.nation SET region = ?, wa_member = 2, update_order = ? WHERE id = ?");
+							update.setInt(1, regionId);
+							update.setInt(2, updateOrder + 1);
+							update.setInt(3, nationId);
+							update.executeUpdate();
+						}
+					}
+				} else if (nationId > -1 && happeningType == HappeningType.getType("CEASED_TO_EXIST").getId()) {
 					access.markNationDead(nationId, conn);
-					PreparedStatement alive = conn.prepareStatement("UPDATE assembly.nation SET alive = 1 WHERE id = ?");
-					alive.setInt(1, nationId);
-					alive.executeUpdate();
+				} else if (nationId > -1 && happeningType == HappeningType.getType("FOUNDED").getId()) {
 					//Update region
 					Matcher regions = Utils.REGION_PATTERN.matcher(text);
 					if(regions.find()) {
@@ -206,8 +230,6 @@ public class HappeningsTask implements Runnable {
 						update.setInt(2, nationId);
 						update.executeUpdate();
 					}
-				} else if (nationId > -1 && happeningType == HappeningType.getType("CEASED_TO_EXIST").getId()) {
-					access.markNationDead(nationId, conn);
 				}
 
 				happeningInsert.setInt(1, nationId);
