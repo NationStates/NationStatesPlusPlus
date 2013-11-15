@@ -345,10 +345,10 @@ fieldset.preview {
 	margin-left: 0px;
 	margin-right: 0px;
 	margin-top: 2px;
-	padding-bottom: 1px;
-	padding-left: 0px;
-	padding-right: 0px;
-	padding-top: 1px;
+	padding-bottom: 3px;
+	padding-left: 4px;
+	padding-right: 4px;
+	padding-top: 3px;
 }
 
 .article_summary {
@@ -467,6 +467,7 @@ fieldset.preview {
 	transition: border-color ease-in-out .15s,box-shadow ease-in-out .15s;
 	padding: 6px 12px;
 	font-size: 14px;
+	min-width: 170px;
 }
 
 .text-input input{
@@ -483,6 +484,7 @@ fieldset.preview {
 	padding: 6px 12px;
 	font-size: 14px;
 	height: 16px;
+	min-width: 170px;
 }
 
 .button-warning {

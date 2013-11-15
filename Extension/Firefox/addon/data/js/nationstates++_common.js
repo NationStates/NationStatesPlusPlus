@@ -446,8 +446,8 @@ function showPuppets() {
 		html += "<li>There's nothing here...</li>";
 	}
 	html += "</ul>";
-	html += "<p style='margin-top: -20px; margin-bottom: 1px;'><input type='text' id='puppet_nation' size='18' placeholder='Nation'></p>";
-	html += "<p style='margin-top: 1px;'><input type='password' id='puppet_password' size='18' placeholder='Password'></p>";
+	html += "<p style='margin-top: -20px; margin-bottom: 1px;'><input class='text-input' type='text' id='puppet_nation' size='18' placeholder='Nation'></p>";
+	html += "<p style='margin-top: 1px;'><input class='text-input' type='password' id='puppet_password' size='18' placeholder='Password'></p>";
 	html += "<div id='puppet_invalid_login' style='display:none;'><p>Invalid Login</p></div>";
 
 	$("#puppet_setting_form").html(html);

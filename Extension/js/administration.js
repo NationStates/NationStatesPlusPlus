@@ -1,5 +1,6 @@
 (function() {
 	if (getVisiblePage() == "region_control") {
+		$("input[name='nation_name'], #rpassword").addClass("text-input");
 		$("input[type='button']").addClass("button");
 		$("<div id='regional_newspaper'></div>").insertBefore("h4:contains('Welcome Telegrams')");
 		$("#regional_newspaper").html("<h4>Regional Newspaper</h4>");
@@ -41,7 +42,7 @@
 			$("#recruitment_form").append("<label for='secretKey'>Secret Key: </label><input class='text-input' placeholder='Telegram Secret Key' name='secretKey' type='text' style='width:400px'></input> <span title='Send your recruitment telegram to \"tag:api\" to receive a tgid and secret key' style='font-size:10px'> <a href='http://www.nationstates.net/pages/api.html#telegrams'>(What is this?)</a></span><br/>");
 			$("label[for='secretKey']").css("margin-right",  Math.max(0, (130 - $("label[for='secretKey']").width())) + "px");
 			
-			$("#recruitment_form").append("<div style='margin-bottom: -15px;'><label for='percent'>Percent: </label><input name='percent' type='range' min='1' value='100' max='100' style='width:426px; position: relative; top: 6px;'></input> <span style='font-size:10px;'><input style='width:26px;' class='text-input' name='percent_input' type='text' max='100' min='1' size='2' value='100'> (Percent of requests allocated)</span></div><br/>");
+			$("#recruitment_form").append("<div style='margin-bottom: -15px;'><label for='percent'>Percent: </label><input name='percent' type='range' min='1' value='100' max='100' style='width:426px; position: relative; top: 6px;'></input> <span style='font-size:10px;'><input style='min-width:26px; width:26px;' class='text-input' name='percent_input' type='text' max='100' min='1' size='2' value='100'> (Percent of requests allocated)</span></div><br/>");
 			$("label[for='percent']").css("margin-right",  Math.max(0, (130 - $("label[for='percent']").width())) + "px");
 			
 			$("#recruitment_form").append("<label for='type'>Type: </label><select name='type'><option value='0'>New Nations</option><option value='1'>Refounded Nations</option><option value='2'>Ejected Nations</option></select><br/>");

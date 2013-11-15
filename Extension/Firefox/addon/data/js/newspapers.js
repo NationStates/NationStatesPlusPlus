@@ -138,7 +138,7 @@
 		console.log("fetching newspaper contents...");
 		$.get("http://nationstatesplusplus.net/nationstates/v2_1/newspaper_administration.html", function(html) {
 			console.log("fetched newspaper contents:" + html);
-			$("#inner-content").hide();
+			//$("#inner-content").hide();
 			$("#inner-content").html(html);
 			$.get("http://nationstatesplusplus.net/api/newspaper/details/?id=" + newspaper, function(data) {
 				$("#newspaper_name").val(data.newspaper);
