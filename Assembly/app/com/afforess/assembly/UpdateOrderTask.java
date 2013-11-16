@@ -5,6 +5,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
 import org.apache.commons.dbutils.DbUtils;
+import org.joda.time.Duration;
 
 import play.Logger;
 
@@ -18,6 +19,7 @@ import com.limewoodMedia.nsapi.holders.RegionData;
 public class UpdateOrderTask implements Runnable{
 	private final NationStates api;
 	private final DatabaseAccess access;
+	private long lastRun = 0;
 	public UpdateOrderTask(NationStates api, DatabaseAccess access) {
 		this.api = api;
 		this.access = access;
@@ -25,6 +27,11 @@ public class UpdateOrderTask implements Runnable{
 
 	@Override
 	public void run() {
+		if (lastRun + Duration.standardSeconds(30).getMillis() > System.currentTimeMillis()) {
+			Logger.info("Skipping update order run, too soon.");
+			return;
+		}
+		lastRun = System.currentTimeMillis();
 		Connection conn = null;
 		try {
 			conn = access.getPool().getConnection();

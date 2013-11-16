@@ -43,3 +43,4 @@
 /Assembly/config.yml
 /Extension/Firefox/*.xpi
 /Extension/Safari/*.safariextz
+/Assembly/*.sh

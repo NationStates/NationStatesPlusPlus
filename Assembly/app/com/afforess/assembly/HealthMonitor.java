@@ -3,13 +3,13 @@ package com.afforess.assembly;
 import java.io.File;
 import java.lang.ProcessBuilder.Redirect;
 import java.sql.Connection;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.dbutils.DbUtils;
 import org.spout.cereal.config.ConfigurationNode;
 
 import com.afforess.assembly.util.DatabaseAccess;
-
 import play.Logger;
 import play.api.Play;
 
@@ -27,6 +27,7 @@ public class HealthMonitor extends Thread {
 	private final int endorsementThreshold;
 	private final AtomicLong lastHappeningHeartbeat = new AtomicLong(System.currentTimeMillis() + HAPPENINGS_TIME);
 	private final AtomicLong lastEndorsementHeartbeat = new AtomicLong(System.currentTimeMillis() + ENDORSEMENT_TIME);
+	private final AtomicInteger databaseBackup = new AtomicInteger(0);
 	private final DatabaseAccess access;
 	public HealthMonitor(ConfigurationNode config, DatabaseAccess access) {
 		super("Health Monitor Thread");
@@ -42,6 +43,10 @@ public class HealthMonitor extends Thread {
 
 	public void endorsementHeartbeat() {
 		this.lastEndorsementHeartbeat.set(System.currentTimeMillis());
+	}
+
+	public void databaseBackup() {
+		this.databaseBackup.set(1);
 	}
 
 	@Override
@@ -96,13 +101,13 @@ public class HealthMonitor extends Thread {
 					Logger.error("Unable to restart application!", t);
 				}
 			}
-			
-			try {
-				Thread.sleep(30000);
-			} catch (InterruptedException e) {
-				Logger.warn("Health Monitoring Interrupted", e);
-				return;
-			}
+		}
+
+		try {
+			Thread.sleep(30000);
+		} catch (InterruptedException e) {
+			Logger.warn("Health Monitoring Interrupted", e);
+			return;
 		}
 	}
 

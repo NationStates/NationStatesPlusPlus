@@ -23,6 +23,7 @@ public class EndorsementMonitoring implements Runnable {
 	private final DatabaseAccess access;
 	private final int limit;
 	private final HealthMonitor monitor;
+	private long lastRun = 0;
 	public EndorsementMonitoring(NationStates api, DatabaseAccess access, int limit, HealthMonitor health) {
 		this.api = api;
 		this.access = access;
@@ -32,6 +33,11 @@ public class EndorsementMonitoring implements Runnable {
 
 	@Override
 	public void run() {
+		if (lastRun + Duration.standardSeconds(30).getMillis() > System.currentTimeMillis()) {
+			Logger.info("Skipping endorsement run, too soon.");
+			return;
+		}
+		lastRun = System.currentTimeMillis();
 		Connection conn = null;
 		try {
 			conn = access.getPool().getConnection();

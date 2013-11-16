@@ -25,8 +25,8 @@ import com.google.common.collect.ObjectArrays;
 import com.limewoodMedia.nsapi.NationStates;
 import com.mchange.v2.c3p0.ComboPooledDataSource;
 
+import controllers.AdminController;
 import controllers.DatabaseController;
-import controllers.FirebaseAuthenticator;
 import controllers.NationStatesController;
 import play.*;
 import play.api.mvc.EssentialFilter;
@@ -40,7 +40,7 @@ import scala.concurrent.duration.Duration;
 
 public class Global extends GlobalSettings {
 	private ComboPooledDataSource pool;
-	private FirebaseAuthenticator firebase;
+	private AdminController admin;
 	private NationStates api;
 	private DatabaseAccess access;
 	private YamlConfiguration config;
@@ -110,6 +110,13 @@ public class Global extends GlobalSettings {
 		api.setRelaxed(true);
 		this.access = new DatabaseAccess(pool, settings.getChild("cache-size").getInt(1000));
 		
+		//AWS creds
+		BasicAWSCredentials awsCredentials = null;
+		ConfigurationNode aws = config.getChild("aws-credentials");
+		if (aws.getChild("access-key").getString() != null && aws.getChild("secret-key").getString() != null) {
+			awsCredentials = new BasicAWSCredentials(aws.getChild("access-key").getString(), aws.getChild("secret-key").getString());
+		}
+
 		//Setup health monitoring
 		HealthMonitor health = null;
 		if (config.getChild("health").getChild("monitor").getBoolean()) {
@@ -120,27 +127,19 @@ public class Global extends GlobalSettings {
 			Logger.info("Application Health Monitoring - DISABLED");
 		}
 		
-
-		//Setup firebase
-		ConfigurationNode firebaseConfig = config.getChild("firebase");
-		firebase = new FirebaseAuthenticator(access, config, firebaseConfig.getChild("token").getString(), api);
+		this.admin = new AdminController(access, config, health);
 
 		//Setup daily dumps
-		BasicAWSCredentials awsCredentials = null;
-		ConfigurationNode aws = config.getChild("aws-credentials");
-		if (aws.getChild("access-key").getString() != null && aws.getChild("secret-key").getString() != null) {
-			awsCredentials = new BasicAWSCredentials(aws.getChild("access-key").getString(), aws.getChild("secret-key").getString());
-		}
 		File dumpsDir = new File(settings.getChild("dailydumps").getString());
-		DailyDumps dumps = new DailyDumps(access, dumpsDir, settings.getChild("User-Agent").getString(), awsCredentials);
+		DailyDumps dumps = new DailyDumps(access, dumpsDir, settings.getChild("User-Agent").getString(), awsCredentials, health);
 		Thread dailyDumps = new Thread(dumps);
 		dailyDumps.setDaemon(true);
 		dailyDumps.start();
 
 		Akka.system().scheduler().schedule(Duration.create(2, TimeUnit.SECONDS), Duration.create(3, TimeUnit.SECONDS), new HappeningsTask(access, api, health), Akka.system().dispatcher());
-		Akka.system().scheduler().schedule(Duration.create(30, TimeUnit.SECONDS), Duration.create(30, TimeUnit.SECONDS), new EndorsementMonitoring(api, access, 14, health), Akka.system().dispatcher());
+		Akka.system().scheduler().schedule(Duration.create(31, TimeUnit.SECONDS), Duration.create(31, TimeUnit.SECONDS), new EndorsementMonitoring(api, access, 14, health), Akka.system().dispatcher());
 		Akka.system().scheduler().schedule(Duration.create(30, TimeUnit.SECONDS), Duration.create(30, TimeUnit.SECONDS), new RecruitmentTask(access), Akka.system().dispatcher());
-		Akka.system().scheduler().schedule(Duration.create(30, TimeUnit.SECONDS), Duration.create(30, TimeUnit.SECONDS), new UpdateOrderTask(api, access), Akka.system().dispatcher());
+		Akka.system().scheduler().schedule(Duration.create(31, TimeUnit.SECONDS), Duration.create(31, TimeUnit.SECONDS), new UpdateOrderTask(api, access), Akka.system().dispatcher());
 	}
 
 	@Override
@@ -200,8 +199,8 @@ public class Global extends GlobalSettings {
 	@SuppressWarnings("unchecked")
 	@Override
 	public <A> A getControllerInstance(Class<A> controllerClass) throws Exception {
-		if (FirebaseAuthenticator.class.isAssignableFrom(controllerClass)) {
-			return (A) firebase;
+		if (AdminController.class.isAssignableFrom(controllerClass)) {
+			return (A) admin;
 		} else if (NationStatesController.class.isAssignableFrom(controllerClass)) {
 			Constructor<A> cons = controllerClass.getConstructor(new Class[] {DatabaseAccess.class, YamlConfiguration.class, NationStates.class});
 			return cons.newInstance(access, config, api);

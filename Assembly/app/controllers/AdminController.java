@@ -7,6 +7,7 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
+
 import org.apache.commons.dbutils.DbUtils;
 import org.spout.cereal.config.yaml.YamlConfiguration;
 
@@ -15,14 +16,17 @@ import play.mvc.Result;
 import play.mvc.Results;
 
 import com.afforess.assembly.HappeningsTask;
+import com.afforess.assembly.HealthMonitor;
 import com.afforess.assembly.model.HappeningType;
 import com.afforess.assembly.util.DatabaseAccess;
 import com.afforess.assembly.util.Utils;
 
 public class AdminController extends DatabaseController {
 	private final String adminCode;
-	public AdminController(DatabaseAccess access, YamlConfiguration config) {
+	private final HealthMonitor health;
+	public AdminController(DatabaseAccess access, YamlConfiguration config, HealthMonitor health) {
 		super(access, config);
+		this.health = health;
 		adminCode = config.getChild("admin").getChild("code").getString();
 	}
 
@@ -79,5 +83,13 @@ public class AdminController extends DatabaseController {
 		map.put("updated", updated);
 		map.put("total", total);
 		return ok(Json.toJson(map)).as("application/json");
+	}
+
+	public Result triggerDatabaseBackup(String code) throws SQLException, ExecutionException, InterruptedException {
+		if (!code.equals(adminCode)) {
+			return Results.badRequest();
+		}
+		health.databaseBackup();
+		return ok("Database update triggered");
 	}
 }

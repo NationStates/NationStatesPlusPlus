@@ -8,7 +8,6 @@ POST    /region/parseHappenings/      @controllers.HappeningsController.parseHap
 GET     /region/happenings/           @controllers.HappeningsController.regionHappenings(region: String ?= "", start: Integer ?= 0)
 GET     /flag/                        @controllers.FlagController.flag(nation: String ?= "")
 GET     /regionflag/                  @controllers.FlagController.regionFlag(region: String ?= "")
-POST    /firebase/                    @controllers.FirebaseAuthenticator.requestAuthentication()
 
 GET     /rmb/comments/exist           @controllers.RMBController.hasComments(rmbPost: Integer ?= -1)
 GET     /rmb/comments/                @controllers.RMBController.getComments(rmbPost: Integer ?= -1)
@@ -59,6 +58,7 @@ POST    /region/recruitment/success   @controllers.RecruitmentController.getRecr
 GET     /recruitment/                 @controllers.RecruitmentController.getRecruitmentNations()
 
 GET    /admin/happenings/             @controllers.AdminController.recalculateHappenings(code: String ?= "", happeningType: Integer ?= -1)
+GET    /admin/db-backup/              @controllers.AdminController.triggerDatabaseBackup(code: String ?= "")
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.at(path="/public", file)
