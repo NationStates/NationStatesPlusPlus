@@ -240,19 +240,23 @@ function setupRegionPage() {
 					return;
 				}
 			}
+			$(this).attr("disabled", true);
 			var password = $("#region_password_input").val();
 			$.post("http://www.nationstates.net/page=change_region", "localid=" + $("input[name='localid']").val() + "&region_name=" + $("input[name='region_name']").val()
 																	+ "&move_region=1" + (password.length > 0 ? "&password=" + password : ""), function(data) {
 				if (data.toLowerCase().contains("you have not entered the correct password")) {
 					$("#invalid-pass").html("Your password is incorrect!").show();
+					$("button[name='move_region']").attr("disabled", false);
 				} else if (data.toLowerCase().contains("you have been temporarily blocked from moving into password-protected regions.")) {
 					$("#invalid-pass").html("You repeatedly entered the wrong password, so you have been temporarily blocked from password-protected regions.").show();
 					$("#region_password_input").attr("disabled", true);
 					$("button[name='move_region']").attr("disabled", true);
 				} else {
+					$("button[name='move_region']").attr("disabled", false);
 					window.location.href = "http://www.nationstates.net/region=" + $("input[name='region_name']").val();
 				}
 			}).fail(function(data) {
+				$("button[name='move_region']").attr("disabled", false);
 				$("#content").html($(data).find("#content"));
 			});
 		});

@@ -122,7 +122,7 @@
 						}
 					} else {
 						if (typeof $("#iframe-" + target).html() == "undefined") {
-							$("#nation_dossier").find("#" + target).html($("#" + target).html() + "<div id='iframe-" + target + "' class='nation-frame'><iframe style='width: 100%; height: 495px;' src='http://nationstates.net/nation=" + target + "?hideBanner=true&hideFooter=true&hidePanel=true&hideFlag=true'/></div>");
+							$("#nation_dossier").find("#" + target).html($("#" + target).html() + "<div id='iframe-" + target + "' class='nation-frame'><iframe style='width: 100%; height: 495px;' src='http://embed.nationstates.net/nation=" + target + "'/></div>");
 							$("#nation_dossier").find("#iframe-" + target).hide();
 						}
 						$("#nation_dossier").find("#iframe-" + target).animate({ height: 'toggle'}, 800);
@@ -133,7 +133,7 @@
 						$("#region_dossier").find("#" + target).animate({ height: 'toggle', 'min-height': 'toggle' }, 800);
 					} else {
 						if (typeof $("#iframe-" + target).html() == "undefined") {
-							$("#region_dossier").find("#" + target).html($("#" + target).html() + "<div id='iframe-" + target + "' class='nation-frame'><iframe style='width: 100%; height: 495px;' src='http://nationstates.net/region=" + target + "?hideBanner=true&hideFooter=true&hidePanel=true&hideFlag=true'/></div>");
+							$("#region_dossier").find("#" + target).html($("#" + target).html() + "<div id='iframe-" + target + "' class='nation-frame'><iframe style='width: 100%; height: 495px;' src='http://embed.nationstates.net/region=" + target + "'/></div>");
 							$("#region_dossier").find("#iframe-" + target).hide();
 						}
 						$("#region_dossier").find("#iframe-" + target).animate({ height: 'toggle'}, 800);

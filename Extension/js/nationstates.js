@@ -84,9 +84,9 @@
 			if (delegateCache == null) {
 				$.get("http://www.nationstates.net/nation=" + getUserNation(), function(data) {
 					if ($(data).find(".wa_status:contains('WA Delegate')").length > 0) {
-						getUserData().setValue("wa_delegate", {wa_delegate: true, timestamp: Date.now()});
+						getUserData(true).setValue("wa_delegate", {wa_delegate: true, timestamp: Date.now()});
 					} else {
-						getUserData().setValue("wa_delegate", {wa_delegate: false, timestamp: Date.now()});
+						getUserData(true).setValue("wa_delegate", {wa_delegate: false, timestamp: Date.now()});
 					}
 				});
 			} else {
