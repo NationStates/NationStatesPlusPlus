@@ -15,7 +15,8 @@ POST    /rmb/comments/flag            @controllers.RMBController.flagComment(com
 POST    /rmb/comments/like            @controllers.RMBController.likeComment(commentId: Integer ?= -1, like: Boolean ?= false)
 POST    /rmb/comments/add             @controllers.RMBController.addComment(rmbPost: Integer ?= -1)
 POST    /rmb/rate/set/                @controllers.RMBController.ratePost(rmbPost: Integer ?= -1, rating: Integer ?= -1)
-GET     /rmb/rate/get/                @controllers.RMBController.getPostRatings(rmbPost: Integer ?= -1)
+GET     /rmb/rate/get/                @controllers.RMBController.getPostRatings(rmbPost: Integer ?= -1, rmbCache: Integer ?= -1)
+GET     /rmb/cache/                   @controllers.RMBController.getRMBCache(region: String ?= "")
 
 GET    /flag/nation/                  @controllers.FlagController.redirectToNationFlag(nation: String ?= "")
 GET    /flag/region/                  @controllers.FlagController.redirectToRegionFlag(region: String ?= "")
@@ -51,6 +52,8 @@ GET    /region/wa/                    @controllers.WorldAssemblyController.getWA
 GET    /region/population/            @controllers.RegionController.getPopulationTrends(region: String ?= "")
 GET    /region/updatetime/            @controllers.RegionController.getUpdateTime(region: String ?= "")
 GET    /region/nations/               @controllers.RegionController.getNations(region: String ?= "", xml: Boolean ?= false)
+GET    /region/map/                   @controllers.RegionController.getRegionalMap(region: String ?= "")
+POST   /region/map/                   @controllers.RegionController.setRegionalMap(region: String ?= "", disband: Boolean ?= false)
 
 POST    /region/recruitment/get       @controllers.RecruitmentController.getRecruitmentStrategies(region: String ?= "")
 POST    /region/recruitment/set       @controllers.RecruitmentController.updateRecruitmentStrategies(region: String ?= "")

@@ -1,15 +1,26 @@
 package com.afforess.assembly.util;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.URL;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.net.ssl.HttpsURLConnection;
+
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.WordUtils;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.type.TypeReference;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.DateTimeFormatterBuilder;
@@ -59,14 +70,15 @@ public class Utils {
 		response.setHeader("Access-Control-Max-Age", seconds);
 		response.setHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
 		response.setHeader("Cache-Control", "public, max-age=" + seconds);
-		response.setHeader("Expires", new DateTime().plusHours(1).toString(Utils.HTTP_DATE_TIME));
-		response.setHeader("Last-Modified", new DateTime().plusHours(-1).toString(Utils.HTTP_DATE_TIME));
+		response.setHeader("Expires", new DateTime().plusHours(1).plusSeconds(Integer.parseInt(seconds)).toString(Utils.HTTP_DATE_TIME));
+		response.setHeader("Last-Modified", new DateTime().plusHours(-1).plusSeconds(-Integer.parseInt(seconds)).toString(Utils.HTTP_DATE_TIME));
 		response.setHeader("Vary", "Accept-Encoding");
-		response.setHeader("ETag", calculatedEtag);
-
-		String eTag = request.getHeader("If-None-Match");
-		if (calculatedEtag != null && calculatedEtag.equals(eTag)) {
-			return Results.status(304);
+		if (calculatedEtag != null) {
+			response.setHeader("ETag", calculatedEtag);
+			String eTag = request.getHeader("If-None-Match");
+			if (calculatedEtag != null && calculatedEtag.equals(eTag)) {
+				return Results.status(304);
+			}
 		}
 		return null;
 	}
@@ -205,5 +217,35 @@ public class Utils {
 		}
 		Utils.handleDefaultPostHeaders(request, response);
 		return Results.unauthorized(reason);
+	}
+
+	public static String uploadToImgur(String url, String clientKey) throws IOException {
+		HttpsURLConnection conn = (HttpsURLConnection) (new URL("https://api.imgur.com/3/image")).openConnection();
+		conn.addRequestProperty("Authorization", "Client-ID " + clientKey);
+		conn.setDoInput(true);
+		conn.setDoOutput(true);
+		conn.setUseCaches(false);
+		conn.setRequestMethod("POST");
+		OutputStream out = null;
+		try {
+			out = conn.getOutputStream();
+			IOUtils.write("image=" + EncodingUtil.encodeURIComponent(url) + "&type=URL", out);
+			out.flush();
+		} finally {
+			IOUtils.closeQuietly(out);
+		}
+
+		InputStream stream = null;
+		try {
+			stream = conn.getInputStream();
+			Map<String, Object> result = new ObjectMapper().readValue(stream, new TypeReference<HashMap<String,Object>>() {});
+			@SuppressWarnings("unchecked")
+			Map<String, Object> data = (Map<String, Object>) result.get("data");
+			String link = (String) data.get("link");
+			return link;
+		} finally {
+			IOUtils.closeQuietly(stream);
+			conn.disconnect();
+		}
 	}
 }

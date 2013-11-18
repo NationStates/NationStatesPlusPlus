@@ -78,7 +78,7 @@ public class RecruitmentAction {
 
 	public static List<RecruitmentAction> getAllActions(Connection conn) throws SQLException {
 		List<RecruitmentAction> actions = new ArrayList<RecruitmentAction>();
-		PreparedStatement select = conn.prepareStatement("SELECT id, region, client_key, tgid, secret_key, percent, type, last_action, feeders_only, filter_regex, error, avoid_full, randomize FROM assembly.recruitment");
+		PreparedStatement select = conn.prepareStatement("SELECT id, region, client_key, tgid, secret_key, percent, type, last_action, feeders_only, filter_regex, error, avoid_full, randomize FROM assembly.recruitment ORDER BY RAND()");
 		ResultSet result = select.executeQuery();
 		while(result.next()) {
 			actions.add(new RecruitmentAction(result.getInt(1), result.getInt(2), result.getString(3), result.getString(4), result.getString(5), result.getInt(6), RecruitmentType.getById(result.getInt(7)), result.getLong(8), result.getByte(9) == 1, result.getString(10), result.getInt(11), result.getByte(12) == 1, result.getByte(13) == 1));

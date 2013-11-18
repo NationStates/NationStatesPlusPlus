@@ -59,6 +59,9 @@ public class RMBController extends NationStatesController {
 					insert.executeUpdate();
 				}
 			}
+			PreparedStatement update = conn.prepareStatement("UPDATE assembly.region SET rmb_cache = rmb_cache + 1 WHERE id = (SELECT region FROM assembly.nation WHERE nation.id = ?)");
+			update.setInt(1, getDatabase().getNationIdCache().get(nation));
+			update.executeUpdate();
 		} finally {
 			DbUtils.closeQuietly(conn);
 		}
@@ -66,7 +69,7 @@ public class RMBController extends NationStatesController {
 		return Results.ok();
 	}
 
-	public Result getPostRatings(int rmbPost) throws SQLException, ExecutionException {
+	public Result getPostRatings(int rmbPost, int rmbCache) throws SQLException, ExecutionException {
 		Connection conn = getConnection();
 		List<Map<String, String>> list = new ArrayList<Map<String, String>>();
 		try {
@@ -82,11 +85,31 @@ public class RMBController extends NationStatesController {
 		} finally {
 			DbUtils.closeQuietly(conn);
 		}
-		Result result = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(list.hashCode()), "10");
+		Result result = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(list.hashCode()), (rmbCache == -1 ? "10" : "86400"));
 		if (result != null) {
 			return result;
 		}
 		return Results.ok(Json.toJson(list)).as("application/json");
+	}
+
+	public Result getRMBCache(String region) throws SQLException, ExecutionException {
+		Connection conn = getConnection();
+		Map<String, Integer> cache = new HashMap<String, Integer>(2);
+		try {
+			PreparedStatement select = conn.prepareStatement("SELECT rmb_cache FROM assembly.region WHERE name = ?");
+			select.setString(1, region);
+			ResultSet result = select.executeQuery();
+			while(result.next()) {
+				cache.put("rmb_cache", result.getInt(1));
+			}
+		} finally {
+			DbUtils.closeQuietly(conn);
+		}
+		Result result = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(cache.hashCode()), "10");
+		if (result != null) {
+			return result;
+		}
+		return Results.ok(Json.toJson(cache)).as("application/json");
 	}
 
 	public Result hasComments(int rmbPost) throws SQLException {

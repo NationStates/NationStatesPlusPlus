@@ -101,13 +101,12 @@ public class HealthMonitor extends Thread {
 					Logger.error("Unable to restart application!", t);
 				}
 			}
-		}
-
-		try {
-			Thread.sleep(30000);
-		} catch (InterruptedException e) {
-			Logger.warn("Health Monitoring Interrupted", e);
-			return;
+			try {
+				Thread.sleep(30000);
+			} catch (InterruptedException e) {
+				Logger.warn("Health Monitoring Interrupted", e);
+				return;
+			}
 		}
 	}
 

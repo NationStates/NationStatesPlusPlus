@@ -205,17 +205,10 @@ public class HappeningsTask implements Runnable {
 					Matcher regions = Utils.REGION_PATTERN.matcher(text);
 					if(regions.find()) {
 						final int regionId = access.getRegionIdCache().get(text.substring(regions.start() + 2, regions.end() - 2));
-						if (regionId > -1) {
-							PreparedStatement order = conn.prepareStatement("SELECT max(update_order) FROM assembly.nation WHERE region = ?");
-							order.setInt(1, regionId);
-							ResultSet set = order.executeQuery();
-							set.next();
-							final int updateOrder = set.getInt(1);
-							
-							PreparedStatement update = conn.prepareStatement("UPDATE assembly.nation SET region = ?, wa_member = 2, update_order = ? WHERE id = ?");
+						if (regionId > -1) {					
+							PreparedStatement update = conn.prepareStatement("UPDATE assembly.nation SET region = ?, wa_member = 2 WHERE id = ?");
 							update.setInt(1, regionId);
-							update.setInt(2, updateOrder + 1);
-							update.setInt(3, nationId);
+							update.setInt(2, nationId);
 							update.executeUpdate();
 						}
 					}
@@ -332,16 +325,10 @@ public class HappeningsTask implements Runnable {
 		if (prevRegion != null && newRegion != null) {
 			//Double check they are still at their prev region before setting their new region!
 			int newRegionId = getOrCreateRegion(conn, nation, newRegion);
-			PreparedStatement select = conn.prepareStatement("SELECT count(id) FROM assembly.nation WHERE alive = 1 AND region = ?");
-			select.setInt(1, newRegionId);
-			ResultSet set = select.executeQuery();
-			set.next();
-			int regionPop = set.getInt(1);
-			PreparedStatement update = conn.prepareStatement("UPDATE assembly.nation SET region = ?, wa_member = 2, update_order = ? WHERE id = ? AND region = ?");
+			PreparedStatement update = conn.prepareStatement("UPDATE assembly.nation SET region = ?, wa_member = 2 WHERE id = ? AND region = ?");
 			update.setInt(1, newRegionId);
-			update.setInt(2, regionPop);
-			update.setInt(3, nationId);
-			update.setInt(4, getOrCreateRegion(conn, nation, prevRegion));
+			update.setInt(2, nationId);
+			update.setInt(3, getOrCreateRegion(conn, nation, prevRegion));
 			update.executeUpdate();
 		}
 	}

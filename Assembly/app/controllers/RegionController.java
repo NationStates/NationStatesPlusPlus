@@ -15,19 +15,24 @@ import org.apache.commons.dbutils.DbUtils;
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 import org.codehaus.jackson.annotate.JsonProperty;
 import org.joda.time.Duration;
+import org.spout.cereal.config.ConfigurationNode;
 import org.spout.cereal.config.yaml.YamlConfiguration;
 
+import play.Logger;
 import play.libs.Json;
 import play.mvc.Result;
 import play.mvc.Results;
 
 import com.afforess.assembly.util.DatabaseAccess;
 import com.afforess.assembly.util.Utils;
+import com.limewoodMedia.nsapi.NationStates;
 
-public class RegionController extends DatabaseController {
-
-	public RegionController(DatabaseAccess access, YamlConfiguration config) {
-		super(access, config);
+public class RegionController extends NationStatesController {
+	private final String imgurClientKey;
+	public RegionController(DatabaseAccess access, YamlConfiguration config, NationStates api) {
+		super(access, config, api);
+		ConfigurationNode imgurAuth = getConfig().getChild("imgur");
+		imgurClientKey = imgurAuth.getChild("client-key").getString(null);
 	}
 
 	public Result getUpdateTime(String region) throws SQLException, ExecutionException {
@@ -185,5 +190,96 @@ public class RegionController extends DatabaseController {
 			this.population = population;
 			this.timestamp = timestamp;
 		}
+	}
+
+	public Result setRegionalMap(String region, boolean disband) throws SQLException, ExecutionException {
+		Result ret = Utils.validateRequest(request(), response(), getAPI(), getDatabase());
+		if (ret != null) {
+			return ret;
+		}
+		String nation = Utils.sanitizeName(Utils.getPostValue(request(), "nation"));
+		
+		Utils.handleDefaultPostHeaders(request(), response());
+		Connection conn = null;
+		try {
+			conn = getConnection();
+			PreparedStatement select = conn.prepareStatement("SELECT delegate, founder FROM assembly.region WHERE name = ?");
+			select.setString(1, Utils.sanitizeName(region));
+			ResultSet result = select.executeQuery();
+			boolean regionAdministrator = true;
+			if (result.next()) {
+				Logger.info("Attempting to set map for " + region + ", nation: " + nation);
+				Logger.info("Delegate: " + result.getString(1) + " | Founder: " + result.getString(2));
+				if (!nation.equals(result.getString(1)) && !nation.equals(result.getString(2))) {
+					regionAdministrator = false;
+				}
+			} else {
+				Logger.info("Attempting to set map for " + region + ", no region found!");
+				regionAdministrator = false;
+			}
+			if (!regionAdministrator) {
+				return Results.unauthorized();
+			}
+			
+			if (disband) {
+				PreparedStatement update = conn.prepareStatement("UPDATE assembly.region SET regional_map = NULL, regional_map_preview = NULL WHERE name = ?");
+				update.setString(1, Utils.sanitizeName(region));
+				update.executeUpdate();
+			} else {
+				String mapLink = Utils.sanitizeName(Utils.getPostValue(request(), "regional_map"));
+				String mapPreview = Utils.sanitizeName(Utils.getPostValue(request(), "regional_map_preview"));
+				if (mapPreview == null) {
+					return Results.badRequest("missing map preview");
+				}
+				if (mapLink == null) {
+					return Results.badRequest("missing map link");
+				}
+				String imgurPreview = null;
+				try {
+					imgurPreview = Utils.uploadToImgur(mapPreview, imgurClientKey);
+				} catch (Exception e) {
+					Logger.warn("Unable to upload image to imgur for regional map [" + mapPreview + "]", e);
+				}
+				if (imgurPreview == null) {
+					return Results.badRequest("invalid map preview");
+				}
+				PreparedStatement update = conn.prepareStatement("UPDATE assembly.region SET regional_map = ?, regional_map_preview = ? WHERE name = ?");
+				update.setString(1, mapLink);
+				update.setString(2, imgurPreview);
+				update.setString(3, Utils.sanitizeName(region));
+				update.executeUpdate();
+			}
+		} finally {
+			DbUtils.closeQuietly(conn);
+		}
+		return Results.ok();
+	}
+
+	public Result getRegionalMap(String region) throws SQLException, ExecutionException {
+		Map<String, String> links = new HashMap<String, String>(3);
+		Connection conn = null;
+		try {
+			conn = getConnection();
+			PreparedStatement update = conn.prepareStatement("SELECT regional_map, regional_map_preview FROM assembly.region WHERE name = ?");
+			update.setString(1, Utils.sanitizeName(region));
+			ResultSet set = update.executeQuery();
+			if (set.next()) {
+				String mapLink = set.getString(1);
+				if (!set.wasNull()) {
+					links.put("regional_map", mapLink);
+				}
+				String mapPreview = set.getString(2);
+				if (!set.wasNull()) {
+					links.put("regional_map_preview", mapPreview);
+				}
+			}
+		} finally {
+			DbUtils.closeQuietly(conn);
+		}
+		Result result = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(links.hashCode()), "60");
+		if (result != null) {
+			return result;
+		}
+		return Results.ok(Json.toJson(links)).as("application/json");
 	}
 }

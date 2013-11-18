@@ -131,7 +131,7 @@ public class Global extends GlobalSettings {
 
 		//Setup daily dumps
 		File dumpsDir = new File(settings.getChild("dailydumps").getString());
-		DailyDumps dumps = new DailyDumps(access, dumpsDir, settings.getChild("User-Agent").getString(), awsCredentials, health);
+		DailyDumps dumps = new DailyDumps(access, dumpsDir, settings.getChild("User-Agent").getString(), awsCredentials);
 		Thread dailyDumps = new Thread(dumps);
 		dailyDumps.setDaemon(true);
 		dailyDumps.start();

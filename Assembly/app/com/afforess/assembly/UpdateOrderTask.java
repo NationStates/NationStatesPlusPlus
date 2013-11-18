@@ -44,6 +44,7 @@ public class UpdateOrderTask implements Runnable{
 			select.setInt(1, id);
 			result = select.executeQuery();
 			int lastId = id;
+			final int startId = lastId;
 			while(result.next()) {
 				RegionData data;
 				try {
@@ -56,15 +57,16 @@ public class UpdateOrderTask implements Runnable{
 				}
 				PreparedStatement updateBatch = conn.prepareStatement("UPDATE assembly.nation SET update_order = ? WHERE name = ?");
 				for (int i = 0; i < data.nations.length; i++) {
-					updateBatch.setInt(1, i);
+					updateBatch.setInt(1, data.nations.length - i);
 					updateBatch.setString(2, Utils.sanitizeName(data.nations[i]));
 					updateBatch.addBatch();
 				}
 				updateBatch.executeBatch();
 				lastId = result.getInt(2);
+				Logger.info("Updated update order for region id [" + lastId + "]");
 			}
 			PreparedStatement update = conn.prepareStatement("UPDATE assembly.settings SET last_update_order_region = ? WHERE id = 1");
-			update.setInt(1, lastId);
+			update.setInt(1, (lastId != startId ? lastId : 0));
 			update.executeUpdate();
 		} catch (RateLimitReachedException e) {
 			Logger.warn("Update order task rate limited!");

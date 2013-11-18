@@ -80,17 +80,11 @@ public class RecruitmentController extends NationStatesController {
 		Connection conn = null;
 		try {
 			conn = getConnection();
-			PreparedStatement select = conn.prepareStatement("SELECT id, delegate, founder FROM assembly.region WHERE name = ?");
-			select.setString(1, Utils.sanitizeName(region));
-			ResultSet set = select.executeQuery();
-			if (set.next()) {
-				if (nation.equals(set.getString(2)) || nation.equals(set.getString(3))) {
-					return Results.ok(Json.toJson(RecruitmentAction.getActions(set.getInt(1), conn))).as("application/json");
-				}
-				return Results.forbidden("Invalid nation - must be founder or delegate [" + nation + "] [" + set.getString(2) + " | " + set.getString(3) + "]");
+			int regionId = getRecruitmentAdministrator(conn, nation, region);
+			if (regionId != -1) {
+				return Results.ok(Json.toJson(RecruitmentAction.getActions(regionId, conn))).as("application/json");
 			}
-			return Results.forbidden("Invalid nation - must be founder or delegate [unknown region]");
-
+			return Results.forbidden("Invalid nation - must be founder or delegate");
 		} finally {
 			DbUtils.closeQuietly(conn);
 		}
@@ -106,27 +100,42 @@ public class RecruitmentController extends NationStatesController {
 		Connection conn = null;
 		try {
 			conn = getConnection();
-			PreparedStatement select = conn.prepareStatement("SELECT id, delegate, founder FROM assembly.region WHERE name = ?");
-			select.setString(1, Utils.sanitizeName(region));
-			ResultSet set = select.executeQuery();
-			if (set.next()) {
-				if (nation.equals(set.getString(2)) || nation.equals(set.getString(3))) {
-					PreparedStatement recruitment = conn.prepareStatement("SELECT (SELECT count(*) FROM assembly.recruitment_success WHERE recruiting_region = ? AND tgid = ? AND recruiting_region = nation_region) AS success, (SELECT count(*) FROM assembly.recruitment_success WHERE recruiting_region = ? AND tgid = ?) AS total");
-					recruitment.setInt(1, set.getInt(1));
-					recruitment.setString(2, tgid);
-					recruitment.setInt(3, set.getInt(1));
-					recruitment.setString(4, tgid);
-					ResultSet data = recruitment.executeQuery();
-					data.next();
-					return Results.ok("{\"tgid\": \"" + tgid + "\", \"sent_telegrams\":" + data.getInt(2) + ", \"successful_telegrams\": " + data.getInt(1) + "}").as("application/json");
-				}
-				return Results.forbidden("Invalid nation - must be founder or delegate [" + nation + "] [" + set.getString(2) + " | " + set.getString(3) + "]");
+			int regionId = getRecruitmentAdministrator(conn, nation, region);
+			if (regionId != -1) {
+				PreparedStatement recruitment = conn.prepareStatement("SELECT (SELECT count(*) FROM assembly.recruitment_success WHERE recruiting_region = ? AND tgid = ? AND recruiting_region = nation_region) AS success, (SELECT count(*) FROM assembly.recruitment_success WHERE recruiting_region = ? AND tgid = ?) AS total");
+				recruitment.setInt(1, regionId);
+				recruitment.setString(2, tgid);
+				recruitment.setInt(3, regionId);
+				recruitment.setString(4, tgid);
+				ResultSet data = recruitment.executeQuery();
+				data.next();
+				return Results.ok("{\"tgid\": \"" + tgid + "\", \"sent_telegrams\":" + data.getInt(2) + ", \"successful_telegrams\": " + data.getInt(1) + "}").as("application/json");
 			}
-			return Results.forbidden("Invalid nation - must be founder or delegate [unknown region]");
-
+			return Results.forbidden("Invalid nation - must be founder or delegate");
 		} finally {
 			DbUtils.closeQuietly(conn);
 		}
+	}
+
+	private int getRecruitmentAdministrator(Connection conn, String nation, String region) throws SQLException, ExecutionException {
+		PreparedStatement select = conn.prepareStatement("SELECT id, delegate, founder FROM assembly.region WHERE name = ?");
+		select.setString(1, Utils.sanitizeName(region));
+		ResultSet set = select.executeQuery();
+		int regionId = -1;
+		if (set.next()) {
+			regionId = set.getInt(1);
+			if (nation.equals(set.getString(2)) || nation.equals(set.getString(3))) {
+				return regionId;
+			}
+		}
+		PreparedStatement officers = conn.prepareStatement("SELECT nation FROM assembly.recruitment_officers WHERE region = ? AND nation = ?");
+		officers.setInt(1, regionId);
+		officers.setInt(2, getDatabase().getNationIdCache().get(nation));
+		set = officers.executeQuery();
+		if (set.next()) {
+			return regionId;
+		}
+		return -1;
 	}
 
 	public Result updateRecruitmentStrategies(String region) throws SQLException, ExecutionException {
@@ -150,75 +159,58 @@ public class RecruitmentController extends NationStatesController {
 		Connection conn = null;
 		try {
 			conn = getConnection();
-			PreparedStatement select = conn.prepareStatement("SELECT id, delegate, founder FROM assembly.region WHERE name = ?");
-			select.setString(1, Utils.sanitizeName(region));
-			ResultSet set = select.executeQuery();
-			if (set.next()) {
-				if (nation.equals(set.getString(2)) || nation.equals(set.getString(3))) {
-					final String id = Utils.getPostValue(request(), "id");
-					final String clientKey = Utils.getPostValue(request(), "clientKey");
-					final String tgid = Utils.getPostValue(request(), "tgid");
-					final String secretKey = Utils.getPostValue(request(), "secretKey");
-					final boolean avoidFull = "true".equalsIgnoreCase(Utils.getPostValue(request(), "avoidFull"));
-					final boolean randomize = "true".equalsIgnoreCase(Utils.getPostValue(request(), "randomize"));
-					final boolean feedersOnly = "true".equalsIgnoreCase(Utils.getPostValue(request(), "feedersOnly"));
-					final String filterRegex = Utils.getPostValue(request(), "filterRegex");
-					if (id == null) {
-						Integer percent = Integer.parseInt(Utils.getPostValue(request(), "percent"));
-						final RecruitmentType type = RecruitmentType.getById(Integer.parseInt(Utils.getPostValue(request(), "type")));
+			int regionId = getRecruitmentAdministrator(conn, nation, region);
+			if (regionId != -1) {
+				final String id = Utils.getPostValue(request(), "id");
+				final String clientKey = Utils.getPostValue(request(), "clientKey");
+				final String tgid = Utils.getPostValue(request(), "tgid");
+				final String secretKey = Utils.getPostValue(request(), "secretKey");
+				final boolean avoidFull = "true".equalsIgnoreCase(Utils.getPostValue(request(), "avoidFull"));
+				final boolean randomize = "true".equalsIgnoreCase(Utils.getPostValue(request(), "randomize"));
+				final boolean feedersOnly = "true".equalsIgnoreCase(Utils.getPostValue(request(), "feedersOnly"));
+				final String filterRegex = Utils.getPostValue(request(), "filterRegex");
+				if (id == null) {
+					Integer percent = Math.min(100, Math.max(0, Integer.parseInt(Utils.getPostValue(request(), "percent"))));
+					final RecruitmentType type = RecruitmentType.getById(Integer.parseInt(Utils.getPostValue(request(), "type")));
+					PreparedStatement insert = conn.prepareStatement("INSERT INTO assembly.recruitment (region, client_key, tgid, secret_key, percent, type, feeders_only, filter_regex, avoid_full, randomize) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+					insert.setInt(1, getDatabase().getRegionIdCache().get(region));
+					insert.setString(2, clientKey.trim());
+					insert.setString(3, tgid.trim());
+					insert.setString(4, secretKey.trim());
+					insert.setInt(5, percent);
+					insert.setInt(6, type.getId());
+					insert.setByte(7, (byte)(feedersOnly ? 1 : 0));
+					insert.setString(8, filterRegex.trim());
+					insert.setByte(9, (byte)(avoidFull ? 1 : 0));
+					insert.setByte(10, (byte)(randomize ? 1 : 0));
+					insert.executeUpdate();
+				} else if (cancel != null) {
+					PreparedStatement delete = conn.prepareStatement("DELETE FROM assembly.recruitment WHERE id = ?");
+					delete.setInt(1, Integer.parseInt(id));
+					delete.executeUpdate();
+				} else {
+					final Integer percent = Integer.parseInt(Utils.getPostValue(request(), "percent"));
+					final RecruitmentType type = RecruitmentType.getById(Integer.parseInt(Utils.getPostValue(request(), "type")));
 
-						int totalPercent = percent;
-						List<RecruitmentAction> actions = RecruitmentAction.getActions(getDatabase().getRegionIdCache().get(region), conn);
-						for (RecruitmentAction action : actions) {
-							totalPercent += action.percent;
-						}
-						if (totalPercent > 100) {
-							for (RecruitmentAction action : actions) {
-								action.percent = (int)((((float)(action.percent)) / totalPercent) * action.percent);
-								action.update(conn);
-							}
-							percent = (int)((((float)(percent)) / totalPercent) * 100);
-						}
-						PreparedStatement insert = conn.prepareStatement("INSERT INTO assembly.recruitment (region, client_key, tgid, secret_key, percent, type, feeders_only, filter_regex, avoid_full, randomize) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-						insert.setInt(1, getDatabase().getRegionIdCache().get(region));
-						insert.setString(2, clientKey.trim());
-						insert.setString(3, tgid.trim());
-						insert.setString(4, secretKey.trim());
-						insert.setInt(5, percent);
-						insert.setInt(6, type.getId());
-						insert.setByte(7, (byte)(feedersOnly ? 1 : 0));
-						insert.setString(8, filterRegex.trim());
-						insert.setByte(9, (byte)(avoidFull ? 1 : 0));
-						insert.setByte(10, (byte)(randomize ? 1 : 0));
-						insert.executeUpdate();
-					} else if (cancel != null) {
-						PreparedStatement delete = conn.prepareStatement("DELETE FROM assembly.recruitment WHERE id = ?");
-						delete.setInt(1, Integer.parseInt(id));
-						delete.executeUpdate();
-					} else {
-						final Integer percent = Integer.parseInt(Utils.getPostValue(request(), "percent"));
-						final RecruitmentType type = RecruitmentType.getById(Integer.parseInt(Utils.getPostValue(request(), "type")));
-
-						List<RecruitmentAction> actions = RecruitmentAction.getActions(getDatabase().getRegionIdCache().get(region), conn);
-						for (RecruitmentAction action : actions) {
-							if (id.equals(String.valueOf(action.id))) {
-								action.clientKey = clientKey;
-								action.tgid = tgid;
-								action.secretKey = secretKey;
-								action.percent = percent;
-								action.type = type;
-								action.feedersOnly = feedersOnly;
-								action.filterRegex = filterRegex;
-								action.avoidFull = avoidFull;
-								action.randomize = randomize;
-								action.error = 0;
-								action.update(conn);
-								break;
-							}
+					List<RecruitmentAction> actions = RecruitmentAction.getActions(getDatabase().getRegionIdCache().get(region), conn);
+					for (RecruitmentAction action : actions) {
+						if (id.equals(String.valueOf(action.id))) {
+							action.clientKey = clientKey;
+							action.tgid = tgid;
+							action.secretKey = secretKey;
+							action.percent = percent;
+							action.type = type;
+							action.feedersOnly = feedersOnly;
+							action.filterRegex = filterRegex;
+							action.avoidFull = avoidFull;
+							action.randomize = randomize;
+							action.error = 0;
+							action.update(conn);
+							break;
 						}
 					}
-					return Results.ok();
 				}
+				return Results.ok();
 			}
 			return Results.forbidden("Invalid nation - must be founder or delegate");
 		} finally {

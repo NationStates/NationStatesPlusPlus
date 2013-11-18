@@ -35,8 +35,7 @@ public class DailyDumps implements Runnable{
 	private final DatabaseAccess access;
 	private final String userAgent;
 	private final BasicAWSCredentials awsCredentials;
-	private final HealthMonitor health;
-	public DailyDumps(DatabaseAccess access, File directory, String userAgent, BasicAWSCredentials awsCredentials, HealthMonitor health) {
+	public DailyDumps(DatabaseAccess access, File directory, String userAgent, BasicAWSCredentials awsCredentials) {
 		this.access = access;
 		this.userAgent = userAgent;
 		regionsDir = new File(directory, "regions");
@@ -44,7 +43,6 @@ public class DailyDumps implements Runnable{
 		nationsDir = new File(directory, "nations");
 		nationsDir.mkdirs();
 		this.awsCredentials = awsCredentials;
-		this.health = health;
 	}
 
 	@Override
@@ -143,7 +141,7 @@ public class DailyDumps implements Runnable{
 						client.putObject("dailydumps", "nations/" + nationsDump.getName(), nationsDump);
 						Logger.info("Successfully Uploaded nations dump to s3");
 					}
-					Akka.system().scheduler().scheduleOnce(Duration.create(60, TimeUnit.SECONDS), new DumpUpdateTask(access, getMostRecentRegionDump(), nationsDump, health), Akka.system().dispatcher());
+					Akka.system().scheduler().scheduleOnce(Duration.create(60, TimeUnit.SECONDS), new DumpUpdateTask(access, getMostRecentRegionDump(), nationsDump), Akka.system().dispatcher());
 				
 				} finally {
 					IOUtils.closeQuietly(fos);

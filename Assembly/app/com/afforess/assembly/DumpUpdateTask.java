@@ -24,10 +24,8 @@ public class DumpUpdateTask implements Runnable {
 	private final File nationDump;
 	private final ComboPooledDataSource pool;
 	private final DatabaseAccess access;
-	private final HealthMonitor health;
-	public DumpUpdateTask(DatabaseAccess access, File regionDump, File nationDump, HealthMonitor health) {
+	public DumpUpdateTask(DatabaseAccess access, File regionDump, File nationDump) {
 		this.pool = access.getPool();
-		this.health = health;
 		this.access = access;
 		this.regionDump = regionDump;
 		this.nationDump = nationDump;
@@ -46,10 +44,6 @@ public class DumpUpdateTask implements Runnable {
 			updateNations(nations);
 			
 			Logger.info("Finished daily dumps update task");
-			
-			if (health != null) {
-				health.databaseBackup();
-			}
 		} catch (FileNotFoundException e) {
 			throw new RuntimeException(e);
 		}

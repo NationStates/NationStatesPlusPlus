@@ -1,9 +1,6 @@
 package controllers;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.URL;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -19,12 +16,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.net.ssl.HttpsURLConnection;
-
 import org.apache.commons.dbutils.DbUtils;
-import org.apache.commons.io.IOUtils;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.type.TypeReference;
 import org.spout.cereal.config.ConfigurationNode;
 import org.spout.cereal.config.yaml.YamlConfiguration;
 
@@ -34,7 +26,6 @@ import play.mvc.Result;
 import play.mvc.Results;
 
 import com.afforess.assembly.util.DatabaseAccess;
-import com.afforess.assembly.util.EncodingUtil;
 import com.afforess.assembly.util.Utils;
 import com.limewoodMedia.nsapi.NationStates;
 
@@ -666,7 +657,7 @@ public class NewspaperController extends NationStatesController {
 				String url = matcher.group().substring(5, match.length() - 6);
 				if (!url.contains("imgur.com")) {
 					try {
-						String imgurUrl = uploadToImgur(url, imgurClientKey);
+						String imgurUrl = Utils.uploadToImgur(url, imgurClientKey);
 						return imgurizeArticle(article.replaceAll(Pattern.quote(match), "[img]" + imgurUrl + "[/img]"), imgurClientKey);
 					} catch (IOException e) {
 						Logger.error("Unable to upload url [" + url + "] to imgur", e);
@@ -675,35 +666,5 @@ public class NewspaperController extends NationStatesController {
 			}
 		}
 		return article;
-	}
-
-	private static String uploadToImgur(String url, String clientKey) throws IOException {
-		HttpsURLConnection conn = (HttpsURLConnection) (new URL("https://api.imgur.com/3/image")).openConnection();
-		conn.addRequestProperty("Authorization", "Client-ID " + clientKey);
-		conn.setDoInput(true);
-		conn.setDoOutput(true);
-		conn.setUseCaches(false);
-		conn.setRequestMethod("POST");
-		OutputStream out = null;
-		try {
-			out = conn.getOutputStream();
-			IOUtils.write("image=" + EncodingUtil.encodeURIComponent(url) + "&type=URL", out);
-			out.flush();
-		} finally {
-			IOUtils.closeQuietly(out);
-		}
-
-		InputStream stream = null;
-		try {
-			stream = conn.getInputStream();
-			Map<String, Object> result = new ObjectMapper().readValue(stream, new TypeReference<HashMap<String,Object>>() {});
-			@SuppressWarnings("unchecked")
-			Map<String, Object> data = (Map<String, Object>) result.get("data");
-			String link = (String) data.get("link");
-			return link;
-		} finally {
-			IOUtils.closeQuietly(stream);
-			conn.disconnect();
-		}
 	}
 }

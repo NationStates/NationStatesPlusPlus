@@ -58,9 +58,9 @@ public class NationController extends NationStatesController {
 	}
 
 	private Result getLastUpdate(String column, String name) throws SQLException, ExecutionException {
-		Utils.handleDefaultPostHeaders(request(), response());
 		final int nationId = getDatabase().getNationIdCache().get(Utils.sanitizeName(name));
 		if (nationId == -1) {
+			Utils.handleDefaultPostHeaders(request(), response());
 			return Results.badRequest();
 		}
 		Connection conn = null;
@@ -72,11 +72,15 @@ public class NationController extends NationStatesController {
 			if (set.next()) {
 				Map<String, Object> json = new HashMap<String, Object>(1);
 				json.put("timestamp", set.getLong(1));
+				Result r = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(json.hashCode()), "10");
+				if (r != null) return r;
 				return Results.ok(Json.toJson(json)).as("application/json");
 			}
 		} finally {
 			DbUtils.closeQuietly(conn);
 		}
+		Result r = Utils.handleDefaultGetHeaders(request(), response(), "0000000", "10");
+		if (r != null) return r;
 		return Results.noContent();
 	}
 
