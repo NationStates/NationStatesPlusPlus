@@ -271,12 +271,12 @@ function getSettings(autoupdate) {
 				$.get("http://nationstatesplusplus.net/api/nation/settings/?name=" + getUserNation(), function(data, textStatus, xhr) {
 					api.settings = data;
 					api.save();
-					if (typeof callback != undefined) callback(data, textStatus, xhr);
+					if (typeof callback != "undefined") callback(data, textStatus, xhr);
 				});
 			} else if (data.timestamp < api.last_update) {
 				api.pushUpdate(callback);
 			} else {
-				if (typeof callback != undefined) callback();
+				if (typeof callback != "undefined") callback();
 			}
 		});
 	}
@@ -358,10 +358,12 @@ function getUserData(autoupdate) {
 				doAuthorizedPostRequest("http://nationstatesplusplus.net/api/nation/data/get/", "", function(data) {
 					api.userData = data;
 					api.save();
-					if (typeof callback != undefined) callback();
+					if (typeof callback != "undefined") callback();
 				});
 			} else if (data.timestamp < api.last_update) {
 				api.pushUpdate(callback);
+			} else {
+				if (typeof callback != "undefined") callback();
 			}
 		});
 	}
@@ -564,7 +566,7 @@ function addPuppetNation(nation, password) {
 }
 
 function getNationStatesAuth(callback) {
-	$.get("/page=verify_login", function(data) {
+	$.get("http://www.nationstates.net/page=verify_login", function(data) {
 		var authCode = $(data).find("#proof_of_login_checksum").html();
 		//Regenerate localid if nessecary
 		$(window).trigger("page/update");
@@ -870,11 +872,13 @@ function addFormattingButtons() {
 }
 
 
-function linkify(inputText) {
+function linkify(inputText, checkNationStates) {
 	var replacedText, replacePattern1, replacePattern2, replacePattern3;
 	
-	if (inputText.indexOf("nationstates.net/") > -1) {
-		return inputText;
+	if (typeof checkNationStates == "undefined" || checkNationStates) {
+		if (inputText.indexOf("nationstates.net/") > -1) {
+			return inputText;
+		}
 	}
 
 	//URLs starting with http://, https://, or ftp://

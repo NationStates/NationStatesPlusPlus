@@ -183,26 +183,49 @@ function showForumEgoposts() {
 	//Search page
 	if (pageUrl.indexOf("/search.php?") > -1) {
 		$(".lastpost:not(:first)").parent().append("<button class='ignore-egopost btn'><div class='ignore-egopost-body'>Ignore</div></button>");
-		$(".lastpost:not(:first)").each(function() {
-			var postName = $(this).parent().parent().find(".topictitle").html();
-			if (localStorage.getItem(postName) == "true") {
-				$(this).parent().parent().hide();
+		getUserData(true).update();
+		var userData = getUserData(true);
+		var ignoredTopics = userData.getValue("ignored_topics", {});
+		var modified = false;
+		$("ul.topiclist.topics").find("li.row").find("h3:first a").each(function() {
+			var threadId = $(this).attr("href").match("t=[0-9]+")[0].substring(2);
+			if (localStorage.getItem($(this).html()) == "true") {
+				$(this).parents("li.row").hide();
+				ignoredTopics[threadId] = true;
+				localStorage.removeItem($(this).html());
+				modified = true;
+			}
+			if (ignoredTopics[threadId]) {
+				$(this).parents("li.row").hide();
 			}
 		});
+		userData.setValue("ignored_topics", ignoredTopics);
+		if (modified) {
+			console.log("Updating user data");
+			userData.pushUpdate();
+		}
 		$(".lastpost:first").parent().append("<button class='showall-egopost btn'><div class='showall-egopost-body'>Show All Posts</div></button>");
 		$("button.ignore-egopost").on("click", function(event) {
 			event.preventDefault();
-			$(this).parent().parent().animate({ height: 'toggle' }, 500);
-			var postName = $(this).parent().parent().find(".topictitle").html();
-			localStorage.setItem(postName, "true");
+			$(this).parents("li.row").animate({ height: 'toggle' }, 500);
+			var threadId = $(this).parents("li.row").find("h3:first a").attr("href").match("t=[0-9]+")[0].substring(2);
+			console.log("Hiding: " + threadId);
+			var userData = getUserData(true);
+			userData.setValue(userData.getValue("ignored_topics", {})[threadId] = true);
+			userData.pushUpdate();
 		});
 		$("button.showall-egopost").on("click", function(event) {
-			$(".lastpost").each(function() {
-				if ($(this).parent().parent().is(':hidden')) {
-					$(this).parent().parent().animate({ height: 'toggle' }, 500);
-				}
-				var postName = $(this).parent().parent().find(".topictitle").html();
-				localStorage.removeItem(postName);
+			$("button.showall-egopost").attr("disabled", true);
+			var userData = getUserData(true);
+			var igoredTopics = userData.getValue("ignored_topics", {});
+			$("ul.topiclist.topics").find("li.row:hidden").each(function() {
+				$(this).animate({ height: 'toggle' }, 500);
+				var threadId = $(this).find("h3:first a").attr("href").match("t=[0-9]+")[0].substring(2);
+				console.log("restoring: " + threadId);
+			});
+			userData.setValue("ignored_topics", {});
+			userData.pushUpdate(function() { 
+				$("button.showall-egopost").attr("disabled", false);
 			});
 		});
 	}

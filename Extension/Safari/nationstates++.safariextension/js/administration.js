@@ -2,6 +2,8 @@
 	if (getVisiblePage() == "region_control") {
 		$("input[name='nation_name'], #rpassword").addClass("text-input");
 		$("input[type='button']").addClass("button");
+		
+		//Found Newspaper button
 		$("<div id='regional_newspaper'></div>").insertBefore("h4:contains('Welcome Telegrams')");
 		$("#regional_newspaper").html("<h4>Regional Newspaper</h4>");
 		$.get("http://nationstatesplusplus.net/api/newspaper/region/?region=" + getVisibleRegion() + "&time=" + Date.now(), function(data) {
@@ -29,6 +31,58 @@
 			});
 		});
 		
+		//Regional Map
+		$(".divindent:first").append("<div id='regional_map'><h4>Regional Map</h4><fieldset>" +
+			"<p><span id='rml_label'><b>Regional Map Link: </b></span><input placeholder='URL to map discussion' id='region_map_link' style='width:700px' class='text-input' type='text'></p>" +
+			"<p><span id='rmp_label'><b>Regional Map Preview Image: </b></span><input placeholder='URL to map image' id='region_map_preview' style='width:700px' class='text-input' type='text'>" + 
+			"</p><p><button class='button' id='update_map'>Update Map</button><button class='button danger icon remove' id='disband_map'>Disband Map</button>" +
+			"<span id='map_error' style='margin-left: 6px; color:red; font-weight:bold; display:none'></span></p></fieldset>");
+		$("#rml_label").css("margin-right", ($("#rmp_label").width() - $("#rml_label").width()) + "px");
+		$("#update_map").on("click", function(event) {
+			event.preventDefault();
+			$("#map_error").css("color", "red").hide();
+			if ($("#region_map_link").val().length == 0) {
+				$("#map_error").html("Missing Map Link").show();
+			} else if ($("#region_map_preview").val().length == 0) {
+				$("#map_error").html("Missing Map Preview Image").show();
+			} else if ($("#region_map_link").val() == linkify($("#region_map_link").val(), false)) {
+				$("#map_error").html("Invalid Region Map Link. Must be a valid url.").show();
+			} else if ($("#region_map_preview").val() == linkify($("#region_map_preview").val(), false)) {
+				$("#map_error").html("Invalid Region Map Preview Image. Must be a valid url.").show();
+			} else {
+				$("#update_map").attr("disabled", true);
+				doAuthorizedPostRequest("http://nationstatesplusplus.net/api/region/map/?region=" + getVisibleRegion(), "regional_map=" + encodeURIComponent($("#region_map_link").val()) + 
+																														"&regional_map_preview=" + encodeURIComponent($("#region_map_preview").val()), function(data) {
+					$("#update_map").attr("disabled", false);
+					$("#map_error").css("color", "green").html("Updated Map Successfully!").show();
+				}, function(error) {
+					if (error.status == 401) {
+						$("#map_error").html("You are not authorized to update the regional map").show();
+					} else {
+						$("#map_error").html(error.responseText).show();
+					}
+					$("#update_map").attr("disabled", false);
+				});
+			}
+		});
+		$("#disband_map").on("click", function(event) {
+			event.preventDefault();
+			$("#disband_map").attr("disabled", true);
+			$("#map_error").css("color", "red").hide();
+			doAuthorizedPostRequest("http://nationstatesplusplus.net/api/region/map/?region=" + getVisibleRegion() + "&disband=true", "", function(data) {
+				$("#disband_map").attr("disabled", false);
+				$("#map_error").css("color", "green").html("Disbanded Map Successfully!").show();
+			}, function(error) {
+				if (error.status == 401) {
+					$("#map_error").html("You are not authorized to disband the regional map").show();
+				} else {
+					$("#map_error").html(error.responseText).show();
+				}
+				$("#disband_map").attr("disabled", false);
+			});
+		});
+		
+		//Recruitment Options
 		$("<div id='recruitment'></div>").insertBefore("h3:contains('Communication')");
 		var addRecruitmentForm = function() {
 			$("#recruitment").html("<h3>Regional Recruitment</h3><div id='existing_recruitment' class='divindent'></div><div id='recruitment_form' class='divindent'></div>");

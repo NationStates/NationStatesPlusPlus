@@ -549,3 +549,15 @@ fieldset.preview {
 .op_posts {
 	background-color: rgba(57, 238, 0, 0.1) !important;
 }
+
+.last_dossier_element {
+	cursor: default !important;
+	text-align: center !important;
+	font-weight: bold !important;
+}
+
+.national_alias {
+	height: 28px;
+	margin-bottom: -10px;
+	margin-left: 15px;
+}

@@ -13,9 +13,9 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleShortVersionString</key>
-	<string>2.1.5</string>
+	<string>2.1.6.2</string>
 	<key>CFBundleVersion</key>
-	<string>2.1.5</string>
+	<string>2.1.6.2</string>
 	<key>Chrome</key>
 	<dict/>
 	<key>Content</key>
@@ -51,6 +51,8 @@
 				<string>js/administration.js</string>
 				<string>js/settings.js</string>
 				<string>js/nspp.js</string>
+				<string>js/activity.js</string>
+				<string>js/history.js</string>
 			</array>
 		</dict>
 		<key>Stylesheets</key>

@@ -38,14 +38,12 @@
 					setTimeout(function() { dossier.find(".info").remove(); }, 1000);
 				}, 10000);
 				currentNationPage = 0;
-				endNationDossier = false;
 				loadDossierPage(isRegional, true);
 			});
 		});
 		
 		$("#refresh_ndossier").click(function() {
 			currentNationPage = 0;
-			endNationDossier = false;
 			$("#nation_dossier").find(".dossier_element").remove();
 			loadDossierPage(false, false);
 			currentNationPage += 1;
@@ -54,7 +52,6 @@
 		
 		$("#refresh_rdossier").click(function() {
 			currentRegionPage = 0;
-			endRegionDossier = false;
 			$("#region_dossier").find(".dossier_element").remove();
 			loadDossierPage(true, false);
 			currentRegionPage += 1;
@@ -66,7 +63,6 @@
 			$("#region_dossier").show();
 			$("#refresh_rdossier").click();
 			currentRegionPage = 0;
-			endRegionDossier = false;
 		});
 		
 		$("#switch_to_nation_dossier").click(function() {
@@ -74,7 +70,49 @@
 			$("#nation_dossier").show();
 			$("#refresh_ndossier").click();
 		});
+		
+		$('body').on('click', "img.national_alias", function(event) {
+			var nation = $(event.target).attr("id").split("alias-")[1];
+			if (getNationAlias(nation) == null) {
+				if ($("#input-alias-" + nation).length == 0) {
+					$(event.target).parent().find(".wa_status, .last_activity").hide();
+					$("<input id='input-alias-" + nation + "' type='text' class='text-input' placeholder='Alias' style='width:250px;margin-left: 10px;'>").insertAfter($(event.target));
+					$("#input-alias-" + nation).on('keydown', function(e) {
+						if (e.which == 13) {
+							var value = $("#input-alias-" + nation).val();
+							$("#input-alias-" + nation).remove();
+							if (value.length > 0) {
+								setNationAlias(nation, value);
+								$("#alias-" + nation).attr("src", "http://nationstatesplusplus.net/nationstates/static/remove-alias.png");
+								$("#alias-" + nation).attr("title", "Remove Alias");
+								$("#nation-link-" + nation).css("text-decoration", "line-through");
+								$("#nation-alias-" + nation).children("pre").html("  " + value);
+								$(event.target).parent().find(".wa_status, .last_activity").show();
+								window.onresize();
+							}
+						}
+					});
+					$("#input-alias-" + nation).focus();
+				}
+			} else {
+				setNationAlias(nation, null);
+				$(event.target).attr("src", "http://nationstatesplusplus.net/nationstates/static/alias.png");
+				$(event.target).attr("title", "Set Alias");
+				$("#nation-link-" + nation).css("text-decoration", "");
+				$("#nation-alias-" + nation).children("pre").html("");
+				window.onresize();
+			}
+		});
+		$('body').on('click', ".dossier_element", function(event) {
+			var target = $(event.target).attr("id");
+			if ($("#iframe-" + target).length == 0) {
+				$("#nation_dossier").find("#" + target).append("<div id='iframe-" + target + "' class='nation-frame'><iframe style='width: 100%; height: 495px;' src='http://embed.nationstates.net/nation=" + target + "'/></div>");
+				$("#nation_dossier").find("#iframe-" + target).hide();
+			}
+			$("#nation_dossier").find("#iframe-" + target).animate({ height: 'toggle'}, 800);
+		});
 
+		/*
 		$(document.body).click(function(event) {
 			var target;
 			if ($(event.target).attr("class") == "dossier_element") {
@@ -141,129 +179,119 @@
 				}
 			}
 		});
+		*/
+		
+		function parseRegionDossier(html) {
+			var result = {html: "", animate: []};
+			if ($(html).find("table").find("th:contains('Region')").length > 0) {
+				$(html).find("table").find("th:contains('Region')").parents("table").find("tbody").find("tr").each(function() {
+					var regionElement = $($(this).children()[1]);
+					var region = regionElement.text();
+					if (regionElement.find("a").length > 0) {
+						region = regionElement.find("a").attr("href").substring(7);
+					}
+					region = region.toLowerCase().replaceAll(" ", "_");
+					var nations = $($(this).children()[2]).html();
+					nations = (typeof nations == "undefined" ? "0" : nations);
+					var delegate = "None";
+					var delegateFlag = "";
+					try {
+						if ($($(this).children()[3]).find(".nlink").length == 1) {
+							delegate = $($(this).children()[3]).find(".nlink").attr("href").substring(7);
+							delegateFlag = $($(this).children()[3]).find(".smallflag").attr("src");
+						}
+					} catch (error) { }
+					if ($("#region_dossier").find("#" + region).length == 0 && !result.html.contains("<div id='" + region + "'")) {
+						result.html += "<div id='" + region + "' class='dossier_element' style='min-height:28px;'><img id='remove-" + region + "' src='http://nationstatesplusplus.net/nationstates/static/remove.png' class='remove-dossier' title='Remove from Dossier'><img class='smallflag' src='http://nationstatesplusplus.net/api/flag/region/?region=" + region + "'><a style='font-weight:bold' target='_blank' href='http://nationstates.net/region=" + region + "'>" + region.replaceAll("_", " ").toTitleCase() + "</a><div class='last_activity'>Nations: " + nations + "</div>";
+						if (delegateFlag.length > 0) {
+							result.html += "<div class='region_activity'><b>Delegate:</b><img class='smallflag' src='" + delegateFlag + "'><a target='_blank' href='/nation=" + delegate + "'>" + delegate.replaceAll("_", " ").toTitleCase() + "</a></div>";
+						}
+						result.animate.push(region);
+						result.html += "</div>";
+					}
+				});
+			} else {
+				result.html = "<div class='last_dossier_element dossier_element'>Your Regional Dossier is Empty!</div>";
+			}
+			return result;
+		}
+		
+		function parseNationDossier(html) {
+			var result = {html: "", animate: []};
+			var nationTable = $(html).find("table").find("thead").find("th:contains('WA Category')");
+			if (nationTable.length == 0) {
+				result.html = "<div class='last_dossier_element dossier_element'>Your National Dossier is Empty!</div>";
+			} else {
+				nationTable.parents("table").find("tbody").find("tr").each(function() {
+					var nation;
+					var flag;
+					var waMember = $(this).html().contains("WA Delegate") || $(this).html().contains("WA Member");
+					if ($(this).children().length == 2) {
+						nation = $($(this).children()[1]).html().replaceAll(" ", "_").toLowerCase();
+						flag = "http://www.nationstates.net/images/flags/exnation.png";
+					} else {
+						nation = $(this).find(".nlink").attr("href").substring(7)
+						flag = $(this).find(".smallflag").attr("src");
+					}
+					if ($("#nation_dossier").find("#" + nation).length == 0 && !result.html.contains("<div id='" + nation + "'")) {
+						result.animate.push(nation);
+						var alias = getNationAlias(nation);
+
+						result.html += "<div id='" + nation + "' class='dossier_element'><img id='remove-" + nation + "' src='http://nationstatesplusplus.net/nationstates/static/remove.png' class='remove-dossier' title='Remove from Dossier'><img class='smallflag' src='" + flag + "'><a id='nation-link-" + nation + "' style='font-weight:bold; " + (alias != null ? "text-decoration:line-through;" : "") + "' target='_blank' href='http://nationstates.net/nation=" + nation + "'>" + nation.replaceAll("_", " ").toTitleCase() + "</a>";
+						
+						if (alias == null) {
+							result.html += "<span id='nation-alias-" + nation + "'><pre style='display: inline;'></pre></span><img src='http://nationstatesplusplus.net/nationstates/static/alias.png' title='Set Alias' class='national_alias' id='alias-" + nation + "'>";
+						} else {
+							result.html += "<span id='nation-alias-" + nation + "'><pre style='display: inline;'>  " + alias + "</pre></span><img src='http://nationstatesplusplus.net/nationstates/static/remove-alias.png' title='Remove Alias' class='national_alias' id='alias-" + nation + "'>";
+						}
+						
+						if (waMember) {
+							result.html += "<div class='wa_status dossier-wa'></div>";
+						}
+						if ($(this).children().length == 4) {
+							var activityHtml = $($(this).children()[3]).html();
+							var lastActivity = activityHtml.substring(0, activityHtml.indexOf("<br>"));
+							var region = $(this).find("a[href*='region=']").attr("href").substring(7);
+							var regionTitle =  $(this).find("a[href*='region=']").html();
+							var censusType = $($(this).children()[2]).text();
+							//For liberal/convervative titles
+							if ($(this).find(".aflabel").length > 0) {
+								censusType = $(this).find(".aflabel").text();
+							}
+							result.html += "<div class='last_activity'>" + lastActivity + "<span style='width:50px;display: inline-block;'> </span>(" + censusType + ") </div><div class='region_activity'><a target='_blank' href='/region=" + region + "'><img class='smallflag' src='http://nationstatesplusplus.net/api/flag/region/?region=" + region + "'>" + regionTitle + "</a></div>";
+						}
+						result.html += "</div>";
+					}
+				});
+			}
+			return result
+		}
 
 		var currentRegionPage = 0;
-		var endRegionDossier = false;
-		
 		var currentNationPage = 0;
-		var endNationDossier = false;
 		loadDossierPage = function(region, animate) {
-			if ((region && endRegionDossier) || (!region && endNationDossier)) {
+			if ((region ? $("#region_dossier") : $("#nation_dossier")).find(".last_dossier_element").length > 0) {
 				return;
 			}
-			var targets = [];
 			$.get("page=dossier?start=" + (currentNationPage * 15) + "&rstart=" + (currentRegionPage * 15), function(html) {
-				var dossierHtml = "";
-				if (region) {
-					var regionTable = $(html).find("table").find("thead").find("th:contains('Region')");
-					if (regionTable.length > 0) {
-						regionTable = regionTable.parent().parent().parent();
-						regionTable.find("tbody").find("tr").each(function() {
-							var regionElement = $($(this).children()[1]);
-							var region = regionElement.text();
-							if (regionElement.find("a").length > 0) {
-								region = regionElement.find("a").attr("href").substring(7);
-							}
-							region = region.toLowerCase().replaceAll(" ", "_");
-							var nations = $($(this).children()[2]).html();
-							nations = (typeof nations == "undefined" ? "0" : nations);
-							var delegate = "None";
-							var delegateFlag = "";
-							try {
-								if ($($(this).children()[3]).find(".nlink").length == 1) {
-									delegate = $($(this).children()[3]).find(".nlink").attr("href").substring(7);
-									delegateFlag = $($(this).children()[3]).find(".smallflag").attr("src");
-								}
-							} catch (error) { }
-							if ($("#region_dossier").find("div[id='" + region + "']").length == 0 && !dossierHtml.contains("<div id='" + region + "'")) {
-								dossierHtml += "<div id='" + region + "' class='dossier_element'" + (animate ? "style='display:none; min-height:28px;'" : "style='min-height:28px'") + "><div><img id='remove-" + region + "' src='http://nationstatesplusplus.net/nationstates/static/remove.png' class='remove-dossier' title='Remove from Dossier'><img class='smallflag' src='http://nationstatesplusplus.net/api/flag/region/?region=" + region + "'><a style='font-weight:bold' target='_blank' href='http://nationstates.net/region=" + region + "'>" + region.replaceAll("_", " ").toTitleCase() + "</a><div class='last_activity'>Nations: " + nations + "</div>";
-								if (delegateFlag.length > 0) {
-									dossierHtml += "<div class='region_activity'><b>Delegate:</b><img class='smallflag' src='" + delegateFlag + "'><a target='_blank' href='/nation=" + delegate + "'>" + delegate.replaceAll("_", " ").toTitleCase() + "</a></div>";
-								}
-								targets.push(region);
-								dossierHtml += "</div></div>";
-							}
-						});
-					}
-				} else {
-					var nationTable = $(html).find("table").find("thead").find("th:contains('WA Category')");
-					if (nationTable.length == 0) {
-						dossierHtml = "<div id='last_nation_element' style='cursor: default;text-align: center;font-weight: bold;' class='dossier_element'>Your Dossier is Empty!</div>";
-						endNationDossier = true;
-						return true;
-					}
-					nationTable = nationTable.parent().parent().parent();
-					nationTable.find("tbody").find("tr").each(function() {
-						var nation;
-						var flag;
-						var waMember = $(this).html().contains("WA Delegate") || $(this).html().contains("WA Member");
-						if ($(this).children().length == 2) {
-							nation = $($(this).children()[1]).html().replaceAll(" ", "_").toLowerCase();
-							flag = "http://www.nationstates.net/images/flags/exnation.png";
-						} else {
-							nation = $(this).find(".nlink").attr("href").substring(7)
-							flag = $(this).find(".smallflag").attr("src");
-						}
-						if ($("#nation_dossier").find("div[id='" + nation + "']").length == 0 && !dossierHtml.contains("<div id='" + nation + "'")) {
-							targets.push(nation);
-							var alias = getNationAlias(nation);
-
-							dossierHtml += "<div id='" + nation + "' class='dossier_element'" + (animate ? "style='display:none;'" : "") + "><div><img id='remove-" + nation + "' src='http://nationstatesplusplus.net/nationstates/static/remove.png' class='remove-dossier' title='Remove from Dossier'><img class='smallflag' src='" + flag + "'><a id='nation-link-" + nation + "' style='font-weight:bold; " + (alias != null ? "text-decoration:line-through;" : "") + "' target='_blank' href='http://nationstates.net/nation=" + nation + "'>" + nation.replaceAll("_", " ").toTitleCase() + "</a>";
-							
-							if (alias == null) {
-								dossierHtml += "<span id='nation-alias-" + nation + "'><pre style='display: inline;'></pre></span><img src='http://nationstatesplusplus.net/nationstates/static/alias.png' title='Set Alias' style='height: 28px; margin-bottom: -10px; margin-left: 15px;' id='alias-" + nation + "'>";
-							} else {
-								dossierHtml += "<span id='nation-alias-" + nation + "'><pre style='display: inline;'>  " + alias + "</pre></span><img src='http://nationstatesplusplus.net/nationstates/static/remove-alias.png' title='Remove Alias' style='height: 28px; margin-bottom: -10px; margin-left: 15px;' id='alias-" + nation + "'>";
-							}
-							
-							if (waMember) {
-								dossierHtml += "<div class='wa_status dossier-wa'></div>";
-							}
-							if ($(this).children().length == 4) {
-								var activityHtml = $($(this).children()[3]).html();
-								var lastActivity = activityHtml.substring(0, activityHtml.indexOf("<br>"));
-								var region = $($($(this).children()[3]).children()[1]).attr("href").substring(7);
-								var formattedRegion = region.replaceAll(" ", "_").toLowerCase();
-								var censusType = $($(this).children()[2]).text();
-								if ($(this).find(".aflabel").length > 0) {
-									censusType = $(this).find(".aflabel").text();
-								}
-								dossierHtml += "<div class='last_activity'>" + lastActivity + "<span style='width:50px;display: inline-block;'> </span>(" + censusType + ") </div><div class='region_activity'><a target='_blank' href='/region=" + formattedRegion + "'><img class='smallflag' src='http://nationstatesplusplus.net/api/flag/region/?region=" + formattedRegion + "'>" + region + "</a></div>";
-							}
-							dossierHtml += "</div></div>";
-						}
-					});
-				}
-				if (dossierHtml.length == 0 && ((region && !endRegionDossier) || (!region && !endNationDossier))) {
-					dossierHtml = "<div id='last_nation_element' style='cursor: default;text-align: center;font-weight: bold;' class='dossier_element'>End of Dossier</div>";
-					if (region) {
-						endRegionDossier = true;
-					} else {
-						endNationDossier = true;
-					}
-				}
 				var dossier = region ? $("#region_dossier") : $("#nation_dossier");
-				dossier.append(dossierHtml);
-				
-				var minWidth = Math.min(400, Math.max($(window).width() - 1250, 0));
-				if (animate || minWidth > 0) {
-					for (var i = 0; i < targets.length; i++) {
+				var result;
+				if (region) {
+					result = parseRegionDossier(html);
+				} else {
+					result = parseNationDossier(html);
+				}
+				console.log(result);
+				dossier.append(result.html);
+
+				if (animate) {
+					for (var i = 0; i < result.animate.length; i++) {
 						if (animate) {
-							dossier.find("#" + targets[i]).hide().animate({ height: 'toggle', 'min-height': 'toggle' }, 800);
-						}
-						if (!region && minWidth > 0) {
-							dossier.find("#nation-link-" + targets[i]).parent().find(".smallflag:first").bind('load', function() {
-								var nation = $(this).parent().parent().attr('id');
-								var ref = dossier.find("#nation-link-" + nation);
-								var alias = dossier.find("#nation-alias-" + nation);
-								var margin = minWidth - ref.width() + (40 - ref.parent().find(".smallflag:first").width()) - alias.width();
-								if (margin > 0) {
-									alias.css("margin-right", margin + "px");
-								}
-							});
+							dossier.find("#" + result.animate[i]).hide().animate({ height: 'toggle', 'min-height': 'toggle' }, 800);
 						}
 					}
 				}
+				window.onresize();
 			});
 		}
 
@@ -285,7 +313,7 @@
 		loadDossierPage(false, false);
 		currentNationPage += 1;
 		loadDossierPage(false, false);
-		window.onresize();
+		setTimeout(function() { window.onresize(); }, 500);
 
 		$(window).scroll(function () {
 			if ($(window).scrollTop() + 400 > ($(document).height() - $(window).height())) {

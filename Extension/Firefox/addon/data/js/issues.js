@@ -1,6 +1,6 @@
 (function() {
 	if (getVisiblePage() == "dilemmas") {
-		$("button").on('click', function() {
+		$("button[name='dismiss_all']").on('click', function() {
 			$(".dilemmalist").find("a").each(function() {
 				var search = "page=show_dilemma/dilemma=";
 				var index = $(this).attr('href').indexOf(search);
@@ -8,6 +8,31 @@
 					var dilemma = $(this).attr('href').substring(index + search.length);
 					selectOption(-1, dilemma);
 				}
+			});
+		});
+		if (!getUserData().getValue("dismiss_all", false)) {
+			$("<button name='autodismiss_issues' class='button danger'>Auto Dismiss All Issues</button>").insertAfter($("button[name='dismiss_all']"));
+		} else {
+			$("<button name='autodismiss_issues' class='button'>Cancel Dismissing All Issues</button>").insertAfter($("button[name='dismiss_all']"));
+		}
+		getUserData().update(function() {
+			if (!getUserData().getValue("dismiss_all", false)) {
+				$("button[name='autodismiss_issues']").html("Auto Dismiss All Issues").addClass("danger");
+			} else {
+				$("button[name='autodismiss_issues']").html("Cancel Dismissing All Issues").removeClass("danger");
+			}
+			$("button[name='autodismiss_issues']").on('click', function() {
+				var userData = getUserData();
+				userData.setValue("dismiss_all", !userData.getValue("dismiss_all", false));
+				$(this).attr("disabled", true);
+				userData.pushUpdate(function() {
+					if (!getUserData().getValue("dismiss_all", false)) {
+						$("button[name='autodismiss_issues']").html("Auto Dismiss All Issues").addClass("danger");
+					} else {
+						$("button[name='autodismiss_issues']").html("Cancel Dismissing All Issues").removeClass("danger");
+					}
+					$("button[name='autodismiss_issues']").attr("disabled", false);
+				});
 			});
 		});
 	} else if (getVisiblePage() == "show_dilemma") {
@@ -22,25 +47,26 @@
 			window.onresize = updateSize;
 			updateSize();
 		}
-		var nationData = getUserData();
-		nationData.update();
-		if (nationData.getValue("issues", {})[getVisibleDilemma()] != null) {
-			var choices = nationData.getValue("issues", {})[getVisibleDilemma()];
-			for (var i = 0; i < choices.length; i++) {
-				var decision = choices[i];
-				if ($("button[name=choice-" + decision.choice + "]").length != 0) {
-					var parent = $("button[name=choice-" + decision.choice + "]").parent();
-					var date = new Date(parseInt(decision.timestamp) * 1000);
-					if (date.getTime() + 24 * 60 * 60 * 1000 < Date.now()) {
-						if (parent.find("span[name='choice-" + decision.choice + "']").length == 0) {
-							$(parent).html($(parent).html() + "<span name='choice-" + decision.choice + "' style='font-style:italic; font-size:11px; margin-left: 10px;'>Your government previously enacted this option on " + date.customFormat("#MMM# #DD#, #YYYY#") + "</span>");
-						} else {
-							parent.find("span[name='choice-" + decision.choice + "']").html("Your government previously enacted this option multiple times, most recently on " + date.customFormat("#MMM# #DD#, #YYYY#"));
+		getUserData().update(function() {
+			var nationData = getUserData();
+			if (nationData.getValue("issues", {})[getVisibleDilemma()] != null) {
+				var choices = nationData.getValue("issues", {})[getVisibleDilemma()];
+				for (var i = 0; i < choices.length; i++) {
+					var decision = choices[i];
+					if ($("button[name=choice-" + decision.choice + "]").length != 0) {
+						var parent = $("button[name=choice-" + decision.choice + "]").parent();
+						var date = new Date(parseInt(decision.timestamp) * 1000);
+						if (date.getTime() + 24 * 60 * 60 * 1000 < Date.now()) {
+							if (parent.find("span[name='choice-" + decision.choice + "']").length == 0) {
+								$(parent).html($(parent).html() + "<span name='choice-" + decision.choice + "' style='font-style:italic; font-size:11px; margin-left: 10px;'>Your government previously enacted this option on " + date.customFormat("#MMM# #DD#, #YYYY#") + "</span>");
+							} else {
+								parent.find("span[name='choice-" + decision.choice + "']").html("Your government previously enacted this option multiple times, most recently on " + date.customFormat("#MMM# #DD#, #YYYY#"));
+							}
 						}
 					}
 				}
 			}
-		}
+		});
 		$("button").on('click', function() {
 			selectOption($(this).prop('name') == "choice--1" ? -1 : parseInt($(this).prop('name').split("-")[1]), getVisibleDilemma());
 		});
@@ -48,18 +74,20 @@
 })();
 
 function selectOption(choice, issueNumber) {
-	var nationData = getUserData();
-	var issues = nationData.getValue("issues", {});
-	var now = Math.floor(Date.now() / 1000);
-	if (issues[issueNumber] == null) {
-		issues[issueNumber] = [];
-	} else {
-		for (var i = 0; i < issues[issueNumber].length; i++) {
-			if (issues[issueNumber][i].timestamp + 12 * 60 * 60 > now) {
-				issues[issueNumber].splice(i, 1);
+	getUserData().update(function() {
+		var nationData = getUserData();
+		var issues = nationData.getValue("issues", {});
+		var now = Math.floor(Date.now() / 1000);
+		if (issues[issueNumber] == null) {
+			issues[issueNumber] = [];
+		} else {
+			for (var i = 0; i < issues[issueNumber].length; i++) {
+				if (issues[issueNumber][i].timestamp + 12 * 60 * 60 > now) {
+					issues[issueNumber].splice(i, 1);
+				}
 			}
 		}
-	}
-	issues[issueNumber].push({timestamp: now, choice: choice});
-	nationData.pushUpdate();
+		issues[issueNumber].push({timestamp: now, choice: choice});
+		nationData.pushUpdate();
+	});
 }

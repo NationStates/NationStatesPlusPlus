@@ -2,12 +2,13 @@
 	if (window.location.href.indexOf("template-overall=none") != -1) {
 		return;
 	}
+	if (getUserNation() == "") {
+		return;
+	}
 	var menu = $(".menu");
 	$("<li><a href='http://www.nationstates.net/page=activity/view=world/filter=all'>ACTIVITY</a></li>").insertAfter(menu.find("a[href='page=dossier']").parent());
-	window.postMessage({ method: "unread_forum_posts"}, "*");
-	addWAProposals();
 	checkPanelAlerts();
-
+	addWAProposals();
 	var userSettings = getSettings();
 	if ($(".STANDOUT").length > 0 && userSettings.isEnabled("floating_sidepanel")) {
 		var flag = $(".STANDOUT:first").find("img").attr("src");
@@ -24,6 +25,11 @@
 		});
 	}
 
+	if ($(".menu").find("a[href='page=dilemmas']").html().match(/[0-9]+/) != null && getUserData().getValue("dismiss_all", false)) {
+		$.post("http://www.nationstates.net/page=dilemmas", "dismiss_all=1", function() { });
+		updatePanelAlerts();
+	}
+
 	if (getVisiblePage() == "blank" && document.head.innerHTML.indexOf("antiquity") != -1) {
 		$("#main").append("<div id='content'></div>");
 	}
@@ -35,6 +41,16 @@
 		userData.setValue("wa_proposals", proposals);
 		userData.pushUpdate();
 		$("#wa_proposals").html("WA PROPOSALS");
+	}
+	
+	//Unread forum posts
+	if (getSettings().isEnabled("show_unread_forum_posts")) {
+		var count = getUserData().getValue("unread_forum_posts", 0)
+		if (count > 0) {
+			$(".menu").find("a:contains('FORUM')").html("FORUM (" + count + ")");
+		} else {
+			$(".menu").find("a:contains('FORUM')").html("FORUM");
+		}
 	}
 
 	function updateProposals(start) {
@@ -126,7 +142,7 @@
 	}
 
 	var _pageInactiveCount = 0;
-	var _lastPanelUpdate = 0;
+	var _lastPanelUpdate = Date.now() - 25000;
 	function checkPanelAlerts() {
 		setTimeout(function() {
 			var updateDelay = 30000; //30 sec
@@ -144,32 +160,16 @@
 			}
 			if (Date.now() > (_lastPanelUpdate + updateDelay)) {
 				_lastPanelUpdate = Date.now();
+				console.log("Triggering page update");
 				$(window).trigger("page/update");
 			}
 			checkPanelAlerts();
 		}, 500);
 	}
 
-	var _unreadForumPosts = 0;
-	window.addEventListener("message", function(event) {
-		if (event.data.method == "unread_forum_posts_amt") {
-			console.log("Unread forum posts: " + event.data.amt);
-			if (event.data.amt != _unreadForumPosts) {
-				_unreadForumPosts = event.data.amt;
-				$("#panel").find("a").each(function() {
-					if ($(this).html().indexOf("FORUM") != -1) {
-						$(this).html("FORUM (" + _unreadForumPosts + ")");
-						return false;
-					}
-				});
-			}
-		}
-	}, false);
-
-	var updatePanelAlerts = function() {
-		var unread = 0;
+	function updatePanelAlerts() {
+		console.log("Updating panel alerts");
 		if (getUserNation() != "") {
-			window.postMessage({ method: "unread_forum_posts"}, "*");
 			$.get('/page=panel/template-overall=none', function(html) {
 				//Verify we haven't switched nations/logged out
 				if ($(html).find(".STANDOUT:first").attr("href").substring(7) == getUserNation()) {
@@ -182,6 +182,27 @@
 					panel.find("a[href='page=news']").html(page.find("a[href='page=news']").html());
 				}
 			});
+			if (getSettings().isEnabled("show_unread_forum_posts")) {
+				$.get("http://forum.nationstates.net/search.php?search_id=egosearch", function(data) {
+					var count = 0;
+					var userData = getUserData();
+					var ignoredTopics = userData.getValue("ignored_topics", {});
+					$(data).find("ul.topiclist.topics").find("li.row").find("h3:first a").each(function() {
+						var threadId = $(this).attr("href").match("t=[0-9]+")[0].substring(2);
+						if (!ignoredTopics[threadId]) {
+							if ($(this).parents("li.row").find("dl:first").attr("style").contains("topic_unread_mine")) {
+								count += 1;
+							}
+						}
+					});
+					getUserData(true).setValue("unread_forum_posts", count);
+					if (count > 0) {
+						$(".menu").find("a:contains('FORUM')").html("FORUM (" + count + ")");
+					} else {
+						$(".menu").find("a:contains('FORUM')").html("FORUM");
+					}
+				});
+			}
 		}
 	}
 	$(window).on("page/update", updatePanelAlerts);

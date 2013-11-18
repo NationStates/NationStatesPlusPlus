@@ -170,17 +170,19 @@
 						}
 					}
 				});
-				$("#add_editor").autocomplete({
-					source: function( request, response ) {
-						if (request.term.length < 3) {
-							response(new Array());
-						} else {
-							$.get("http://www.capitalistparadise.com/api/autocomplete/nation/?start=" + request.term, function(nations) {
-								response(nations);
-							});
+				if (navigator.userAgent.toLowerCase().indexOf('firefox') == -1) {
+					$("#add_editor").autocomplete({
+						source: function( request, response ) {
+							if (request.term.length < 3) {
+								response(new Array());
+							} else {
+								$.get("http://www.capitalistparadise.com/api/autocomplete/nation/?start=" + request.term, function(nations) {
+									response(nations);
+								});
+							}
 						}
-					}
-				});
+					});
+				}
 				$("#add_editor_btn").on("click", function(event) {
 					event.preventDefault();
 					var nation = $("#add_editor").val();
