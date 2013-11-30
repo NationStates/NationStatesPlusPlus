@@ -83,7 +83,7 @@ function setupRegionPage() {
 		population.html("<strong><i class='fa fa-bar-chart-o'></i> Population: </strong>" + population.html());
 		
 		//Regional Maps
-		$("<p id='region_map' style='display:none; height: 10px;'><img src='http://nationstatesplusplus.net/nationstates/static/" + (document.head.innerHTML.indexOf("ns.dark") != -1 ? "dark_" : "") + "map.png' style='width: 16px;'><span style='position: relative; top: -5px;'><strong> Map: </strong><span id='regional_map_link'></span></span></p>").insertAfter(population);
+		$("<p id='region_map' style='display:none; height: 10px;'><img src='http://nationstatesplusplus.net/nationstates/static/" + (document.head.innerHTML.indexOf("ns.dark") != -1 ? "dark_" : "") + "map3.png' style='width: 16px;'><span style='position: relative; top: -5px;'><strong> Map: </strong><span id='regional_map_link'></span></span></p>").insertAfter(population);
 		//Fetch region map
 		$.get("http://nationstatesplusplus.net/api/region/map/?region=" + getVisibleRegion(), function(data) {
 			if (data.regional_map != null) {
