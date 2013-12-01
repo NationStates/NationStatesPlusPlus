@@ -19,7 +19,6 @@ import com.mchange.v2.c3p0.ComboPooledDataSource;
 
 public class DatabaseAccess {
 	private final ComboPooledDataSource pool;
-	private final LoadingCache<String, String> regionFlagCache;
 	private final LoadingCache<String, Integer> regionIdCache;
 	private final LoadingCache<String, Integer> nationIdCache;
 	private final LoadingCache<Integer, String> reverseIdCache;
@@ -48,33 +47,6 @@ public class DatabaseAccess {
 					DbUtils.closeQuietly(conn);
 				}
 				return -1;
-			}
-		});
-
-		this.regionFlagCache = CacheBuilder.newBuilder()
-			.maximumSize(cacheSize)
-			.expireAfterAccess(10, TimeUnit.MINUTES)
-			.expireAfterWrite(1, TimeUnit.HOURS)
-			.build(new CacheLoader<String, String>() {
-			public String load(String key) throws SQLException {
-				Connection conn = null;
-				try {
-					conn = pool.getConnection();
-					PreparedStatement statement = conn.prepareStatement("SELECT flag, alive FROM assembly.region WHERE name = ?");
-					statement.setString(1, key);
-					ResultSet result = statement.executeQuery();
-					if (result.next()) {
-						if (result.getByte(2) == 1) {
-							return result.getString(1);
-						}
-						return "http://capitalistparadise.com/nationstates/static/exregion.png";
-					}
-				} catch (SQLException e) {
-					Logger.error("Unable to look up region flag", e);
-				} finally {
-					DbUtils.closeQuietly(conn);
-				}
-				return "http://www.nationstates.net/images/flags/Defaultt2.png";
 			}
 		});
 
@@ -125,10 +97,6 @@ public class DatabaseAccess {
 				throw new RuntimeException("No nation with id [" + key + "] found!");
 			}
 		});
-	}
-
-	public LoadingCache<String, String> getRegionCache() {
-		return regionFlagCache;
 	}
 
 	public LoadingCache<String, Integer> getNationIdCache() {

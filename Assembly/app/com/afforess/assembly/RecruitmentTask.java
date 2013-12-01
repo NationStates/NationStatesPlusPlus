@@ -15,7 +15,6 @@ import java.util.regex.Pattern;
 import org.apache.commons.dbutils.DbUtils;
 import org.apache.commons.io.IOUtils;
 import org.joda.time.Duration;
-
 import play.Logger;
 
 import com.afforess.assembly.model.RecruitmentAction;
@@ -54,8 +53,9 @@ public class RecruitmentTask implements Runnable {
 							if (sendTelegram(action, (String)nation[0]) != null) {
 								completedRegions.add(action.region);
 								List<RecruitmentAction> regionTgs = RecruitmentAction.getActions(action.region, conn);
+								final long lastAction = System.currentTimeMillis() + Duration.standardSeconds(180).getMillis();
 								for (RecruitmentAction telegram : regionTgs) {
-									telegram.lastAction = System.currentTimeMillis() + Duration.standardSeconds(180).getMillis();
+									telegram.lastAction = lastAction;
 									telegram.update(conn);
 								}
 								
@@ -70,6 +70,9 @@ public class RecruitmentTask implements Runnable {
 								action.lastAction = System.currentTimeMillis() + Duration.standardMinutes(15).getMillis();
 								action.update(conn);
 							} else if (io.getMessage().toLowerCase().contains("http response code: 403")) {
+								action.error = 1;
+								action.update(conn);
+							} else if (io.getMessage().toLowerCase().contains("http response code: 400")) {
 								action.error = 1;
 								action.update(conn);
 							} else {

@@ -14,6 +14,7 @@ import com.afforess.assembly.util.DatabaseAccess;
 import com.afforess.assembly.util.Utils;
 import com.limewoodMedia.nsapi.NationStates;
 import com.limewoodMedia.nsapi.enums.WAStatus;
+import com.limewoodMedia.nsapi.exceptions.RateLimitReachedException;
 import com.limewoodMedia.nsapi.exceptions.UnknownNationException;
 import com.limewoodMedia.nsapi.holders.NationData;
 import com.limewoodMedia.nsapi.holders.NationData.Shards;
@@ -24,11 +25,13 @@ public class EndorsementMonitoring implements Runnable {
 	private final int limit;
 	private final HealthMonitor monitor;
 	private long lastRun = 0;
-	public EndorsementMonitoring(NationStates api, DatabaseAccess access, int limit, HealthMonitor health) {
+	private final HappeningsTask task;
+	public EndorsementMonitoring(NationStates api, DatabaseAccess access, int limit, HealthMonitor health, HappeningsTask task) {
 		this.api = api;
 		this.access = access;
 		this.limit = limit;
 		this.monitor = health;
+		this.task = task;
 	}
 
 	@Override
@@ -40,6 +43,15 @@ public class EndorsementMonitoring implements Runnable {
 		lastRun = System.currentTimeMillis();
 		Connection conn = null;
 		try {
+			if (task.isHighActivity()) {
+				Logger.info("Skipping endorsement run, high happenings activity");
+				return;
+			}
+			final int limit = Math.min(api.getRateLimitRemaining() / 2, this.limit);
+			if (limit <= 1) {
+				Logger.info("Skipping endorsement run, no rate limit remaining");
+				return;
+			}
 			conn = access.getPool().getConnection();
 			PreparedStatement select = conn.prepareStatement("SELECT id, name FROM assembly.nation WHERE alive = 1 AND wa_member <> 0 AND last_endorsement_baseline < ? ORDER BY last_endorsement_baseline ASC LIMIT 0, " + limit);
 			select.setLong(1, System.currentTimeMillis() - Duration.standardHours(12).getMillis());
@@ -72,6 +84,8 @@ public class EndorsementMonitoring implements Runnable {
 					access.markNationDead(id, conn);
 				}
 			}
+		} catch (RateLimitReachedException e) {
+			Logger.warn("Endorsement monitoring rate limited!");
 		} catch (Exception e) {
 			Logger.error("Unable to update endorsements", e);
 		} finally {

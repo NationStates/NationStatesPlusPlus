@@ -17,6 +17,7 @@ import java.util.regex.Pattern;
 
 import javax.net.ssl.HttpsURLConnection;
 
+import org.apache.commons.dbutils.DbUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.WordUtils;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -156,16 +157,49 @@ public class Utils {
 	}
 
 	public static String getNationFlag(String nation, Connection conn) throws SQLException {
-		PreparedStatement statement = conn.prepareStatement("SELECT flag, alive from assembly.nation WHERE name = ?");
-		statement.setString(1, sanitizeName(nation));
-		ResultSet result = statement.executeQuery();
-		if (result.next()) {
-			if (result.getByte(2) == 1) {
-				return result.getString(1);
+		PreparedStatement statement = null;
+		ResultSet result = null;
+		try {
+			statement = conn.prepareStatement("SELECT flag, alive from assembly.nation WHERE name = ?");
+			statement.setString(1, sanitizeName(nation));
+			result = statement.executeQuery();
+			if (result.next()) {
+				final String flag = result.getString(1);
+				if (flag != null && !flag.isEmpty()) {
+					if (result.getByte(2) == 1) {
+						return flag;
+					}
+					return "http://www.nationstates.net/images/flags/exnation.png";
+				}
 			}
-			return "http://www.nationstates.net/images/flags/exnation.png";
+			return "http://www.nationstates.net/images/flags/Default.png";
+		} finally {
+			DbUtils.closeQuietly(result);
+			DbUtils.closeQuietly(statement);
 		}
-		return "http://www.nationstates.net/images/flags/default.jpg";
+	}
+
+	public static String getRegionFlag(String region, Connection conn) throws SQLException {
+		PreparedStatement statement = null;
+		ResultSet result = null;
+		try {
+			statement = conn.prepareStatement("SELECT flag, alive FROM assembly.region WHERE name = ?");
+			statement.setString(1, sanitizeName(region));
+			result = statement.executeQuery();
+			if (result.next()) {
+				final String flag = result.getString(1);
+				if (flag != null && !flag.isEmpty()) {
+					if (result.getByte(2) == 1) {
+						return flag;
+					}
+					return "http://capitalistparadise.com/nationstates/static/exregion.png";
+				}
+			}
+			return "http://www.nationstates.net/images/flags/Default.png";
+		} finally {
+			DbUtils.closeQuietly(result);
+			DbUtils.closeQuietly(statement);
+		}
 	}
 
 	public static String getPostValue(Http.Request request, String property) {

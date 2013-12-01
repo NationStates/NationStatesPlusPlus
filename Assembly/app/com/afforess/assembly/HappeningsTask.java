@@ -40,7 +40,7 @@ public class HappeningsTask implements Runnable {
 	/**
 	 * A counter, when set > 0, runs happening update polls at 2s intervals, otherwise at 10s intervals.
 	 */
-	private final AtomicInteger highActivity = new AtomicInteger(0);
+	private final AtomicInteger highActivity = new AtomicInteger(1);
 	private final HealthMonitor monitor;
 	public HappeningsTask(DatabaseAccess access, NationStates api, HealthMonitor health) {
 		this.api = api;
@@ -92,9 +92,9 @@ public class HappeningsTask implements Runnable {
 			//Throttle the happening queries based on how many new happenings occurred last run
 			if (lastRun + Duration.standardSeconds(10).getMillis() > System.currentTimeMillis()) {
 				final int activity = this.highActivity.get();
-				if (newEvents >= 25 || activity > 0) {
+				if (newEvents >= 50 || activity > 0) {
 					Logger.info("Very high happenings activity, running at 2s intervals");
-					this.highActivity.set(newEvents >= 25 ? 10 : activity - 1);
+					this.highActivity.set(newEvents >= 50 ? 10 : activity - 1);
 				} else {
 					Logger.debug("Skipping happening run, little activity, last run was " + (System.currentTimeMillis() - lastRun) + " ms ago");
 					return;

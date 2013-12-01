@@ -6,6 +6,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Savepoint;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -550,7 +551,7 @@ public class NewspaperController extends NationStatesController {
 			int prevOrder = -1;
 			int prevColumn = -1;
 			if (articleId == -1) {
-				PreparedStatement insert = conn.prepareStatement("INSERT INTO assembly.articles (newspaper_id, article, title, articles.timestamp, author, articles.column, articles.order, visible, submitter) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+				PreparedStatement insert = conn.prepareStatement("INSERT INTO assembly.articles (newspaper_id, article, title, articles.timestamp, author, articles.column, articles.order, visible, submitter) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);
 				insert.setInt(1, newspaper);
 				insert.setString(2, article);
 				insert.setString(3, title);
@@ -561,6 +562,9 @@ public class NewspaperController extends NationStatesController {
 				insert.setInt(8, Integer.parseInt(visible));
 				insert.setInt(9, submitterId);
 				insert.executeUpdate();
+				ResultSet keys = insert.getGeneratedKeys();
+				keys.next();
+				articleId = keys.getInt(1);
 			} else {
 				PreparedStatement prevArticle = conn.prepareStatement("SELECT articles.order, articles.column FROM assembly.articles WHERE visible = ? AND article_id = ?");
 				prevArticle.setInt(1, Visibility.VISIBLE.getType());
@@ -585,7 +589,7 @@ public class NewspaperController extends NationStatesController {
 			
 			if (Integer.parseInt(visible) == Visibility.VISIBLE.getType() && prevColumn != Integer.parseInt(column) && prevOrder != Integer.parseInt(order)) {
 				//Shifted the article to a new column
-				if (prevColumn != Integer.parseInt(column)) {
+				if (prevColumn != -1 && prevColumn != Integer.parseInt(column)) {
 					PreparedStatement updateOrder = conn.prepareStatement("UPDATE assembly.articles SET articles.order = articles.order - 1 WHERE newspaper_id = ? AND articles.column = ? AND visible = ? AND articles.order > ?");
 					//Shift up previous content
 					updateOrder.setInt(1, newspaper);
@@ -623,6 +627,15 @@ public class NewspaperController extends NationStatesController {
 					updateOrder.setInt(4, Visibility.VISIBLE.getType());
 					updateOrder.executeUpdate();
 				}
+			//Was visible, is not anymore
+			} else if (Integer.parseInt(visible) != Visibility.VISIBLE.getType() && prevColumn != -1 && prevOrder != -1) {
+				PreparedStatement updateOrder = conn.prepareStatement("UPDATE assembly.articles SET articles.order = articles.order - 1 WHERE newspaper_id = ? AND articles.column = ? AND visible = ? AND articles.order > ?");
+				//Shift up previous content
+				updateOrder.setInt(1, newspaper);
+				updateOrder.setInt(2, prevColumn);
+				updateOrder.setInt(3, Visibility.VISIBLE.getType());
+				updateOrder.setInt(4, prevOrder);
+				updateOrder.executeUpdate();
 			}
 
 		} finally {

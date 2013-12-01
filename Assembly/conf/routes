@@ -6,8 +6,8 @@
 GET     /nation/happenings/           @controllers.HappeningsController.nationHappenings(nation: String ?= "", start: Integer ?= 0)
 POST    /region/parseHappenings/      @controllers.HappeningsController.parseHappenings()
 GET     /region/happenings/           @controllers.HappeningsController.regionHappenings(region: String ?= "", start: Integer ?= 0)
-GET     /flag/                        @controllers.FlagController.flag(nation: String ?= "")
-GET     /regionflag/                  @controllers.FlagController.regionFlag(region: String ?= "")
+GET     /flag/                        @controllers.FlagController.nationFlags(nations: String ?= "")
+GET     /regionflag/                  @controllers.FlagController.regionFlags(regions: String ?= "")
 
 GET     /rmb/comments/exist           @controllers.RMBController.hasComments(rmbPost: Integer ?= -1)
 GET     /rmb/comments/                @controllers.RMBController.getComments(rmbPost: Integer ?= -1)
@@ -50,7 +50,7 @@ GET     /nation/missingendo/          @controllers.WorldAssemblyController.getMi
 
 GET    /region/wa/                    @controllers.WorldAssemblyController.getWAMembers(region: String ?= "")
 GET    /region/population/            @controllers.RegionController.getPopulationTrends(region: String ?= "")
-GET    /region/updatetime/            @controllers.RegionController.getUpdateTime(region: String ?= "")
+GET    /region/updatetime/            @controllers.RegionController.getUpdateTime(region: String ?= "", std: Integer ?= 2)
 GET    /region/nations/               @controllers.RegionController.getNations(region: String ?= "", xml: Boolean ?= false)
 GET    /region/map/                   @controllers.RegionController.getRegionalMap(region: String ?= "")
 POST   /region/map/                   @controllers.RegionController.setRegionalMap(region: String ?= "", disband: Boolean ?= false)

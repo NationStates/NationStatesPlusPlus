@@ -5,10 +5,14 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
 import org.apache.commons.dbutils.DbUtils;
@@ -35,7 +39,7 @@ public class RegionController extends NationStatesController {
 		imgurClientKey = imgurAuth.getChild("client-key").getString(null);
 	}
 
-	public Result getUpdateTime(String region) throws SQLException, ExecutionException {
+	public Result getUpdateTime(String region, int std) throws SQLException, ExecutionException {
 		Connection conn = null; 
 		final int regionId = getDatabase().getRegionIdCache().get(Utils.sanitizeName(region));
 		if (regionId == -1) {
@@ -46,14 +50,53 @@ public class RegionController extends NationStatesController {
 			PreparedStatement updateTime = conn.prepareStatement("SELECT normalized_start, major FROM assembly.region_update_calculations WHERE region = ? AND update_time < 200000 ORDER BY start DESC LIMIT 0, 60");
 			updateTime.setInt(1, regionId);
 			ResultSet times = updateTime.executeQuery();
+			List<Long> majorData = new ArrayList<Long>(30);
+			List<Long> minorData = new ArrayList<Long>(30);
 			SummaryStatistics minor = new SummaryStatistics();
 			SummaryStatistics major = new SummaryStatistics();
 			while(times.next()) {
-				if (times.getInt(2) == 1) 
+				if (times.getInt(2) == 1) {
 					major.addValue(times.getLong(1));
-				else
+					majorData.add(times.getLong(1));
+				} else {
 					minor.addValue(times.getLong(1));
+					minorData.add(times.getLong(1));
+				}
 			}
+			if (std > 0) {
+				//Check for major update outliers
+				Set<Long> outliers = new HashSet<Long>();
+				for (Long time : majorData) {
+					if (time.longValue() > (major.getMean() + major.getStandardDeviation() * std)) {
+						outliers.add(time);
+					}
+				}
+				if (outliers.size() > 0) {
+					major.clear();
+					for (Long time : majorData) {
+						if (!outliers.contains(time)) {
+							major.addValue(time);
+						}
+					}
+				}
+				
+				outliers.clear();
+				//Check for minor update outliers
+				for (Long time : minorData) {
+					if (time.longValue() > (minor.getMean() + minor.getStandardDeviation() * std)) {
+						outliers.add(time);
+					}
+				}
+				if (outliers.size() > 0) {
+					minor.clear();
+					for (Long time : minorData) {
+						if (!outliers.contains(time)) {
+							minor.addValue(time);
+						}
+					}
+				}
+			}
+			
 			Map<String, Object> data = new HashMap<String, Object>();
 			Map<String, Long> majorUpdate = new HashMap<String, Long>();
 			majorUpdate.put("mean", Double.valueOf(major.getMean()).longValue());
@@ -72,7 +115,7 @@ public class RegionController extends NationStatesController {
 			minorUpdate.put("geomean", Double.valueOf(minor.getGeometricMean()).longValue());
 			minorUpdate.put("variance", Double.valueOf(minor.getVariance()).longValue());
 			data.put("minor", minorUpdate);
-			
+
 			Result result = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(data.hashCode()), "60");
 			if (result != null) {
 				return result;
@@ -84,7 +127,7 @@ public class RegionController extends NationStatesController {
 	}
 
 	public Result getNations(String regions, boolean xml) throws SQLException, ExecutionException {
-		Map<String, Object> regionData = new HashMap<String, Object>();
+		Map<String, Object> regionData = new LinkedHashMap<String, Object>();
 		Connection conn = null; 
 		try {
 			conn = getConnection();
@@ -97,6 +140,7 @@ public class RegionController extends NationStatesController {
 				while(result.next()) {
 					nations.add(result.getString(1));
 				}
+				Collections.reverse(nations);
 				regionData.put(split[i], nations);
 			}
 		} finally {
@@ -256,6 +300,99 @@ public class RegionController extends NationStatesController {
 	}
 
 	public Result getRegionalMap(String region) throws SQLException, ExecutionException {
+		Map<String, String> links = new HashMap<String, String>(3);
+		Connection conn = null;
+		try {
+			conn = getConnection();
+			PreparedStatement update = conn.prepareStatement("SELECT regional_map, regional_map_preview FROM assembly.region WHERE name = ?");
+			update.setString(1, Utils.sanitizeName(region));
+			ResultSet set = update.executeQuery();
+			if (set.next()) {
+				String mapLink = set.getString(1);
+				if (!set.wasNull()) {
+					links.put("regional_map", mapLink);
+				}
+				String mapPreview = set.getString(2);
+				if (!set.wasNull()) {
+					links.put("regional_map_preview", mapPreview);
+				}
+			}
+		} finally {
+			DbUtils.closeQuietly(conn);
+		}
+		Result result = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(links.hashCode()), "60");
+		if (result != null) {
+			return result;
+		}
+		return Results.ok(Json.toJson(links)).as("application/json");
+	}
+
+
+	public Result setRegionDelegateTitle(String region, boolean disband) throws SQLException, ExecutionException {
+		Result ret = Utils.validateRequest(request(), response(), getAPI(), getDatabase());
+		if (ret != null) {
+			return ret;
+		}
+		String nation = Utils.sanitizeName(Utils.getPostValue(request(), "nation"));
+		
+		Utils.handleDefaultPostHeaders(request(), response());
+		Connection conn = null;
+		try {
+			conn = getConnection();
+			PreparedStatement select = conn.prepareStatement("SELECT delegate, founder FROM assembly.region WHERE name = ?");
+			select.setString(1, Utils.sanitizeName(region));
+			ResultSet result = select.executeQuery();
+			boolean regionAdministrator = true;
+			if (result.next()) {
+				Logger.info("Attempting to set map for " + region + ", nation: " + nation);
+				Logger.info("Delegate: " + result.getString(1) + " | Founder: " + result.getString(2));
+				if (!nation.equals(result.getString(1)) && !nation.equals(result.getString(2))) {
+					regionAdministrator = false;
+				}
+			} else {
+				Logger.info("Attempting to set map for " + region + ", no region found!");
+				regionAdministrator = false;
+			}
+			if (!regionAdministrator) {
+				return Results.unauthorized();
+			}
+			
+			if (disband) {
+				PreparedStatement update = conn.prepareStatement("UPDATE assembly.region SET regional_map = NULL, regional_map_preview = NULL WHERE name = ?");
+				update.setString(1, Utils.sanitizeName(region));
+				update.executeUpdate();
+			} else {
+				String mapLink = Utils.sanitizeName(Utils.getPostValue(request(), "regional_map"));
+				String mapPreview = Utils.sanitizeName(Utils.getPostValue(request(), "regional_map_preview"));
+				if (mapPreview == null) {
+					return Results.badRequest("missing map preview");
+				}
+				if (mapLink == null) {
+					return Results.badRequest("missing map link");
+				}
+				String imgurPreview = (mapPreview.contains("imgur") ? mapPreview : null);
+				try {
+					if (imgurPreview == null)
+						imgurPreview = Utils.uploadToImgur(mapPreview, imgurClientKey);
+				} catch (Exception e) {
+					Logger.warn("Unable to upload image to imgur for regional map [" + mapPreview + "]", e);
+				}
+				if (imgurPreview == null) {
+					return Results.badRequest("invalid map preview");
+				}
+				PreparedStatement update = conn.prepareStatement("UPDATE assembly.region SET regional_map = ?, regional_map_preview = ? WHERE name = ?");
+				update.setString(1, mapLink);
+				update.setString(2, imgurPreview);
+				update.setString(3, Utils.sanitizeName(region));
+				update.executeUpdate();
+			}
+		} finally {
+			DbUtils.closeQuietly(conn);
+		}
+		return Results.ok();
+	}
+
+	public Result getRegionalDelegateTitle(String region) throws SQLException, ExecutionException {
 		Map<String, String> links = new HashMap<String, String>(3);
 		Connection conn = null;
 		try {

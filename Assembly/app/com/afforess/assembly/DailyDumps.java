@@ -142,7 +142,6 @@ public class DailyDumps implements Runnable{
 						Logger.info("Successfully Uploaded nations dump to s3");
 					}
 					Akka.system().scheduler().scheduleOnce(Duration.create(60, TimeUnit.SECONDS), new DumpUpdateTask(access, getMostRecentRegionDump(), nationsDump), Akka.system().dispatcher());
-				
 				} finally {
 					IOUtils.closeQuietly(fos);
 				}

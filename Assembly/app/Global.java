@@ -1,4 +1,3 @@
-import java.beans.PropertyVetoException;
 import java.io.File;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
@@ -8,7 +7,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.dbutils.DbUtils;
-import org.spout.cereal.config.ConfigurationException;
 import org.spout.cereal.config.ConfigurationNode;
 import org.spout.cereal.config.yaml.YamlConfiguration;
 
@@ -17,6 +15,7 @@ import com.afforess.assembly.EndorsementMonitoring;
 import com.afforess.assembly.HappeningsTask;
 import com.afforess.assembly.HealthMonitor;
 import com.afforess.assembly.RecruitmentTask;
+import com.afforess.assembly.Start;
 import com.afforess.assembly.UpdateOrderTask;
 import com.afforess.assembly.model.HappeningType;
 import com.afforess.assembly.util.DatabaseAccess;
@@ -47,53 +46,13 @@ public class Global extends GlobalSettings {
 
 	@Override
 	public void onStart(Application app) {
-		config = new YamlConfiguration(new File("./config.yml"));
-		try {
-			config.load();
-		} catch (ConfigurationException e1) {
-			Logger.error("Unable to parse configuration", e1);
-			throw new RuntimeException(e1);
-		}
+		config = Start.loadConfig();
 		ConfigurationNode settings = config.getChild("settings");
-		try {
-			Logger.info("Initializing database connection pool to [ " + settings.getChild("jbdc").getString() + " ]");
-			//Connection Driver
-			Class.forName("com.mysql.jdbc.Driver");
-			pool = new ComboPooledDataSource();
-			pool.setDriverClass("com.mysql.jdbc.Driver");
-			pool.setJdbcUrl(settings.getChild("jbdc").getString());
-
-			//Connection Pooling
-			pool.setMaxPoolSize(50);
-			pool.setMinPoolSize(1);
-
-			pool.setMaxIdleTime(600); // 10 min after being unused, conn is closed
-			pool.setMaxConnectionAge(60 * 60); //1 hr after connection is open, it is closed
-
-			//Connection Debugging
-			pool.setDebugUnreturnedConnectionStackTraces(true);
-			pool.setUnreturnedConnectionTimeout(60 * 60);
-
-			//Statement caching
-			pool.setMaxStatementsPerConnection(25);
-
-			//Connection testing
-			pool.setTestConnectionOnCheckin(true);
-			pool.setTestConnectionOnCheckout(true);
-			pool.setPreferredTestQuery("SELECT 1");
-
-			//Connection Auth
-			Logger.info("Authenticating database connection pool with user [ " + settings.getChild("user").getString() + " ]");
-			pool.setUser(settings.getChild("user").getString());
-			pool.setPassword(settings.getChild("password").getString());
-		} catch (ClassNotFoundException e) {
-			Logger.error("No Database driver found!", e);
-			return;
-		} catch (PropertyVetoException e) {
-			Logger.error("No Database driver found!", e);
+		pool = Start.loadDatabase(settings);
+		if (pool == null) {
 			return;
 		}
-		
+
 		Connection conn = null;
 		try {
 			conn = pool.getConnection();
@@ -135,11 +94,13 @@ public class Global extends GlobalSettings {
 		Thread dailyDumps = new Thread(dumps);
 		dailyDumps.setDaemon(true);
 		dailyDumps.start();
+		
+		HappeningsTask task = new HappeningsTask(access, api, health);
 
-		Akka.system().scheduler().schedule(Duration.create(2, TimeUnit.SECONDS), Duration.create(3, TimeUnit.SECONDS), new HappeningsTask(access, api, health), Akka.system().dispatcher());
-		Akka.system().scheduler().schedule(Duration.create(31, TimeUnit.SECONDS), Duration.create(31, TimeUnit.SECONDS), new EndorsementMonitoring(api, access, 14, health), Akka.system().dispatcher());
+		Akka.system().scheduler().schedule(Duration.create(5, TimeUnit.SECONDS), Duration.create(3, TimeUnit.SECONDS), task, Akka.system().dispatcher());
+		Akka.system().scheduler().schedule(Duration.create(60, TimeUnit.SECONDS), Duration.create(31, TimeUnit.SECONDS), new EndorsementMonitoring(api, access, 13, health, task), Akka.system().dispatcher());
 		Akka.system().scheduler().schedule(Duration.create(30, TimeUnit.SECONDS), Duration.create(30, TimeUnit.SECONDS), new RecruitmentTask(access), Akka.system().dispatcher());
-		Akka.system().scheduler().schedule(Duration.create(31, TimeUnit.SECONDS), Duration.create(31, TimeUnit.SECONDS), new UpdateOrderTask(api, access), Akka.system().dispatcher());
+		Akka.system().scheduler().schedule(Duration.create(120, TimeUnit.SECONDS), Duration.create(31, TimeUnit.SECONDS), new UpdateOrderTask(api, access), Akka.system().dispatcher());
 	}
 
 	@Override
@@ -159,7 +120,7 @@ public class Global extends GlobalSettings {
 	public Action onRequest(final Request request, Method actionMethod) {
 		final long id = requestId.getAndIncrement();
 		final long start = System.nanoTime();
-		Logger.debug("LOGGING [ID: " + id + "] REQUEST FROM [" + request.remoteAddress().split(",")[0] + "] TO [" + request.uri() + "]");
+		Logger.debug("LOGGING [ID: " + id + "] REQUEST FROM [" + request.remoteAddress() + "] TO [" + request.uri() + "]");
 		final Action superAction = super.onRequest(request, actionMethod);
 		final Action logAction = new StatusCodeAction(superAction, id, start);
 		return logAction;

@@ -40,7 +40,7 @@ public class UpdateOrderTask implements Runnable{
 			result.next();
 			int id = result.getInt(1);
 			
-			select = conn.prepareStatement("SELECT name, id FROM assembly.region WHERE id > ? AND alive = 1 LIMIT 0, 3");
+			select = conn.prepareStatement("SELECT name, id FROM assembly.region WHERE id > ? AND alive = 1 LIMIT 0, 2");
 			select.setInt(1, id);
 			result = select.executeQuery();
 			int lastId = id;

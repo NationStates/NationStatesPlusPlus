@@ -9,16 +9,14 @@ object ApplicationBuild extends Build {
 
   val appDependencies = Seq(
     javaCore,
-	"mysql" % "mysql-connector-java" % "5.1.24",
+	"mysql" % "mysql-connector-java" % "5.1.27",
 	"commons-io" % "commons-io" % "2.3",
 	"commons-lang" % "commons-lang" % "2.6",
 	"com.mchange" % "c3p0" % "0.9.2.1",
 	"org.jsoup" % "jsoup" % "1.7.2",
-	"com.firebase" % "firebase-client" % "1.0.2",
-	"com.firebase" % "firebase-token-generator" % "1.0.2",
 	"commons-dbutils" % "commons-dbutils" % "1.5",
 	"com.typesafe.play.extras" % "iteratees-extras_2.10" % "1.0.1",
-	"com.amazonaws" % "aws-java-sdk" % "1.4.3",
+	"com.amazonaws" % "aws-java-sdk" % "1.6.6",
 	"com.google.guava" % "guava" % "15.0",
 	"org.apache.commons" % "commons-math3" % "3.2"
   )
