@@ -18,11 +18,14 @@ $.get(urlPrefix + "cache_buster.txt?time=" + Date.now() , function(value) {
 	if (pageUrl.indexOf("template-overall=none") != -1) {
 		return;
 	}
-	
+	if (pageUrl.indexOf("/page=ajax2/") != -1) {
+		return;
+	}
 	$("#banneradbox").remove();
 	var settings = localStorage.getItem("settings")
 	if (settings == null || settings.indexOf('"hide_ads":false') == -1) {
 		$("#paneladbox").remove();
+		$("a[href='/page=store']").remove()
 		$("#sidebaradbox").remove();
 		$("#footeradbox").remove();
 		$("#removead").remove();
@@ -32,6 +35,7 @@ $.get(urlPrefix + "cache_buster.txt?time=" + Date.now() , function(value) {
 		$("#google_image_div").remove();
 		$("iframe[name='google_osd_static_frame']").remove();
 		$("#panelad").remove();
+		$("#regionbanneradbox").remove();
 	}
 
 	if (localStorage.getItem("ignore_theme_warning") != "true" && $("#outdated").length == 0) {

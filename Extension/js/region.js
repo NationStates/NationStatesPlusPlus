@@ -25,6 +25,8 @@ function setupRegionPage() {
 	}
 	addUpdateTime();
 	
+	var rmbSearchEnabled = getSettings().isEnabled("search_rmb") && $("em:contains('There are no lodged messages at present.')").length == 0;
+	
 	//Add link to region controls
 	var rControls = $("a[href='page=region_control/region=" + getVisibleRegion() + "']");
 	if (rControls.length > 0) {
@@ -143,7 +145,6 @@ function setupRegionPage() {
 		});
 		$("tbody:last").html(html);
 	} else {
-		
 		if (getSettings().isEnabled("show_all_suppressed_posts")) {
 			$(window).on("rmb/update", function(event, post) {
 				post.find(".hide").show();
@@ -316,7 +317,7 @@ function setupRegionPage() {
 		}
 	}
 
-	if (getSettings().isEnabled("infinite_scroll") || getSettings().isEnabled("search_rmb")) {
+	if (getSettings().isEnabled("infinite_scroll") || rmbSearchEnabled) {
 		var formHtml = "<div id='rmb-post-form' style='display: none;'><div style='text-align:center;'><p>You need to " + (getUserNation().length > 0 ?  "move to the region" : "login to NationStates") + " first!</p></div></div>";
 		//Move the RMB reply area to the top
 		var rmbPost = document.forms["rmb"];
@@ -329,10 +330,13 @@ function setupRegionPage() {
 			});
 
 			//Move the post form to the top
-			var formHtml = "<div id='rmb-post-form' " + (!getSettings().isEnabled("search_rmb") ? "" : "style='display: none;'") + "><form id='rmb'>" + rmbPost.innerHTML + "</form></div>";
+			var formHtml = "<div id='rmb-post-form'><form id='rmb'>" + rmbPost.innerHTML + "</form></div>";
 			$(rmbPost).remove();
 		}
 		$('.widebox:last').prepend(formHtml);
+		if (rmbSearchEnabled) {
+			$("#rmb-post-form").hide();
+		}
 	}
 	if (!getSettings().isEnabled("infinite_scroll")) {
 		//Override older rmb click
@@ -388,14 +392,14 @@ function setupRegionPage() {
 			forumView.remove();
 			$("<p class='rmbview'>" + forumViewHTML + "</p>").insertBefore(".rmbtable2:first");
 		}
-	} else if (getSettings().isEnabled("search_rmb")) {
+	} else if (rmbSearchEnabled) {
 		$('.rmbolder').css("margin-top", "20px");
 	}
 
 	//Setup infinite scroll
 	$(window).scroll(handleInfiniteScroll);
 
-	if (getSettings().isEnabled("search_rmb")) {
+	if (rmbSearchEnabled) {
 		var wideboxArea = $(".widebox:contains('Switch to Forum View')");
 		//Add rmb menu area
 		$("<div id='rmb-menu' style='text-align: center;'><button class='button RoundedButton rmb-message'>Leave a message</button> <button class='button RoundedButton search-rmb'>Search messages</button></div").insertBefore(wideboxArea);
@@ -417,49 +421,52 @@ function setupRegionPage() {
 
 	var census = $("h2:contains('Today's World Census Report')");
 	$("<div id='census_report_container'></div>").insertAfter(census);
-	$("#census_report_container").next().appendTo($("#census_report_container"));
-	$("#census_report_container").next().appendTo($("#census_report_container"));
-	$("#census_report_container").next().appendTo($("#census_report_container"));
-	$("#census_report_container").next().appendTo($("#census_report_container"));
-	$("h6").appendTo($("#census_report_container"));
-	census.html(census.html() + "<a style='font-family: Verdana,Tahoma; font-size: 10pt; margin-left: 10px;' class='toggle-census-report' href='#'>(Hide)</a>");
-	$("a.toggle-census-report").click(function(event) {
-		event.preventDefault();
-		if ($("#census_report_container:visible").length == 0) {
-			$("#census_report_container").show();
-			$("a.toggle-census-report").html("(Hide)");
-			getSettings(true).setValue("show_world_census", true);
-		} else {
+	if ($("#content:contains('The WA has not compiled a report for this region yet.')").length == 0) {
+		$("#census_report_container").next().appendTo($("#census_report_container"));
+		$("#census_report_container").next().appendTo($("#census_report_container"));
+		$("#census_report_container").next().appendTo($("#census_report_container"));
+		$("#census_report_container").next().appendTo($("#census_report_container"));
+		$("h6").appendTo($("#census_report_container"));
+		census.html(census.html() + "<a style='font-family: Verdana,Tahoma; font-size: 10pt; margin-left: 10px;' class='toggle-census-report' href='#'>(Hide)</a>");
+		$("a.toggle-census-report").click(function(event) {
+			event.preventDefault();
+			if ($("#census_report_container:visible").length == 0) {
+				$("#census_report_container").show();
+				$("a.toggle-census-report").html("(Hide)");
+				getSettings(true).setValue("show_world_census", true);
+			} else {
+				$("#census_report_container").hide();
+				$("a.toggle-census-report").html("(Show)");
+				getSettings(true).setValue("show_world_census", false);
+			}
+		});
+
+		if (!getSettings().isEnabled("show_world_census")) {
 			$("#census_report_container").hide();
 			$("a.toggle-census-report").html("(Show)");
-			getSettings(true).setValue("show_world_census", false);
 		}
-	});
-	
-	if (!getSettings().isEnabled("show_world_census")) {
-		$("#census_report_container").hide();
-		$("a.toggle-census-report").html("(Show)");
-	}
-	$("<h2>Regional Population <a style='font-family: Verdana,Tahoma; font-size: 10pt; margin-left: 10px;' class='toggle-pop-report' href='#'>(Hide)</a></h2><div id='regional-pop'></div><div class='hzln'></div>").insertAfter($("#census_report_container").next());
 
-	$("<div id='highcharts_graph' graph='region_chart' region='" + getVisibleRegion() + "' title='" + getVisibleRegion().replaceAll("_", " ").toTitleCase() + "'></div>").insertAfter($("#census_report_container"));
+		$("<h2>Regional Population <a style='font-family: Verdana,Tahoma; font-size: 10pt; margin-left: 10px;' class='toggle-pop-report' href='#'>(Hide)</a></h2><div id='regional-pop'></div><div class='hzln'></div>").insertAfter($("#census_report_container").next());
 
-	$("a.toggle-pop-report").click(function(event) {
-		event.preventDefault();
-		if ($("#regional-pop:visible").length == 0) {
-			$("#regional-pop").show();
-			$("a.toggle-pop-report").html("(Hide)");
-			getSettings(true).setValue("show_regional_population", true);
-			$("<div id='highcharts_graph' graph='set_chart_size' width='" + $("#regional-pop").width() + "' height='" + 400 + "'></div>").insertAfter($("#census_report_container"));
-		} else {
+		$("<div id='highcharts_graph' graph='region_chart' region='" + getVisibleRegion() + "' title='" + getVisibleRegion().replaceAll("_", " ").toTitleCase() + "'></div>").insertAfter($("#census_report_container"));
+
+		$("a.toggle-pop-report").click(function(event) {
+			event.preventDefault();
+			if ($("#regional-pop:visible").length == 0) {
+				$("#regional-pop").show();
+				$("a.toggle-pop-report").html("(Hide)");
+				getSettings(true).setValue("show_regional_population", true);
+				$("<div id='highcharts_graph' graph='set_chart_size' width='" + $("#regional-pop").width() + "' height='" + 400 + "'></div>").insertAfter($("#census_report_container"));
+			} else {
+				$("#regional-pop").hide();
+				$("a.toggle-pop-report").html("(Show)");
+				getSettings(true).setValue("show_regional_population", false);
+			}
+		});
+		if (!getSettings().isEnabled("show_regional_population")) {
 			$("#regional-pop").hide();
 			$("a.toggle-pop-report").html("(Show)");
-			getSettings(true).setValue("show_regional_population", false);
 		}
-	});
-	if (!getSettings().isEnabled("show_regional_population")) {
-		$("#regional-pop").hide();
-		$("a.toggle-pop-report").html("(Show)");
 	}
 }
 

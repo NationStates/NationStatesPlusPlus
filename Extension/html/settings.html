@@ -10,6 +10,18 @@
       <input type="checkbox" name="region_settings" id="embassy_flags" default="true" value="Embassy Flags">
       Embassy Flags
     </label>
+	<label class="checkbox" for="region_settings-8">
+      <input type="checkbox" name="region_settings" id="show_regional_map_preview" default="true" value="Show Regional Map Preview">
+      Show Regional Map Preview
+    </label>
+  </div>
+</div>
+
+<hr style="width: 40%; margin-left: 1%;"></hr>
+
+<div class="control-group">
+  <label class="control-label" for="region_settings">Regional Message Board Settings</label>
+  <div class="controls">
     <label class="checkbox" for="region_settings-1">
       <input type="checkbox" name="region_settings" id="search_rmb" default="true" value="Search Message Board">
       Search Message Board
@@ -31,13 +43,16 @@
       Linkify URLs
     </label>
 	<label class="checkbox" for="region_settings-7">
-      <input type="checkbox" name="region_settings" id="show_all_suppressed_posts" default="true" value="Auto-Show Suppressed Posts">
+      <input type="checkbox" name="region_settings" id="show_all_suppressed_posts" default="false" value="Auto-Show Suppressed Posts">
       Auto-Show Suppressed Posts
     </label>
-	<label class="checkbox" for="region_settings-8">
-      <input type="checkbox" name="region_settings" id="show_regional_map_preview" default="true" value="Show Regional Map Preview">
-      Show Regional Map Preview
-    </label>
+	<div class="controls">
+		<input style="width: 400px; margin-bottom: 10px;" type="text" name="irc_network_override" id="irc_network_override" default="" title="Overrides the IRC network you connect to for KiwiIRC. Leave alone unless you know what you are doing" value="">
+	</div>
+	<label class="control-label" for="irc_username_override">IRC User Override:</label>
+	<div class="controls">
+		<input style="width: 400px;" type="text" name="irc_username_override" id="irc_username_override" default="" title="Overrides the IRC username you connect as for KiwiIRC." value="">
+	</div>
   </div>
 </div>
 
@@ -123,7 +138,7 @@
       Highlight Author Posts
     </label>
 	 <label class="checkbox" for="forum_settings-4">
-      <input type="checkbox" name="forum_settings" id="show_unread_forum_posts" value="Show Unread Forum Posts">
+      <input type="checkbox" name="forum_settings" id="show_unread_forum_posts" default="false" value="Show Unread Forum Posts">
       Show Unread Forum Posts
     </label>
   </div>

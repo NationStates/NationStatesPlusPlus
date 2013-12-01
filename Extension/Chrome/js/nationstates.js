@@ -2,6 +2,10 @@
 	if (window.location.href.indexOf("template-overall=none") != -1) {
 		return;
 	}
+	if (window.location.href.indexOf("/page=ajax2/a=reports/") != -1) {
+		$(".rlink, .nlink").each(function() { $(this).attr("href", "http://www.nationstates.net/" + $(this).attr("href")); });
+		return;
+	}
 	if (getUserNation() == "") {
 		return;
 	}

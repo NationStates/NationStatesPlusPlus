@@ -1,21 +1,15 @@
 (function(){
 	if (getVisiblePage() == "blank" && window.location.href.contains("?puppet_creator")) {
 		$("#content").html("<h1>Puppet Creation Center</h1>");
-		$("#content").append("<h3>Puppet Settings</h3><div id='settings'></div>");
+		$("#content").append("<div id='settings'></div>");
 		$.get("http://nationstatesplusplus.net/nationstates/v2_1/puppet_creation.html", function(html) {
 			$("#settings").html(html);
-			$("#randomized").on("click", function(event) {
-				$("#puppet_name").attr("disabled", $("#randomized").prop("checked"));
-			});
-			$("#found_nation").on("click", function(event) {
+			$("#random_name").on("click", function(event) {
 				event.preventDefault();
-				var nation = getRandomName(4 + Math.floor(Math.random() * 36));
-				
+				$("#puppet_name").val(getRandomName(4 + Math.floor(Math.random() * 36)));
 			});
 		});
 	}
-	
-	
 
 	function getRandomVowel() {
 		var r = Math.floor((Math.random() * 38100));

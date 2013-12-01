@@ -5,22 +5,21 @@
   <label class="control-label" for="puppet_name">Puppet Name:</label>
   <div class="controls">
     <input id="puppet_name" name="puppet_name" type="text" placeholder="Puppet Name" class="input-xlarge" required="">
-    <button id="random_name" name="random_name" class="btn">Random Nation</button>
+    <button id="random_name" name="random_name" class="btn">Random Name</button>
   </div>
 </div>
 
-<!-- Password input-->
 <div class="control-group">
   <label class="control-label" for="password">Password:</label>
   <div class="controls">
-    <input id="password" name="password" type="password" placeholder="password" class="input-xlarge" required="">
+    <input id="password" name="password" type="password" placeholder="Password" class="input-xlarge" required="">
   </div>
 </div>
 
 <div class="control-group">
   <label class="control-label" for="history">Nation History:</label>
   <div class="controls">
-    <select id="history" name="history" class="input-xlarge">
+    <select id="history" name="history" style="width: 284px;" class="input-xlarge">
 		<option value="random">Random History</option>
 		<option value="pioneer">Plucky, Malnourished Pioneers</option>
 		<option value="tribe">Recently Discovered Undiscovered Tribe</option>
@@ -38,7 +37,7 @@
 <div class="control-group">
   <label class="control-label" for="government_style">Government:</label>
   <div class="controls">
-    <select id="government_style" name="government_style" class="input-xlarge">
+    <select id="government_style" name="government_style" style="width: 284px;" class="input-xlarge">
 		<option value="random">Random</option>
 		<option value="50.50.50">Sensible</option>
 		<option value="25.75.50">Liberal</option>
@@ -77,6 +76,13 @@
   </div>
 </div>
 
+<div class="control-group">
+  <label class="control-label" for="flag">Flag:</label>
+  <div class="controls">
+    <input id="flag" name="flag" type="text" placeholder="Optional - Flag URL" value="" class="input-xlarge" >
+  </div>
+</div>
+
 <!-- Text input-->
 <div class="control-group">
   <label class="control-label" for="destination">Destination:</label>
@@ -90,6 +96,7 @@
   <label class="control-label" for="found_nation">Found Nation</label>
   <div class="controls">
     <button id="found_nation" name="found_nation" class="btn btn-primary">Found Nation</button>
+	<button id="random_nation" name="random_nation" class="btn">Random Nation</button>
   </div>
 </div>
 

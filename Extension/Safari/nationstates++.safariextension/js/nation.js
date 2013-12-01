@@ -30,10 +30,22 @@
 	}
 
 	function loadNSPPSupporterIcon() {
+		if ($(".trophy:first").length > 0) {
+			$(".trophy:first").parent().prepend("<img id='nspp_trophy' src='http://nationstatesplusplus.net/nationstates/static/nspp.png?v' class='trophy' title='A Proud NationStates++ User!'>");
+			$("#nspp_trophy").hide();
+		}
 		$.get("http://nationstatesplusplus.net/api/nation/latest_update/?name=" + getVisibleNation(), function(data, textStatus, xhr) {
 			if (xhr.status != 204 && data.timestamp > (Date.now() - 30 * 24 * 60 * 60 * 1000)) {
-				if ($(".trophy:first").length > 0) {
-					$(".trophy:first").parent().prepend("<img src='http://nationstatesplusplus.net/nationstates/static/nspp.png?v' class='trophy' title='A Proud NationStates++ User!'>");
+				$("#nspp_trophy").show();
+			}
+		});
+		$.get("http://nationstatesplusplus.net/nationstates/feature_authors.json", function(data) {
+			var nation = getVisibleNation();
+			for (var i = 0; i < data.authors.length; i += 1) {
+				if (data.authors[i] == nation) {
+					if ($("#nspp_trophy").length > 0) {
+						$("<img src='http://nationstatesplusplus.net/nationstates/static/nspp_idea.png' class='trophy' title='NationStates++ Feature Author!'>").insertAfter("#nspp_trophy");
+					}
 				}
 			}
 		});

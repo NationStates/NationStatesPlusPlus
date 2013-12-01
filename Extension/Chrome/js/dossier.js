@@ -111,7 +111,18 @@
 			}
 			$("#nation_dossier").find("#iframe-" + target).animate({ height: 'toggle'}, 800);
 		});
-
+		$('body').on('click', ".remove-dossier", function(event) {
+			if ($(event.target).attr("nation") != null) {
+				var target = $(event.target).attr("nation");
+				$.post("page=dossier", "nation=" + target + "&action=remove", function() { });
+				$("#nation_dossier").find("#" + target).animate({ height: 'toggle', 'min-height': 'toggle' }, 800);
+			} else if ($(event.target).attr("region") != null) {
+				var target = $(event.target).attr("region");
+				$.post("page=dossier", "remove_region_" + target + "=on&remove_from_region_dossier=Remove+Marked+Regions", function() { });
+				$("#region_dossier").find("#" + target).animate({ height: 'toggle', 'min-height': 'toggle' }, 800);
+			}
+		});
+		
 		/*
 		$(document.body).click(function(event) {
 			var target;
@@ -202,7 +213,7 @@
 						}
 					} catch (error) { }
 					if ($("#region_dossier").find("#" + region).length == 0 && !result.html.contains("<div id='" + region + "'")) {
-						result.html += "<div id='" + region + "' class='dossier_element' style='min-height:28px;'><img id='remove-" + region + "' src='http://nationstatesplusplus.net/nationstates/static/remove.png' class='remove-dossier' title='Remove from Dossier'><img class='smallflag' src='http://nationstatesplusplus.net/api/flag/region/?region=" + region + "'><a style='font-weight:bold' target='_blank' href='http://nationstates.net/region=" + region + "'>" + region.replaceAll("_", " ").toTitleCase() + "</a><div class='last_activity'>Nations: " + nations + "</div>";
+						result.html += "<div id='" + region + "' class='dossier_element' style='min-height:28px;'><img region='" + region + "' src='http://nationstatesplusplus.net/nationstates/static/remove.png' class='remove-dossier' title='Remove from Dossier'><img class='smallflag' src='http://nationstatesplusplus.net/api/flag/region/?region=" + region + "'><a style='font-weight:bold' target='_blank' href='http://nationstates.net/region=" + region + "'>" + region.replaceAll("_", " ").toTitleCase() + "</a><div class='last_activity'>Nations: " + nations + "</div>";
 						if (delegateFlag.length > 0) {
 							result.html += "<div class='region_activity'><b>Delegate:</b><img class='smallflag' src='" + delegateFlag + "'><a target='_blank' href='/nation=" + delegate + "'>" + delegate.replaceAll("_", " ").toTitleCase() + "</a></div>";
 						}
@@ -237,7 +248,7 @@
 						result.animate.push(nation);
 						var alias = getNationAlias(nation);
 
-						result.html += "<div id='" + nation + "' class='dossier_element'><img id='remove-" + nation + "' src='http://nationstatesplusplus.net/nationstates/static/remove.png' class='remove-dossier' title='Remove from Dossier'><img class='smallflag' src='" + flag + "'><a id='nation-link-" + nation + "' style='font-weight:bold; " + (alias != null ? "text-decoration:line-through;" : "") + "' target='_blank' href='http://nationstates.net/nation=" + nation + "'>" + nation.replaceAll("_", " ").toTitleCase() + "</a>";
+						result.html += "<div id='" + nation + "' class='dossier_element'><img nation='" + nation + "' src='http://nationstatesplusplus.net/nationstates/static/remove.png' class='remove-dossier' title='Remove from Dossier'><img class='smallflag' src='" + flag + "'><a id='nation-link-" + nation + "' style='font-weight:bold; " + (alias != null ? "text-decoration:line-through;" : "") + "' target='_blank' href='http://nationstates.net/nation=" + nation + "'>" + nation.replaceAll("_", " ").toTitleCase() + "</a>";
 						
 						if (alias == null) {
 							result.html += "<span id='nation-alias-" + nation + "'><pre style='display: inline;'></pre></span><img src='http://nationstatesplusplus.net/nationstates/static/alias.png' title='Set Alias' class='national_alias' id='alias-" + nation + "'>";

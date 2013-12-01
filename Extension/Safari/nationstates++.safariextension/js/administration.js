@@ -181,8 +181,8 @@
 					html += "<div><b>Randomize</b>: " + data[i].randomize + "</div>";
 					html += "<div><b>Avoid Full Inboxes</b>: " + data[i].avoidFull + "</div>";
 					html += "<div><b>Nation Filter</b>: " + data[i].filterRegex + "</div>";
-					html += "<div><b>Sent Telegrams</b>: <span id='sent_tgs_" + data[i].tgid + "'></span></div>";
-					html += "<div><b>Successful Telegrams</b>: <span id='success_tgs_" + data[i].tgid + "'></span></div>";
+					html += "<div><b>Sent Telegrams</b>: <span name='sent_tgs_" + data[i].tgid + "'></span></div>";
+					html += "<div><b>Successful Telegrams</b>: <span name='success_tgs_" + data[i].tgid + "'></span></div>";
 					if (data[i].error == 1) {
 						html += "<div><p class='error'>Error sending recruitment telegrams. Check client key, telegram id, secret key, and try again! Contact <a href='/nation=shadow_afforess'>Afforess</a> if errors persist.<p></div>";
 					}
@@ -190,9 +190,9 @@
 					html += "<button class='button' name='edit_recruitment' id='" + data[i].id + "'>Edit Recruitment</button>";
 					html += "<hr style='width: 30%;margin-left: 0;'></hr></div>";
 					doAuthorizedPostRequest("http://nationstatesplusplus.net/api/region/recruitment/success?region=" + getVisibleRegion() + "&tgid=" + data[i].tgid, "", function(data) {
-						$("#sent_tgs_" + data.tgid).html(data.sent_telegrams);
+						$("span[name='sent_tgs_" + data.tgid + "']").html(data.sent_telegrams);
 						var rate = Math.floor((data.successful_telegrams / (data.sent_telegrams + 1)) * 10000) / 100;
-						$("#success_tgs_" + data.tgid).html(data.successful_telegrams + " (" + rate + "%)");
+						$("span[name='success_tgs_" + data.tgid + "']").html(data.successful_telegrams + " (" + rate + "%)");
 					});
 				}
 				$("#existing_recruitment").html(html);
