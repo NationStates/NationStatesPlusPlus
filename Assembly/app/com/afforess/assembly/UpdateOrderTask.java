@@ -38,7 +38,9 @@ public class UpdateOrderTask implements Runnable{
 			PreparedStatement select = conn.prepareStatement("SELECT last_update_order_region FROM assembly.settings WHERE id = 1");
 			ResultSet result = select.executeQuery();
 			result.next();
-			int id = result.getInt(1);
+			final int id = result.getInt(1);
+			DbUtils.closeQuietly(result);
+			DbUtils.closeQuietly(select);
 			
 			select = conn.prepareStatement("SELECT name, id FROM assembly.region WHERE id > ? AND alive = 1 LIMIT 0, 2");
 			select.setInt(1, id);
@@ -53,6 +55,7 @@ public class UpdateOrderTask implements Runnable{
 					PreparedStatement setDead = conn.prepareStatement("UPDATE assembly.region SET alive = 0 WHERE id = ?");
 					setDead.setInt(1, result.getInt(2));
 					setDead.executeUpdate();
+					DbUtils.closeQuietly(setDead);
 					continue;
 				}
 				PreparedStatement updateBatch = conn.prepareStatement("UPDATE assembly.nation SET update_order = ? WHERE name = ?");
@@ -62,12 +65,17 @@ public class UpdateOrderTask implements Runnable{
 					updateBatch.addBatch();
 				}
 				updateBatch.executeBatch();
+				DbUtils.closeQuietly(updateBatch);
 				lastId = result.getInt(2);
 				Logger.info("Updated update order for region id [" + lastId + "]");
 			}
 			PreparedStatement update = conn.prepareStatement("UPDATE assembly.settings SET last_update_order_region = ? WHERE id = 1");
 			update.setInt(1, (lastId != startId ? lastId : 0));
 			update.executeUpdate();
+			DbUtils.closeQuietly(update);
+			
+			DbUtils.closeQuietly(result);
+			DbUtils.closeQuietly(select);
 		} catch (RateLimitReachedException e) {
 			Logger.warn("Update order task rate limited!");
 		} catch (Exception e) {

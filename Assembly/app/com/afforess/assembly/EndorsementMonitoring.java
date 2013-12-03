@@ -42,6 +42,8 @@ public class EndorsementMonitoring implements Runnable {
 		}
 		lastRun = System.currentTimeMillis();
 		Connection conn = null;
+		PreparedStatement select = null;
+		ResultSet result = null;
 		try {
 			if (task.isHighActivity()) {
 				Logger.info("Skipping endorsement run, high happenings activity");
@@ -53,9 +55,9 @@ public class EndorsementMonitoring implements Runnable {
 				return;
 			}
 			conn = access.getPool().getConnection();
-			PreparedStatement select = conn.prepareStatement("SELECT id, name FROM assembly.nation WHERE alive = 1 AND wa_member <> 0 AND last_endorsement_baseline < ? ORDER BY last_endorsement_baseline ASC LIMIT 0, " + limit);
+			select = conn.prepareStatement("SELECT id, name FROM assembly.nation WHERE alive = 1 AND wa_member <> 0 AND last_endorsement_baseline < ? ORDER BY last_endorsement_baseline ASC LIMIT 0, " + limit);
 			select.setLong(1, System.currentTimeMillis() - Duration.standardHours(12).getMillis());
-			ResultSet result = select.executeQuery();
+			result = select.executeQuery();
 			while(result.next()) {
 				final int id = result.getInt(1);
 				final String name = result.getString(2);
@@ -76,6 +78,7 @@ public class EndorsementMonitoring implements Runnable {
 					updateNation.setInt(9, access.getRegionIdCache().get(Utils.sanitizeName(data.region)));
 					updateNation.setInt(10, id);
 					updateNation.executeUpdate();
+					DbUtils.closeQuietly(updateNation);
 					
 					updateEndorsements(conn, data, id);
 					
@@ -89,6 +92,8 @@ public class EndorsementMonitoring implements Runnable {
 		} catch (Exception e) {
 			Logger.error("Unable to update endorsements", e);
 		} finally {
+			DbUtils.closeQuietly(result);
+			DbUtils.closeQuietly(select);
 			DbUtils.closeQuietly(conn);
 			if (monitor != null) monitor.endorsementHeartbeat();
 		}

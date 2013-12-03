@@ -48,15 +48,19 @@ public class HappeningsTask implements Runnable {
 		this.access = access;
 		this.monitor = health;
 		Connection conn = null;
+		PreparedStatement state = null;
+		ResultSet result = null;
 		try {
 			conn = pool.getConnection();
-			PreparedStatement state = conn.prepareStatement("SELECT last_event_id FROM assembly.settings WHERE id = 1");
-			ResultSet result = state.executeQuery();
+			state = conn.prepareStatement("SELECT last_event_id FROM assembly.settings WHERE id = 1");
+			result = state.executeQuery();
 			result.next();
 			maxEventId = result.getInt(1);
 		} catch (SQLException e) {
 			throw new RuntimeException(e);
 		} finally {
+			DbUtils.closeQuietly(result);
+			DbUtils.closeQuietly(state);
 			DbUtils.closeQuietly(conn);
 		}
 	}
@@ -102,7 +106,7 @@ public class HappeningsTask implements Runnable {
 			}
 			lastRun = System.currentTimeMillis() + Duration.standardSeconds(1).getMillis();
 			newEvents = 0;
-			Logger.info("Starting global happenings run. Max Event ID: " + maxEventId);
+			Logger.info("Executing global happenings run. Max Event ID: " + maxEventId);
 			try {
 				data = api.getHappeningInfo(null, -1, maxEventId);
 			} catch (RateLimitReachedException e) {
@@ -120,14 +124,16 @@ public class HappeningsTask implements Runnable {
 			}
 		}
 		Connection conn = null;
+		PreparedStatement happeningInsert = null;
 		try {
 			conn = pool.getConnection();
 			
 			PreparedStatement state = conn.prepareStatement("UPDATE assembly.settings SET last_event_id = ? WHERE id = 1");
 			state.setInt(1, maxEventId);
 			state.executeUpdate();
+			DbUtils.closeQuietly(state);
 			
-			PreparedStatement happeningInsert = conn.prepareStatement("INSERT INTO assembly.global_happenings (nation, happening, timestamp, type) VALUES (?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);
+			happeningInsert = conn.prepareStatement("INSERT INTO assembly.global_happenings (nation, happening, timestamp, type) VALUES (?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);
 			for (EventHappening happening : data.happenings) {
 				final String text = happening.text;
 				final long timestamp = happening.timestamp * 1000;
@@ -150,6 +156,9 @@ public class HappeningsTask implements Runnable {
 						keys.next();
 						nationId = keys.getInt(1);
 						access.getNationIdCache().put(nation, nationId);
+						
+						DbUtils.closeQuietly(keys);
+						DbUtils.closeQuietly(insert);
 					}
 				}
 
@@ -199,6 +208,7 @@ public class HappeningsTask implements Runnable {
 						PreparedStatement alive = conn.prepareStatement("UPDATE assembly.nation SET alive = 1 WHERE id = ?");
 						alive.setInt(1, nationId);
 						alive.executeUpdate();
+						DbUtils.closeQuietly(alive);
 					}
 					
 					//Update region
@@ -210,6 +220,7 @@ public class HappeningsTask implements Runnable {
 							update.setInt(1, regionId);
 							update.setInt(2, nationId);
 							update.executeUpdate();
+							DbUtils.closeQuietly(update);
 						}
 					}
 				} else if (nationId > -1 && happeningType == HappeningType.getType("CEASED_TO_EXIST").getId()) {
@@ -222,6 +233,7 @@ public class HappeningsTask implements Runnable {
 						update.setInt(1, access.getRegionIdCache().get(text.substring(regions.start() + 2, regions.end() - 2)));
 						update.setInt(2, nationId);
 						update.executeUpdate();
+						DbUtils.closeQuietly(update);
 					}
 				}
 
@@ -236,12 +248,14 @@ public class HappeningsTask implements Runnable {
 				if (type != null) {
 					updateRegionHappenings(conn, access, nationId, happeningId, text, type);
 				}
+				DbUtils.closeQuietly(keys);
 			}
 		} catch (SQLException e) {
 			Logger.error("Unable to update happenings", e);
 		}  catch (ExecutionException e) {
 			Logger.error("Unable to update happenings", e);
 		} finally {
+			DbUtils.closeQuietly(happeningInsert);
 			DbUtils.closeQuietly(conn);
 		}
 	}
@@ -261,6 +275,8 @@ public class HappeningsTask implements Runnable {
 			if (result.next()) {
 				regionIds.add(result.getInt(1));
 			}
+			DbUtils.closeQuietly(result);
+			DbUtils.closeQuietly(select);
 		}
 		PreparedStatement insert = conn.prepareStatement("INSERT INTO assembly.regional_happenings (global_id, region, happening) VALUES (?, ?, ?)");
 		if (region1Happening != null && regionIds.size() > 0) {
@@ -275,37 +291,61 @@ public class HappeningsTask implements Runnable {
 			insert.setString(3, region2Happening);
 			insert.executeUpdate();
 		}
+		DbUtils.closeQuietly(insert);
 	}
 
 	private synchronized void setRegionUpdateTime(Connection conn, int nationId, long timestamp) throws SQLException {
-		PreparedStatement select = conn.prepareStatement("SELECT region FROM assembly.nation WHERE id = ?");
-		select.setInt(1, nationId);
-		ResultSet result = select.executeQuery();
-		if (result.next()) {
-			int region = result.getInt(1);
-			select = conn.prepareStatement("SELECT id, start, end FROM assembly.region_updates WHERE region = ? AND start BETWEEN ? AND ?");
-			select.setInt(1, region);
-			select.setLong(2, timestamp - Duration.standardHours(1).getMillis());
-			select.setLong(3, timestamp + Duration.standardHours(1).getMillis());
-			result = select.executeQuery();
-			if (result.next()) {
-				final int id = result.getInt(1);
-				final long start = result.getLong(2);
-				final long end = result.getLong(3);
-				PreparedStatement update = conn.prepareStatement("UPDATE assembly.region_updates SET start = ?, end = ? WHERE id = ?");
-				update.setLong(1, Math.min(start, timestamp));
-				update.setLong(2, Math.max(end, timestamp));
-				update.setInt(3, id);
-				update.executeUpdate();
-			} else {
-				PreparedStatement insert = conn.prepareStatement("INSERT INTO assembly.region_updates (region, start, end) VALUES (?, ?, ?)");
-				insert.setLong(1, region);
-				insert.setLong(2, timestamp);
-				insert.setLong(3, timestamp);
-				insert.executeUpdate();
+		final int region = getRegionOfNation(conn, nationId);
+		if (region != -1) {
+			PreparedStatement select = null, update = null, insert = null;
+			ResultSet result = null;
+			try {
+				select = conn.prepareStatement("SELECT id, start, end FROM assembly.region_updates WHERE region = ? AND start BETWEEN ? AND ?");
+				select.setInt(1, region);
+				select.setLong(2, timestamp - Duration.standardHours(1).getMillis());
+				select.setLong(3, timestamp + Duration.standardHours(1).getMillis());
+				result = select.executeQuery();
+				if (result.next()) {
+					final int id = result.getInt(1);
+					final long start = result.getLong(2);
+					final long end = result.getLong(3);
+					update = conn.prepareStatement("UPDATE assembly.region_updates SET start = ?, end = ? WHERE id = ?");
+					update.setLong(1, Math.min(start, timestamp));
+					update.setLong(2, Math.max(end, timestamp));
+					update.setInt(3, id);
+					update.executeUpdate();
+				} else {
+					insert = conn.prepareStatement("INSERT INTO assembly.region_updates (region, start, end) VALUES (?, ?, ?)");
+					insert.setLong(1, region);
+					insert.setLong(2, timestamp);
+					insert.setLong(3, timestamp);
+					insert.executeUpdate();
+				}
+			} finally {
+				DbUtils.closeQuietly(result);
+				DbUtils.closeQuietly(insert);
+				DbUtils.closeQuietly(update);
+				DbUtils.closeQuietly(select);
 			}
 		} else {
 			Logger.info("Can not set region update time for nation [" + nationId + "], unknown region!");
+		}
+	}
+
+	private int getRegionOfNation(Connection conn, int nationId) throws SQLException {
+		PreparedStatement select = null;
+		ResultSet result = null;
+		try {
+			select = conn.prepareStatement("SELECT region FROM assembly.nation WHERE id = ?");
+			select.setInt(1, nationId);
+			result = select.executeQuery();
+			if (result.next()) {
+				return result.getInt(1);
+			}
+			return -1;
+		} finally {
+			DbUtils.closeQuietly(result);
+			DbUtils.closeQuietly(select);
 		}
 	}
 
@@ -330,27 +370,41 @@ public class HappeningsTask implements Runnable {
 			update.setInt(2, nationId);
 			update.setInt(3, getOrCreateRegion(conn, nation, prevRegion));
 			update.executeUpdate();
+			DbUtils.closeQuietly(update);
 		}
 	}
 
 	private int getOrCreateRegion(Connection conn, String nation, String region) throws SQLException {
-		PreparedStatement select = conn.prepareStatement("SELECT id FROM assembly.region WHERE name = ?");
-		select.setString(1, region);
-		ResultSet result = select.executeQuery();
-		if (result.next()) {
-			return result.getInt(1);
-		} else {
-			PreparedStatement insert = conn.prepareStatement("INSERT INTO assembly.region (name, flag, founder, title) VALUES (?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);
-			insert.setString(1, region);
-			insert.setString(2, "");
-			insert.setString(3, nation);
-			insert.setString(4, Utils.formatName(region));
-			insert.executeUpdate();
-			ResultSet keys = insert.getGeneratedKeys();
-			keys.next();
-			int id = keys.getInt(1);
-			access.getRegionIdCache().put(region, id);
-			return id;
+		PreparedStatement select = null;
+		ResultSet result = null;
+		try {
+			select = conn.prepareStatement("SELECT id FROM assembly.region WHERE name = ?");
+			select.setString(1, region);
+			result = select.executeQuery();
+			if (result.next()) {
+				return result.getInt(1);
+			}
+			PreparedStatement insert = null;
+			ResultSet keys = null;
+			try {
+				insert = conn.prepareStatement("INSERT INTO assembly.region (name, flag, founder, title) VALUES (?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);
+				insert.setString(1, region);
+				insert.setString(2, "");
+				insert.setString(3, nation);
+				insert.setString(4, Utils.formatName(region));
+				insert.executeUpdate();
+				keys = insert.getGeneratedKeys();
+				keys.next();
+				int id = keys.getInt(1);
+				access.getRegionIdCache().put(region, id);
+				return id;
+			} finally {
+				DbUtils.closeQuietly(keys);
+				DbUtils.closeQuietly(insert);
+			}
+		} finally {
+			DbUtils.closeQuietly(result);
+			DbUtils.closeQuietly(select);
 		}
 	}
 

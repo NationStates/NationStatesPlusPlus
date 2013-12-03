@@ -85,11 +85,11 @@ public class AdminController extends DatabaseController {
 		return ok(Json.toJson(map)).as("application/json");
 	}
 
-	public Result triggerDatabaseBackup(String code) throws SQLException, ExecutionException, InterruptedException {
+	public Result invalidateCaches(String code) throws SQLException, ExecutionException, InterruptedException {
 		if (!code.equals(adminCode)) {
 			return Results.badRequest();
 		}
-		health.databaseBackup();
-		return ok("Database update triggered");
+		health.invalidateCaches();
+		return ok("All cache's invalidated");
 	}
 }

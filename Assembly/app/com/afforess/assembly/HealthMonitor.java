@@ -3,13 +3,14 @@ package com.afforess.assembly;
 import java.io.File;
 import java.lang.ProcessBuilder.Redirect;
 import java.sql.Connection;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.sql.PreparedStatement;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.dbutils.DbUtils;
 import org.spout.cereal.config.ConfigurationNode;
 
 import com.afforess.assembly.util.DatabaseAccess;
+
 import play.Logger;
 import play.api.Play;
 
@@ -27,7 +28,6 @@ public class HealthMonitor extends Thread {
 	private final int endorsementThreshold;
 	private final AtomicLong lastHappeningHeartbeat = new AtomicLong(System.currentTimeMillis() + HAPPENINGS_TIME);
 	private final AtomicLong lastEndorsementHeartbeat = new AtomicLong(System.currentTimeMillis() + ENDORSEMENT_TIME);
-	private final AtomicInteger databaseBackup = new AtomicInteger(0);
 	private final DatabaseAccess access;
 	public HealthMonitor(ConfigurationNode config, DatabaseAccess access) {
 		super("Health Monitor Thread");
@@ -45,8 +45,13 @@ public class HealthMonitor extends Thread {
 		this.lastEndorsementHeartbeat.set(System.currentTimeMillis());
 	}
 
-	public void databaseBackup() {
-		this.databaseBackup.set(1);
+	public void invalidateCaches() {
+		access.getNationIdCache().invalidateAll();
+		access.getRegionIdCache().invalidateAll();
+		access.getReverseIdCache().invalidateAll();
+		access.getNationIdCache().cleanUp();
+		access.getRegionIdCache().cleanUp();
+		access.getReverseIdCache().cleanUp();
 	}
 
 	@Override
@@ -100,6 +105,10 @@ public class HealthMonitor extends Thread {
 				} catch (Throwable t) {
 					Logger.error("Unable to restart application!", t);
 				}
+			} else {
+				access.getNationIdCache().cleanUp();
+				access.getRegionIdCache().cleanUp();
+				access.getReverseIdCache().cleanUp();
 			}
 			try {
 				Thread.sleep(30000);
@@ -115,12 +124,15 @@ public class HealthMonitor extends Thread {
 		@Override
 		public void run() {
 			Connection conn = null;
+			PreparedStatement select = null;
 			try {
 				conn = access.getPool().getConnection();
-				success = conn.prepareStatement("SELECT 1").execute();
+				select = conn.prepareStatement("SELECT 1");
+				success = select.execute();
 			} catch (Throwable t) {
 				Logger.error("Unable to open connection", t);
 			} finally {
+				DbUtils.closeQuietly(select);
 				DbUtils.closeQuietly(conn);
 			}
 		}

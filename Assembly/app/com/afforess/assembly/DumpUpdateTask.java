@@ -60,6 +60,7 @@ public class DumpUpdateTask implements Runnable {
 			while (result.next()) {
 				set.add(result.getString(1));
 			}
+			DbUtils.closeQuietly(result);
 			Logger.info("Updating " + set.size() + " regions from daily dump");
 			PreparedStatement select = conn.prepareStatement("SELECT title, flag, delegate, founder, numnations FROM regions WHERE name = ?");
 			int newRegions = 0;
@@ -68,6 +69,7 @@ public class DumpUpdateTask implements Runnable {
 				result = select.executeQuery();
 				result.next();
 				newRegions += updateRegion(region, result.getString(1), result.getString(2), result.getString(3), result.getString(4), result.getInt(5));
+				DbUtils.closeQuietly(result);
 				try {
 					Thread.sleep(1);
 				} catch (InterruptedException e) { }
@@ -81,6 +83,7 @@ public class DumpUpdateTask implements Runnable {
 			while (result.next()) {
 				allRegions.add(result.getString(1));
 			}
+			DbUtils.closeQuietly(result);
 			allRegions.removeAll(set);
 			Logger.info("Marking " + allRegions.size() + " regions as dead");
 			
@@ -91,6 +94,7 @@ public class DumpUpdateTask implements Runnable {
 			}
 			markDead.executeBatch();
 			conn.prepareStatement("DROP TABLE regions").execute();
+			conn.prepareStatement("SHUTDOWN COMPACT").execute();
 		} catch (Exception e) {
 			Logger.error("unable to update region dumps", e);
 		} finally {
@@ -164,6 +168,7 @@ public class DumpUpdateTask implements Runnable {
 				result = select.executeQuery();
 				result.next();
 				newNations += updateNation(nation, result.getString(1), result.getString(2), !result.getString(3).toLowerCase().equals("non-member"), result.getString(4), result.getInt(5), result.getString(6), result.getString(7));
+				DbUtils.closeQuietly(result);
 				try {
 					Thread.sleep(1);
 				} catch (InterruptedException e) { }
@@ -176,6 +181,7 @@ public class DumpUpdateTask implements Runnable {
 			while (result.next()) {
 				allNations.add(result.getString(1));
 			}
+			DbUtils.closeQuietly(result);
 			allNations.removeAll(set);
 			Logger.info("Marking " + allNations.size() + " nations as dead");
 			for (String nation : allNations) {
@@ -186,12 +192,14 @@ public class DumpUpdateTask implements Runnable {
 				}
 			}
 			conn.prepareStatement("DROP TABLE nations").execute();
+			conn.prepareStatement("SHUTDOWN COMPACT").execute();
 			int cleanupNations = 0;
 			result = assembly.prepareStatement("SELECT id FROM assembly.nation WHERE alive = 0 AND wa_member = 1").executeQuery();
 			while(result.next()) {
 				access.markNationDead(result.getInt(1), assembly);
 				cleanupNations++;
 			}
+			DbUtils.closeQuietly(result);
 			Logger.info("Cleaned up " + cleanupNations + " who were dead World Assembly Member nations!");
 		} catch (SQLException e) {
 			Logger.error("unable to update nation dumps", e);

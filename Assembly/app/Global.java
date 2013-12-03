@@ -3,6 +3,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -33,6 +34,7 @@ import play.api.mvc.PlainResult;
 import play.extras.iteratees.GzipFilter;
 import play.libs.Akka;
 import play.mvc.Action;
+import play.mvc.Controller;
 import play.mvc.Http.Context;
 import play.mvc.Http.Request;
 import scala.concurrent.duration.Duration;
@@ -43,11 +45,14 @@ public class Global extends GlobalSettings {
 	private NationStates api;
 	private DatabaseAccess access;
 	private YamlConfiguration config;
+	private boolean logRequests = false;
+	private final ConcurrentHashMap<Class<?>, Controller> controllers = new ConcurrentHashMap<Class<?>, Controller>();
 
 	@Override
 	public void onStart(Application app) {
 		config = Start.loadConfig();
 		ConfigurationNode settings = config.getChild("settings");
+		logRequests = settings.getChild("log-requests").getBoolean(logRequests);
 		pool = Start.loadDatabase(settings);
 		if (pool == null) {
 			return;
@@ -118,12 +123,15 @@ public class Global extends GlobalSettings {
 	@SuppressWarnings("rawtypes")
 	@Override
 	public Action onRequest(final Request request, Method actionMethod) {
-		final long id = requestId.getAndIncrement();
-		final long start = System.nanoTime();
-		Logger.debug("LOGGING [ID: " + id + "] REQUEST FROM [" + request.remoteAddress() + "] TO [" + request.uri() + "]");
-		final Action superAction = super.onRequest(request, actionMethod);
-		final Action logAction = new StatusCodeAction(superAction, id, start);
-		return logAction;
+		if (logRequests) {
+			final long id = requestId.getAndIncrement();
+			final long start = System.nanoTime();
+			Logger.debug("LOGGING [ID: " + id + "] REQUEST FROM [" + request.remoteAddress() + "] TO [" + request.uri() + "]");
+			final Action superAction = super.onRequest(request, actionMethod);
+			final Action logAction = new StatusCodeAction(superAction, id, start);
+			return logAction;
+		}
+		return super.onRequest(request, actionMethod);
 	}
 
 	private static class StatusCodeAction extends Action.Simple {
@@ -160,14 +168,21 @@ public class Global extends GlobalSettings {
 	@SuppressWarnings("unchecked")
 	@Override
 	public <A> A getControllerInstance(Class<A> controllerClass) throws Exception {
+		if (controllers.containsKey(controllerClass)) {
+			return (A) controllers.get(controllerClass);
+		}
 		if (AdminController.class.isAssignableFrom(controllerClass)) {
 			return (A) admin;
 		} else if (NationStatesController.class.isAssignableFrom(controllerClass)) {
 			Constructor<A> cons = controllerClass.getConstructor(new Class[] {DatabaseAccess.class, YamlConfiguration.class, NationStates.class});
-			return cons.newInstance(access, config, api);
+			A controller = cons.newInstance(access, config, api);
+			controllers.put(controllerClass, (Controller) controller);
+			return controller;
 		} else if (DatabaseController.class.isAssignableFrom(controllerClass)) {
 			Constructor<A> cons = controllerClass.getConstructor(new Class[] {DatabaseAccess.class, YamlConfiguration.class});
-			return cons.newInstance(access, config);
+			A controller = cons.newInstance(access, config);
+			controllers.put(controllerClass, (Controller) controller);
+			return controller;
 		}
 		return super.getControllerInstance(controllerClass);
 	}

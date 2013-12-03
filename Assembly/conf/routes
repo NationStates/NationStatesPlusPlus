@@ -6,8 +6,8 @@
 GET     /nation/happenings/           @controllers.HappeningsController.nationHappenings(nation: String ?= "", start: Integer ?= 0)
 POST    /region/parseHappenings/      @controllers.HappeningsController.parseHappenings()
 GET     /region/happenings/           @controllers.HappeningsController.regionHappenings(region: String ?= "", start: Integer ?= 0)
-GET     /flag/                        @controllers.FlagController.nationFlags(nations: String ?= "")
-GET     /regionflag/                  @controllers.FlagController.regionFlags(regions: String ?= "")
+GET     /flag/                        @controllers.FlagController.nationFlags(nation: String ?= "")
+GET     /regionflag/                  @controllers.FlagController.regionFlags(region: String ?= "")
 
 GET     /rmb/comments/exist           @controllers.RMBController.hasComments(rmbPost: Integer ?= -1)
 GET     /rmb/comments/                @controllers.RMBController.getComments(rmbPost: Integer ?= -1)
@@ -61,7 +61,7 @@ POST    /region/recruitment/success   @controllers.RecruitmentController.getRecr
 GET     /recruitment/                 @controllers.RecruitmentController.getRecruitmentNations()
 
 GET    /admin/happenings/             @controllers.AdminController.recalculateHappenings(code: String ?= "", happeningType: Integer ?= -1)
-GET    /admin/db-backup/              @controllers.AdminController.triggerDatabaseBackup(code: String ?= "")
+GET    /admin/invalidate_cache/       @controllers.AdminController.invalidateCaches(code: String ?= "")
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.at(path="/public", file)

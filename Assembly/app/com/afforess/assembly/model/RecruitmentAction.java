@@ -59,21 +59,26 @@ public class RecruitmentAction {
 	}
 
 	public void update(Connection conn) throws SQLException {
-		PreparedStatement update = conn.prepareStatement("UPDATE assembly.recruitment SET region = ?, client_key = ?, tgid = ?, secret_key = ?, percent = ?, type = ?, last_action = ?, feeders_only = ?, filter_regex = ?, error = ?, avoid_full = ?, randomize = ? WHERE id = ?");
-		update.setInt(1, region);
-		update.setString(2, clientKey);
-		update.setString(3, tgid);
-		update.setString(4, secretKey);
-		update.setInt(5, percent);
-		update.setInt(6, type.getId());
-		update.setLong(7, lastAction);
-		update.setByte(8, (byte)(feedersOnly ? 1 : 0));
-		update.setString(9, filterRegex);
-		update.setInt(10, error);
-		update.setByte(11, (byte)(avoidFull ? 1 : 0));
-		update.setByte(12, (byte)(randomize ? 1 : 0));
-		update.setInt(13, id);
-		update.executeUpdate();
+		PreparedStatement update = null;
+		try {
+			update = conn.prepareStatement("UPDATE assembly.recruitment SET region = ?, client_key = ?, tgid = ?, secret_key = ?, percent = ?, type = ?, last_action = ?, feeders_only = ?, filter_regex = ?, error = ?, avoid_full = ?, randomize = ? WHERE id = ?");
+			update.setInt(1, region);
+			update.setString(2, clientKey);
+			update.setString(3, tgid);
+			update.setString(4, secretKey);
+			update.setInt(5, percent);
+			update.setInt(6, type.getId());
+			update.setLong(7, lastAction);
+			update.setByte(8, (byte)(feedersOnly ? 1 : 0));
+			update.setString(9, filterRegex);
+			update.setInt(10, error);
+			update.setByte(11, (byte)(avoidFull ? 1 : 0));
+			update.setByte(12, (byte)(randomize ? 1 : 0));
+			update.setInt(13, id);
+			update.executeUpdate();
+		} finally {
+			DbUtils.closeQuietly(update);
+		}
 	}
 
 	public static List<RecruitmentAction> getAllActions(Connection conn) throws SQLException {
@@ -83,6 +88,7 @@ public class RecruitmentAction {
 		while(result.next()) {
 			actions.add(new RecruitmentAction(result.getInt(1), result.getInt(2), result.getString(3), result.getString(4), result.getString(5), result.getInt(6), RecruitmentType.getById(result.getInt(7)), result.getLong(8), result.getByte(9) == 1, result.getString(10), result.getInt(11), result.getByte(12) == 1, result.getByte(13) == 1));
 		}
+		DbUtils.closeQuietly(result);
 		DbUtils.closeQuietly(select);
 		return actions;
 	}
@@ -95,6 +101,7 @@ public class RecruitmentAction {
 		while(result.next()) {
 			actions.add(new RecruitmentAction(result.getInt(1), result.getInt(2), result.getString(3), result.getString(4), result.getString(5), result.getInt(6), RecruitmentType.getById(result.getInt(7)), result.getLong(8), result.getByte(9) == 1, result.getString(10), result.getInt(11), result.getByte(12) == 1, result.getByte(13) == 1));
 		}
+		DbUtils.closeQuietly(result);
 		DbUtils.closeQuietly(select);
 		return actions;
 	}

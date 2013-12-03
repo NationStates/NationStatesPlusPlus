@@ -270,8 +270,8 @@ public class RegionController extends NationStatesController {
 				update.setString(1, Utils.sanitizeName(region));
 				update.executeUpdate();
 			} else {
-				String mapLink = Utils.sanitizeName(Utils.getPostValue(request(), "regional_map"));
-				String mapPreview = Utils.sanitizeName(Utils.getPostValue(request(), "regional_map_preview"));
+				String mapLink = Utils.getPostValue(request(), "regional_map");
+				String mapPreview = Utils.getPostValue(request(), "regional_map_preview");
 				if (mapPreview == null) {
 					return Results.badRequest("missing map preview");
 				}
