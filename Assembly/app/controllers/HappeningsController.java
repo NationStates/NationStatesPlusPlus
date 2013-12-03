@@ -59,6 +59,8 @@ public class HappeningsController extends DatabaseController {
 				data.timestamp = result.getLong(2);
 				happenings.add(data);
 			}
+			DbUtils.closeQuietly(result);
+			DbUtils.closeQuietly(statement);
 		} finally {
 			DbUtils.closeQuietly(conn);
 		}
@@ -126,7 +128,6 @@ public class HappeningsController extends DatabaseController {
 				PreparedStatement statement = conn.prepareStatement("SELECT happening, timestamp FROM assembly.global_happenings WHERE visible = 1 AND nation = ?  ORDER BY timestamp DESC LIMIT " + start + ", 20");
 				statement.setInt(1, getDatabase().getNationIdCache().get(nation));
 				ResultSet result = statement.executeQuery();
-				
 				while(result.next()) {
 					final String happening = Utils.formatHappeningText(result.getString(1), conn, nation);
 					HappeningData data = new HappeningData();
@@ -134,6 +135,9 @@ public class HappeningsController extends DatabaseController {
 					data.timestamp = result.getLong(2);
 					happenings.add(data);
 				}
+				
+				DbUtils.closeQuietly(result);
+				DbUtils.closeQuietly(statement);
 			} finally {
 				DbUtils.closeQuietly(conn);
 			}

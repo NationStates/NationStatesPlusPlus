@@ -48,16 +48,20 @@ public class NewspaperController extends NationStatesController {
 		Map<String, Object> results = new HashMap<String, Object>(1);
 		Utils.handleDefaultPostHeaders(request(), response());
 		Connection conn = null;
+		PreparedStatement newspaper = null, select = null;
+		ResultSet result = null;
 		try {
 			conn = getConnection();
-			PreparedStatement newspaper = conn.prepareStatement("SELECT newspaper FROM assembly.newspapers WHERE region = ? AND disbanded = 0");
+			newspaper = conn.prepareStatement("SELECT newspaper FROM assembly.newspapers WHERE region = ? AND disbanded = 0");
 			newspaper.setString(1, region);
-			ResultSet result = newspaper.executeQuery();
+			result = newspaper.executeQuery();
 			if (result.next()) {
 				return Results.forbidden();
 			}
+			DbUtils.closeQuietly(result);
+			DbUtils.closeQuietly(newspaper);
 			
-			PreparedStatement select = conn.prepareStatement("SELECT delegate, founder FROM assembly.region WHERE name = ?");
+			select = conn.prepareStatement("SELECT delegate, founder FROM assembly.region WHERE name = ?");
 			select.setString(1, region);
 			result = select.executeQuery();
 			boolean regionAdministrator = true;
@@ -74,6 +78,8 @@ public class NewspaperController extends NationStatesController {
 			if (!regionAdministrator) {
 				return Results.unauthorized();
 			}
+			DbUtils.closeQuietly(result);
+			DbUtils.closeQuietly(select);
 			
 			newspaper = conn.prepareStatement("INSERT INTO assembly.newspapers (region, editor, title, byline) VALUES (?, ?, ?, ?)");
 			newspaper.setString(1, region);
@@ -81,6 +87,7 @@ public class NewspaperController extends NationStatesController {
 			newspaper.setString(3, Utils.formatName(nation) + " Regional News");
 			newspaper.setString(4, Utils.formatName(nation) + " makes the trains run on time!");
 			newspaper.executeUpdate();
+			DbUtils.closeQuietly(newspaper);
 			
 			newspaper = conn.prepareStatement("SELECT newspaper FROM assembly.newspapers WHERE disbanded = 0 AND region = ?");
 			newspaper.setString(1, region);
@@ -93,7 +100,11 @@ public class NewspaperController extends NationStatesController {
 			editors.setInt(1, newspaperId);
 			editors.setInt(2, getDatabase().getNationIdCache().get(nation));
 			editors.executeUpdate();
+			DbUtils.closeQuietly(editors);
 		} finally {
+			DbUtils.closeQuietly(result);
+			DbUtils.closeQuietly(select);
+			DbUtils.closeQuietly(newspaper);
 			DbUtils.closeQuietly(conn);
 		}
 		return Results.ok(Json.toJson(results)).as("application/json");
@@ -108,16 +119,20 @@ public class NewspaperController extends NationStatesController {
 		
 		Utils.handleDefaultPostHeaders(request(), response());
 		Connection conn = null;
+		PreparedStatement newspaper = null, select = null;
+		ResultSet result = null;
 		try {
 			conn = getConnection();
-			PreparedStatement newspaper = conn.prepareStatement("SELECT newspaper FROM assembly.newspapers WHERE region = ? AND disbanded = 0");
+			newspaper = conn.prepareStatement("SELECT newspaper FROM assembly.newspapers WHERE region = ? AND disbanded = 0");
 			newspaper.setString(1, region);
-			ResultSet result = newspaper.executeQuery();
+			result = newspaper.executeQuery();
 			if (!result.next()) {
 				return Results.forbidden();
 			}
+			DbUtils.closeQuietly(result);
+			DbUtils.closeQuietly(newspaper);
 			
-			PreparedStatement select = conn.prepareStatement("SELECT delegate, founder FROM assembly.region WHERE name = ?");
+			select = conn.prepareStatement("SELECT delegate, founder FROM assembly.region WHERE name = ?");
 			select.setString(1, region);
 			result = select.executeQuery();
 			boolean regionAdministrator = true;
@@ -131,11 +146,16 @@ public class NewspaperController extends NationStatesController {
 			if (!regionAdministrator) {
 				return Results.unauthorized();
 			}
+			DbUtils.closeQuietly(result);
+			DbUtils.closeQuietly(select);
 			
 			newspaper = conn.prepareStatement("UPDATE assembly.newspapers SET disbanded = 1 WHERE region = ?");
 			newspaper.setString(1, region);
 			newspaper.executeUpdate();
 		} finally {
+			DbUtils.closeQuietly(result);
+			DbUtils.closeQuietly(select);
+			DbUtils.closeQuietly(newspaper);
 			DbUtils.closeQuietly(conn);
 		}
 		return Results.ok();
@@ -144,11 +164,13 @@ public class NewspaperController extends NationStatesController {
 	public Result findNewspaper(String region) throws SQLException {
 		Map<String, Object> newspaper = new HashMap<String, Object>();
 		Connection conn = null;
+		PreparedStatement articles = null;
+		ResultSet result = null;
 		try {
 			conn = getConnection();
-			PreparedStatement articles = conn.prepareStatement("SELECT newspaper, title FROM assembly.newspapers WHERE disbanded = 0 AND region = ?");
+			articles = conn.prepareStatement("SELECT newspaper, title FROM assembly.newspapers WHERE disbanded = 0 AND region = ?");
 			articles.setString(1, region);
-			ResultSet result = articles.executeQuery();
+			result = articles.executeQuery();
 			if (result.next()) {
 				newspaper.put("newspaper_id", result.getInt(1));
 				newspaper.put("title", result.getString(2));
@@ -157,11 +179,13 @@ public class NewspaperController extends NationStatesController {
 				return Results.notFound();
 			}
 		} finally {
+			DbUtils.closeQuietly(result);
+			DbUtils.closeQuietly(articles);
 			DbUtils.closeQuietly(conn);
 		}
-		Result result = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(newspaper.hashCode()), "15");
-		if (result != null) {
-			return result;
+		Result r = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(newspaper.hashCode()), "15");
+		if (r != null) {
+			return r;
 		}
 		return ok(Json.toJson(newspaper)).as("application/json");
 	}
@@ -169,22 +193,26 @@ public class NewspaperController extends NationStatesController {
 	public Result getLatestUpdate(int id) throws SQLException {
 		Map<String, Object> newspaper = new HashMap<String, Object>();
 		Connection conn = null;
+		PreparedStatement articles = null;
+		ResultSet result = null;
 		try {
 			conn = getConnection();
-			PreparedStatement articles = conn.prepareStatement("SELECT max(articles.timestamp) FROM assembly.articles WHERE newspaper_id = ? AND visible = 1");
+			articles = conn.prepareStatement("SELECT max(articles.timestamp) FROM assembly.articles WHERE newspaper_id = ? AND visible = 1");
 			articles.setInt(1, id);
-			ResultSet result = articles.executeQuery();
+			result = articles.executeQuery();
 			if (result.next()) {
 				newspaper.put("timestamp", result.getLong(1));
 			}
 		} finally {
+			DbUtils.closeQuietly(result);
+			DbUtils.closeQuietly(articles);
 			DbUtils.closeQuietly(conn);
 		}
 		newspaper.put("newspaper_id", id);
 
-		Result result = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(newspaper.hashCode()), "60");
-		if (result != null) {
-			return result;
+		Result r = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(newspaper.hashCode()), "60");
+		if (r != null) {
+			return r;
 		}
 		return ok(Json.toJson(newspaper)).as("application/json");
 	}
@@ -192,12 +220,14 @@ public class NewspaperController extends NationStatesController {
 	public Result getNewspaperDetails(int id) throws SQLException {
 		Map<String, Object> newspaper = new HashMap<String, Object>();
 		Connection conn = null;
+		PreparedStatement select = null, editors = null;
+		ResultSet result = null, set = null;
 		try {
 			conn = getConnection();
 
-			PreparedStatement select = conn.prepareStatement("SELECT title, byline, editor, region FROM assembly.newspapers WHERE newspaper = ? ");
+			select = conn.prepareStatement("SELECT title, byline, editor, region FROM assembly.newspapers WHERE newspaper = ? ");
 			select.setInt(1, id);
-			ResultSet result = select.executeQuery();
+			result = select.executeQuery();
 			if (result.next()) {
 				newspaper.put("newspaper_id", id);
 				newspaper.put("newspaper", result.getString(1));
@@ -205,9 +235,9 @@ public class NewspaperController extends NationStatesController {
 				newspaper.put("editor", result.getString(3));
 				newspaper.put("region", result.getString(4));
 			}
-			PreparedStatement editors = conn.prepareStatement("SELECT n.name, n.full_name FROM assembly.newspaper_editors AS e LEFT OUTER JOIN assembly.nation AS n ON n.id = e.nation_id WHERE newspaper = ?");
+			editors = conn.prepareStatement("SELECT n.name, n.full_name FROM assembly.newspaper_editors AS e LEFT OUTER JOIN assembly.nation AS n ON n.id = e.nation_id WHERE newspaper = ?");
 			editors.setInt(1, id);
-			ResultSet set = editors.executeQuery();
+			set = editors.executeQuery();
 			ArrayList<Map<String, String>> editorNations = new ArrayList<Map<String, String>>();
 			while(set.next()) {
 				Map<String, String> nation = new HashMap<String, String>(2);
@@ -217,13 +247,17 @@ public class NewspaperController extends NationStatesController {
 			}
 			newspaper.put("editors", editorNations);
 		} finally {
+			DbUtils.closeQuietly(result);
+			DbUtils.closeQuietly(set);
+			DbUtils.closeQuietly(select);
+			DbUtils.closeQuietly(editors);
 			DbUtils.closeQuietly(conn);
 		}
 		newspaper.put("newspaper_id", id);
 
-		Result result = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(newspaper.hashCode()), "0");
-		if (result != null) {
-			return result;
+		Result r = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(newspaper.hashCode()), "0");
+		if (r != null) {
+			return r;
 		}
 		return ok(Json.toJson(newspaper)).as("application/json");
 	}
@@ -232,11 +266,13 @@ public class NewspaperController extends NationStatesController {
 		Map<String, Object> newspaper = new HashMap<String, Object>();
 		ArrayList<Map<String, String>> news = new ArrayList<Map<String, String>>();
 		Connection conn = null;
+		PreparedStatement select = null, articles = null;
+		ResultSet result = null;
 		try {
 			conn = getConnection();
-			PreparedStatement select = conn.prepareStatement("SELECT title, byline, editor FROM assembly.newspapers WHERE newspaper = ? ");
+			select = conn.prepareStatement("SELECT title, byline, editor FROM assembly.newspapers WHERE newspaper = ? ");
 			select.setInt(1, id);
-			ResultSet result = select.executeQuery();
+			result = select.executeQuery();
 			if (result.next()) {
 				newspaper.put("newspaper_id", id);
 				newspaper.put("newspaper", result.getString(1));
@@ -246,8 +282,9 @@ public class NewspaperController extends NationStatesController {
 				Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(newspaper.hashCode()), "0");
 				return Results.notFound();
 			}
+			DbUtils.closeQuietly(result);
 
-			PreparedStatement articles = conn.prepareStatement("SELECT article_id, title, articles.timestamp, author, articles.column, articles.order, visible" + (!hideBody ? ", article " : "") + " FROM assembly.articles WHERE visible <> " + Visibility.DELETED.getType() + " AND newspaper_id = ? " + (lookupArticleId != -1 ? " AND article_id = ? " : "") + (visible != -1 ? " AND visible = ?" : ""));
+			articles = conn.prepareStatement("SELECT article_id, title, articles.timestamp, author, articles.column, articles.order, visible" + (!hideBody ? ", article " : "") + " FROM assembly.articles WHERE visible <> " + Visibility.DELETED.getType() + " AND newspaper_id = ? " + (lookupArticleId != -1 ? " AND article_id = ? " : "") + (visible != -1 ? " AND visible = ?" : ""));
 			int index = 1;
 			articles.setInt(index, id);
 			index++;
@@ -276,20 +313,23 @@ public class NewspaperController extends NationStatesController {
 				news.add(article);
 			}
 		} finally {
+			DbUtils.closeQuietly(result);
+			DbUtils.closeQuietly(select);
+			DbUtils.closeQuietly(articles);
 			DbUtils.closeQuietly(conn);
 		}
 		newspaper.put("articles", news);
 		newspaper.put("newspaper_id", id);
 
-		Result result = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(newspaper.hashCode()), "0");
-		if (result != null) {
-			return result;
+		Result r = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(newspaper.hashCode()), "0");
+		if (r != null) {
+			return r;
 		}
 		return ok(Json.toJson(newspaper)).as("application/json");
 	}
 
 	public Result changeEditors(int newspaper) throws SQLException, ExecutionException {
-		Result result = canEditImpl(newspaper);
+		Result result = canEditImpl(newspaper, true, Utils.getPostValue(request(), "nation"));
 		if (result != null) {
 			return result;
 		}
@@ -302,19 +342,27 @@ public class NewspaperController extends NationStatesController {
 			conn = getConnection();
 			
 			String editor = null;
-			PreparedStatement select = conn.prepareStatement("SELECT editor FROM assembly.newspapers WHERE newspaper = ? ");
-			select.setInt(1, newspaper);
-			ResultSet set = select.executeQuery();
-			if (set.next()) {
-				editor = set.getString(1);
-			} else {
-				Utils.handleDefaultPostHeaders(request(), response());
-				return Results.badRequest();
-			}
 			
-			if (!editor.equals(submitter)) {
-				Utils.handleDefaultPostHeaders(request(), response());
-				return Results.unauthorized();
+			PreparedStatement select = null;
+			ResultSet set = null;
+			try {
+				select = conn.prepareStatement("SELECT editor FROM assembly.newspapers WHERE newspaper = ? ");
+				select.setInt(1, newspaper);
+				set = select.executeQuery();
+				if (set.next()) {
+					editor = set.getString(1);
+				} else {
+					Utils.handleDefaultPostHeaders(request(), response());
+					return Results.badRequest();
+				}
+				
+				if (!editor.equals(submitter)) {
+					Utils.handleDefaultPostHeaders(request(), response());
+					return Results.unauthorized();
+				}
+			} finally {
+				DbUtils.closeQuietly(set);
+				DbUtils.closeQuietly(select);
 			}
 			
 			Set<Integer> existingEditors = new HashSet<Integer>();
@@ -324,6 +372,9 @@ public class NewspaperController extends NationStatesController {
 			while(set.next()) {
 				existingEditors.add(set.getInt(1));
 			}
+			
+			DbUtils.closeQuietly(set);
+			DbUtils.closeQuietly(select);
 			
 			Map<String, String> errors = new HashMap<String, String>();
 			conn.setAutoCommit(false);
@@ -338,6 +389,7 @@ public class NewspaperController extends NationStatesController {
 							editors.setInt(1, newspaper);
 							editors.setInt(2, nationId);
 							editors.executeUpdate();
+							DbUtils.closeQuietly(editors);
 						}
 					} else {
 						errors.put("error", "unknown nation: " + nation);
@@ -363,6 +415,7 @@ public class NewspaperController extends NationStatesController {
 							editors.setInt(1, newspaper);
 							editors.setInt(2, nationId);
 							editors.executeUpdate();
+							DbUtils.closeQuietly(editors);
 						}
 					} else {
 						errors.put("error", "unknown nation: " + nation);
@@ -383,18 +436,21 @@ public class NewspaperController extends NationStatesController {
 		return Results.ok();
 	}
 
-	private Result canEditImpl(int newspaper) throws SQLException, ExecutionException {
-		Result result = Utils.validateRequest(request(), response(), getAPI(), getDatabase());
-		if (result != null) {
-			return result;
+	private Result canEditImpl(int newspaper, boolean checkAuth, String nation) throws SQLException, ExecutionException {
+		if (checkAuth) {
+			Result result = Utils.validateRequest(request(), response(), getAPI(), getDatabase());
+			if (result != null) {
+				return result;
+			}
 		}
-		String nation = Utils.getPostValue(request(), "nation");
 		Connection conn = null;
+		PreparedStatement editors = null;
+		ResultSet set = null;
 		try {
 			conn = getConnection();
-			PreparedStatement editors = conn.prepareStatement("SELECT nation_id FROM assembly.newspaper_editors WHERE newspaper = ?");
+			editors = conn.prepareStatement("SELECT nation_id FROM assembly.newspaper_editors WHERE newspaper = ?");
 			editors.setInt(1, newspaper);
-			ResultSet set = editors.executeQuery();
+			set = editors.executeQuery();
 			final int nationId = getDatabase().getNationIdCache().get(Utils.sanitizeName(nation));
 			boolean validEditor = false;
 			while (set.next()) {
@@ -409,17 +465,28 @@ public class NewspaperController extends NationStatesController {
 				return Results.unauthorized();
 			}
 		} finally {
+			DbUtils.closeQuietly(set);
+			DbUtils.closeQuietly(editors);
 			DbUtils.closeQuietly(conn);
 		}
 		return null;
 	}
 
 	public Result canEdit(int newspaper) throws SQLException, ExecutionException {
-		Result result = canEditImpl(newspaper);
+		Result result = canEditImpl(newspaper, true, Utils.getPostValue(request(), "nation"));
 		if (result != null) {
 			return result;
 		}
 		Utils.handleDefaultPostHeaders(request(), response());
+		return Results.ok();
+	}
+
+	public Result isEditor(int newspaper, String nation) throws SQLException, ExecutionException {
+		Result result = canEditImpl(newspaper, false, nation);
+		if (result != null) {
+			return result;
+		}
+		Utils.handleDefaultGetHeaders(request(), response(), null, "60");
 		return Results.ok();
 	}
 
@@ -448,6 +515,8 @@ public class NewspaperController extends NationStatesController {
 					validEditor = true;
 				}
 			}
+			DbUtils.closeQuietly(set);
+			DbUtils.closeQuietly(editors);
 			
 			if (!validEditor) {
 				Utils.handleDefaultPostHeaders(request(), response());
@@ -459,6 +528,7 @@ public class NewspaperController extends NationStatesController {
 			update.setString(2, byline);
 			update.setInt(3, newspaper);
 			update.executeUpdate();
+			DbUtils.closeQuietly(update);
 		} finally {
 			DbUtils.closeQuietly(conn);
 		}
@@ -470,11 +540,13 @@ public class NewspaperController extends NationStatesController {
 		start = Math.max(0, start);
 		List<Map<String, Object>> list = new ArrayList<Map<String, Object>>();
 		Connection conn = null;
+		PreparedStatement articles = null;
+		ResultSet set = null;
 		try {
 			conn = getConnection();
-			PreparedStatement articles = conn.prepareStatement("SELECT newspaper_id, article, title, timestamp, author, newspaper FROM assembly.full_articles WHERE visible = 1 ORDER BY timestamp DESC LIMIT ?, 10");
+			articles = conn.prepareStatement("SELECT newspaper_id, article, title, timestamp, author, newspaper FROM assembly.full_articles WHERE visible = 1 ORDER BY timestamp DESC LIMIT ?, 10");
 			articles.setInt(1, start);
-			ResultSet set = articles.executeQuery();
+			set = articles.executeQuery();
 			while(set.next()) {
 				Map<String, Object> article = new HashMap<String, Object>();
 				article.put("newspaper_id", set.getInt(1));
@@ -486,6 +558,8 @@ public class NewspaperController extends NationStatesController {
 				list.add(article);
 			}
 		} finally {
+			DbUtils.closeQuietly(set);
+			DbUtils.closeQuietly(articles);
 			DbUtils.closeQuietly(conn);
 		}
 		Result result = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(list.hashCode()), "180");
@@ -528,6 +602,9 @@ public class NewspaperController extends NationStatesController {
 				}
 			}
 			
+			DbUtils.closeQuietly(set);
+			DbUtils.closeQuietly(editors);
+			
 			int submitterId = getDatabase().getNationIdCache().get(Utils.sanitizeName(nation));
 			
 			if (!validEditor || submitterId == -1) {
@@ -535,14 +612,20 @@ public class NewspaperController extends NationStatesController {
 					Utils.handleDefaultPostHeaders(request(), response());
 					return Results.unauthorized();
 				} else {
-					PreparedStatement submissions = conn.prepareStatement("SELECT article_id FROM assembly.articles WHERE visible = ? AND newspaper_id = ? AND submitter = ?");
-					submissions.setInt(1, Visibility.SUBMITTED.getType());
-					submissions.setInt(2, newspaper);
-					submissions.setInt(3, submitterId);
-					set = submissions.executeQuery();
-					if (set.next() && set.getInt(1) != articleId) {
-						Utils.handleDefaultPostHeaders(request(), response());
-						return Results.unauthorized();
+					PreparedStatement submissions = null;
+					try {
+						submissions = conn.prepareStatement("SELECT article_id FROM assembly.articles WHERE visible = ? AND newspaper_id = ? AND submitter = ?");
+						submissions.setInt(1, Visibility.SUBMITTED.getType());
+						submissions.setInt(2, newspaper);
+						submissions.setInt(3, submitterId);
+						set = submissions.executeQuery();
+						if (set.next() && set.getInt(1) != articleId) {
+							Utils.handleDefaultPostHeaders(request(), response());
+							return Results.unauthorized();
+						}
+					} finally {
+						DbUtils.closeQuietly(set);
+						DbUtils.closeQuietly(submissions);
 					}
 				}
 			}
@@ -565,6 +648,9 @@ public class NewspaperController extends NationStatesController {
 				ResultSet keys = insert.getGeneratedKeys();
 				keys.next();
 				articleId = keys.getInt(1);
+				
+				DbUtils.closeQuietly(keys);
+				DbUtils.closeQuietly(insert);
 			} else {
 				PreparedStatement prevArticle = conn.prepareStatement("SELECT articles.order, articles.column FROM assembly.articles WHERE visible = ? AND article_id = ?");
 				prevArticle.setInt(1, Visibility.VISIBLE.getType());
@@ -585,6 +671,10 @@ public class NewspaperController extends NationStatesController {
 				insert.setInt(7, Integer.parseInt(visible));
 				insert.setInt(8, articleId);
 				insert.executeUpdate();
+				
+				DbUtils.closeQuietly(set);
+				DbUtils.closeQuietly(prevArticle);
+				DbUtils.closeQuietly(insert);
 			}
 			
 			if (Integer.parseInt(visible) == Visibility.VISIBLE.getType() && prevColumn != Integer.parseInt(column) && prevOrder != Integer.parseInt(order)) {
@@ -597,7 +687,7 @@ public class NewspaperController extends NationStatesController {
 					updateOrder.setInt(3, Visibility.VISIBLE.getType());
 					updateOrder.setInt(4, prevOrder);
 					updateOrder.executeUpdate();
-				
+					DbUtils.closeQuietly(updateOrder);
 				}
 				//Shifted article to a new position in the same column
 				if (prevColumn == Integer.parseInt(column) && prevOrder != Integer.parseInt(order)) {
@@ -610,6 +700,7 @@ public class NewspaperController extends NationStatesController {
 					updateOrder.setInt(5, Integer.parseInt(order));
 					updateOrder.setInt(6, articleId);
 					updateOrder.executeUpdate();
+					DbUtils.closeQuietly(updateOrder);
 				} else {
 					PreparedStatement updateOrder = conn.prepareStatement("UPDATE assembly.articles SET articles.order = articles.order + 1 WHERE newspaper_id = ? AND articles.column = ? AND visible = ? AND articles.order >= ? AND article_id <> ?");
 					//Shift down existing content
@@ -619,6 +710,7 @@ public class NewspaperController extends NationStatesController {
 					updateOrder.setInt(4, Integer.parseInt(order));
 					updateOrder.setInt(5, articleId);
 					updateOrder.executeUpdate();
+					DbUtils.closeQuietly(updateOrder);
 					//Archive older content
 					updateOrder = conn.prepareStatement("UPDATE assembly.articles SET visible = ?, articles.order = 5 WHERE newspaper_id = ? AND articles.column = ? AND visible = ? AND articles.order > 5");
 					updateOrder.setInt(1, Visibility.RETIRED.getType());
@@ -626,6 +718,7 @@ public class NewspaperController extends NationStatesController {
 					updateOrder.setInt(3, Integer.parseInt(column));
 					updateOrder.setInt(4, Visibility.VISIBLE.getType());
 					updateOrder.executeUpdate();
+					DbUtils.closeQuietly(updateOrder);
 				}
 			//Was visible, is not anymore
 			} else if (Integer.parseInt(visible) != Visibility.VISIBLE.getType() && prevColumn != -1 && prevOrder != -1) {
@@ -636,6 +729,7 @@ public class NewspaperController extends NationStatesController {
 				updateOrder.setInt(3, Visibility.VISIBLE.getType());
 				updateOrder.setInt(4, prevOrder);
 				updateOrder.executeUpdate();
+				DbUtils.closeQuietly(updateOrder);
 			}
 
 		} finally {

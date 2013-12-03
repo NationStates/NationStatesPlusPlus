@@ -32,11 +32,13 @@ public class NationController extends NationStatesController {
 			return Results.badRequest();
 		}
 		Connection conn = null;
+		PreparedStatement select = null;
+		ResultSet set = null;
 		try {
 			conn = getConnection();
-			PreparedStatement select = conn.prepareStatement("SELECT settings FROM assembly.ns_settings WHERE id = ?");
+			select = conn.prepareStatement("SELECT settings FROM assembly.ns_settings WHERE id = ?");
 			select.setInt(1, nationId);
-			ResultSet set = select.executeQuery();
+			set = select.executeQuery();
 			if (set.next()) {
 				String json = set.getString(1);
 				if (!set.wasNull()) {
@@ -44,6 +46,8 @@ public class NationController extends NationStatesController {
 				}
 			}
 		} finally {
+			DbUtils.closeQuietly(set);
+			DbUtils.closeQuietly(select);
 			DbUtils.closeQuietly(conn);
 		}
 		return Results.noContent();
@@ -64,11 +68,13 @@ public class NationController extends NationStatesController {
 			return Results.badRequest();
 		}
 		Connection conn = null;
+		PreparedStatement select = null;
+		ResultSet set = null;
 		try {
 			conn = getConnection();
-			PreparedStatement select = conn.prepareStatement("SELECT " + column + " FROM assembly.ns_settings WHERE id = ?");
+			select = conn.prepareStatement("SELECT " + column + " FROM assembly.ns_settings WHERE id = ?");
 			select.setInt(1, nationId);
-			ResultSet set = select.executeQuery();
+			set = select.executeQuery();
 			if (set.next()) {
 				Map<String, Object> json = new HashMap<String, Object>(1);
 				json.put("timestamp", set.getLong(1));
@@ -77,6 +83,8 @@ public class NationController extends NationStatesController {
 				return Results.ok(Json.toJson(json)).as("application/json");
 			}
 		} finally {
+			DbUtils.closeQuietly(set);
+			DbUtils.closeQuietly(select);
 			DbUtils.closeQuietly(conn);
 		}
 		Result r = Utils.handleDefaultGetHeaders(request(), response(), "0000000", "10");
@@ -97,26 +105,32 @@ public class NationController extends NationStatesController {
 			return Results.badRequest();
 		}
 		Connection conn = null;
+		PreparedStatement select = null;
+		ResultSet set = null;
 		try {
 			conn = getConnection();
-			PreparedStatement select = conn.prepareStatement("SELECT last_settings_update FROM assembly.ns_settings WHERE id = ?");
+			select = conn.prepareStatement("SELECT last_settings_update FROM assembly.ns_settings WHERE id = ?");
 			select.setInt(1, nationId);
-			ResultSet set = select.executeQuery();
+			set = select.executeQuery();
 			if (set.next()) {
 				PreparedStatement update = conn.prepareStatement("UPDATE assembly.ns_settings SET settings = ?, last_settings_update = ? WHERE id = ?");
 				update.setString(1, settings);
 				update.setLong(2, System.currentTimeMillis());
 				update.setInt(3, nationId);
 				update.executeUpdate();
+				DbUtils.closeQuietly(update);
 			} else {
 				PreparedStatement insert = conn.prepareStatement("INSERT INTO assembly.ns_settings (id, settings, last_settings_update) VALUES (?, ?, ?)");
 				insert.setInt(1, nationId);
 				insert.setString(2, settings);
 				insert.setLong(3, System.currentTimeMillis());
 				insert.executeUpdate();
+				DbUtils.closeQuietly(insert);
 			}
 			return Results.ok();
 		} finally {
+			DbUtils.closeQuietly(set);
+			DbUtils.closeQuietly(select);
 			DbUtils.closeQuietly(conn);
 		}
 	}
@@ -133,11 +147,13 @@ public class NationController extends NationStatesController {
 			return Results.badRequest();
 		}
 		Connection conn = null;
+		PreparedStatement select = null;
+		ResultSet set = null;
 		try {
 			conn = getConnection();
-			PreparedStatement select = conn.prepareStatement("SELECT data FROM assembly.ns_settings WHERE id = ?");
+			select = conn.prepareStatement("SELECT data FROM assembly.ns_settings WHERE id = ?");
 			select.setInt(1, nationId);
-			ResultSet set = select.executeQuery();
+			set = select.executeQuery();
 			if (set.next()) {
 				String json = set.getString(1);
 				if (!set.wasNull()) {
@@ -145,6 +161,8 @@ public class NationController extends NationStatesController {
 				}
 			}
 		} finally {
+			DbUtils.closeQuietly(set);
+			DbUtils.closeQuietly(select);
 			DbUtils.closeQuietly(conn);
 		}
 		return Results.noContent();
@@ -163,26 +181,32 @@ public class NationController extends NationStatesController {
 			return Results.badRequest();
 		}
 		Connection conn = null;
+		PreparedStatement select = null;
+		ResultSet set = null;
 		try {
 			conn = getConnection();
-			PreparedStatement select = conn.prepareStatement("SELECT last_data_update FROM assembly.ns_settings WHERE id = ?");
+			select = conn.prepareStatement("SELECT last_data_update FROM assembly.ns_settings WHERE id = ?");
 			select.setInt(1, nationId);
-			ResultSet set = select.executeQuery();
+			set = select.executeQuery();
 			if (set.next()) {
 				PreparedStatement update = conn.prepareStatement("UPDATE assembly.ns_settings SET data = ?, last_data_update = ? WHERE id = ?");
 				update.setString(1, data);
 				update.setLong(2, System.currentTimeMillis());
 				update.setInt(3, nationId);
 				update.executeUpdate();
+				DbUtils.closeQuietly(update);
 			} else {
 				PreparedStatement insert = conn.prepareStatement("INSERT INTO assembly.ns_settings (id, data, last_data_update) VALUES (?, ?, ?)");
 				insert.setInt(1, nationId);
 				insert.setString(2, data);
 				insert.setLong(3, System.currentTimeMillis());
 				insert.executeUpdate();
+				DbUtils.closeQuietly(insert);
 			}
 			return Results.ok();
 		} finally {
+			DbUtils.closeQuietly(set);
+			DbUtils.closeQuietly(select);
 			DbUtils.closeQuietly(conn);
 		}
 	}

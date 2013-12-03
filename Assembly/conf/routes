@@ -27,6 +27,7 @@ GET     /newspaper/region/            @controllers.NewspaperController.findNewsp
 GET     /newspaper/lookup/            @controllers.NewspaperController.getNewspaper(id: Integer ?= -1, visible: Integer ?= 1, hideBody: Boolean ?= false, lookupArticleId: Integer ?= -1)
 POST    /newspaper/editors/           @controllers.NewspaperController.changeEditors(newspaper: Integer ?= 0)
 POST    /newspaper/canedit/           @controllers.NewspaperController.canEdit(newspaper: Integer ?= 0)
+GET     /newspaper/editor/            @controllers.NewspaperController.isEditor(newspaper: Integer ?= 0, nation: String ?= "")
 POST    /newspaper/submit/            @controllers.NewspaperController.submitArticle(newspaper: Integer ?= 0, articleId: Integer ?= -1)
 POST    /newspaper/administrate/      @controllers.NewspaperController.administrateNewspaper(newspaper: Integer ?= 0)
 POST    /newspaper/found/             @controllers.NewspaperController.foundNewspaper(region: String ?= "")

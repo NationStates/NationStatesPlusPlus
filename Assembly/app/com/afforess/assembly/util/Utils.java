@@ -130,18 +130,25 @@ public class Utils {
 	}
 
 	public static String formatFullName(String nation, Connection conn, boolean fullName) throws SQLException {
-		PreparedStatement statement = conn.prepareStatement("SELECT full_name, flag, alive, title from assembly.nation WHERE name = ?");
-		statement.setString(1, sanitizeName(nation));
-		ResultSet result = statement.executeQuery();
-		if (result.next()) {
-			//Dead, return just full title
-			if (result.getByte(3) != 1) {
-				return result.getString(1);
-			} else {
-				return "<a href=\"http://www.nationstates.net/nation=" + nation + "\"><img src=\"" + result.getString(2) + "\" class=\"miniflag\" alt=\"\" title=\"" + result.getString(1) + "\">" + (fullName ? result.getString(1) : result.getString(4)) + "</a>";
+		PreparedStatement statement = null;
+		ResultSet result = null;
+		try {
+			statement = conn.prepareStatement("SELECT full_name, flag, alive, title from assembly.nation WHERE name = ?");
+			statement.setString(1, sanitizeName(nation));
+			result = statement.executeQuery();
+			if (result.next()) {
+				//Dead, return just full title
+				if (result.getByte(3) != 1) {
+					return result.getString(1);
+				} else {
+					return "<a href=\"http://www.nationstates.net/nation=" + nation + "\"><img src=\"" + result.getString(2) + "\" class=\"miniflag\" alt=\"\" title=\"" + result.getString(1) + "\">" + (fullName ? result.getString(1) : result.getString(4)) + "</a>";
+				}
 			}
+			return formatNationLink(nation);
+		} finally {
+			DbUtils.closeQuietly(result);
+			DbUtils.closeQuietly(statement);
 		}
-		return formatNationLink(nation);
 	}
 
 	public static String sanitizeName(String name) {
@@ -203,11 +210,12 @@ public class Utils {
 	}
 
 	public static String getPostValue(Http.Request request, String property) {
-		try {
-			return request.body().asFormUrlEncoded().get(property)[0];
-		} catch (Exception e) {
-			return null;
+		Map<String, String[]> post = request.body().asFormUrlEncoded();
+		String[] value = post.get(property);
+		if (value != null && value.length > 0) {
+			return value[0];
 		}
+		return null;
 	}
 
 	public static Result validateRequest(Http.Request request, Http.Response response, NationStates api, DatabaseAccess access) {

@@ -63,6 +63,9 @@ public class RegionController extends NationStatesController {
 					minorData.add(times.getLong(1));
 				}
 			}
+			DbUtils.closeQuietly(times);
+			DbUtils.closeQuietly(updateTime);
+			
 			if (std > 0) {
 				//Check for major update outliers
 				Set<Long> outliers = new HashSet<Long>();
@@ -142,6 +145,8 @@ public class RegionController extends NationStatesController {
 				}
 				Collections.reverse(nations);
 				regionData.put(split[i], nations);
+				DbUtils.closeQuietly(result);
+				DbUtils.closeQuietly(statement);
 			}
 		} finally {
 			DbUtils.closeQuietly(conn);
@@ -189,6 +194,9 @@ public class RegionController extends NationStatesController {
 				population.add(new Population(result.getInt(1), result.getLong(2)));
 			}
 			data.put("region", population);
+			
+			DbUtils.closeQuietly(result);
+			DbUtils.closeQuietly(statement);
 
 			PreparedStatement global = conn.prepareStatement("CALL assembly.first_seen_history(30)");
 			result = global.executeQuery();
@@ -197,6 +205,9 @@ public class RegionController extends NationStatesController {
 				population.add(new Population(result.getInt(1), result.getLong(2)));
 			}
 			data.put("global_growth", population);
+			
+			DbUtils.closeQuietly(result);
+			DbUtils.closeQuietly(global);
 
 			global = conn.prepareStatement("CALL assembly.cte_history(30)");
 			result = global.executeQuery();
@@ -205,11 +216,17 @@ public class RegionController extends NationStatesController {
 				population.add(new Population(result.getInt(1), result.getLong(2)));
 			}
 			data.put("global_cte", population);
+			
+			DbUtils.closeQuietly(result);
+			DbUtils.closeQuietly(global);
 
 			global = conn.prepareStatement("SELECT count(id) FROM assembly.nation WHERE alive = 1;");
 			result = global.executeQuery();
 			result.next();
 			data.put("global_alive", result.getInt(1));
+			
+			DbUtils.closeQuietly(result);
+			DbUtils.closeQuietly(global);
 		} finally {
 			DbUtils.closeQuietly(conn);
 		}
@@ -261,6 +278,10 @@ public class RegionController extends NationStatesController {
 				Logger.info("Attempting to set map for " + region + ", no region found!");
 				regionAdministrator = false;
 			}
+			
+			DbUtils.closeQuietly(result);
+			DbUtils.closeQuietly(select);
+			
 			if (!regionAdministrator) {
 				return Results.unauthorized();
 			}
@@ -269,6 +290,7 @@ public class RegionController extends NationStatesController {
 				PreparedStatement update = conn.prepareStatement("UPDATE assembly.region SET regional_map = NULL, regional_map_preview = NULL WHERE name = ?");
 				update.setString(1, Utils.sanitizeName(region));
 				update.executeUpdate();
+				DbUtils.closeQuietly(update);
 			} else {
 				String mapLink = Utils.getPostValue(request(), "regional_map");
 				String mapPreview = Utils.getPostValue(request(), "regional_map_preview");
@@ -292,6 +314,7 @@ public class RegionController extends NationStatesController {
 				update.setString(2, imgurPreview);
 				update.setString(3, Utils.sanitizeName(region));
 				update.executeUpdate();
+				DbUtils.closeQuietly(update);
 			}
 		} finally {
 			DbUtils.closeQuietly(conn);
@@ -317,6 +340,8 @@ public class RegionController extends NationStatesController {
 					links.put("regional_map_preview", mapPreview);
 				}
 			}
+			DbUtils.closeQuietly(set);
+			DbUtils.closeQuietly(update);
 		} finally {
 			DbUtils.closeQuietly(conn);
 		}
@@ -357,35 +382,6 @@ public class RegionController extends NationStatesController {
 				return Results.unauthorized();
 			}
 			
-			if (disband) {
-				PreparedStatement update = conn.prepareStatement("UPDATE assembly.region SET regional_map = NULL, regional_map_preview = NULL WHERE name = ?");
-				update.setString(1, Utils.sanitizeName(region));
-				update.executeUpdate();
-			} else {
-				String mapLink = Utils.sanitizeName(Utils.getPostValue(request(), "regional_map"));
-				String mapPreview = Utils.sanitizeName(Utils.getPostValue(request(), "regional_map_preview"));
-				if (mapPreview == null) {
-					return Results.badRequest("missing map preview");
-				}
-				if (mapLink == null) {
-					return Results.badRequest("missing map link");
-				}
-				String imgurPreview = (mapPreview.contains("imgur") ? mapPreview : null);
-				try {
-					if (imgurPreview == null)
-						imgurPreview = Utils.uploadToImgur(mapPreview, imgurClientKey);
-				} catch (Exception e) {
-					Logger.warn("Unable to upload image to imgur for regional map [" + mapPreview + "]", e);
-				}
-				if (imgurPreview == null) {
-					return Results.badRequest("invalid map preview");
-				}
-				PreparedStatement update = conn.prepareStatement("UPDATE assembly.region SET regional_map = ?, regional_map_preview = ? WHERE name = ?");
-				update.setString(1, mapLink);
-				update.setString(2, imgurPreview);
-				update.setString(3, Utils.sanitizeName(region));
-				update.executeUpdate();
-			}
 		} finally {
 			DbUtils.closeQuietly(conn);
 		}
@@ -393,30 +389,7 @@ public class RegionController extends NationStatesController {
 	}
 
 	public Result getRegionalDelegateTitle(String region) throws SQLException, ExecutionException {
-		Map<String, String> links = new HashMap<String, String>(3);
-		Connection conn = null;
-		try {
-			conn = getConnection();
-			PreparedStatement update = conn.prepareStatement("SELECT regional_map, regional_map_preview FROM assembly.region WHERE name = ?");
-			update.setString(1, Utils.sanitizeName(region));
-			ResultSet set = update.executeQuery();
-			if (set.next()) {
-				String mapLink = set.getString(1);
-				if (!set.wasNull()) {
-					links.put("regional_map", mapLink);
-				}
-				String mapPreview = set.getString(2);
-				if (!set.wasNull()) {
-					links.put("regional_map_preview", mapPreview);
-				}
-			}
-		} finally {
-			DbUtils.closeQuietly(conn);
-		}
-		Result result = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(links.hashCode()), "60");
-		if (result != null) {
-			return result;
-		}
-		return Results.ok(Json.toJson(links)).as("application/json");
+		
+		return Results.ok(Json.toJson("")).as("application/json");
 	}
 }

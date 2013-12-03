@@ -46,6 +46,7 @@ public class RMBController extends NationStatesController {
 				delete.setInt(1, getDatabase().getNationIdCache().get(nation));
 				delete.setInt(2, rmbPost);
 				delete.executeUpdate();
+				DbUtils.closeQuietly(delete);
 			} else {
 				PreparedStatement update = conn.prepareStatement("UPDATE assembly.rmb_post_ratings SET rating_type = ? WHERE nation = ? AND rmb_post = ?");
 				update.setInt(1, rating);
@@ -57,11 +58,14 @@ public class RMBController extends NationStatesController {
 					insert.setInt(2, rating);
 					insert.setInt(3, rmbPost);
 					insert.executeUpdate();
+					DbUtils.closeQuietly(insert);
 				}
+				DbUtils.closeQuietly(update);
 			}
 			PreparedStatement update = conn.prepareStatement("UPDATE assembly.region SET rmb_cache = rmb_cache + 1 WHERE id = (SELECT region FROM assembly.nation WHERE nation.id = ?)");
 			update.setInt(1, getDatabase().getNationIdCache().get(nation));
 			update.executeUpdate();
+			DbUtils.closeQuietly(update);
 		} finally {
 			DbUtils.closeQuietly(conn);
 		}
@@ -82,6 +86,8 @@ public class RMBController extends NationStatesController {
 				ratings.put("type", String.valueOf(result.getInt(2)));
 				list.add(ratings);
 			}
+			DbUtils.closeQuietly(result);
+			DbUtils.closeQuietly(select);
 		} finally {
 			DbUtils.closeQuietly(conn);
 		}
@@ -102,6 +108,8 @@ public class RMBController extends NationStatesController {
 			while(result.next()) {
 				cache.put("rmb_cache", result.getInt(1));
 			}
+			DbUtils.closeQuietly(result);
+			DbUtils.closeQuietly(select);
 		} finally {
 			DbUtils.closeQuietly(conn);
 		}
@@ -124,6 +132,8 @@ public class RMBController extends NationStatesController {
 			} else {
 				comments.put("comments", 0);
 			}
+			DbUtils.closeQuietly(result);
+			DbUtils.closeQuietly(select);
 		} finally {
 			DbUtils.closeQuietly(conn);
 		}
@@ -144,6 +154,8 @@ public class RMBController extends NationStatesController {
 			while(result.next()) {
 				list.add(new RMBComment(result.getInt(1), result.getLong(2), result.getString(3), getDatabase().getReverseIdCache().get(result.getInt(4)), result.getInt(5), result.getInt(6)));
 			}
+			DbUtils.closeQuietly(result);
+			DbUtils.closeQuietly(select);
 		} finally {
 			DbUtils.closeQuietly(conn);
 		}
@@ -197,13 +209,20 @@ public class RMBController extends NationStatesController {
 	}
 
 	private int getRMBCommentNation(Connection conn, int commentId) throws SQLException {
-		PreparedStatement select = conn.prepareStatement("SELECT nation_id FROM assembly.rmb_comments WHERE id = ?");
-		select.setInt(1, commentId);
-		ResultSet result = select.executeQuery();
-		if (result.next()) {
-			return result.getInt(1);
+		PreparedStatement select = null;
+		ResultSet result = null;
+		try {
+			select = conn.prepareStatement("SELECT nation_id FROM assembly.rmb_comments WHERE id = ?");
+			select.setInt(1, commentId);
+			result = select.executeQuery();
+			if (result.next()) {
+				return result.getInt(1);
+			}
+			return -1;
+		} finally {
+			DbUtils.closeQuietly(result);
+			DbUtils.closeQuietly(select);
 		}
-		return -1;
 	}
 
 	public Result flagComment(int commentId, boolean flag) throws SQLException, ExecutionException {
@@ -231,6 +250,7 @@ public class RMBController extends NationStatesController {
 				update.setByte(2, (byte) (flag ? 0 : liked));
 				update.setInt(3, id);
 				update.executeUpdate();
+				DbUtils.closeQuietly(update);
 			} else {
 				PreparedStatement update = conn.prepareStatement("INSERT INTO assembly.rmb_comment_actions (rmb_comment_id, nation_id, flag, like) VALUES (?, ?, ?, )");
 				update.setInt(1, commentId);
@@ -238,6 +258,7 @@ public class RMBController extends NationStatesController {
 				update.setByte(3, (byte) 1);
 				update.setByte(4, (byte) 0);
 				update.executeUpdate();
+				DbUtils.closeQuietly(update);
 			}
 			DbUtils.closeQuietly(result);
 			DbUtils.closeQuietly(select);
@@ -273,6 +294,7 @@ public class RMBController extends NationStatesController {
 				update.setByte(2, (byte) (like ? 1 : 0));
 				update.setInt(3, id);
 				update.executeUpdate();
+				DbUtils.closeQuietly(update);
 			} else {
 				PreparedStatement update = conn.prepareStatement("INSERT INTO assembly.rmb_comment_actions (rmb_comment_id, nation_id, flag, like) VALUES (?, ?, ?, )");
 				update.setInt(1, commentId);
@@ -280,6 +302,7 @@ public class RMBController extends NationStatesController {
 				update.setByte(3, (byte) 0);
 				update.setByte(4, (byte) 1);
 				update.executeUpdate();
+				DbUtils.closeQuietly(update);
 			}
 			DbUtils.closeQuietly(result);
 			DbUtils.closeQuietly(select);
@@ -321,6 +344,7 @@ public class RMBController extends NationStatesController {
 			insert.setLong(2, System.currentTimeMillis());
 			insert.setString(3, comment);
 			insert.setInt(4, nationId);
+			DbUtils.closeQuietly(insert);
 		} finally {
 			DbUtils.closeQuietly(conn);
 		}

@@ -42,6 +42,8 @@ public class WorldAssemblyController extends DatabaseController {
 				values.put("influence_desc", result.getString(3));
 				json.put(nation, values);
 			}
+			DbUtils.closeQuietly(result);
+			DbUtils.closeQuietly(statement);
 		} finally {
 			DbUtils.closeQuietly(conn);
 		}
@@ -65,6 +67,8 @@ public class WorldAssemblyController extends DatabaseController {
 				String title = result.getString(1);
 				nations.add(title);
 			}
+			DbUtils.closeQuietly(result);
+			DbUtils.closeQuietly(statement);
 		} finally {
 			DbUtils.closeQuietly(conn);
 		}
@@ -89,6 +93,9 @@ public class WorldAssemblyController extends DatabaseController {
 			while(result.next()) {
 				endorsements.add(result.getInt(1));
 			}
+			DbUtils.closeQuietly(result);
+			DbUtils.closeQuietly(statement);
+			
 			statement = conn.prepareStatement("SELECT id, title FROM assembly.nation WHERE alive = 1 AND wa_member = 1 AND region = (SELECT region FROM assembly.nation WHERE id = ?)");
 			statement.setInt(1, nationId);
 			result = statement.executeQuery();
@@ -97,6 +104,8 @@ public class WorldAssemblyController extends DatabaseController {
 					nations.add(result.getString(2));
 				}
 			}
+			DbUtils.closeQuietly(result);
+			DbUtils.closeQuietly(statement);
 		} finally {
 			DbUtils.closeQuietly(conn);
 		}
@@ -121,6 +130,9 @@ public class WorldAssemblyController extends DatabaseController {
 			while(result.next()) {
 				endorsements.add(result.getInt(1));
 			}
+			DbUtils.closeQuietly(result);
+			DbUtils.closeQuietly(statement);
+			
 			statement = conn.prepareStatement("SELECT id, title FROM assembly.nation WHERE alive = 1 AND wa_member = 1 AND region = (SELECT region FROM assembly.nation WHERE id = ?)");
 			statement.setInt(1, nationId);
 			result = statement.executeQuery();
@@ -129,6 +141,8 @@ public class WorldAssemblyController extends DatabaseController {
 					nations.add(result.getString(2));
 				}
 			}
+			DbUtils.closeQuietly(result);
+			DbUtils.closeQuietly(statement);
 		} finally {
 			DbUtils.closeQuietly(conn);
 		}

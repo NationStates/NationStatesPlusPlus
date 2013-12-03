@@ -50,6 +50,9 @@ public class RecruitmentController extends NationStatesController {
 				nationData.add(nation);
 			}
 			nations.put("nations", nationData);
+			
+			DbUtils.closeQuietly(set);
+			DbUtils.closeQuietly(select);
 		} finally {
 			DbUtils.closeQuietly(conn);
 		}
@@ -98,44 +101,58 @@ public class RecruitmentController extends NationStatesController {
 		Utils.handleDefaultPostHeaders(request(), response());
 		String nation = Utils.sanitizeName(Utils.getPostValue(request(), "nation"));
 		Connection conn = null;
+		PreparedStatement recruitment = null;
+		ResultSet data = null;
 		try {
 			conn = getConnection();
 			int regionId = getRecruitmentAdministrator(conn, nation, region);
 			if (regionId != -1) {
-				PreparedStatement recruitment = conn.prepareStatement("SELECT (SELECT count(*) FROM assembly.recruitment_success WHERE recruiting_region = ? AND tgid = ? AND recruiting_region = nation_region) AS success, (SELECT count(*) FROM assembly.recruitment_success WHERE recruiting_region = ? AND tgid = ?) AS total");
+				recruitment = conn.prepareStatement("SELECT (SELECT count(*) FROM assembly.recruitment_success WHERE recruiting_region = ? AND tgid = ? AND recruiting_region = nation_region) AS success, (SELECT count(*) FROM assembly.recruitment_success WHERE recruiting_region = ? AND tgid = ?) AS total");
 				recruitment.setInt(1, regionId);
 				recruitment.setString(2, tgid);
 				recruitment.setInt(3, regionId);
 				recruitment.setString(4, tgid);
-				ResultSet data = recruitment.executeQuery();
+				data = recruitment.executeQuery();
 				data.next();
 				return Results.ok("{\"tgid\": \"" + tgid + "\", \"sent_telegrams\":" + data.getInt(2) + ", \"successful_telegrams\": " + data.getInt(1) + "}").as("application/json");
 			}
 			return Results.forbidden("Invalid nation - must be founder or delegate");
 		} finally {
+			DbUtils.closeQuietly(data);
+			DbUtils.closeQuietly(recruitment);
 			DbUtils.closeQuietly(conn);
 		}
 	}
 
 	private int getRecruitmentAdministrator(Connection conn, String nation, String region) throws SQLException, ExecutionException {
-		PreparedStatement select = conn.prepareStatement("SELECT id, delegate, founder FROM assembly.region WHERE name = ?");
-		select.setString(1, Utils.sanitizeName(region));
-		ResultSet set = select.executeQuery();
-		int regionId = -1;
-		if (set.next()) {
-			regionId = set.getInt(1);
-			if (nation.equals(set.getString(2)) || nation.equals(set.getString(3))) {
+		PreparedStatement select = null, officers = null;
+		ResultSet set = null;
+		try {
+			select = conn.prepareStatement("SELECT id, delegate, founder FROM assembly.region WHERE name = ?");
+			select.setString(1, Utils.sanitizeName(region));
+			set = select.executeQuery();
+			int regionId = -1;
+			if (set.next()) {
+				regionId = set.getInt(1);
+				if (nation.equals(set.getString(2)) || nation.equals(set.getString(3))) {
+					return regionId;
+				}
+			}
+			DbUtils.closeQuietly(set);
+			
+			officers = conn.prepareStatement("SELECT nation FROM assembly.recruitment_officers WHERE region = ? AND nation = ?");
+			officers.setInt(1, regionId);
+			officers.setInt(2, getDatabase().getNationIdCache().get(nation));
+			set = officers.executeQuery();
+			if (set.next()) {
 				return regionId;
 			}
+			return -1;
+		} finally {
+			DbUtils.closeQuietly(set);
+			DbUtils.closeQuietly(select);
+			DbUtils.closeQuietly(officers);
 		}
-		PreparedStatement officers = conn.prepareStatement("SELECT nation FROM assembly.recruitment_officers WHERE region = ? AND nation = ?");
-		officers.setInt(1, regionId);
-		officers.setInt(2, getDatabase().getNationIdCache().get(nation));
-		set = officers.executeQuery();
-		if (set.next()) {
-			return regionId;
-		}
-		return -1;
 	}
 
 	public Result updateRecruitmentStrategies(String region) throws SQLException, ExecutionException {
@@ -184,10 +201,12 @@ public class RecruitmentController extends NationStatesController {
 					insert.setByte(9, (byte)(avoidFull ? 1 : 0));
 					insert.setByte(10, (byte)(randomize ? 1 : 0));
 					insert.executeUpdate();
+					DbUtils.closeQuietly(insert);
 				} else if (cancel != null) {
 					PreparedStatement delete = conn.prepareStatement("DELETE FROM assembly.recruitment WHERE id = ?");
 					delete.setInt(1, Integer.parseInt(id));
 					delete.executeUpdate();
+					DbUtils.closeQuietly(delete);
 				} else {
 					final Integer percent = Integer.parseInt(Utils.getPostValue(request(), "percent"));
 					final RecruitmentType type = RecruitmentType.getById(Integer.parseInt(Utils.getPostValue(request(), "type")));

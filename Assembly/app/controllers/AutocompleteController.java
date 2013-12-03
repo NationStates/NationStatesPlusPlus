@@ -41,6 +41,8 @@ public class AutocompleteController extends DatabaseController {
 			while(result.next()) {
 				nations.add(WordUtils.capitalizeFully(result.getString(1).replaceAll("_", " ")));
 			}
+			DbUtils.closeQuietly(result);
+			DbUtils.closeQuietly(select);
 		} finally {
 			DbUtils.closeQuietly(conn);
 		}
@@ -68,7 +70,8 @@ public class AutocompleteController extends DatabaseController {
 			if (result.next()) {
 				json.put(nation, result.getString(1));
 			}
-			
+			DbUtils.closeQuietly(result);
+			DbUtils.closeQuietly(select);
 		} finally {
 			DbUtils.closeQuietly(conn);
 		}
