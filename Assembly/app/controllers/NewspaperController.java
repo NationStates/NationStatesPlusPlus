@@ -340,35 +340,16 @@ public class NewspaperController extends NationStatesController {
 		Connection conn = null;
 		try {
 			conn = getConnection();
-			
-			String editor = null;
-			
-			PreparedStatement select = null;
-			ResultSet set = null;
-			try {
-				select = conn.prepareStatement("SELECT editor FROM assembly.newspapers WHERE newspaper = ? ");
-				select.setInt(1, newspaper);
-				set = select.executeQuery();
-				if (set.next()) {
-					editor = set.getString(1);
-				} else {
-					Utils.handleDefaultPostHeaders(request(), response());
-					return Results.badRequest();
-				}
-				
-				if (!editor.equals(submitter)) {
-					Utils.handleDefaultPostHeaders(request(), response());
-					return Results.unauthorized();
-				}
-			} finally {
-				DbUtils.closeQuietly(set);
-				DbUtils.closeQuietly(select);
+
+			if (!isEditorInChief(newspaper, submitter, conn)) {
+				Utils.handleDefaultPostHeaders(request(), response());
+				return Results.unauthorized();
 			}
-			
+
 			Set<Integer> existingEditors = new HashSet<Integer>();
-			select = conn.prepareStatement("SELECT nation_id FROM assembly.newspaper_editors WHERE newspaper = ?");
+			PreparedStatement select = conn.prepareStatement("SELECT nation_id FROM assembly.newspaper_editors WHERE newspaper = ?");
 			select.setInt(1, newspaper);
-			set = select.executeQuery();
+			ResultSet set = select.executeQuery();
 			while(set.next()) {
 				existingEditors.add(set.getInt(1));
 			}
@@ -402,7 +383,7 @@ public class NewspaperController extends NationStatesController {
 			if (remove != null) {
 				for (String nation : remove.split(",")) {
 					final String format = Utils.sanitizeName(nation);
-					if (format.equals(editor)) {
+					if (format.equals(submitter)) {
 						errors.put("error", "Cannot remove Editor-in-Chief");
 						conn.rollback(save);
 						Utils.handleDefaultPostHeaders(request(), response());
@@ -436,6 +417,23 @@ public class NewspaperController extends NationStatesController {
 		return Results.ok();
 	}
 
+	private boolean isEditorInChief(int newspaper, String nation, Connection conn) throws SQLException {
+		PreparedStatement select = null;
+		ResultSet set = null;
+		try {
+			select = conn.prepareStatement("SELECT editor FROM assembly.newspapers WHERE newspaper = ? ");
+			select.setInt(1, newspaper);
+			set = select.executeQuery();
+			if (set.next()) {
+				return set.getString(1).equals(nation);
+			}
+			return false;
+		} finally {
+			DbUtils.closeQuietly(set);
+			DbUtils.closeQuietly(select);
+		}
+	}
+
 	private Result canEditImpl(int newspaper, boolean checkAuth, String nation) throws SQLException, ExecutionException {
 		if (checkAuth) {
 			Result result = Utils.validateRequest(request(), response(), getAPI(), getDatabase());
@@ -448,21 +446,23 @@ public class NewspaperController extends NationStatesController {
 		ResultSet set = null;
 		try {
 			conn = getConnection();
-			editors = conn.prepareStatement("SELECT nation_id FROM assembly.newspaper_editors WHERE newspaper = ?");
-			editors.setInt(1, newspaper);
-			set = editors.executeQuery();
-			final int nationId = getDatabase().getNationIdCache().get(Utils.sanitizeName(nation));
-			boolean validEditor = false;
-			while (set.next()) {
-				if (set.getInt(1) == nationId) {
-					validEditor = true;
-					break;
+			if (!isEditorInChief(newspaper, nation, conn)) {
+				editors = conn.prepareStatement("SELECT nation_id FROM assembly.newspaper_editors WHERE newspaper = ?");
+				editors.setInt(1, newspaper);
+				set = editors.executeQuery();
+				final int nationId = getDatabase().getNationIdCache().get(Utils.sanitizeName(nation));
+				boolean validEditor = false;
+				while (set.next()) {
+					if (set.getInt(1) == nationId) {
+						validEditor = true;
+						break;
+					}
 				}
-			}
-			
-			if (!validEditor) {
-				Utils.handleDefaultPostHeaders(request(), response());
-				return Results.unauthorized();
+				
+				if (!validEditor) {
+					Utils.handleDefaultPostHeaders(request(), response());
+					return Results.unauthorized();
+				}
 			}
 		} finally {
 			DbUtils.closeQuietly(set);
@@ -505,24 +505,12 @@ public class NewspaperController extends NationStatesController {
 		Connection conn = null;
 		try {
 			conn = getConnection();
-			
-			PreparedStatement editors = conn.prepareStatement("SELECT editor FROM assembly.newspapers WHERE newspaper = ?");
-			editors.setInt(1, newspaper);
-			ResultSet set = editors.executeQuery();
-			boolean validEditor = false;
-			if (set.next()) {
-				if (set.getString(1).equals(nation)) {
-					validEditor = true;
-				}
-			}
-			DbUtils.closeQuietly(set);
-			DbUtils.closeQuietly(editors);
-			
-			if (!validEditor) {
+
+			if (!isEditorInChief(newspaper, nation, conn)) {
 				Utils.handleDefaultPostHeaders(request(), response());
 				return Results.unauthorized();
 			}
-			
+
 			PreparedStatement update = conn.prepareStatement("UPDATE assembly.newspapers SET title = ?, byline = ? WHERE newspaper = ?");
 			update.setString(1, title);
 			update.setString(2, byline);
@@ -590,29 +578,33 @@ public class NewspaperController extends NationStatesController {
 		try {
 			conn = getConnection();
 			
-			PreparedStatement editors = conn.prepareStatement("SELECT nation_id FROM assembly.newspaper_editors WHERE newspaper = ?");
-			editors.setInt(1, newspaper);
-			ResultSet set = editors.executeQuery();
-			final int nationId = getDatabase().getNationIdCache().get(Utils.sanitizeName(nation));
 			boolean validEditor = false;
-			while (set.next()) {
-				if (set.getInt(1) == nationId) {
-					validEditor = true;
-					break;
+			if (!isEditorInChief(newspaper, nation, conn)) {
+				PreparedStatement editors = conn.prepareStatement("SELECT nation_id FROM assembly.newspaper_editors WHERE newspaper = ?");
+				editors.setInt(1, newspaper);
+				ResultSet set = editors.executeQuery();
+				final int nationId = getDatabase().getNationIdCache().get(Utils.sanitizeName(nation));
+				
+				while (set.next()) {
+					if (set.getInt(1) == nationId) {
+						validEditor = true;
+						break;
+					}
 				}
+				DbUtils.closeQuietly(set);
+				DbUtils.closeQuietly(editors);
+			} else {
+				validEditor = true;
 			}
-			
-			DbUtils.closeQuietly(set);
-			DbUtils.closeQuietly(editors);
-			
+
 			int submitterId = getDatabase().getNationIdCache().get(Utils.sanitizeName(nation));
-			
 			if (!validEditor || submitterId == -1) {
 				if (Integer.parseInt(visible) != Visibility.SUBMITTED.getType()) {
 					Utils.handleDefaultPostHeaders(request(), response());
 					return Results.unauthorized();
 				} else {
 					PreparedStatement submissions = null;
+					ResultSet set = null;
 					try {
 						submissions = conn.prepareStatement("SELECT article_id FROM assembly.articles WHERE visible = ? AND newspaper_id = ? AND submitter = ?");
 						submissions.setInt(1, Visibility.SUBMITTED.getType());
@@ -655,7 +647,7 @@ public class NewspaperController extends NationStatesController {
 				PreparedStatement prevArticle = conn.prepareStatement("SELECT articles.order, articles.column FROM assembly.articles WHERE visible = ? AND article_id = ?");
 				prevArticle.setInt(1, Visibility.VISIBLE.getType());
 				prevArticle.setInt(2, articleId);
-				set = prevArticle.executeQuery();
+				ResultSet set = prevArticle.executeQuery();
 				if (set.next()) {
 					prevOrder = set.getInt(1);
 					prevColumn = set.getInt(2);
