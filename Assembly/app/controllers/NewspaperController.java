@@ -210,7 +210,7 @@ public class NewspaperController extends NationStatesController {
 		}
 		newspaper.put("newspaper_id", id);
 
-		Result r = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(newspaper.hashCode()), "60");
+		Result r = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(newspaper.hashCode()), "300");
 		if (r != null) {
 			return r;
 		}

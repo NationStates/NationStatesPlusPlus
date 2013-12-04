@@ -1,10 +1,6 @@
 package com.afforess.assembly;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.Proxy;
-import java.net.URL;
-import java.net.URLConnection;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -16,7 +12,6 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 import org.apache.commons.dbutils.DbUtils;
-import org.apache.commons.io.IOUtils;
 import org.joda.time.Duration;
 
 import play.Logger;
@@ -24,6 +19,7 @@ import play.Logger;
 import com.afforess.assembly.model.RecruitmentAction;
 import com.afforess.assembly.model.RecruitmentType;
 import com.afforess.assembly.util.DatabaseAccess;
+import com.limewoodMedia.nsapi.NationStates;
 
 public class RecruitmentTask implements Runnable {
 	private static final String[] FEEDER_REGIONS = {"the_north_pacific", "the_pacific", "the_east_pacific", "the_west_pacific", "the_south_pacific", "the_rejected_realms", "lazarus", "osiris", "balder"};
@@ -36,8 +32,14 @@ public class RecruitmentTask implements Runnable {
 		}
 	}
 	private final DatabaseAccess access;
+	private final NationStates telegramAPI = new NationStates();
 	public RecruitmentTask(DatabaseAccess access) {
 		this.access = access;
+		telegramAPI.setRateLimit(40);
+		telegramAPI.setUserAgent("-- NationStates++ Recruitment Server --");
+		telegramAPI.setRelaxed(true);
+		telegramAPI.setProxyIP("162.243.18.166");
+		telegramAPI.setProxyPort(3128);
 	}
 
 	@Override
@@ -49,7 +51,7 @@ public class RecruitmentTask implements Runnable {
 		}
 	}
 
-	public void runImpl() throws SQLException, IOException {
+	public void runImpl() throws SQLException {
 		Connection conn = null;
 		try {
 			Random rand = new Random();
@@ -58,9 +60,11 @@ public class RecruitmentTask implements Runnable {
 			List<RecruitmentAction> actions = RecruitmentAction.getAllActions(conn);
 			for (RecruitmentAction action : actions) {
 				if (action.error != 1 && action.lastAction < System.currentTimeMillis() && !completedRegions.contains(action.region) && rand.nextInt(100) < action.percent) {
-					Object[] nation = findTargetNation(action, conn);
-					if (nation != null) {
-						doRecruitment(action, completedRegions, nation, conn);
+					if (telegramAPI.getRateLimitRemaining() > 1) {
+						Object[] nation = findTargetNation(action, conn);
+						if (nation != null) {
+							doRecruitment(action, completedRegions, nation, conn);
+						}
 					}
 				}
 			}
@@ -69,13 +73,17 @@ public class RecruitmentTask implements Runnable {
 		}
 	}
 
-	private void doRecruitment(RecruitmentAction action, Set<Integer> completedRegions, Object[] nation, Connection conn) throws SQLException, IOException {
+	private void doRecruitment(RecruitmentAction action, Set<Integer> completedRegions, Object[] nation, Connection conn) throws SQLException {
 		PreparedStatement update = null;
 		try {
-			if (sendTelegram(action, (String)nation[0]) != null) {
+			if (telegramAPI.sendTelegram(action.clientKey, action.secretKey, action.tgid, (String)nation[0]) != null) {
 				completedRegions.add(action.region);
-				List<RecruitmentAction> regionTgs = RecruitmentAction.getActions(action.region, conn);
 				final long lastAction = System.currentTimeMillis() + Duration.standardSeconds(180).getMillis();
+				action.error = 0;
+				action.lastAction = lastAction;
+				action.update(conn);
+
+				List<RecruitmentAction> regionTgs = RecruitmentAction.getActions(action.region, conn);
 				for (RecruitmentAction telegram : regionTgs) {
 					telegram.lastAction = lastAction;
 					telegram.update(conn);
@@ -87,19 +95,24 @@ public class RecruitmentTask implements Runnable {
 				update.setString(3, action.tgid);
 				update.executeUpdate();
 			}
-		} catch (IOException io) {
-			if (io.getMessage().toLowerCase().contains("http response code: 429")) {
-				action.lastAction = System.currentTimeMillis() + Duration.standardMinutes(15).getMillis();
-				action.error = 2; //rate limited
-				action.update(conn);
-			} else if (io.getMessage().toLowerCase().contains("http response code: 403")) {
-				action.error = 1; //invalid telegram or client key
-				action.update(conn);
-			} else if (io.getMessage().toLowerCase().contains("http response code: 400")) {
-				action.error = 1; //invalid telegram or client key
-				action.update(conn);
+		} catch (RuntimeException e) {
+			if (e.getCause() instanceof IOException) {
+				IOException io = (IOException)e.getCause();
+				if (io.getMessage().toLowerCase().contains("http response code: 429")) {
+					action.lastAction = System.currentTimeMillis() + Duration.standardMinutes(15).getMillis();
+					action.error = 2; //rate limited
+					action.update(conn);
+				} else if (io.getMessage().toLowerCase().contains("http response code: 403")) {
+					action.error = 1; //invalid telegram or client key
+					action.update(conn);
+				} else if (io.getMessage().toLowerCase().contains("http response code: 400")) {
+					action.error = 1; //invalid telegram or client key
+					action.update(conn);
+				} else {
+					throw e;
+				}
 			} else {
-				throw io;
+				throw e;
 			}
 		} finally {
 			DbUtils.closeQuietly(update);
@@ -197,15 +210,5 @@ loop:		while(result.next()) {
 			DbUtils.closeQuietly(sent);
 			DbUtils.closeQuietly(sentTgs);
 		}
-	}
-
-	private String sendTelegram(RecruitmentAction action, String nation) throws IOException {
-		//TODO: move to config
-		Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress("162.243.18.166", 3128));
-		URL url = new URL("http://www.nationstates.net/cgi-bin/api.cgi?a=sendTG&client=" + action.clientKey + "&tgid=" + action.tgid + "&key=" + action.secretKey + "&to=" + nation);
-		URLConnection connection = url.openConnection(proxy);
-		connection.setRequestProperty("user-agent", "-- NationStates++ Recruitment Server --");
-		connection.connect();
-		return IOUtils.readLines(connection.getInputStream()).get(0);
 	}
 }

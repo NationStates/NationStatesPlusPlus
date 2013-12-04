@@ -185,6 +185,8 @@
 					html += "<div><b>Successful Telegrams</b>: <span name='success_tgs_" + data[i].tgid + "'></span></div>";
 					if (data[i].error == 1) {
 						html += "<div><p class='error'>Error sending recruitment telegrams. Check client key, telegram id, secret key, and try again! Contact <a href='/nation=shadow_afforess'>Afforess</a> if errors persist.<p></div>";
+					} else if (data[i].error == 2) {
+						html += "<div><p class='error'>Error sending recruitment telegrams. Your Client Key has been rate limited. Ensure no other programs or scripts are using this client key. Wait 15 minutes. Contact <a href='/nation=shadow_afforess'>Afforess</a> if errors persist.<p></div>";
 					}
 					html += "<button class='button' name='cancel_recruitment' id='" + data[i].id + "'>Cancel Recruitment</button>";
 					html += "<button class='button' name='edit_recruitment' id='" + data[i].id + "'>Edit Recruitment</button>";
