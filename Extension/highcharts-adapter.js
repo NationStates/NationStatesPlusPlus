@@ -175,7 +175,7 @@ update(1);
 					});
 				}
 			}
-			setTimeout(function() { $("#snark").remove(); container.appendTo($("#" + (showInfluence ? 'influence' : 'power')));}, 2000);
+			setTimeout(function() { $("#snark").remove(); container.appendTo($("#" + (showInfluence ? 'influence' : 'power')));}, 1000);
 		});
 	}
 

@@ -53,6 +53,7 @@
 				<string>js/nspp.js</string>
 				<string>js/activity.js</string>
 				<string>js/history.js</string>
+				<string>js/world.js</string>
 			</array>
 		</dict>
 		<key>Stylesheets</key>

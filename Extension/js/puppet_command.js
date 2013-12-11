@@ -4,9 +4,10 @@
 		$("#content").append("<div id='settings'></div>");
 		$.get("http://nationstatesplusplus.net/nationstates/v2_1/puppet_creation.html", function(html) {
 			$("#settings").html(html);
+			$("#settings").find("input").removeAttr("required");
 			$("#random_name").on("click", function(event) {
 				event.preventDefault();
-				$("#puppet_name").val(getRandomName(4 + Math.floor(Math.random() * 36)));
+				$("#puppet_name").val(getRandomName(Math.floor(Math.random() * 12) + 6).toTitleCase());
 			});
 		});
 	}
@@ -50,7 +51,7 @@
 	function generateRandomWord(maxLength) {
 		var str = "";
 		var nextLetter;
-		var length = Math.max(4, Math.floor((Math.random() * maxLength)));
+		var length = Math.max(7, maxLength);
 		for (var i = 0; i < length; i += 1) {
 			var r = Math.floor((Math.random() * 1000));
 			if (r < 381) {
@@ -67,59 +68,33 @@
 	}
 
 	function isValidName(name) {
-		var consonantCount = 0;
-		var vowelCount = 0;
 		var vowelStreak = 0;
 		var consonantStreak = 0;
-		
+
 		name = name.toLowerCase();
 		for (var i = 0; i < name.length; i += 1) {
 			var ch = name[i];
 			if (ch == 'a' || ch == 'e' || ch == 'i' || ch == 'o' || ch == 'u') {
-				vowelCount += 1;
 				vowelStreak += 1;
 				consonantStreak = 0;
 			} else {
-				consonantCount += 1;
 				consonantStreak += 1;
 				vowelStreak = 0;
 			}
-			if (consonantStreak > 3 || vowelStreak > 4) {
+			if (consonantStreak > 2 || vowelStreak > 2) {
 				return false;
 			}
 		}
-		//More than 75% of the word is vowels
-		if ((vowelCount * 100 / Math.max(1, vowelCount + consonantCount)) >= 75) {
-			return false;
-		}
-		//More than 70% of the word is consonants
-		if ((consonantCount * 100 / Math.max(1, vowelCount + consonantCount)) >= 70) {
-			return false;
-		}
 		return true;
 	}
-	
+
 	function getRandomName(maxLength) {
-		var randomName = "";
-		var tries = 3;
-		maxLength = Math.max(4, maxLength);
-		while(tries > 0) {
+		while(true) {
 			var name = generateRandomWord(maxLength);
 			if (isValidName(name)) {
-				//first word is always valid
-				if (randomName.length == 0) {
-					randomName = name;
-				} else {
-					var newLength = randomName.length + name.length;
-					if (newLength <= maxLength) {
-						randomName += " " + name;
-					} else {
-						tries -= 1;
-					}
-				}
+				return name;
 			}
 		}
-		return randomName;
 	}
 })();
 

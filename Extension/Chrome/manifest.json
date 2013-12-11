@@ -18,8 +18,8 @@
 				"js/textFit.min.js", "js/nprogress.js", "js/nationstates++_common.js", 
 				"js/nationstates.js", "js/region.js", "js/nation.js", "js/newspapers.js",
 				"js/happenings.js", "js/census_slider.js", "js/embassy_flags.js", "js/telegrams.js",
-				"js/issues.js", "js/help.js", "js/irc.js", "js/dossier.js",
-				"js/administration.js", "js/settings.js", "js/activity.js", "js/history.js", "js/puppet_c&c.js"],
+				"js/issues.js", "js/help.js", "js/irc.js", "js/dossier.js", "js/world.js",
+				"js/administration.js", "js/settings.js", "js/activity.js", "js/history.js", "js/puppet_command.js"],
 	  "css": ["css/nouislider.fox.css", "css/bootstrap-button.css", "css/two_column.css", "css/bootstrap-fileupload.min.css", "css/nprogress.css", "css/nationstates++.css"],
       "matches": [ "http://www.nationstates.net/*"],
 	  "all_frames": true
