@@ -19,7 +19,7 @@
 		if (flag.match(/t[0-9]?.(jpg|png|gif)/).length > 0) {
 			flag = flag.substring(0, flag.length - 6) + flag.substring(flag.length - 4);
 		}
-		$("<a href='www.nationstates.net/nation=" + getUserNation() + "'><img src='" + flag + "' style='max-width: 192px; display: block; margin-left: auto; margin-right: auto; max-height: 400px;'></a>").insertBefore($("#createdby"));
+		$("<a href='http://www.nationstates.net/nation=" + getUserNation() + "'><img src='" + flag + "' style='max-width: 192px; display: block; margin-left: auto; margin-right: auto; max-height: 400px;'></a>").insertBefore($("#createdby"));
 		$("#createdby").remove();
 		$(".STANDOUT:first").find("img").hide();
 		$("#panel").css("position", "fixed");
