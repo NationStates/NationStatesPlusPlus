@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -17,7 +18,7 @@ import java.util.concurrent.ExecutionException;
 
 import org.apache.commons.dbutils.DbUtils;
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
-import org.codehaus.jackson.annotate.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.joda.time.Duration;
 import org.spout.cereal.config.ConfigurationNode;
 import org.spout.cereal.config.yaml.YamlConfiguration;
@@ -352,44 +353,77 @@ public class RegionController extends NationStatesController {
 		return Results.ok(Json.toJson(links)).as("application/json");
 	}
 
-
 	public Result setRegionDelegateTitle(String region, boolean disband) throws SQLException, ExecutionException {
 		Result ret = Utils.validateRequest(request(), response(), getAPI(), getDatabase());
 		if (ret != null) {
 			return ret;
 		}
 		String nation = Utils.sanitizeName(Utils.getPostValue(request(), "nation"));
-		
+		String title = Utils.sanitizeName(Utils.getPostValue(request(), "title"));
 		Utils.handleDefaultPostHeaders(request(), response());
+
+		//Must have valid title
+		if (!disband) {
+			if (title == null) {
+				return Results.badRequest("Missing title");
+			} else if (title.length() > 40) {
+				return Results.badRequest("Maximum title length is 40 characters");
+			}
+		}
+
 		Connection conn = null;
 		try {
 			conn = getConnection();
-			PreparedStatement select = conn.prepareStatement("SELECT delegate, founder FROM assembly.region WHERE name = ?");
+			PreparedStatement select = conn.prepareStatement("SELECT id, delegate, founder FROM assembly.region WHERE name = ?");
 			select.setString(1, Utils.sanitizeName(region));
 			ResultSet result = select.executeQuery();
 			boolean regionAdministrator = true;
+			int regionId = -1;
 			if (result.next()) {
-				Logger.info("Attempting to set map for " + region + ", nation: " + nation);
-				Logger.info("Delegate: " + result.getString(1) + " | Founder: " + result.getString(2));
-				if (!nation.equals(result.getString(1)) && !nation.equals(result.getString(2))) {
+				regionId = result.getInt(1);
+				final String delegate = result.getString(2);
+				final String founder = result.getString(3);
+				Logger.info("Attempting to set delegate title for " + region + ", nation: " + nation);
+				Logger.info("Delegate: " + delegate + " | Founder: " + founder);
+				if (!nation.equals(delegate) && !nation.equals(founder)) {
 					regionAdministrator = false;
 				}
 			} else {
-				Logger.info("Attempting to set map for " + region + ", no region found!");
+				Logger.info("Attempting to set delegate title for " + region + ", no region found!");
 				regionAdministrator = false;
 			}
-			if (!regionAdministrator) {
-				return Results.unauthorized();
+			if (regionAdministrator) {
+				PreparedStatement update = conn.prepareStatement("UPDATE assembly.region SET delegate_title = ? WHERE id = ?");
+				if (!disband) {
+					update.setString(1, title);
+				} else {
+					update.setNull(1, Types.VARCHAR);
+				}
+				update.setInt(2, regionId);
+				update.executeUpdate();
 			}
-			
 		} finally {
 			DbUtils.closeQuietly(conn);
 		}
-		return Results.ok();
+		return Results.unauthorized();
 	}
 
 	public Result getRegionalDelegateTitle(String region) throws SQLException, ExecutionException {
-		
+		Connection conn = null;
+		try {
+			conn = getConnection();
+			PreparedStatement select = conn.prepareStatement("SELECT delegate_title FROM assembly.region WHERE name = ?");
+			select.setString(1, Utils.sanitizeName(region));
+			ResultSet result = select.executeQuery();
+			if (result.next()) {
+				String title = result.getString(1);
+				if (!result.wasNull()) {
+					return Results.ok("{\"delegate_title\":\"" + title + "\"}").as("application/json");
+				}
+			}
+		} finally {
+			DbUtils.closeQuietly(conn);
+		}
 		return Results.ok(Json.toJson("")).as("application/json");
 	}
 }

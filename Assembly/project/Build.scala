@@ -18,7 +18,10 @@ object ApplicationBuild extends Build {
 	"com.typesafe.play.extras" % "iteratees-extras_2.10" % "1.0.1",
 	"com.amazonaws" % "aws-java-sdk" % "1.6.6",
 	"com.google.guava" % "guava" % "15.0",
-	"org.apache.commons" % "commons-math3" % "3.2"
+	"org.apache.commons" % "commons-math3" % "3.2",
+	"com.fasterxml.jackson.core" % "jackson-core" % "2.3.0",
+	"com.fasterxml.jackson.core" % "jackson-annotations" % "2.3.0",
+	"com.fasterxml.jackson.core" % "jackson-databind" % "2.3.0"
   )
 
   val main = play.Project(appName, appVersion, appDependencies).settings(

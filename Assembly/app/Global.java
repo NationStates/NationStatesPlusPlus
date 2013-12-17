@@ -118,6 +118,7 @@ public class Global extends GlobalSettings {
 	public <T extends EssentialFilter> Class<T>[] filters() {
 		return (Class[]) ObjectArrays.concat(GzipFilter.class, super.filters());
     }
+/*
 
 	private final AtomicLong requestId = new AtomicLong(0);
 	@SuppressWarnings("rawtypes")
@@ -133,7 +134,6 @@ public class Global extends GlobalSettings {
 		}
 		return super.onRequest(request, actionMethod);
 	}
-
 	private static class StatusCodeAction extends Action.Simple {
 		@SuppressWarnings("rawtypes")
 		private final Action superAction;
@@ -164,7 +164,7 @@ public class Global extends GlobalSettings {
 			}
 		}
 	}
-
+*/
 	@SuppressWarnings("unchecked")
 	@Override
 	public <A> A getControllerInstance(Class<A> controllerClass) throws Exception {

@@ -9,7 +9,7 @@ import java.util.concurrent.ExecutionException;
 
 import org.apache.commons.dbutils.DbUtils;
 import org.apache.commons.io.IOUtils;
-import org.codehaus.jackson.annotate.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.spout.cereal.config.yaml.YamlConfiguration;
 
 import play.Logger;

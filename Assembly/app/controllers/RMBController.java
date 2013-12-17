@@ -12,7 +12,7 @@ import java.util.concurrent.ExecutionException;
 
 import org.apache.commons.dbutils.DbUtils;
 import org.apache.commons.lang.builder.ToStringBuilder;
-import org.codehaus.jackson.annotate.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.joda.time.Duration;
 import org.spout.cereal.config.yaml.YamlConfiguration;
 
