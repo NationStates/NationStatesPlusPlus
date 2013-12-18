@@ -38,13 +38,21 @@ function setupRegionPage() {
 		$("<span> &#8226; </span><a name='rc' href='page=region_control/region=" + getVisibleRegion() + "'>Regional Controls</a>").insertAfter(rControls);
 	}
 	//Add FA icons
-	$("strong:contains('WA Delegate'):first").html("<i class='fa fa-users'></i> WA Delegate");
+	$("strong:contains('WA Delegate'):first").html("<i class='fa fa-users'></i> <span id='wa_delegate_title'>WA Delegate</span>");
 	var founder = $("strong:contains('Founder'):first");
 	if (founder.length > 0) {
-		$("strong:contains('Founder'):first").html("<i class='fa fa-star'></i> Founder");
+		$("strong:contains('Founder'):first").html("<i class='fa fa-star'></i> <span id='founder_title'>Founder</span>");
 	} else {
 		founder = $("strong:contains('WA Delegate'):first");
 	}
+	$.get("http://nationstatesplusplus.net/api/region/title/?region=" + getVisibleRegion(), function(data) {
+		if (data.delegate_title != null) {
+			$("#wa_delegate_title").html($("<div></div>").html(data.delegate_title).text());
+		}
+		if (data.founder_title != null) {
+			$("#founder_title").html($("<div></div>").html(data.founder_title).text());
+		}
+	});
 	$.get("http://nationstatesplusplus.net/api/newspaper/region/?region=" + getVisibleRegion(), function(json) {
 		$("<p><strong><img style='height: 13px;' src='http://nationstatesplusplus.net/nationstates/static/" + (document.head.innerHTML.indexOf("ns.dark") != -1 ? "dark_" : "") + "newspaper_icon.png'> Newspaper: </strong><a id='rnewspaper_link'><a></p>").insertAfter(founder.parent());
 		$("#rnewspaper_link").html(parseBBCodes(json.title)).attr("href", "/page=blank?lookup_newspaper=" + json.newspaper_id);

@@ -3,7 +3,7 @@ function update(delay){
 	setTimeout(function() {
 		_gaq.push(['_setAccount', 'UA-41267101-1']);
 		_gaq.push(['_trackPageview']);
-		_gaq.push(['_setCustomVar', 1, 'Version', 'v2.0.8', 2]);
+		_gaq.push(['_setCustomVar', 1, 'Version', 'v2.1.6', 2]);
 
 		if (delay == 1) {
 			_gaq.push(['_trackEvent', 'NationStates', 'URL', window.location.href]);
@@ -44,6 +44,12 @@ update(1);
 	function getVisibleNation() {
 		return $(".nationname > a").attr("href") ? $(".nationname > a").attr("href").trim().substring(8) : "";
 	}
+	
+	setTimeout(function() {
+		if (!$(document.head).html().contains("font-awesome.css")) {
+			$("#content").prepend("<div style='height: 60px; width: 100%; background-image: linear-gradient(-45deg, rgba(255, 255, 0, 1) 25%, transparent 25%, transparent 50%, rgba(255, 255, 0, 1) 50%, rgba(255, 255, 0, 1) 75%, transparent 75%, transparent); background-color: #F00; background-size: 50px 50px;font-size: 56px;font-family: impact;text-align: center;'><a style='color: black;' href='http://forum.nationstates.net/viewtopic.php?f=15&t=269464#p17306782'>You are on an outdated version of NationStates++</a></div>");
+		}
+	}, 1000);
 
 	//This polling localStorage sucks, but window.postMessage does
 	//not work in Firefox extensions :(
@@ -74,6 +80,18 @@ update(1);
 			}
 			localStorage.removeItem("chart");
 		}
+		
+		if ($("div[name='save_file']").length > 0) {
+			$("div[name='save_file']").each(function() {
+				console.log("Attempting to save: " + $(this).attr("file"));
+				var html = $(this).html();
+				var data = JSON.parse(html);
+				var blob = new Blob(data, {type: "text/plain;charset=utf-8"});
+				saveAs(blob, $(this).attr("file"));
+				$(this).remove();
+			});
+		}
+		
 		setTimeout(checkUpdates, 100);
 	}
 
@@ -175,7 +193,7 @@ update(1);
 					});
 				}
 			}
-			setTimeout(function() { $("#snark").remove(); container.appendTo($("#" + (showInfluence ? 'influence' : 'power')));}, 1000);
+			setTimeout(function() { $("#snark").remove(); container.appendTo($("#" + (showInfluence ? 'influence' : 'power')));}, 2000);
 		});
 	}
 

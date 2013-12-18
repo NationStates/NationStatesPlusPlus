@@ -92,6 +92,8 @@ $.get(urlPrefix + "cache_buster.txt?time=" + Date.now() , function(value) {
 		addJavascript(staticUrlPrefix + "bootstrap-dropdown.min.js", false);
 		addStylesheet(staticUrlPrefix + "bootstrap-fileupload.min.css", false);
 		addJavascript(staticUrlPrefix + "bootstrap-fileupload.min.js", false);
+		
+		addJavascript(staticUrlPrefix + "FileSaver.js", false);
 	}
 
 	if (document.head.innerHTML.indexOf("//ajax.googleapis.com/ajax/libs/jquery") == -1) {

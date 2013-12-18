@@ -113,11 +113,10 @@
 	$(window).on("page/update", updateNewspaperNags);
 	
 	var visibleTypes = ["Draft", "Published", "Archived", "User Submitted, Pending Review"];
-	
 	function viewNewspaperArticles(newspaper) {
 		window.document.title = "NationStates | Newspaper"
 		$("#content").html("<div id='news_header' style='text-align: center;'><h1>Newspaper Article Database</h1><hr></div><div id='inner-content'></div>");
-		doAuthorizedPostRequest("http://nationstatesplusplus.net/api/newspaper/canedit/?newspaper=" + newspaper, "", function(data, textStatus, jqXHR) {
+		$.get("http://nationstatesplusplus.net/api/newspaper/editor/?newspaper=" + newspaper + "&nation=" + getUserNation(), function(data, textStatus, jqXHR) {
 			$.get("http://nationstatesplusplus.net/api/newspaper/lookup/?id=" + newspaper + (window.location.href.contains("pending=1") ? "&visible=3" : "&visible=-1") + "&hideBody=true", function(json) {
 				var articles = json.articles;
 				var html = "";
@@ -127,7 +126,7 @@
 				}
 				$("#inner-content").html(html);
 			});
-		}, function() {
+		}).fail(function() {
 			$("#inner-content").html("<span style='color:red'>You do not have permission to view the article database for this newspaper!</span>");
 		});
 	}
@@ -356,15 +355,18 @@
 			});
 		}
 		$.get("http://nationstatesplusplus.net/api/newspaper/lookup/?id=" + id, function(json) {
-			doAuthorizedPostRequest("http://nationstatesplusplus.net/api/newspaper/canedit/?newspaper=" + id, "", function(data, textStatus, jqXHR) {
+			$.get("http://nationstatesplusplus.net/api/newspaper/editor/?newspaper=" + id + "&nation=" + getUserNation(), function(data, textStatus, jqXHR) {
 				$(".edit_article").show();
 				$("#manage_newspaper").show();
-				$.get("http://nationstatesplusplus.net/api/newspaper/lookup/?id=" + id + "&hideBody=true&visible=3", function(json) {
-					if (json.articles.length > 0) {
-						$("a.pending_articles").html("Pending Articles (" + json.articles.length + ")").show();
-					}
-				});
-			}, function() {
+				//This just prevents GP and RP news editors from approving articles...sick of their sloppy approvals
+				if (getUserNation() == "shadow_afforess" || id > 1) {
+					$.get("http://nationstatesplusplus.net/api/newspaper/lookup/?id=" + id + "&hideBody=true&visible=3", function(json) {
+						if (json.articles.length > 0) {
+							$("a.pending_articles").html("Pending Articles (" + json.articles.length + ")").show();
+						}
+					});
+				}
+			}).fail(function() {
 				$("#view_newspaper").show();
 			});
 			window.document.title = json.newspaper;

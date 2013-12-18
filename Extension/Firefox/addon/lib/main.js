@@ -19,7 +19,7 @@ pageMod.PageMod({
 pageMod.PageMod({
   include: ["http://www.nationstates.net/*"],
   contentScriptWhen: "ready",
-  contentScriptFile: [self.data.url("jquery-2.0.2.min.js"), self.data.url("background.js"), self.data.url("js/Blob.js"), self.data.url("js/FileSaver.js"), self.data.url("js/bootstrap-fileupload.min.js"),
+  contentScriptFile: [self.data.url("jquery-2.0.2.min.js"), self.data.url("background.js"), self.data.url("js/bootstrap-fileupload.min.js"),
 				self.data.url("js/jquery.caret.js"), self.data.url("js/jquery.highlight.js"), self.data.url("js/jquery.nouislider.min.js"),
 				self.data.url("js/textFit.min.js"), self.data.url("js/nprogress.js"), self.data.url("js/nationstates++_common.js"), 
 				self.data.url("js/nationstates.js"), self.data.url("js/region.js"), self.data.url("js/nation.js"), self.data.url("js/newspapers.js"),

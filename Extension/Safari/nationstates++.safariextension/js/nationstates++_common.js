@@ -741,6 +741,13 @@ function getLastActivity() {
 	if (!_lastPageActivity) {
 		$("#main").mousemove(function (c) {
 			_lastPageActivity = Date.now();
+			console.log("Mouse Move");
+		}).mousedown(function (c) {
+			_lastPageActivity = Date.now();
+			console.log("Mouse Down");
+		}).mouseup(function (c) {
+			_lastPageActivity = Date.now();
+			console.log("Mouse Up");
 		});
 		_lastPageActivity = Date.now()
 	}

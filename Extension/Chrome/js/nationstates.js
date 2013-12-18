@@ -153,12 +153,15 @@
 			//If there is no content element, we are trapped in an iframe and can not accurately judge activity or lack of it
 			if ($("#content").length > 0) {
 				if (!isPageActive()) {
+					console.log("unfocused page");
 					_pageInactiveCount += 1;
 					updateDelay = 300000 * _pageInactiveCount; //5 min
 				} else if (getLastActivity() + 60000 < Date.now()) {
+					console.log("Inactive page");
 					_pageInactiveCount += 1;
 					updateDelay = 150000 * _pageInactiveCount; //2.5 min
 				} else {
+					console.log("active page");
 					_pageInactiveCount = 0;
 				}
 			}
@@ -186,7 +189,7 @@
 					panel.find("a[href='page=news']").html(page.find("a[href='page=news']").html());
 				}
 			});
-			if (getSettings().isEnabled("show_unread_forum_posts")) {
+			if (getSettings().isEnabled("show_unread_forum_posts", false)) {
 				$.get("http://forum.nationstates.net/search.php?search_id=egosearch", function(data) {
 					var count = 0;
 					var userData = getUserData();

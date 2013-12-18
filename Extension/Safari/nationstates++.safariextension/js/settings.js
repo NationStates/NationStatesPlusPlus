@@ -140,7 +140,11 @@
 						};
 					}
 					var blob = new Blob(puppetArr, {type: "text/plain;charset=utf-8"});
-					saveAs(blob, "puppets.csv");
+					if (typeof saveAs != "undefined") {
+						saveAs(blob, "puppets.csv");
+					} else {
+						$(document.body).append("<div name='save_file' file='puppets.csv' style='display:none;'>" + JSON.stringify(puppetArr) + "</div>");
+					}
 				});
 				var parsingError = function(error) {
 					var log = "Error: " + error + "\n";

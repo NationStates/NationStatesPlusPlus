@@ -66,11 +66,7 @@
 										nations += nation;
 									}
 								});
-								//console.log("tgto: " + nations);
-								//console.log("chk: " + telegram.find("input[name=chk]").val());
-								//console.log("tgid: " + sendButton.attr("tgid"));
 								var message = $('#tgreply-' + tgid).find('textarea').serialize();
-								//console.log(message);
 								$.post("page=telegrams", "chk=" + telegram.find("input[name=chk]").val() + "&tgto=" + nations + "&in_reply_to=" + sendButton.attr("tgid") + "&" + message + "&send=1", function(html) {
 									var info = $(html).find(".info").html();
 									var error = false;
@@ -88,7 +84,7 @@
 										$(".info").css("border", "solid 2px red");
 									} else {
 										$('#tgreply-' + sendButton.attr("tgid")).slideToggle(1000);
-										$('#tgreply-' + sendButton.attr("tgid")).val("");
+										$('#tgreply-' + sendButton.attr("tgid")).find("textarea").val("");
 									}
 									$(".info").hide().slideDown('slow');
 								});
