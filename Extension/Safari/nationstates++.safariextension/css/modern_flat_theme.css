@@ -1,0 +1,86 @@
+@import url(http://fonts.googleapis.com/css?family=Oxygen:400,700,300&subset=latin,latin-ext);
+
+#namebox p.nationname {
+	font-family: Oxygen !important;
+	-webkit-text-stroke: .01em #333;
+}
+
+p.slogan {
+	font-family: Oxygen !important;
+	-webkit-text-stroke: .01em #333;
+	font-size: 15px !important;
+}
+/*
+img.logo {
+	display:none;
+}
+
+#banner a[href='/'], #nsbanner a[href='http://www.nationstates.net'] {
+	background: url(http://nationstatesplusplus.net/nationstates/static/nationstates.png);
+	display:block;
+	width:180px;
+	height:45px;
+}
+
+#banner, #nsbanner {
+	height: 45px !important;
+	background: rgb(34, 34, 34) !important;
+	border-bottom: solid white 2px;
+	content: "NationStates";
+	color: white;
+	
+}
+*/
+td, th, fieldset, legend, table, .updatetime {
+	border-radius: 0px !important;
+}
+
+table.shiny {
+	box-shadow: none !important;
+	background: white !important;
+	margin-bottom: 1.25em !important;
+	border: solid 0px #ecf0f1 !important;
+	border-radius: 0px !important;
+	border-spacing: 0px !important;
+	border-collapse: collapse !important;
+}
+
+.hzln {
+	border-bottom: 2px solid black !important;
+	margin: 1em 2% 1em 2% !important;
+}
+
+.older {
+	border-radius: 0px !important;
+}
+
+.rmbrow {
+	border-radius: 0px !important;
+	margin-bottom: 1px !important;
+	padding: 0 0px 0 12px !important;
+	border-collapse: collapse !important;
+	margin: 0px !important;
+}
+
+.rmbauthor2 {
+	float: left;
+	border: white 0px solid !important;
+}
+
+.rmbmsg2 {
+	border: white 0px solid !important;
+	padding-left: 10px;
+	min-height: 20px;
+}
+
+table.shiny tr {
+	border-radius: 0px !important;
+	border: solid 2px #BDC3C7 !important;
+	border-spacing: 0px !important;
+}
+
+table.shiny td {
+	border-radius: 0px !important;
+	border: solid 2px #BDC3C7 !important;
+}
+*/
