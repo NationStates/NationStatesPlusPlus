@@ -31,7 +31,7 @@ import controllers.NationStatesController;
 import play.*;
 import play.api.mvc.EssentialFilter;
 import play.api.mvc.PlainResult;
-import play.extras.iteratees.GzipFilter;
+import play.filters.gzip.GzipFilter;
 import play.libs.Akka;
 import play.mvc.Action;
 import play.mvc.Controller;

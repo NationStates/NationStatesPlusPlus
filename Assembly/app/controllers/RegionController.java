@@ -353,7 +353,7 @@ public class RegionController extends NationStatesController {
 		return Results.ok(Json.toJson(links)).as("application/json");
 	}
 
-	public Result setRegionDelegateTitle(String region, boolean disband) throws SQLException, ExecutionException {
+	public Result setRegionalTitle(String region, boolean delegateTitle, boolean disband) throws SQLException, ExecutionException {
 		Result ret = Utils.validateRequest(request(), response(), getAPI(), getDatabase());
 		if (ret != null) {
 			return ret;
@@ -383,17 +383,17 @@ public class RegionController extends NationStatesController {
 				regionId = result.getInt(1);
 				final String delegate = result.getString(2);
 				final String founder = result.getString(3);
-				Logger.info("Attempting to set delegate title for " + region + ", nation: " + nation);
+				Logger.info("Attempting to set regional title for " + region + ", nation: " + nation);
 				Logger.info("Delegate: " + delegate + " | Founder: " + founder);
 				if (!nation.equals(delegate) && !nation.equals(founder)) {
 					regionAdministrator = false;
 				}
 			} else {
-				Logger.info("Attempting to set delegate title for " + region + ", no region found!");
+				Logger.info("Attempting to set regional title for " + region + ", no region found!");
 				regionAdministrator = false;
 			}
 			if (regionAdministrator) {
-				PreparedStatement update = conn.prepareStatement("UPDATE assembly.region SET delegate_title = ? WHERE id = ?");
+				PreparedStatement update = conn.prepareStatement("UPDATE assembly.region SET " + (delegateTitle ? "delegate_title" : "founder_title") + " = ? WHERE id = ?");
 				if (!disband) {
 					update.setString(1, title);
 				} else {
@@ -408,22 +408,36 @@ public class RegionController extends NationStatesController {
 		return Results.unauthorized();
 	}
 
-	public Result getRegionalDelegateTitle(String region) throws SQLException, ExecutionException {
+	public Result getRegionalTitles(String region) throws SQLException, ExecutionException {
 		Connection conn = null;
 		try {
 			conn = getConnection();
-			PreparedStatement select = conn.prepareStatement("SELECT delegate_title FROM assembly.region WHERE name = ?");
+			PreparedStatement select = conn.prepareStatement("SELECT delegate_title, founder_title FROM assembly.region WHERE name = ?");
 			select.setString(1, Utils.sanitizeName(region));
 			ResultSet result = select.executeQuery();
 			if (result.next()) {
+				Map<String, String> data = new HashMap<String, String>(2);
 				String title = result.getString(1);
 				if (!result.wasNull()) {
-					return Results.ok("{\"delegate_title\":\"" + title + "\"}").as("application/json");
+					data.put("delegate_title", title);
 				}
+				title = result.getString(2);
+				if (!result.wasNull()) {
+					data.put("founder_title", title);
+				}
+				Result r = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(data.hashCode()), "600");
+				if (r != null) {
+					return r;
+				}
+				return Results.ok(Json.toJson(data)).as("application/json");
 			}
 		} finally {
 			DbUtils.closeQuietly(conn);
 		}
-		return Results.ok(Json.toJson("")).as("application/json");
+		Result r = Utils.handleDefaultGetHeaders(request(), response(), "0", "60");
+		if (r != null) {
+			return r;
+		}
+		return Results.ok("").as("application/json");
 	}
 }
