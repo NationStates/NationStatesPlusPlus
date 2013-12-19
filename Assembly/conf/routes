@@ -56,7 +56,7 @@ GET    /region/nations/               @controllers.RegionController.getNations(r
 GET    /region/map/                   @controllers.RegionController.getRegionalMap(region: String ?= "")
 POST   /region/map/                   @controllers.RegionController.setRegionalMap(region: String ?= "", disband: Boolean ?= false)
 GET    /region/title/                 @controllers.RegionController.getRegionalTitles(region: String ?= "")
-POST   /region/title/                 @controllers.RegionController.setRegionalTitle(region: String ?= "", delegateTitle: Boolean ?= true, disband: Boolean ?= false)
+POST   /region/title/                 @controllers.RegionController.setRegionalTitle(region: String ?= "", disband: Boolean ?= false)
 
 POST    /region/recruitment/get       @controllers.RecruitmentController.getRecruitmentStrategies(region: String ?= "")
 POST    /region/recruitment/set       @controllers.RecruitmentController.updateRecruitmentStrategies(region: String ?= "")

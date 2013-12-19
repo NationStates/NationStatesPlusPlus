@@ -353,20 +353,21 @@ public class RegionController extends NationStatesController {
 		return Results.ok(Json.toJson(links)).as("application/json");
 	}
 
-	public Result setRegionalTitle(String region, boolean delegateTitle, boolean disband) throws SQLException, ExecutionException {
+	public Result setRegionalTitle(String region, boolean disband) throws SQLException, ExecutionException {
 		Result ret = Utils.validateRequest(request(), response(), getAPI(), getDatabase());
 		if (ret != null) {
 			return ret;
 		}
 		String nation = Utils.sanitizeName(Utils.getPostValue(request(), "nation"));
-		String title = Utils.sanitizeName(Utils.getPostValue(request(), "title"));
+		String delegateTitle = Utils.sanitizeName(Utils.getPostValue(request(), "delegate_title"));
+		String founderTitle = Utils.sanitizeName(Utils.getPostValue(request(), "founder_title"));
 		Utils.handleDefaultPostHeaders(request(), response());
 
 		//Must have valid title
 		if (!disband) {
-			if (title == null) {
+			if (delegateTitle == null || founderTitle == null || delegateTitle.isEmpty() || founderTitle.isEmpty()) {
 				return Results.badRequest("Missing title");
-			} else if (title.length() > 40) {
+			} else if (delegateTitle.length() > 40 || founderTitle.length() > 40) {
 				return Results.badRequest("Maximum title length is 40 characters");
 			}
 		}
@@ -383,24 +384,27 @@ public class RegionController extends NationStatesController {
 				regionId = result.getInt(1);
 				final String delegate = result.getString(2);
 				final String founder = result.getString(3);
-				Logger.info("Attempting to set regional title for " + region + ", nation: " + nation);
+				Logger.info("Attempting to set regional titles for " + region + ", nation: " + nation);
 				Logger.info("Delegate: " + delegate + " | Founder: " + founder);
 				if (!nation.equals(delegate) && !nation.equals(founder)) {
 					regionAdministrator = false;
 				}
 			} else {
-				Logger.info("Attempting to set regional title for " + region + ", no region found!");
+				Logger.info("Attempting to set regional titles for " + region + ", no region found!");
 				regionAdministrator = false;
 			}
 			if (regionAdministrator) {
-				PreparedStatement update = conn.prepareStatement("UPDATE assembly.region SET " + (delegateTitle ? "delegate_title" : "founder_title") + " = ? WHERE id = ?");
+				PreparedStatement update = conn.prepareStatement("UPDATE assembly.region SET delegate_title = ?, founder_title = ? WHERE id = ?");
 				if (!disband) {
-					update.setString(1, title);
+					update.setString(1, delegateTitle);
+					update.setString(2, founderTitle);
 				} else {
 					update.setNull(1, Types.VARCHAR);
+					update.setNull(2, Types.VARCHAR);
 				}
-				update.setInt(2, regionId);
+				update.setInt(3, regionId);
 				update.executeUpdate();
+				return Results.ok();
 			}
 		} finally {
 			DbUtils.closeQuietly(conn);
