@@ -2,7 +2,7 @@
 	if (getVisiblePage() == "blank" && window.location.href.contains("?puppet_creator")) {
 		$("#content").html("<h1>Puppet Creation Center</h1>");
 		$("#content").append("<div id='settings'></div>");
-		$.get("http://nationstatesplusplus.net/nationstates/v2_1/puppet_creation.html", function(html) {
+		$.get("http://nationstatesplusplus.net/nationstates/v2_2/puppet_creation.html", function(html) {
 			$("#settings").html(html);
 			$("#settings").find("input").removeAttr("required");
 			$("#random_name").on("click", function(event) {

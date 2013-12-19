@@ -135,7 +135,7 @@
 		window.document.title = "NationStates | Newspaper"
 		$("#content").html("<div id='news_header' style='text-align: center;'><h1>Newspaper Administration</h1><hr></div><div id='inner-content'></div>");
 		console.log("fetching newspaper contents...");
-		$.get("http://nationstatesplusplus.net/nationstates/v2_1/newspaper_administration.html", function(html) {
+		$.get("http://nationstatesplusplus.net/nationstates/v2_2/newspaper_administration.html", function(html) {
 			console.log("fetched newspaper contents:" + html);
 			//$("#inner-content").hide();
 			$("#inner-content").html(html);
@@ -252,7 +252,7 @@
 	function openArticleEditor(newspaper, article_id) {
 		window.document.title = "NationStates | Article Editor"
 		$("#content").html("<div id='news_header' style='text-align: center;'><h1>Newspaper Article Editor</h1><hr></div><div id='inner-content'></div>");
-		$.get("http://nationstatesplusplus.net/nationstates/v2_1/newspaper_editor.html", function(html) {
+		$.get("http://nationstatesplusplus.net/nationstates/v2_2/newspaper_editor.html", function(html) {
 			$("#inner-content").html(html);
 			var submitArticle = function(deleteArticle) {
 				var postData = "title=" + encodeURIComponent($("#article_title").val());

@@ -1,8 +1,8 @@
 
 //versioned files are checked for modifications each page hit (slow)
-var urlPrefix = "http://direct.capitalistparadise.com/nationstates/v2_1/";
+var urlPrefix = "http://www.nationstatesplusplus.net/nationstates/v2_2/";
 //static files are cached by browser for 1 week, not checked for modifications (fast)
-var staticUrlPrefix = "http://direct.capitalistparadise.com/nationstates/static/";
+var staticUrlPrefix = "http://www.nationstatesplusplus.net/nationstates/static/";
 
 var pageUrl = window.location.href;
 
@@ -234,32 +234,6 @@ function showForumEgoposts() {
 		});
 	}
 };
-
-window.addEventListener("message", function(event) {
-	if (event.data.method == "unread_forum_posts") {
-		/*$.get("http://forum.nationstates.net/search.php?search_id=egosearch", function(data) {
-			var unread = 0;
-			$(data).find(".forumbg").find("a").each(function() {
-				if ($(this).attr("href") != null && $(this).attr("href").indexOf("#unread") != -1) {
-					var postName = "post-" + $(this).parent().parent().find(".topictitle").html();
-					var lastDate = localStorage.getItem("post-" + postName);
-					if (lastDate == null) {
-						localStorage.setItem("post-" + postName, Date.now());
-						lastDate = Date.now();
-					} else {
-						lastDate = parseInt(lastDate);
-					}
-					if (lastDate + 24 * 60 * 60 * 1000) {
-						unread++;
-					}
-				}
-			});
-			window.postMessage({ method: "unread_forum_posts_amt", amt: unread}, "*");
-		});*/
-	} else if (event.data.method == "load_live_happenings") {
-		window.location.href = "http://www.nationstates.net/page=news/?live_happenings=true";
-	}
-});
 
 function addStylesheet(url, cacheBuster) {
 	var style = document.createElement('link');
