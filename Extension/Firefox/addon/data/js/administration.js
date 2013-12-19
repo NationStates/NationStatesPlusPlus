@@ -30,7 +30,65 @@
 				});
 			});
 		});
-		
+
+		//Regional Titles
+		$(".divindent:first").append("<div id='regional_titles'><h4>Regional Titles</h4><fieldset>" +
+			"<p><span id='rd_label'><b>Regional Delegate Title: </b></span><input placeholder='Title for the WA Delegate' id='rd_title' style='width:500px' maxlength='40' class='text-input' type='text' disabled></p>" +
+			"<p><span id='rf_label'><b>Regional Founder Title: </b></span><input placeholder='Title for the Founder' id='rf_title' style='width:500px' maxlength='40' class='text-input' type='text' disabled>" + 
+			"</p><p><button class='button' id='update_titles' disabled>Update Titles</button><button class='button danger icon remove' id='reset_titles' disabled>Reset Titles</button>" +
+			"<span id='title_error' style='margin-left: 6px; color:red; font-weight:bold; display:none'></span></p></fieldset>");
+		$("#rf_label").css("margin-right", ($("#rd_label").width() - $("#rf_label").width()) + "px");
+		$("#update_titles").on("click", function(event) {
+			event.preventDefault();
+			$("#title_error").css("color", "red").hide();
+			if ($("#rd_title").val().length == 0 || $("#rf_title").val().length == 0) {
+				$("#title_error").html("You can not have blank titles.").show();
+			} else {
+				$("#update_titles").attr("disabled", true);
+				doAuthorizedPostRequest("http://nationstatesplusplus.net/api/region/title/?region=" + getVisibleRegion(), "delegate_title=" + encodeURIComponent($("#rd_title").val()) + 
+																														"&founder_title=" + encodeURIComponent($("#rf_title").val()), function(data) {
+					$("#update_titles").attr("disabled", false);
+					$("#title_error").css("color", "green").html("Updated Titles Successfully!").show();
+				}, function(error) {
+					if (error.status == 401) {
+						$("#title_error").html("You are not authorized to update the regional titles").show();
+					} else {
+						$("#title_error").html(error.responseText).show();
+					}
+					$("#update_titles").attr("disabled", false);
+				});
+			}
+		});
+		$("#reset_titles").on("click", function(event) {
+			event.preventDefault();
+			$("#reset_titles").attr("disabled", true);
+			$("#title_error").css("color", "red").hide();
+			doAuthorizedPostRequest("http://nationstatesplusplus.net/api/region/title/?region=" + getVisibleRegion() + "&disband=true", "", function(data) {
+				$("#reset_titles").attr("disabled", false);
+				$("#title_error").css("color", "green").html("Reset Titles Successfully!").show();
+			}, function(error) {
+				if (error.status == 401) {
+					$("#title_error").html("You are not authorized to reset the regional titles").show();
+				} else {
+					$("#title_error").html(error.responseText).show();
+				}
+				$("#reset_titles").attr("disabled", false);
+			});
+		});
+		$.get("http://nationstatesplusplus.net/api/region/title/?region=" + getVisibleRegion(), function(data) {
+			if (data.delegate_title != null) {
+				$("#rd_title").val(data.delegate_title).removeAttr("disabled");
+			} else {
+				$("#rd_title").val("WA Delegate").removeAttr("disabled");
+			}
+			if (data.founder_title != null) {
+				$("#rf_title").val(data.founder_title).removeAttr("disabled");
+			} else {
+				$("#rf_title").val("Founder").removeAttr("disabled");
+			}
+			$("#regional_titles button").removeAttr("disabled");
+		});
+
 		//Regional Map
 		$(".divindent:first").append("<div id='regional_map'><h4>Regional Map</h4><fieldset>" +
 			"<p><span id='rml_label'><b>Regional Map Link: </b></span><input placeholder='URL to map discussion' id='region_map_link' style='width:700px' class='text-input' type='text'></p>" +
