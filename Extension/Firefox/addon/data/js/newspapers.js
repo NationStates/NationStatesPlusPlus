@@ -175,7 +175,7 @@
 							if (request.term.length < 3) {
 								response(new Array());
 							} else {
-								$.get("http://www.capitalistparadise.com/api/autocomplete/nation/?start=" + request.term, function(nations) {
+								$.get("http://www.nationstatesplusplus.net/api/autocomplete/nation/?start=" + request.term, function(nations) {
 									response(nations);
 								});
 							}
@@ -193,7 +193,7 @@
 							return;
 						}
 						$("#editor_error").hide();
-						$.get("http://www.capitalistparadise.com/api/nation/title/?name=" + name, function(json) {
+						$.get("http://www.nationstatesplusplus.net/api/nation/title/?name=" + name, function(json) {
 							if (json[name] != null && $("#newspaper_editors").find("option[name='" + name + "']").length == 0) {
 								var title = json[name]
 								$("#newspaper_editors").append("<option value='" + $("#newspaper_editors").find("option").length + "' name='" + name + "'>" + title + "</option>");
@@ -217,7 +217,7 @@
 					var postData = "title=" + encodeURIComponent($("#newspaper_name").val());
 					postData += "&byline=" + encodeURIComponent($("#newspaper_byline").val());
 					
-					doAuthorizedPostRequest("http://www.capitalistparadise.com/api/newspaper/administrate/?newspaper=" + $("#newspaper_name").attr("newspaper_id"), postData, function(data, textStatus, jqXHR) {
+					doAuthorizedPostRequest("http://www.nationstatesplusplus.net/api/newspaper/administrate/?newspaper=" + $("#newspaper_name").attr("newspaper_id"), postData, function(data, textStatus, jqXHR) {
 						var postData = "";
 						if (typeof $("#newspaper_editors").attr("remove") != "undefined") {
 							postData += "&remove=" + $("#newspaper_editors").attr("remove");
@@ -226,7 +226,7 @@
 							postData += "&add=" + $("#newspaper_editors").attr("add");
 						}
 						if (postData.length > 0) {
-							doAuthorizedPostRequest("http://www.capitalistparadise.com/api/newspaper/editors/?newspaper=" + $("#newspaper_name").attr("newspaper_id"), "editors=1" + postData, function(json) {
+							doAuthorizedPostRequest("http://www.nationstatesplusplus.net/api/newspaper/editors/?newspaper=" + $("#newspaper_name").attr("newspaper_id"), "editors=1" + postData, function(json) {
 								window.location.href = "http://www.nationstates.net/page=blank/?lookup_newspaper=" + $("#newspaper_name").attr("newspaper_id");
 							});
 						} else {

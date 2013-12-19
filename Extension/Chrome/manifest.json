@@ -4,11 +4,11 @@
   "short_name": "NS++",
   "minimum_chrome_version": "22",
   "description": "Improves the NationStates.net experience",
-  "version": "2.1.6.2",
+  "version": "2.2.0",
   "content_scripts": [ {
 	  "run_at": "document_end",
       "js": [ "jquery-2.0.2.min.js", "js/nationstates++_common.js", "background.js"],
-	  "css": ["css/bootstrap-button.css", "css/nationstates++.css", "css/forum.css", "css/modern_flat_theme.css"],
+	  "css": ["css/bootstrap-button.css", "css/nationstates++.css", "css/forum.css"],
       "matches": [ "http://forum.nationstates.net/*" ],
 	  "all_frames": true
 	}, {
@@ -20,7 +20,7 @@
 				"js/happenings.js", "js/census_slider.js", "js/embassy_flags.js", "js/telegrams.js",
 				"js/issues.js", "js/help.js", "js/irc.js", "js/dossier.js", "js/world.js",
 				"js/administration.js", "js/settings.js", "js/activity.js", "js/history.js", "js/puppet_command.js"],
-	  "css": ["css/nouislider.fox.css", "css/bootstrap-button.css", "css/two_column.css", "css/bootstrap-fileupload.min.css", "css/nprogress.css", "css/nationstates++.css", "css/modern_flat_theme.css"],
+	  "css": ["css/nouislider.fox.css", "css/bootstrap-button.css", "css/two_column.css", "css/bootstrap-fileupload.min.css", "css/nprogress.css", "css/nationstates++.css"],
       "matches": [ "http://www.nationstates.net/*"],
 	  "all_frames": true
 	},

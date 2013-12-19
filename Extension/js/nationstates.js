@@ -153,21 +153,17 @@
 			//If there is no content element, we are trapped in an iframe and can not accurately judge activity or lack of it
 			if ($("#content").length > 0) {
 				if (!isPageActive()) {
-					console.log("unfocused page");
 					_pageInactiveCount += 1;
 					updateDelay = 300000 * _pageInactiveCount; //5 min
 				} else if (getLastActivity() + 60000 < Date.now()) {
-					console.log("Inactive page");
 					_pageInactiveCount += 1;
 					updateDelay = 150000 * _pageInactiveCount; //2.5 min
 				} else {
-					console.log("active page");
 					_pageInactiveCount = 0;
 				}
 			}
 			if (Date.now() > (_lastPanelUpdate + updateDelay)) {
 				_lastPanelUpdate = Date.now();
-				console.log("Triggering page update");
 				$(window).trigger("page/update");
 			}
 			checkPanelAlerts();
