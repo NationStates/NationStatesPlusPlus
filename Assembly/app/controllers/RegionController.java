@@ -359,8 +359,8 @@ public class RegionController extends NationStatesController {
 			return ret;
 		}
 		String nation = Utils.sanitizeName(Utils.getPostValue(request(), "nation"));
-		String delegateTitle = Utils.sanitizeName(Utils.getPostValue(request(), "delegate_title"));
-		String founderTitle = Utils.sanitizeName(Utils.getPostValue(request(), "founder_title"));
+		String delegateTitle = Utils.getPostValue(request(), "delegate_title");
+		String founderTitle = Utils.getPostValue(request(), "founder_title");
 		Utils.handleDefaultPostHeaders(request(), response());
 
 		//Must have valid title
