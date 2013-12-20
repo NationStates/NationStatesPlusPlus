@@ -418,12 +418,12 @@ function setupRegionPage() {
 		$("button.rmb-message").on("click", toggleRMBPostForm);
 		$("button.search-rmb").on("click", toggleSearchForm);
 		$("#rmb-search-input, #rmb-search-input-region, #rmb-search-input-author").on("keydown", searchRMB);
-		$("button[name='lodge_message']").on("click", doRMBPost);
 		if (isAntiquityTheme()) {
 			$("#rmb-menu").css("margin-bottom", "20px");
 			$("#rmb-search-input").css("margin-bottom", "20px");
 		}
 	}
+	$("button[name='lodge_message']").on("click", doRMBPost);
 
 	addFormattingButtons();
 
@@ -509,6 +509,7 @@ function encodeRMBPost(message) {
 			'\u2021': 135, '\u2022': 149, '\u2026': 133, '\u2030': 137, 
 			'\u2039': 139, '\u203a': 155, '\u20ac': 128, '\u2122': 153
 		};
+		var errors = false;
 		var ret = new Array(string.length);	
 		for (var i = 0; i < string.length; i++) {
 			var ch = string.charCodeAt(i);
@@ -518,12 +519,14 @@ function encodeRMBPost(message) {
 				ret[i] = table[string[i]];
 				if (typeof ret[i] === "undefined") {
 					ret[i] = 0;
+					errors = true;
 				}
 			}
 		}
-		return ret;
+		return { converted: ret, error: errors};
 	}
-	var chars = toWindows1252(message);
+	var data = toWindows1252(message);
+	var chars = data.converted;
 	var result = "";
 	for (var i = 0; i < chars.length; i++) {
 		if (chars[i] > 16) {
@@ -532,13 +535,12 @@ function encodeRMBPost(message) {
 			result += String.fromCharCode(chars[i]);
 		}
 	}
-	return result;
+	return {converted: result, error: data.error};
 }
 
 function doRMBPost(event) {
 	event.preventDefault();
-	var $form = $( this ),
-		chkValue = $('input[name="chk"]').val(),
+	var chkValue = $('input[name="chk"]').val(),
 		messageValue = $('textarea[name="message"]').val(),
 		url = "/page=lodgermbpost/region=" + getVisibleRegion();
 	
@@ -560,33 +562,45 @@ function doRMBPost(event) {
 	}
 	removeWarning();
 
-	var posting = jQuery.ajax({
-		type: "POST",
-		url: url,
-		data: "chk=" + chkValue + "&message=" + encodeRMBPost(messageValue) + "&lodge_message=1",
-		dataType: "html",
-		contentType: "application/x-www-form-urlencoded;",
-		beforeSend: function(jqXHR) {
-			jqXHR.overrideMimeType('text/html;');
-		}
-	});
-
-	$("#rmb-post-form").animate({ height: 'toggle' }, 1200, function() { $(this).hide(); });
-	posting.done(function( data ) {
-		var error = ($(data).find("p[class='error']")).text();
-		if (typeof error != 'undefined' && error.length > 0) {
-			console.log("Error: " + error);
-			alert(error);
-			return;
-		}
-		$.get('/region=' + getVisibleRegion(), function(data) {
-			$("#rmb").html($(data).find("#rmb").html());
-			$('textarea[name="message"]').val("");
-			$('textarea[name="message"]').height(120);
-			$("#previewcontent").html("");
-			updateRMB();
+	var conversion = encodeRMBPost(messageValue);
+	if (conversion.error) {
+		//Fallback on RMB form
+		var form = $('textarea[name="message"]').parents("form");
+		form.attr("action", "/page=lodgermbpost/region=" + getVisibleRegion());
+		form.submit();
+	} else {
+		var posting = jQuery.ajax({
+			type: "POST",
+			url: url,
+			data: "chk=" + chkValue + "&message=" + conversion.converted + "&lodge_message=1",
+			dataType: "html",
+			contentType: "application/x-www-form-urlencoded;",
+			beforeSend: function(jqXHR) {
+				jqXHR.overrideMimeType('text/html;');
+			}
 		});
-	});
+
+		$("#rmb-post-form").animate({ height: 'toggle' }, 1200, function() { $(this).hide(); });
+		posting.done(function( data ) {
+			var error = ($(data).find("p[class='error']")).text();
+			if (typeof error != 'undefined' && error.length > 0) {
+				console.log("Error: " + error);
+				alert(error);
+				return;
+			}
+			$.get('/region=' + getVisibleRegion(), function(data) {
+				$("#rmb").html($(data).find("#rmb").html());
+				$('textarea[name="message"]').val("");
+				$('textarea[name="message"]').height(120);
+				$("#previewcontent").html("");
+				if ($("em:contains('There are no lodged messages at present.')").length == 0) {
+					updateRMB();
+				} else {
+					location.reload();
+				}
+			});
+		});
+	}
 }
 
 function hasInvalidBBCodes(message) {
