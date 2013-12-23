@@ -561,3 +561,27 @@ fieldset.preview {
 	margin-bottom: -10px;
 	margin-left: 15px;
 }
+
+.success_alert {
+	margin-left: 180px;
+	padding: 15px;
+	margin-bottom: 20px;
+	border: 1px solid transparent;
+	border-radius: 4px;
+	display: inline-block;
+	color: #3c763d;
+	background-color: #dff0d8;
+	border-color: #d6e9c6;
+}
+
+.danger_alert {
+	margin-left: 180px;
+	padding: 15px;
+	margin-bottom: 20px;
+	border: 1px solid transparent;
+	border-radius: 4px;
+	display: inline-block;
+	color: #a94442;
+	background-color: #f2dede;
+	border-color: #ebccd1;
+}

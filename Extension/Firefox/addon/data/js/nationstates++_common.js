@@ -266,6 +266,7 @@ function getSettings(autoupdate) {
 	api.update = function(callback) {
 		var api = this;
 		$.get("http://nationstatesplusplus.net/api/nation/latest_update/?name=" + getUserNation(), function(data, textStatus, xhr) {
+			data = data || {}
 			if (xhr.status != 204 && data.timestamp > api.last_update) {
 				api.last_update = data.timestamp;
 				$.get("http://nationstatesplusplus.net/api/nation/settings/?name=" + getUserNation(), function(data, textStatus, xhr) {
@@ -353,6 +354,7 @@ function getUserData(autoupdate) {
 	api.update = function(callback) {
 		var api = this;
 		$.get("http://nationstatesplusplus.net/api/nation/data/?name=" + getUserNation(), function(data, textStatus, xhr) {
+			data = data || {}
 			if (xhr.status != 204 && data.timestamp > api.last_update) {
 				api.last_update = data.timestamp;
 				doAuthorizedPostRequest("http://nationstatesplusplus.net/api/nation/data/get/", "", function(data) {
@@ -575,13 +577,17 @@ function getNationStatesAuth(callback) {
 }
 
 function doAuthorizedPostRequest(url, postData, success, failure) {
+	doAuthorizedPostRequestFor(getUserNation(), url, postData, success, failure);
+}
+
+function doAuthorizedPostRequestFor(nation, url, postData, success, failure) {
 	getNationStatesAuth(function(authCode) {
-		var authToken = localStorage.getItem(getUserNation() + "-auth-token");
-		postData = "nation=" + getUserNation() + "&auth=" + authCode + (authToken != null ? "&auth-token=" + authToken : "") + (postData.length > 0 ? "&" + postData : "");
+		var authToken = localStorage.getItem(nation + "-auth-token");
+		postData = "nation=" + nation + "&auth=" + authCode + (authToken != null ? "&auth-token=" + authToken : "") + (postData.length > 0 ? "&" + postData : "");
 		$.post(url, postData, function(data, textStatus, jqXHR) {
 			var authToken = jqXHR.getResponseHeader("X-Auth-Token");
 			if (authToken != null) {
-				localStorage.setItem(getUserNation() + "-auth-token", authToken);
+				localStorage.setItem(nation + "-auth-token", authToken);
 				if (typeof success != "undefined" && success != null) {
 					success(data, textStatus, jqXHR);
 				}
