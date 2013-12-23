@@ -530,8 +530,11 @@ public class NewspaperController extends NationStatesController {
 		Connection conn = null;
 		PreparedStatement articles = null;
 		ResultSet set = null;
+		PreparedStatement newspaperRegion = null;
 		try {
 			conn = getConnection();
+			newspaperRegion = conn.prepareStatement("SELECT region FROM assembly.newspapers WHERE newspaper = ?");
+
 			articles = conn.prepareStatement("SELECT newspaper_id, article, title, timestamp, author, newspaper FROM assembly.full_articles WHERE visible = 1 ORDER BY timestamp DESC LIMIT ?, 10");
 			articles.setInt(1, start);
 			set = articles.executeQuery();
@@ -543,11 +546,19 @@ public class NewspaperController extends NationStatesController {
 				article.put("timestamp", set.getLong(4));
 				article.put("author", set.getString(5));
 				article.put("newspaper", set.getString(6));
+				
+				newspaperRegion.setInt(1, set.getInt(1));
+				ResultSet region = newspaperRegion.executeQuery();
+				region.next();
+				article.put("region", region.getString(1));
+				DbUtils.closeQuietly(region);
+				
 				list.add(article);
 			}
 		} finally {
 			DbUtils.closeQuietly(set);
 			DbUtils.closeQuietly(articles);
+			DbUtils.closeQuietly(newspaperRegion);
 			DbUtils.closeQuietly(conn);
 		}
 		Result result = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(list.hashCode()), "180");

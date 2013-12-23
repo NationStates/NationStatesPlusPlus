@@ -62,9 +62,13 @@ POST    /region/recruitment/get       @controllers.RecruitmentController.getRecr
 POST    /region/recruitment/set       @controllers.RecruitmentController.updateRecruitmentStrategies(region: String ?= "")
 POST    /region/recruitment/success   @controllers.RecruitmentController.getRecruitmentSuccess(tgid: String ?= "", region: String ?= "")
 GET     /recruitment/                 @controllers.RecruitmentController.getRecruitmentNations()
+GET     /recruitment/puppet/          @controllers.RecruitmentController.markPuppetNation(nation: String ?= "")
 
 GET    /admin/happenings/             @controllers.AdminController.recalculateHappenings(code: String ?= "", happeningType: Integer ?= -1)
 GET    /admin/invalidate_cache/       @controllers.AdminController.invalidateCaches(code: String ?= "")
+
+POST   /xenforo/login/                @controllers.XenforoController.verifyNationLogin()
+POST   /xenforo/register/             @controllers.XenforoController.createXenforoUser()
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.at(path="/public", file)

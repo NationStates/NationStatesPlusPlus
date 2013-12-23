@@ -219,6 +219,10 @@ public class Utils {
 	}
 
 	public static Result validateRequest(Http.Request request, Http.Response response, NationStates api, DatabaseAccess access) {
+		return validateRequest(request, response, api, access, true);
+	}
+
+	public static Result validateRequest(Http.Request request, Http.Response response, NationStates api, DatabaseAccess access, boolean rateLimit) {
 		String authToken = Utils.getPostValue(request, "auth-token");
 		String nation = Utils.getPostValue(request, "nation");
 		String auth = Utils.getPostValue(request, "auth");
@@ -233,7 +237,7 @@ public class Utils {
 				} else {
 					reason = "INVALID AUTH TOKEN";
 				}
-				if (auth != null && recentAuthRequest.getIfPresent(nation) == null) {
+				if (auth != null && (!rateLimit || recentAuthRequest.getIfPresent(nation) == null)) {
 					recentAuthRequest.put(nation, true);
 					boolean verify = false;
 					try {

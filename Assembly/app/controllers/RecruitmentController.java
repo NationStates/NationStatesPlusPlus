@@ -17,6 +17,7 @@ import play.libs.Json;
 import play.mvc.Result;
 import play.mvc.Results;
 
+import com.afforess.assembly.HappeningsTask;
 import com.afforess.assembly.model.HappeningType;
 import com.afforess.assembly.model.RecruitmentAction;
 import com.afforess.assembly.model.RecruitmentType;
@@ -235,5 +236,15 @@ public class RecruitmentController extends NationStatesController {
 		} finally {
 			DbUtils.closeQuietly(conn);
 		}
+	}
+
+	public Result markPuppetNation(String nation) throws ExecutionException {
+		Utils.handleDefaultPostHeaders(request(), response());
+		nation = Utils.sanitizeName(nation);
+		if (getDatabase().getNationIdCache().get(nation) == -1) {
+			HappeningsTask.markNationAsPuppet(nation);
+			return Results.ok();
+		}
+		return Results.badRequest();
 	}
 }

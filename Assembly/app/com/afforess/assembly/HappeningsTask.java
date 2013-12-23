@@ -42,6 +42,7 @@ public class HappeningsTask implements Runnable {
 	 */
 	private final AtomicInteger highActivity = new AtomicInteger(1);
 	private final HealthMonitor monitor;
+	private final static Cache<String, Boolean> puppetCache = CacheBuilder.newBuilder().maximumSize(1000).expireAfterWrite(5, TimeUnit.MINUTES).build();
 	public HappeningsTask(DatabaseAccess access, NationStates api, HealthMonitor health) {
 		this.api = api;
 		this.pool = access.getPool();
@@ -67,6 +68,10 @@ public class HappeningsTask implements Runnable {
 
 	public boolean isHighActivity() {
 		return highActivity.get() > 0;
+	}
+
+	public static void markNationAsPuppet(String nation) {
+		puppetCache.put(nation, true);
 	}
 
 	private String parseHappening(String text) {
@@ -228,10 +233,11 @@ public class HappeningsTask implements Runnable {
 				} else if (nationId > -1 && happeningType == HappeningType.getType("FOUNDED").getId()) {
 					//Update region
 					Matcher regions = Utils.REGION_PATTERN.matcher(text);
-					if(regions.find()) {
-						PreparedStatement update = conn.prepareStatement("UPDATE assembly.nation SET region = ?, wa_member = 2 WHERE id = ?");
+					if (regions.find()) {
+						PreparedStatement update = conn.prepareStatement("UPDATE assembly.nation SET region = ?, wa_member = 2, puppet = ? WHERE id = ?");
 						update.setInt(1, access.getRegionIdCache().get(text.substring(regions.start() + 2, regions.end() - 2)));
-						update.setInt(2, nationId);
+						update.setInt(2, puppetCache.getIfPresent(nation) ? 1 : 0);
+						update.setInt(3, nationId);
 						update.executeUpdate();
 						DbUtils.closeQuietly(update);
 					}

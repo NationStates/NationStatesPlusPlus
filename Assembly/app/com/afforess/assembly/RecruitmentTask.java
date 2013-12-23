@@ -132,7 +132,10 @@ public class RecruitmentTask implements Runnable {
 	private Object[] findTargetNation(RecruitmentAction action, Connection conn) throws SQLException {
 		PreparedStatement newNations = null;
 		ResultSet result = null;
+		PreparedStatement puppetNation = null;
+		ResultSet puppet = null;
 		try {
+			puppetNation = conn.prepareStatement("SELECT puppet FROM assembly.nation WHERE id = ?");
 			//TODO: improve randomize to not suck
 			//newNations = conn.prepareStatement((action.randomize ? "SELECT * FROM ( " : "") + "SELECT nation, name, region_name FROM " + getTable(action.type) + " LIMIT 0, 500" + (action.randomize ? ") as derived_tbl ORDER BY rand()" : ""));
 			newNations = conn.prepareStatement("SELECT nation, name, region_name FROM " + getTable(action.type) + " LIMIT 0, 500");
@@ -147,6 +150,16 @@ loop:		while(result.next()) {
 				if (isSpamNation(nation)) {
 					continue loop;
 				}
+				
+				//Check if known puppet nation
+				puppetNation.setInt(1, nationId);
+				puppet = puppetNation.executeQuery();
+				if (puppet.next() && puppet.getInt(1) == 1) {
+					DbUtils.closeQuietly(puppet);
+					continue loop;
+				}
+				DbUtils.closeQuietly(puppet);
+				
 				if (action.filterRegex != null && action.filterRegex.length() > 0) {
 					try {
 						Pattern pattern = Pattern.compile(action.filterRegex);
@@ -173,6 +186,7 @@ loop:		while(result.next()) {
 		} finally {
 			DbUtils.closeQuietly(result);
 			DbUtils.closeQuietly(newNations);
+			DbUtils.closeQuietly(puppetNation);
 		}
 		return null;
 	}
