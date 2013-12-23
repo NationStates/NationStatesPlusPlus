@@ -1,8 +1,8 @@
 
 //versioned files are checked for modifications each page hit (slow)
-var urlPrefix = "http://www.nationstatesplusplus.net/nationstates/v2_2/";
+var urlPrefix = "http://nationstatesplusplus.net/nationstates/v2_2/";
 //static files are cached by browser for 1 week, not checked for modifications (fast)
-var staticUrlPrefix = "http://www.nationstatesplusplus.net/nationstates/static/";
+var staticUrlPrefix = "http://nationstatesplusplus.net/nationstates/static/";
 
 var pageUrl = window.location.href;
 
@@ -89,7 +89,7 @@ $.get(urlPrefix + "cache_buster.txt?time=" + Date.now() , function(value) {
 	if (document.head.innerHTML.indexOf("ns.dark") != -1) {
 		addStylesheet(urlPrefix + 'nationstates++_dark.css', true);
 	}
-	addStylesheet("//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css", false);
+	//addStylesheet("//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css", false);
 
 	if (pageUrl.indexOf("page=blank") != -1) {
 		addStylesheet(staticUrlPrefix + 'newspaper_bootstrap.min.css', true);
