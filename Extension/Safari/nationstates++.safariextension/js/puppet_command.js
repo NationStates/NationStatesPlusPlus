@@ -9,6 +9,7 @@
 		$("#content").append("<div id='settings'></div>");
 		$.get("http://nationstatesplusplus.net/nationstates/v2_2/puppet_creation.html", function(html) {
 			$("#settings").html(html);
+			$("#import_puppets_btn").hide();
 			$("#error_label").hide();
 			$("#settings").find("input").removeAttr("required");
 			$("#random_name").on("click", function(event) {
@@ -39,17 +40,6 @@
 				$("#random_animal").click();
 				$("#random_motto").click();
 			});
-			$("#move_to_destination").attr("disabled", true);
-			$("#destination").on("keydown", function(event) {
-				setTimeout(function() {
-					if ($("#destination").val().length == 0) {
-						$("#move_to_destination").attr("disabled", true);
-					} else {
-						$("#move_to_destination").removeAttr("disabled");
-					}
-				}, 250);
-			});
-			
 			//Remember last email
 			var settings = getSettings();
 			var lastEmail = settings.getValue("last_puppet_email");
@@ -57,9 +47,46 @@
 				$("#puppet_email").val(lastEmail);
 			}
 			
-			$("#found_nation").on("click", function(event) {
+			$("#move_to_destination").on("click", function(event) {
 				event.preventDefault();
 				$("#error_label").removeClass("success_alert").addClass("danger_alert").hide();
+				if ($("#destination").val().length == 0) $("#error_label").html("Missing Destination Region!").show();
+				else if ($("#destination").val().length > 40) $("#error_label").html("Region Name Can Not Exceed 40 Characters!").show();
+				else {
+					$("#error_label").removeClass("danger_alert").addClass("progress_alert").html("Checking Region...").show();
+					$.get("http://nationstatesplusplus.net/api/region/nations/?region=" + $("#destination").val().replaceAll(" ", "_").toLowerCase(), function(population) {
+						if (population.length == 0) {
+							$("#error_label").html("Creating New Region...").show();
+							$.get("http://www.nationstates.net/page=create_region", function(data) {
+								$.post("http://www.nationstates.net/page=create_region", "page=create_region&region_name=" + encodeURIComponent($("#destination").val()) + "&desc=+&founder_control=1&delegate_control=0&create_region=+Create+Region+", function(data) {
+									if ($(data).find("p.info").length > 0) {
+										$("#error_label").removeClass("progress_alert").addClass("success_alert").html($(data).find("p.info").html());
+									} else {
+										$("#error_label").removeClass("progress_alert").addClass("danger_alert").html($(data).find("p.error").html());
+									}
+								});
+							});
+						} else {
+							$("#error_label").html("Moving To Existing Region...").show();
+							$.get("http://www.nationstates.net/region=" + $("#destination").val().replaceAll(" ", "_").toLowerCase(), function(data) {
+								if ($(data).find(".STANDOUT:first").attr("href").substring(7) != $("#puppet_name").val().replaceAll(" ", "_").toLowerCase()) {
+									$("#error_label").removeClass("progress_alert").addClass("danger_alert").html("Not logged in as '" + $("#puppet_name").val() + "'. Log in or found '" + $("#puppet_name").val() + "' and try again.").show();
+								} else if ($(data).find("img[alt='Password required']").length > 0) {
+									$("#error_label").removeClass("progress_alert").addClass("danger_alert").html("Can not move into passworded regions. Move the nation manually.").show();
+								} else {
+									$.post("http://www.nationstates.net/page=change_region", "localid=" + $(data).find("input[name='localid']").val() + "&region_name=" + $(data).find("input[name='region_name']").val() + "&move_region=1", function(data) {
+										$("#error_label").removeClass("progress_alert").addClass("success_alert").html("Moved Into " + $("#destination").val() + " Successfully!").show();
+									});
+								}
+							});
+						}
+					});
+				}
+			});
+			
+			$("#found_nation").on("click", function(event) {
+				event.preventDefault();
+				$("#error_label").removeClass("success_alert").removeClass("progress_alert").addClass("danger_alert").hide();
 				if ($("#puppet_name").val().length == 0) $("#error_label").html("Missing Puppet Name!").show();
 				else if ($("#puppet_name").val().length > 40) $("#error_label").html("Puppet Name Can Not Exceed 40 Characters!").show();
 				else if ($("#password").val().length == 0) $("#error_label").html("Missing Password!").show();
@@ -86,7 +113,7 @@
 							questions += "Q" + i + "=";
 							questions += ANSWERS[Math.floor(Math.random() * ANSWERS.length)];
 						}
-						$("#error_label").html("Attempting Puppet Creation...").css("color", "inherit").show();
+						$("#error_label").html("Attempting Puppet Creation...").removeClass("success_alert").removeClass("danger_alert").addClass("progress_alert").show();
 						var type = ($("#type").val() == "random" ? Math.floor(Math.random() * 38) + 100 : $("#type").val());
 						var history = ($("#history").val() == "random" ? Math.floor(($("#history").find("option").length - 1) * Math.random()) : $("#history").val());
 						$.post("http://www.nationstates.net/cgi-bin/build_nation.cgi", questions + "&name=" + encodeURIComponent($("#puppet_name").val()) +
@@ -136,13 +163,13 @@
 										flagUpload.open("POST", "http://www.nationstates.net/cgi-bin/upload.cgi");
 										$("#error_label").html("Uploading Puppet Flag...").show();
 										flagUpload.onload = function(event) {
-											$("#error_label").html("Puppet Created Successfully!").removeClass("danger_alert").addClass("success_alert").show();
+											$("#error_label").html("Puppet Created Successfully!").removeClass("danger_alert").removeClass("progress_alert").addClass("success_alert").show();
 											$("#found_nation").removeAttr("disabled");
 										};
 										flagUpload.send(flagForm);
 									});
 								} else {
-									$("#error_label").html("Puppet Created Successfully!").removeClass("danger_alert").addClass("success_alert").show();
+									$("#error_label").html("Puppet Created Successfully!").removeClass("danger_alert").removeClass("progress_alert").addClass("success_alert").show();
 									$("#found_nation").removeAttr("disabled");
 								}
 							}

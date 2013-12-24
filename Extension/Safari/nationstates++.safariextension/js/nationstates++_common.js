@@ -452,7 +452,7 @@ function showPuppets() {
 	html += "</ul>";
 	html += "<p style='margin-top: -20px; margin-bottom: 1px;'><input class='text-input' type='text' id='puppet_nation' size='18' placeholder='Nation'></p>";
 	html += "<p style='margin-top: 1px;'><input class='text-input' type='password' id='puppet_password' size='18' placeholder='Password'></p>";
-	html += "<div id='puppet_invalid_login' style='display:none;'><p>Invalid Login</p></div>";
+	html += "<div id='puppet_invalid_login' style='display:none;'><p>Invalid Login</p></div><p class='puppet_creator'><a style='color:white;' href='http://www.nationstates.net/page=blank?puppet_creator'>Create New Puppet Nations</a></p>";
 
 	$("#puppet_setting_form").html(html);
 	

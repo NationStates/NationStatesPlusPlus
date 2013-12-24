@@ -582,23 +582,22 @@ function doRMBPost(event) {
 
 		$("#rmb-post-form").animate({ height: 'toggle' }, 1200, function() { $(this).hide(); });
 		posting.done(function( data ) {
-			var error = ($(data).find("p[class='error']")).text();
-			if (typeof error != 'undefined' && error.length > 0) {
-				console.log("Error: " + error);
-				alert(error);
-				return;
+			if ($(data).find("p[class='error']").length > 0) {
+				console.log("Error: " + $(data).find("p[class='error']").text());
+				alert($(data).find("p[class='error']").text());
+			} else {
+				$.get('/region=' + getVisibleRegion(), function(data) {
+					$("#rmb").html($(data).find("#rmb").html());
+					$('textarea[name="message"]').val("");
+					$('textarea[name="message"]').height(120);
+					$("#previewcontent").html("");
+					if ($("em:contains('There are no lodged messages at present.')").length == 0) {
+						updateRMB();
+					} else {
+						location.reload();
+					}
+				});
 			}
-			$.get('/region=' + getVisibleRegion(), function(data) {
-				$("#rmb").html($(data).find("#rmb").html());
-				$('textarea[name="message"]').val("");
-				$('textarea[name="message"]').height(120);
-				$("#previewcontent").html("");
-				if ($("em:contains('There are no lodged messages at present.')").length == 0) {
-					updateRMB();
-				} else {
-					location.reload();
-				}
-			});
 		});
 	}
 }
