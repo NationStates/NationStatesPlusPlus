@@ -13,9 +13,9 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleShortVersionString</key>
-	<string>2.2</string>
+	<string>2.2.1</string>
 	<key>CFBundleVersion</key>
-	<string>2.2</string>
+	<string>2.2.1</string>
 	<key>Chrome</key>
 	<dict/>
 	<key>Content</key>
@@ -54,6 +54,7 @@
 				<string>js/activity.js</string>
 				<string>js/history.js</string>
 				<string>js/world.js</string>
+				<string>js/puppet_command.js</string>
 			</array>
 		</dict>
 		<key>Stylesheets</key>

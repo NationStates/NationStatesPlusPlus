@@ -58,13 +58,17 @@
 						if (population.length == 0) {
 							$("#error_label").html("Creating New Region...").show();
 							$.get("http://www.nationstates.net/page=create_region", function(data) {
-								$.post("http://www.nationstates.net/page=create_region", "page=create_region&region_name=" + encodeURIComponent($("#destination").val()) + "&desc=+&founder_control=1&delegate_control=0&create_region=+Create+Region+", function(data) {
-									if ($(data).find("p.info").length > 0) {
-										$("#error_label").removeClass("progress_alert").addClass("success_alert").html($(data).find("p.info").html());
-									} else {
-										$("#error_label").removeClass("progress_alert").addClass("danger_alert").html($(data).find("p.error").html());
-									}
-								});
+								if ($(data).find(".STANDOUT:first").attr("href").substring(7) != $("#puppet_name").val().replaceAll(" ", "_").toLowerCase()) {
+									$("#error_label").removeClass("progress_alert").addClass("danger_alert").html("Not logged in as '" + $("#puppet_name").val() + "'. Log in or found '" + $("#puppet_name").val() + "' and try again.").show();
+								} else {
+									$.post("http://www.nationstates.net/page=create_region", "page=create_region&region_name=" + encodeURIComponent($("#destination").val()) + "&desc=+&founder_control=1&delegate_control=0&create_region=+Create+Region+", function(data) {
+										if ($(data).find("p.info").length > 0) {
+											$("#error_label").removeClass("progress_alert").addClass("success_alert").html($(data).find("p.info").html());
+										} else {
+											$("#error_label").removeClass("progress_alert").addClass("danger_alert").html($(data).find("p.error").html());
+										}
+									});
+								}
 							});
 						} else {
 							$("#error_label").html("Moving To Existing Region...").show();
@@ -150,7 +154,9 @@
 								$.post("http://www.nationstates.net/page=dilemmas", "dismiss_all=1", function() { });
 								
 								//Hide All Newspapers
-								doAuthorizedPostRequestFor($("#puppet_name").val().toLowerCase().replaceAll(" ", "_"), "http://nationstatesplusplus.net/api/nation/settings/", "settings=" + encodeURIComponent('{"settings":{"show_gameplay_news":false,"show_roleplay_news":false,"show_regional_news":false,"show_irc":false,"show_world_census":false,"show_regional_population":false,},"last_update":' + Date.now() + '}'), function() {});
+								setTimeout(function(nation) {
+									doAuthorizedPostRequestFor(nation, "http://nationstatesplusplus.net/api/nation/settings/", "settings=" + encodeURIComponent('{"settings":{"show_gameplay_news":false,"show_roleplay_news":false,"show_regional_news":false,"show_irc":false,"show_world_census":false,"show_regional_population":false,},"last_update":' + Date.now() + '}'), function() {});
+								}, 10000, $("#puppet_name").val().toLowerCase().replaceAll(" ", "_"));
 								
 								if ($(".fileupload-preview").html().length > 0 && $(".fileupload-preview").html() != "(Optional)") {
 									$.get("http://www.nationstates.net/page=upload_flag", function(data) {
