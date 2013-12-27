@@ -12,6 +12,7 @@
 			$("#import_puppets_btn").hide();
 			$("#error_label").hide();
 			$("#settings").find("input").removeAttr("required");
+			$("#apply_to_wa").removeAttr("title").removeAttr("disabled");
 			$("#random_name").on("click", function(event) {
 				event.preventDefault();
 				$("#puppet_name").val(getRandomName(Math.floor(Math.random() * 12) + 6).toTitleCase());
@@ -137,47 +138,81 @@
 									addPuppetNation($("#puppet_name").val(), $("#password").val());
 								}
 								//Disable recruitment/wa telegrams
-								$.get("http://www.nationstates.net/page=tgsettings", function(data) {
-									$.post("http://www.nationstates.net/page=tgsettings", "chk=" + $(data).find('input[name="chk"]').val() + "&C1=3&C2=3&C3=3&C4=0&update_filter=1", function(data) {
-										console.log("Updated TG settings");
+								var disableRecruitment = function(callback) {
+									$("#error_label").html("10% - Blocking Recruitment Telegrams...").show();
+									$.get("http://www.nationstates.net/page=tgsettings", function(data) {
+										$("#error_label").html("20% - Blocking Recruitment Telegrams...").show();
+										$.post("http://www.nationstates.net/page=tgsettings", "chk=" + $(data).find('input[name="chk"]').val() + "&C1=3&C2=3&C3=3&C4=0&update_filter=1", function(data) {
+											if (typeof callback != "undefined") callback();
+										});
 									});
-								});
+								};
+								
 								//Delete existing telegrams
-								$.get("http://www.nationstates.net/page=telegrams", function(data) {
-									$(data).find(".tgsentline").each(function() {
-										var tgid = $(this).attr("href").split("=")[$(this).attr("href").split("=").length - 1]
-										var chk = $(data).find('input[name="chk"]').val();
-										$.get("http://www.nationstates.net/page=ajax3/a=tgdelete/tgid=" + tgid + "/chk=" + chk, function() { });
+								var deleteTelegrams = function(callback) {
+									$("#error_label").html("30% - Cleaning Up Telegram Inbox...").show();
+									$.get("http://www.nationstates.net/page=telegrams", function(data) {
+										$("#error_label").html("40% - Cleaning Up Telegram Inbox...").show();
+										$(data).find(".tgsentline").each(function() {
+											var tgid = $(this).attr("href").split("=")[$(this).attr("href").split("=").length - 1]
+											var chk = $(data).find('input[name="chk"]').val();
+											$.get("http://www.nationstates.net/page=ajax3/a=tgdelete/tgid=" + tgid + "/chk=" + chk, callback);
+										});
 									});
-								});
+								};
+
 								//Dismiss all issues
-								$.post("http://www.nationstates.net/page=dilemmas", "dismiss_all=1", function() { });
-								
-								//Hide All Newspapers
-								setTimeout(function(nation) {
-									doAuthorizedPostRequestFor(nation, "http://nationstatesplusplus.net/api/nation/settings/", "settings=" + encodeURIComponent('{"settings":{"show_gameplay_news":false,"show_roleplay_news":false,"show_regional_news":false,"show_irc":false,"show_world_census":false,"show_regional_population":false,},"last_update":' + Date.now() + '}'), function() {});
-								}, 10000, $("#puppet_name").val().toLowerCase().replaceAll(" ", "_"));
-								
-								if ($(".fileupload-preview").html().length > 0 && $(".fileupload-preview").html() != "(Optional)") {
-									$.get("http://www.nationstates.net/page=upload_flag", function(data) {
-										var file = $("input[type='file']")[0].files[0];
-										var flagForm = new FormData();
-										flagForm.append("nationname", $("#puppet_name").val().toLowerCase());
-										flagForm.append("localid", $(data).find("input[name='localid']").val());
-										flagForm.append("file", file);
-										var flagUpload = new XMLHttpRequest();
-										flagUpload.open("POST", "http://www.nationstates.net/cgi-bin/upload.cgi");
-										$("#error_label").html("Uploading Puppet Flag...").show();
-										flagUpload.onload = function(event) {
-											$("#error_label").html("Puppet Created Successfully!").removeClass("danger_alert").removeClass("progress_alert").addClass("success_alert").show();
-											$("#found_nation").removeAttr("disabled");
-										};
-										flagUpload.send(flagForm);
-									});
-								} else {
-									$("#error_label").html("Puppet Created Successfully!").removeClass("danger_alert").removeClass("progress_alert").addClass("success_alert").show();
-									$("#found_nation").removeAttr("disabled");
+								var dismissIssues = function(callback) {
+									$("#error_label").html("50% - Dismissing Issues...").show();
+									$.post("http://www.nationstates.net/page=dilemmas", "dismiss_all=1", callback);
+								};
+
+								var applyToWorldAssembly = function(callback) {
+									if ($("#apply_to_wa").prop("checked")) {
+										$("#error_label").html("60% - Apply for World Assembly Membership...").show();
+										$.get("http://www.nationstates.net/page=un", function(data) {
+											$("#error_label").html("70% - Apply for World Assembly Membership...").show();
+											var chk = $(data).find('input[name="chk"]').val();
+											$.post("http://www.nationstates.net/page=UN_status", "action=join_UN&chk=" + chk + "&submit=+Apply+to+Join+", callback);
+										});
+									} else {
+										callback();
+									}
 								}
+								
+
+								var finalizePuppet = function() {
+									if ($(".fileupload-preview").html().length > 0 && $(".fileupload-preview").html() != "(Optional)") {
+										$("#error_label").html("80% - Uploading Puppet Flag...").show();
+										$.get("http://www.nationstates.net/page=upload_flag", function(data) {
+											var file = $("input[type='file']")[0].files[0];
+											var flagForm = new FormData();
+											flagForm.append("nationname", $("#puppet_name").val().toLowerCase());
+											flagForm.append("localid", $(data).find("input[name='localid']").val());
+											flagForm.append("file", file);
+											var flagUpload = new XMLHttpRequest();
+											flagUpload.open("POST", "http://www.nationstates.net/cgi-bin/upload.cgi");
+											$("#error_label").html("90% - Uploading Puppet Flag...").show();
+											flagUpload.onload = function(event) {
+												$("#error_label").html("100% - Puppet Created Successfully!").removeClass("danger_alert").removeClass("progress_alert").addClass("success_alert").show();
+												$("#found_nation").removeAttr("disabled");
+											};
+											flagUpload.send(flagForm);
+										});
+									} else {
+										$("#error_label").html("100% - Puppet Created Successfully!").removeClass("danger_alert").removeClass("progress_alert").addClass("success_alert").show();
+										$("#found_nation").removeAttr("disabled");
+									}
+								};
+								disableRecruitment(function() {
+									deleteTelegrams(function() {
+										dismissIssues(function() {
+											applyToWorldAssembly(function() {
+												finalizePuppet();
+											});
+										})
+									})
+								});
 							}
 						}).fail(function() {
 							$("#found_nation").removeAttr("disabled");
