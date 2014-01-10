@@ -74,6 +74,10 @@ public class HappeningsTask implements Runnable {
 		puppetCache.put(nation, true);
 	}
 
+	public static boolean isPuppetNation(String nation) {
+		return puppetCache.getIfPresent(nation) != null;
+	}
+
 	private String parseHappening(String text) {
 		int index = text.indexOf("%rmb%%");
 		if (index > -1) {
@@ -201,6 +205,8 @@ public class HappeningsTask implements Runnable {
 					joinWorldAssembly(conn, nationId);
 				} else if (happeningType == HappeningType.getType("EJECTED_FOR_RULE_VIOLATIONS").getId()) {
 					resignFromWorldAssembly(conn, nationId, true);
+				} else if (happeningType == HappeningType.getType("ABOLISHED_REGIONAL_FLAG").getId()) {
+					abolishRegionFlag(conn, access, text);
 				} else if (happeningType == HappeningType.getType("RELOCATED").getId()) {
 					relocateNation(conn, nationId, nation, text);
 				} else if (updateCache.getIfPresent(nationId) == null && happeningType == HappeningType.getType("NEW_LEGISLATION").getId()) {
@@ -221,28 +227,28 @@ public class HappeningsTask implements Runnable {
 					if(regions.find()) {
 						final int regionId = access.getRegionIdCache().get(text.substring(regions.start() + 2, regions.end() - 2));
 						if (regionId > -1) {					
-							PreparedStatement update = conn.prepareStatement("UPDATE assembly.nation SET region = ?, wa_member = 2 WHERE id = ?");
+							PreparedStatement update = conn.prepareStatement("UPDATE assembly.nation SET region = ?, wa_member = 2, puppet = ? WHERE id = ?");
 							update.setInt(1, regionId);
-							update.setInt(2, nationId);
+							update.setInt(2, puppetCache.getIfPresent(nation) != null ? 1 : 0);
+							update.setInt(3, nationId);
 							update.executeUpdate();
 							DbUtils.closeQuietly(update);
+							
+							if (puppetCache.getIfPresent(nation) != null) {
+								String defaultSettings = "{\"settings\":{\"show_gameplay_news\":false,\"show_roleplay_news\":false,\"show_regional_news\":false,\"show_irc\":false,\"show_world_census\":false,\"show_regional_population\":false,},\"last_update\":" + System.currentTimeMillis() + "}";
+								PreparedStatement insert = conn.prepareStatement("INSERT INTO assembly.ns_settings (id, settings, last_settings_update) VALUES (?, ?, ?)");
+								insert.setInt(1, nationId);
+								insert.setString(2, defaultSettings);
+								insert.setLong(3, System.currentTimeMillis());
+								insert.executeUpdate();
+								DbUtils.closeQuietly(insert);
+								puppetCache.invalidate(nation);
+							}
 						}
 					}
 				} else if (nationId > -1 && happeningType == HappeningType.getType("CEASED_TO_EXIST").getId()) {
 					access.markNationDead(nationId, conn);
-				} else if (nationId > -1 && happeningType == HappeningType.getType("FOUNDED").getId()) {
-					//Update region
-					Matcher regions = Utils.REGION_PATTERN.matcher(text);
-					if (regions.find()) {
-						PreparedStatement update = conn.prepareStatement("UPDATE assembly.nation SET region = ?, wa_member = 2, puppet = ? WHERE id = ?");
-						update.setInt(1, access.getRegionIdCache().get(text.substring(regions.start() + 2, regions.end() - 2)));
-						update.setInt(2, puppetCache.getIfPresent(nation) ? 1 : 0);
-						update.setInt(3, nationId);
-						update.executeUpdate();
-						DbUtils.closeQuietly(update);
-					}
 				}
-
 				happeningInsert.setInt(1, nationId);
 				happeningInsert.setString(2, parseHappening(text));
 				happeningInsert.setLong(3, timestamp);
@@ -263,6 +269,20 @@ public class HappeningsTask implements Runnable {
 		} finally {
 			DbUtils.closeQuietly(happeningInsert);
 			DbUtils.closeQuietly(conn);
+		}
+	}
+
+	public static void abolishRegionFlag(Connection conn, DatabaseAccess access, String happening) throws SQLException, ExecutionException {
+		Matcher regions = Utils.REGION_PATTERN.matcher(happening);
+		if (regions.find()) {
+			int region = access.getRegionIdCache().get(happening.substring(regions.start() + 2, regions.end() - 2));
+			if (region > -1) {
+				PreparedStatement updateFlag = conn.prepareStatement("UPDATE assembly.region SET flag = ? WHERE id = ?");
+				updateFlag.setString(1, "");
+				updateFlag.setInt(2, region);
+				updateFlag.executeUpdate();
+				DbUtils.closeQuietly(updateFlag);
+			}
 		}
 	}
 

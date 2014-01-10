@@ -64,6 +64,8 @@ POST    /region/recruitment/success   @controllers.RecruitmentController.getRecr
 GET     /recruitment/                 @controllers.RecruitmentController.getRecruitmentNations()
 GET     /recruitment/puppet/          @controllers.RecruitmentController.markPuppetNation(nation: String ?= "")
 
+GET     /wa/power_transfers/          @controllers.WorldAssemblyController.getRecentPowerTransfers()
+
 GET    /admin/happenings/             @controllers.AdminController.recalculateHappenings(code: String ?= "", happeningType: Integer ?= -1)
 GET    /admin/invalidate_cache/       @controllers.AdminController.invalidateCaches(code: String ?= "")
 

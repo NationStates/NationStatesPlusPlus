@@ -34,7 +34,7 @@ public class DumpUpdateTask implements Runnable {
 	@Override
 	public void run() {
 		try {
-			Logger.info("Starting daily dumps update task");
+			Logger.info("Starting daily dumps update task with [" + regionDump.getName() + " & " + nationDump.getName() + "]");
 			RegionsDump regions = new RegionsDump(regionDump);
 			regions.parse();
 			updateRegions(regions);
@@ -114,7 +114,7 @@ public class DumpUpdateTask implements Runnable {
 				regionId = result.getInt(1);
 			}
 
-			Logger.info("Updating region [" + region + "] from the daily dump");
+			Logger.info("Updating region [" + region + "] from the daily dump [numnations: " + numNations + "]");
 
 			PreparedStatement insert = null;
 			insert = conn.prepareStatement("INSERT INTO assembly.region_populations (region, population, timestamp) VALUES (?, ?, ?)");
@@ -122,6 +122,7 @@ public class DumpUpdateTask implements Runnable {
 			insert.setInt(2, numNations);
 			insert.setLong(3, System.currentTimeMillis());
 			insert.executeUpdate();
+			DbUtils.closeQuietly(insert);
 
 			PreparedStatement update = null;
 			if (regionId == -1) {
@@ -132,6 +133,7 @@ public class DumpUpdateTask implements Runnable {
 				update.setString(4, delegate);
 				update.setString(5, founder);
 				update.executeUpdate();
+				DbUtils.closeQuietly(update);
 				return 1;
 			} else {
 				update = conn.prepareStatement("UPDATE assembly.region SET alive = 1, title = ?, flag = ?, delegate = ?, founder = ? WHERE id = ?");
@@ -141,6 +143,7 @@ public class DumpUpdateTask implements Runnable {
 				update.setString(4, founder);
 				update.setInt(5, regionId);
 				update.executeUpdate();
+				DbUtils.closeQuietly(update);
 				return 0;
 			}
 		} finally {
@@ -245,6 +248,7 @@ public class DumpUpdateTask implements Runnable {
 				insert.setByte(9, (byte)1);
 				insert.setLong(10, System.currentTimeMillis() / 1000L);
 				insert.executeUpdate();
+				DbUtils.closeQuietly(insert);
 				return 1;
 			} else {
 				insert = conn.prepareStatement("UPDATE assembly.nation SET alive = 1, full_name = ?, title = ?, flag = ?, region = ?, influence_desc = ?, last_login = ?, wa_member = ? WHERE id = ?");
@@ -261,6 +265,7 @@ public class DumpUpdateTask implements Runnable {
 				}
 				insert.setInt(8, id);
 				insert.executeUpdate();
+				DbUtils.closeQuietly(insert);
 				return 0;
 			}
 		} finally {

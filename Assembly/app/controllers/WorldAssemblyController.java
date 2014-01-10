@@ -12,11 +12,13 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 import org.apache.commons.dbutils.DbUtils;
+import org.joda.time.Duration;
 import org.spout.cereal.config.yaml.YamlConfiguration;
 
 import play.libs.Json;
 import play.mvc.Result;
 
+import com.afforess.assembly.model.HappeningType;
 import com.afforess.assembly.util.DatabaseAccess;
 import com.afforess.assembly.util.Utils;
 
@@ -152,5 +154,46 @@ public class WorldAssemblyController extends DatabaseController {
 			return result;
 		}
 		return ok(Json.toJson(nations)).as("application/json");
+	}
+
+	private List<Map<String, String>> powerTransfers = null;
+	private long nextCache = 0;
+	public Result getRecentPowerTransfers() throws SQLException {
+		if (powerTransfers == null || nextCache < System.currentTimeMillis()) {
+			Connection conn = null;
+			PreparedStatement select = null;
+			ResultSet result = null;
+			List<Map<String, String>> transfers = new ArrayList<Map<String, String>>();
+			try {
+				conn = getConnection();
+				select = conn.prepareStatement("SELECT g.type, re.name, re.title, re.flag, n.name AS nation_name, n.title AS nation_title, n.flag AS nation_flag, g.timestamp FROM ((assembly.global_happenings AS g LEFT JOIN assembly.regional_happenings AS r ON g.id = r.global_id) LEFT JOIN assembly.region AS re ON re.id = r.region) LEFT JOIN assembly.nation AS n ON n.id = g.nation WHERE g.timestamp > ? AND (type = 32 OR g.type = 33) ORDER BY g.timestamp DESC");
+				select.setLong(1, System.currentTimeMillis() - Duration.standardHours(30).getMillis());
+				result = select.executeQuery();
+				while(result.next()) {
+					Map<String, String> data = new HashMap<String, String>();
+					data.put("type", HappeningType.getType(result.getInt(1)).getName());
+					data.put("region", result.getString(2));
+					data.put("region_title", result.getString(3));
+					data.put("region_flag", result.getString(4));
+					data.put("delegate", result.getString(5));
+					data.put("delegate_title", result.getString(6));
+					data.put("delegate_flag", result.getString(7));
+					data.put("timestamp", String.valueOf(result.getLong(8)));
+					
+					transfers.add(data);
+				}
+			} finally {
+				DbUtils.closeQuietly(conn);
+			}
+			
+			powerTransfers = transfers;
+			nextCache = System.currentTimeMillis() + Duration.standardHours(1).getMillis();
+		}
+		
+		Result r = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(powerTransfers.hashCode()), "21600");
+		if (r != null) {
+			return r;
+		}
+		return ok(Json.toJson(powerTransfers)).as("application/json");
 	}
 }

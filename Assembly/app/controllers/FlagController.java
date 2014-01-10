@@ -22,12 +22,16 @@ public class FlagController extends DatabaseController {
 		Connection conn = null;
 		try {
 			conn = getConnection();
-			final String flag = Utils.getNationFlag(nation, conn);
-			Result result = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(flag.hashCode()), "3600");
-			if (result == null) {
-				return Results.redirect(flag);
+			final String flag = Utils.getNationFlag(nation, conn, null);
+			if (flag != null) {
+				Result result = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(flag.hashCode()), "3600");
+				if (result == null) {
+					return Results.redirect(flag);
+				}
+				return result;
 			}
-			return result;
+			Utils.handleDefaultPostHeaders(request(), response());
+			return Results.notFound();
 		} finally {
 			DbUtils.closeQuietly(conn);
 		}
@@ -37,12 +41,16 @@ public class FlagController extends DatabaseController {
 		Connection conn = null;
 		try {
 			conn = getConnection();
-			final String flag = Utils.getRegionFlag(region, conn);
-			Result result = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(flag.hashCode()), "3600");
-			if (result == null) {
-				return Results.redirect(flag);
+			final String flag = Utils.getRegionFlag(region, conn, null);
+			if (flag != null) {
+				Result result = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(flag.hashCode()), "21600");
+				if (result == null) {
+					return Results.redirect(flag);
+				}
+				return result;
 			}
-			return result;
+			Utils.handleDefaultPostHeaders(request(), response());
+			return Results.notFound();
 		} finally {
 			DbUtils.closeQuietly(conn);
 		}
@@ -61,7 +69,7 @@ public class FlagController extends DatabaseController {
 			DbUtils.closeQuietly(conn);
 		}
 
-		Result result = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(json.hashCode()), "3600");
+		Result result = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(json.hashCode()), "21600");
 		if (result != null) {
 			return result;
 		}

@@ -164,6 +164,9 @@ public class Utils {
 	}
 
 	public static String getNationFlag(String nation, Connection conn) throws SQLException {
+		return getNationFlag(nation, conn, "http://www.nationstates.net/images/flags/Default.png");
+	}
+	public static String getNationFlag(String nation, Connection conn, String defaultFlag) throws SQLException {
 		PreparedStatement statement = null;
 		ResultSet result = null;
 		try {
@@ -172,14 +175,14 @@ public class Utils {
 			result = statement.executeQuery();
 			if (result.next()) {
 				final String flag = result.getString(1);
-				if (flag != null && !flag.isEmpty()) {
+				if (flag != null && !flag.trim().isEmpty()) {
 					if (result.getByte(2) == 1) {
 						return flag;
 					}
 					return "http://www.nationstates.net/images/flags/exnation.png";
 				}
 			}
-			return "http://www.nationstates.net/images/flags/Default.png";
+			return defaultFlag;
 		} finally {
 			DbUtils.closeQuietly(result);
 			DbUtils.closeQuietly(statement);
@@ -187,6 +190,10 @@ public class Utils {
 	}
 
 	public static String getRegionFlag(String region, Connection conn) throws SQLException {
+		return getRegionFlag(region, conn, "http://www.nationstates.net/images/flags/Default.png");
+	}
+
+	public static String getRegionFlag(String region, Connection conn, String defaultFlag) throws SQLException {
 		PreparedStatement statement = null;
 		ResultSet result = null;
 		try {
@@ -195,14 +202,14 @@ public class Utils {
 			result = statement.executeQuery();
 			if (result.next()) {
 				final String flag = result.getString(1);
-				if (flag != null && !flag.isEmpty()) {
+				if (flag != null && !flag.trim().isEmpty()) {
 					if (result.getByte(2) == 1) {
 						return flag;
 					}
-					return "http://capitalistparadise.com/nationstates/static/exregion.png";
+					return "http://nationstatesplusplus.com/nationstates/static/exregion.png";
 				}
 			}
-			return "http://www.nationstates.net/images/flags/Default.png";
+			return defaultFlag;
 		} finally {
 			DbUtils.closeQuietly(result);
 			DbUtils.closeQuietly(statement);

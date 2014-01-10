@@ -535,7 +535,7 @@ public class NewspaperController extends NationStatesController {
 			conn = getConnection();
 			newspaperRegion = conn.prepareStatement("SELECT region FROM assembly.newspapers WHERE newspaper = ?");
 
-			articles = conn.prepareStatement("SELECT newspaper_id, article, title, timestamp, author, newspaper FROM assembly.full_articles WHERE visible = 1 ORDER BY timestamp DESC LIMIT ?, 10");
+			articles = conn.prepareStatement("SELECT newspaper_id, article, title, timestamp, author, newspaper, article_id FROM assembly.full_articles WHERE visible = 1 ORDER BY timestamp DESC LIMIT ?, 10");
 			articles.setInt(1, start);
 			set = articles.executeQuery();
 			while(set.next()) {
@@ -546,7 +546,8 @@ public class NewspaperController extends NationStatesController {
 				article.put("timestamp", set.getLong(4));
 				article.put("author", set.getString(5));
 				article.put("newspaper", set.getString(6));
-				
+				article.put("article_id", set.getInt(7));
+
 				newspaperRegion.setInt(1, set.getInt(1));
 				ResultSet region = newspaperRegion.executeQuery();
 				region.next();

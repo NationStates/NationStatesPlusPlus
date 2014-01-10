@@ -1,18 +1,16 @@
 import java.io.File;
 import java.lang.reflect.Constructor;
-import java.lang.reflect.Method;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
-
 import org.apache.commons.dbutils.DbUtils;
 import org.spout.cereal.config.ConfigurationNode;
 import org.spout.cereal.config.yaml.YamlConfiguration;
 
 import com.afforess.assembly.DailyDumps;
 import com.afforess.assembly.EndorsementMonitoring;
+import com.afforess.assembly.FlagUpdateTask;
 import com.afforess.assembly.HappeningsTask;
 import com.afforess.assembly.HealthMonitor;
 import com.afforess.assembly.RecruitmentTask;
@@ -30,13 +28,9 @@ import controllers.DatabaseController;
 import controllers.NationStatesController;
 import play.*;
 import play.api.mvc.EssentialFilter;
-import play.api.mvc.PlainResult;
 import play.filters.gzip.GzipFilter;
 import play.libs.Akka;
-import play.mvc.Action;
 import play.mvc.Controller;
-import play.mvc.Http.Context;
-import play.mvc.Http.Request;
 import scala.concurrent.duration.Duration;
 
 public class Global extends GlobalSettings {
@@ -90,7 +84,7 @@ public class Global extends GlobalSettings {
 		} else {
 			Logger.info("Application Health Monitoring - DISABLED");
 		}
-		
+
 		this.admin = new AdminController(access, config, health);
 
 		//Setup daily dumps
@@ -99,13 +93,14 @@ public class Global extends GlobalSettings {
 		Thread dailyDumps = new Thread(dumps);
 		dailyDumps.setDaemon(true);
 		dailyDumps.start();
-		
+
 		HappeningsTask task = new HappeningsTask(access, api, health);
 
 		Akka.system().scheduler().schedule(Duration.create(5, TimeUnit.SECONDS), Duration.create(3, TimeUnit.SECONDS), task, Akka.system().dispatcher());
 		Akka.system().scheduler().schedule(Duration.create(60, TimeUnit.SECONDS), Duration.create(31, TimeUnit.SECONDS), new EndorsementMonitoring(api, access, 13, health, task), Akka.system().dispatcher());
 		Akka.system().scheduler().schedule(Duration.create(30, TimeUnit.SECONDS), Duration.create(30, TimeUnit.SECONDS), new RecruitmentTask(access), Akka.system().dispatcher());
 		Akka.system().scheduler().schedule(Duration.create(120, TimeUnit.SECONDS), Duration.create(31, TimeUnit.SECONDS), new UpdateOrderTask(api, access), Akka.system().dispatcher());
+		Akka.system().scheduler().schedule(Duration.create(120, TimeUnit.SECONDS), Duration.create(31, TimeUnit.SECONDS), new FlagUpdateTask(api, access), Akka.system().dispatcher());
 	}
 
 	@Override

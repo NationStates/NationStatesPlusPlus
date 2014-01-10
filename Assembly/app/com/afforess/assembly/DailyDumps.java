@@ -51,7 +51,7 @@ public class DailyDumps implements Runnable{
 			updateRegionsDump();
 			updateNationsDump();
 			try {
-				Thread.sleep(60000L * 60);
+				Thread.sleep(60000L * 3);
 			} catch (InterruptedException e) {
 				return;
 			}

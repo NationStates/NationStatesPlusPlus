@@ -9,6 +9,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 import org.apache.commons.dbutils.DbUtils;
@@ -19,6 +21,10 @@ import play.Logger;
 import com.afforess.assembly.model.RecruitmentAction;
 import com.afforess.assembly.model.RecruitmentType;
 import com.afforess.assembly.util.DatabaseAccess;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.limewoodMedia.nsapi.NationStates;
 
 public class RecruitmentTask implements Runnable {
@@ -33,13 +39,27 @@ public class RecruitmentTask implements Runnable {
 	}
 	private final DatabaseAccess access;
 	private final NationStates telegramAPI = new NationStates();
-	public RecruitmentTask(DatabaseAccess access) {
+	private final LoadingCache<Integer, Integer> recruitmentCount;
+	public RecruitmentTask(final DatabaseAccess access) {
 		this.access = access;
 		telegramAPI.setRateLimit(40);
 		telegramAPI.setUserAgent("-- NationStates++ Recruitment Server --");
 		telegramAPI.setRelaxed(true);
 		telegramAPI.setProxyIP("162.243.18.166");
 		telegramAPI.setProxyPort(3128);
+		
+		recruitmentCount = CacheBuilder.newBuilder().maximumSize(2000)
+		.expireAfterAccess(1, TimeUnit.HOURS).expireAfterWrite(1, TimeUnit.HOURS).build(new CacheLoader<Integer, Integer>() {
+			public Integer load(Integer nationId) throws SQLException {
+				Connection conn = null;
+				try {
+					conn = access.getPool().getConnection();
+					return countReceivedTelegrams(conn, nationId);
+				} finally {
+					DbUtils.closeQuietly(conn);
+				}
+			}
+		});
 	}
 
 	@Override
@@ -51,7 +71,7 @@ public class RecruitmentTask implements Runnable {
 		}
 	}
 
-	public void runImpl() throws SQLException {
+	public void runImpl() throws SQLException, ExecutionException {
 		Connection conn = null;
 		try {
 			Random rand = new Random();
@@ -76,7 +96,9 @@ public class RecruitmentTask implements Runnable {
 	private void doRecruitment(RecruitmentAction action, Set<Integer> completedRegions, Object[] nation, Connection conn) throws SQLException {
 		PreparedStatement update = null;
 		try {
-			if (telegramAPI.sendTelegram(action.clientKey, action.secretKey, action.tgid, (String)nation[0]) != null) {
+			String result = telegramAPI.sendTelegram(action.clientKey, action.secretKey, action.tgid, (String)nation[0]);
+			Logger.debug("Recruitment telegram result [" + action.clientKey + " - " + action.clientKey + "] : " + result);
+			if (result != null) {
 				completedRegions.add(action.region);
 				final long lastAction = System.currentTimeMillis() + Duration.standardSeconds(180).getMillis();
 				action.error = 0;
@@ -89,11 +111,16 @@ public class RecruitmentTask implements Runnable {
 					telegram.update(conn);
 				}
 				
+				int nationId = (Integer)nation[1];
 				update = conn.prepareStatement("INSERT INTO assembly.recruitment_history (region, nation_id, tgid) VALUES (?, ?, ?)");
 				update.setInt(1, action.region);
-				update.setInt(2, (Integer)nation[1]);
+				update.setInt(2, nationId);
 				update.setString(3, action.tgid);
 				update.executeUpdate();
+				Integer existing = recruitmentCount.getIfPresent(nationId);
+				if (existing != null) {
+					recruitmentCount.put(nationId, existing + 1);
+				}
 			}
 		} catch (RuntimeException e) {
 			if (e.getCause() instanceof IOException) {
@@ -129,7 +156,7 @@ public class RecruitmentTask implements Runnable {
 		return "assembly.founded_nations";
 	}
 
-	private Object[] findTargetNation(RecruitmentAction action, Connection conn) throws SQLException {
+	private Object[] findTargetNation(RecruitmentAction action, Connection conn) throws SQLException, ExecutionException {
 		PreparedStatement newNations = null;
 		ResultSet result = null;
 		PreparedStatement puppetNation = null;
@@ -173,7 +200,7 @@ loop:		while(result.next()) {
 						action.update(conn);
 					}
 				}
-				if (action.avoidFull && countReceivedTelegrams(conn, nationId) > 15) {
+				if (action.avoidFull && recruitmentCount.get(nationId) > 15) {
 					continue loop;
 				}
 				PreparedStatement prevRecruitment = conn.prepareStatement("SELECT nation_id FROM assembly.recruitment_history WHERE region = ? AND nation_id = ?");
