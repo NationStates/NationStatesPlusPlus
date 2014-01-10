@@ -9,6 +9,22 @@
 	background: #FFFF00;
 }
 
+.banhammer_row {
+	border: 2px solid black;
+	border-radius: 6px;
+	margin-bottom: 6px;
+}
+
+.banhammer_row p {
+	padding: 0px 5px 0px 5px;
+}
+
+.banhammer_span {
+	float: right !important;
+	position: relative;
+	top: -6px;
+}
+
 .news_quote {
     border: 2px solid #CCC;
     padding: 0 6px 0 6px;

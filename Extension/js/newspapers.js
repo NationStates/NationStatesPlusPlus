@@ -340,20 +340,10 @@
 		settings.getValue("newspapers", {})[id] = Date.now();
 		settings.pushUpdate();
 		$("#ns_news_nag").remove();
-		$("#content").html("<div id='news_header' style='text-align: center;'><h1 id='newspaper_name'></h1><div id='manage_newspaper'><p class='newspaper_controls'>Newspaper Controls</p><a class='button' style='font-weight: bold;' href='page=blank/?manage_newspaper=" + id + "'>Manage Newspaper</a><a class='button' style='font-weight: bold;' href='page=blank/?article_editor=" + id + "&article=-1'>Submit Article</a><a class='button pending_articles' style='font-weight: bold; display:none; background:red;' href='page=blank/?view_articles=" + id + "&pending=1'>View Pending Articles</a><a class='button' style='font-weight: bold;' href='page=blank/?view_articles=" + id + "'>View All Articles</a></div><div id='view_newspaper'><p class='newspaper_controls'>Newspaper Database</p><a class='button' style='font-weight: bold;' href='page=blank/?archived_articles=" + id + "'>View Archived Articles</a><a class='button' style='font-weight: bold;' href='page=blank/?article_editor=" + id + "&article=-1&volunteer=1'>Submit Article</a></div><i id='newspaper_byline'></i><hr></div><div id='inner-content'><div id='left_column'></div><div id='middle_column'></div><div id='right_column'></div></div><div id='bottom_content' style='text-align:center;'><i id='submissions' style='display:none;'>Looking to have your article or content featured? Contact <a id='submissions_editor' href='nation=afforess' class='nlink'>Afforess</a> for submissions!</i></div>");
+		$("#content").html("<div id='news_header' style='text-align: center;'><h1 id='newspaper_name'></h1><div id='manage_newspaper'><p class='newspaper_controls'>Newspaper Controls</p><a class='button' style='font-weight: bold;' href='page=blank/?manage_newspaper=" + id + "'>Manage Newspaper</a><a class='button' style='font-weight: bold;' href='page=blank/?article_editor=" + id + "&article=-1'>Submit Article</a><a class='button pending_articles' style='font-weight: bold; display:none; background:red;' href='page=blank/?view_articles=" + id + "&pending=1'>View Pending Articles</a><a class='button' style='font-weight: bold;' href='page=blank/?view_articles=" + id + "'>View All Articles</a></div><div id='view_newspaper'><p class='newspaper_controls'>Newspaper Database</p><a class='button' style='font-weight: bold;' href='page=blank/?archived_articles=" + id + "'>View Archived Articles</a><a class='button' style='font-weight: bold;' href='page=blank/?article_editor=" + id + "&article=-1&volunteer=1'>Submit Article</a></div><i id='newspaper_byline'></i><hr></div><div id='inner-content'><iframe id='article-content' seamless='seamless' frameborder='no' scrolling='no' src='http://nationstatesplusplus.net/newspaper?id=" + id + "&embed=true' style='width: 100%;height: 1000px;'></iframe></div>");
 		loadingAnimation();
 		window.document.title = "NationStates | Newspaper"
 		//$(window).unbind("scroll");
-		updateSize = function() {
-			$("#inner-content").css("height", 0);
-			$("#inner-content").children().each(function() {
-				var height = $("#inner-content").height();
-				$("#inner-content").css("height", Math.max(height, $(this).height() + 200) + "px");
-				$("#left_column").find("img").css("max-width", ($("#left_column").width() - 30) + "px");
-				$("#middle_column").find("img").css("max-width", ($("#middle_column").width() - 30) + "px");
-				$("#right_column").find("img").css("max-width", ($("#right_column").width() - 30) + "px");
-			});
-		}
 		$.get("http://nationstatesplusplus.net/api/newspaper/lookup/?id=" + id, function(json) {
 			$.get("http://nationstatesplusplus.net/api/newspaper/editor/?newspaper=" + id + "&nation=" + getUserNation(), function(data, textStatus, jqXHR) {
 				$(".edit_article").show();
@@ -370,48 +360,16 @@
 				$("#view_newspaper").show();
 			});
 			window.document.title = json.newspaper;
-			$("#newspaper_name").html("<a href='page=blank?lookup_newspaper=" + id + "'>" + parseBBCodes(json.newspaper) + "</a>");
+			$("#newspaper_name").html("<a href='http://nationstatesplusplus.net/newspaper?id=" + id + "'>" + parseBBCodes(json.newspaper) + "</a>");
 			$("#newspaper_byline").html(parseBBCodes(json.byline));
-			$("#submissions_editor").html(json.editor.replaceAll("_", " ").toTitleCase());
-			$("#submissions_editor").attr("href", "nation=" + json.editor);
-			
-			var getSelector = function(column) {
-				switch (parseInt(column, 10)) {
-					case 0:
-						return $("#left_column");
-					case 1:
-						return $("#middle_column");
-					case 2:
-						return $("#right_column");
+			window.addEventListener('message', receiveMessage, false);
+			function receiveMessage(event) {
+				console.log(event.data);
+				if (event.data.height) {
+					$("#article-content").height(event.data.height + 50);
 				}
 			}
-			var articles = json.articles;
-			$("#left_column, #middle_column, #right_column").html("");
-			for (var order = 0; order < 5; order++) {
-				for (var i = 0; i < articles.length; i++) {
-					var article = articles[i];
-					if (article.order == order) {
-						var selector = getSelector(article.column);
-						if (order > 0) selector.append("<hr style='margin-top: 40px;'>");
-						selector.append("<div newspaper='" + article.newspaper + "' id='article_id_" + article.article_id + "'></div>");
-					}
-				}
-			}
-			for (var i = 0; i < articles.length; i++) {
-				var article = articles[i];
-				var selector = $("#article_id_" + article.article_id);
-				var html = "<h2 style='margin-top:-5px;margin-bottom:-15px'>" + parseBBCodes(article.title) + "</h2>";
-				html += "<i><p>" + parseBBCodes(article.author) + ", " + (new Date(parseInt(article.timestamp, 10))).customFormat("#D##th# #MMMM# #YYYY#") + "</p></i>";
-				html += "<div class='edit_article' style='display:none; margin-top:-12px;'><p><a class='button' href='page=blank/?article_editor=" + article.newspaper + "&article=" + article.article_id + "'>Edit Article</a></p></div>";
-				html += parseBBCodes(article.article);
-				selector.html(html);
-				selector.find("img").load(function() {window.onresize();});
-			}
-			setTimeout(function() {window.onresize();}, 1000);
-			window.onresize();
 		});
-		$("#submissions").show();
-		window.onresize = updateSize;
 	}
 
 	function loadingAnimation() {

@@ -2,7 +2,9 @@
 	var CURRENCY_LIST = ["Dollar", "Credit", "Peso", "Euro", "Money", "Denero", "Shiny Green Things", "Yen", "Gold", "Platinum", "Latinum"];
 	var ANIMAL_LIST = ["Eagle", "Dog", "Cat", "Lion", "Tiger", "Giraffe", "Zebra", "Vulture", "Python", "Rattlesnake", "Wolf", "Scorpion", "Spider", "Black Widow", "Black Bear", "Cow"];
 	var MOTTO_LIST = ["The End of All Things", "Forward unto the dawn", "Flee, Flee for your lives", "Mostly Harmless", "The meaning to life, the universe, and everything", "42", 
-						"This Motto Space For Sale", "This Space Intentionally Left Blank", "Puppeteer", "Not Even Remotely Random"];
+						"This Motto Space For Sale", "This Space Intentionally Left Blank", "Puppeteer", "Turning and turning in the widening gyre", "The falcon cannot hear the falconer",
+						"Things fall apart", "the centre cannot hold", "Mere anarchy is loosed upon the world", "The blood-dimmed tide is loosed, and everywhere", "The ceremony of innocence is drowned",
+						"The best lack all conviction", "while the worst Are full of passionate intensity", "Surely some revelation is at hand" ];
 	if (getVisiblePage() == "blank" && window.location.href.contains("?puppet_creator")) {
 		window.document.title = "Puppet Creator";
 		$("#content").html("<h1>Puppet Creation Center</h1>");
@@ -13,6 +15,55 @@
 			$("#error_label").hide();
 			$("#settings").find("input").removeAttr("required");
 			$("#apply_to_wa").removeAttr("title").removeAttr("disabled");
+			$("#autofill_names").show();
+			$("#autofill_names").on("click", function(event) {
+				event.preventDefault();
+				if ($("#autofill_names_group:visible").length > 0) {
+					$("#autofill_names_group").slideToggle(400);
+					setTimeout(function() { $("#autofill_names_group").remove(); }, 500);
+				} else {
+					var upload = $("#import_buttons").parents(".control-group").clone();
+					upload.attr("id", "autofill_names_group");
+					upload.find("input[id='import_buttons']").attr("id", "import_puppet_names");
+					upload.find("button[id='import_puppets_btn']").attr("id", "upload_autofill_names").attr("style", "margin-top:-1px;");
+					upload.find(".control-label").html("Puppet Names:");
+					upload.find(".fileupload-preview").html("List of Puppet Names to use");
+					upload.hide();
+					$(upload).insertAfter($("#autofill_names").parents(".control-group"));
+					upload.slideToggle(400);
+					$('#upload_autofill_names').html("Upload File").show();
+					$('#upload_autofill_names').on('click', function(evt) {
+						event.preventDefault();
+						$('#upload_autofill_names').attr('disabled', true);
+						if ($("input[type='file']")[0].files.length > 0 ) {
+							console.log("Uploading puppets file");
+							var reader = new FileReader();
+							reader.readAsText($("input[type='file']")[0].files[0], "UTF-8");
+							reader.onload = function (evt) {
+								try {
+									var split = evt.target.result.split("\n");
+									for (var i = 0; i < split.length; i++) {
+										var line = split[i].trim();
+										if (line != "") {
+											$(document.body).append("<div name='autofill_puppet' style='display:none;' nation='" + line + "'></div>");
+										}
+									}
+									if ($("div[name='autofill_puppet']").length > 0) {
+										$("#autofill_names_group").find(".fileupload-preview").html("Uploaded Names Successfully...");
+										setTimeout(function() { $("#autofill_names").click(); ("#autofill_names").remove(); }, 2000);
+									} else {
+										$("#autofill_names_group").find(".fileupload-preview").html("Invalid File");
+										$('#upload_autofill_names').removeAttr('disabled');
+									}
+								} catch (error) {
+									$("#autofill_names_group").find(".fileupload-preview").html("Invalid File");
+									$('#upload_autofill_names').removeAttr('disabled');
+								}
+							}
+						}
+					});
+				}
+			});
 			$("#random_name").on("click", function(event) {
 				event.preventDefault();
 				$("#puppet_name").val(getRandomName(Math.floor(Math.random() * 12) + 6).toTitleCase());

@@ -36,6 +36,17 @@
 		}
 		$.get("http://nationstatesplusplus.net/api/nation/latest_update/?name=" + getVisibleNation(), function(data, textStatus, xhr) {
 			if (xhr.status != 204 && data.timestamp > (Date.now() - 30 * 24 * 60 * 60 * 1000)) {
+				if (data.timestamp > (Date.now() - 15 * 60 * 1000)) {
+					$("#nspp_trophy").attr("src", "http://nationstatesplusplus.net/nationstates/static/nspp_online.png");
+					$("#nspp_trophy").attr("title", $("#nspp_trophy").attr("title") + "\nCurrently Online!");
+				} else {
+					var opacity = 1 - ((Date.now() - data.timestamp + 3 * 24 * 60 * 60 * 1000) / (30 * 24 * 60 * 60 * 1000));
+					console.log(Date.now() - data.timestamp);
+					console.log(Date.now() - data.timestamp + 3 * 24 * 60 * 60 * 1000);
+					console.log(opacity);
+					$("#nspp_trophy").attr("title", $("#nspp_trophy").attr("title") + "\nLast seen " + timestampToTimeAgo(data.timestamp).toLowerCase() + " ago.");
+					$("#nspp_trophy").css("opacity", Math.max(0, Math.min(1, opacity)));
+				}
 				$("#nspp_trophy").show();
 			}
 		});
