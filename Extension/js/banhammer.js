@@ -2,6 +2,10 @@
 	if (getVisiblePage() == "blank" && typeof $.QueryString["banhammer"] != "undefined") {
 		var region = $.QueryString["banhammer"];
 		window.document.title = "Banhammer!";
+		$("#content").html("<h1>Ban Management Settings</h1><div id='settings'></div><hr></hr><h1>Nation List</h2><div id='nation_list'></div>");
+		$.get("http://nationstatesplusplus.net/nationstates/v2_2/banhammer.html", function(html) {
+			$("#settings").html(html);
+		});
 		$.get("http://nationstatesplusplus.net/api/region/nations/?region=" + region, function(data) {
 			var html = "";
 			for (var i = 0; i < data.length; i++) {
@@ -14,7 +18,7 @@
 				
 				html += "</p></div>";
 			}
-			$("#content").html(html);
+			$("#nation_list").html(html);
 			var ejectOrBan = function(event, nation, param) {
 				event.preventDefault();
 				$("button").attr("disabled", true);
