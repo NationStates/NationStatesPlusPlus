@@ -166,6 +166,7 @@ public class Utils {
 	public static String getNationFlag(String nation, Connection conn) throws SQLException {
 		return getNationFlag(nation, conn, "http://www.nationstates.net/images/flags/Default.png");
 	}
+
 	public static String getNationFlag(String nation, Connection conn, String defaultFlag) throws SQLException {
 		PreparedStatement statement = null;
 		ResultSet result = null;
@@ -177,6 +178,10 @@ public class Utils {
 				final String flag = result.getString(1);
 				if (flag != null && !flag.trim().isEmpty()) {
 					if (result.getByte(2) == 1) {
+						//Return png copy, even if older jpg version
+						if (flag.startsWith("http://www.nationstates.net/images/flags/Default")) {
+							return "http://www.nationstates.net/images/flags/Default.png";
+						}
 						return flag;
 					}
 					return "http://www.nationstates.net/images/flags/exnation.png";

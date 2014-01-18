@@ -130,9 +130,38 @@ public class RegionController extends NationStatesController {
 		}
 	}
 
+	public Result getRegionSummary(String region) throws SQLException, ExecutionException {
+		List<Map<String, Object>> regionData = new ArrayList<Map<String, Object>>();
+		Connection conn = null;
+		try {
+			conn = getConnection();
+			PreparedStatement statement = conn.prepareStatement("SELECT name, title, flag, influence FROM assembly.nation WHERE alive = 1 AND region = ? ORDER BY update_order ASC");
+			statement.setInt(1, getDatabase().getRegionIdCache().get(Utils.sanitizeName(region)));
+			ResultSet result = statement.executeQuery();
+			while(result.next()) {
+				Map<String, Object> nation = new HashMap<String, Object>();
+				nation.put("name", result.getString(1));
+				nation.put("title", result.getString(2));
+				nation.put("flag", result.getString(3));
+				nation.put("influence", result.getInt(4));
+				regionData.add(nation);
+			}
+			DbUtils.closeQuietly(result);
+			DbUtils.closeQuietly(statement);
+		} finally {
+			DbUtils.closeQuietly(conn);
+		}
+
+		Result r = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(regionData.hashCode()), "6");
+		if (r != null) {
+			return r;
+		}
+		return ok(Json.toJson(regionData)).as("application/json");
+	}
+
 	public Result getNations(String regions, boolean xml) throws SQLException, ExecutionException {
 		Map<String, Object> regionData = new LinkedHashMap<String, Object>();
-		Connection conn = null; 
+		Connection conn = null;
 		try {
 			conn = getConnection();
 			String[] split = regions.split(",");
