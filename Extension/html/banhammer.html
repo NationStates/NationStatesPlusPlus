@@ -1,0 +1,51 @@
+<form class="form-horizontal">
+<fieldset>
+
+<!-- Multiple Checkboxes (inline) -->
+<div class="control-group">
+  <label class="control-label" for="checkboxes">Show Nation Flags</label>
+  <div class="controls">
+    <label class="checkbox inline" for="show_flags">
+      <input type="checkbox" name="show_flags" id="show_flags" value="Flags" checked="checked">
+      Flags
+    </label>
+  </div>
+</div>
+
+<!-- Text input-->
+<div class="control-group">
+  <label class="control-label" for="filter_names">Filter Nations:</label>
+  <div class="controls">
+    <input id="filter_names" name="filter_names" type="text" placeholder="Filter" class="input-xlarge">
+    <p class="help-block">Type part of the nation's name</p>
+  </div>
+</div>
+
+<!-- Multiple Radios -->
+<div class="control-group">
+  <label class="control-label" for="radios">Sorting</label>
+  <div class="controls">
+    <label class="radio" for="length_of_residency">
+      <input type="radio" name="radio_controls" id="length_of_residency" value="Length of Residency" checked="checked">
+      Length of Residency
+    </label>
+    <label class="radio" for="influence">
+      <input type="radio" name="radio_controls" id="influence" value="Influence">
+      Influence
+    </label>
+  </div>
+</div>
+
+<!-- Multiple Checkboxes (inline) -->
+<div class="control-group">
+  <label class="control-label" for="inversion">Invert Sorting</label>
+  <div class="controls">
+    <label class="checkbox inline" for="inversion">
+      <input type="checkbox" name="inversion" id="inversion" value="(Low to High)">
+      (Low to High)
+    </label>
+  </div>
+</div>
+
+</fieldset>
+</form>

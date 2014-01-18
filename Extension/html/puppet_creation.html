@@ -4,15 +4,71 @@
 <div class="control-group">
   <label class="control-label" for="puppet_name">Puppet Name:</label>
   <div class="controls">
-    <input id="puppet_name" name="puppet_name" type="text" placeholder="Puppet Name" class="input-xlarge" required="">
+    <input id="puppet_name" maxlength="40" name="puppet_name" type="text" placeholder="Puppet Name" class="input-xlarge">
     <button id="random_name" name="random_name" class="btn">Random Name</button>
+	<button id="autofill_names" name="autofill_names" title="Automatically use names from an uploaded list" style='display:none;' class="btn">Autofill Names</button>
+  </div>
+</div>
+
+<div class="control-group">
+  <label class="control-label" for="puppet_email">Email Address:</label>
+  <div class="controls">
+    <input id="puppet_email" name="puppet_email" type="email" placeholder="Email (Optional)" class="input-xlarge">
   </div>
 </div>
 
 <div class="control-group">
   <label class="control-label" for="password">Password:</label>
   <div class="controls">
-    <input id="password" name="password" type="password" placeholder="Password" class="input-xlarge" required="">
+    <input id="password" name="password" type="password" placeholder="Password" class="input-xlarge">
+  </div>
+</div>
+
+<div class="control-group">
+  <label class="control-label" for="type">Nation Type:</label>
+  <div class="controls">
+    <select id="type" name="type" style="width: 284px;" class="input-xlarge">
+		<option value="random">Random Classification</option>
+		<option value="100">Republic</option>
+		<option value="101">Kingdom</option>
+		<option value="102">Empire</option>
+		<option value="103">Commonwealth</option>
+		<option value="104">Federation</option>
+		<option value="105">Colony</option>
+		<option value="106">Principality</option>
+		<option value="107">Protectorate</option>
+		<option value="108">United States</option>
+		<option value="109">United Kingdom</option>
+		<option value="110">People's Republic</option>
+		<option value="111">Democratic Republic</option>
+		<option value="112">Confederacy</option>
+		<option value="113">Dominion</option>
+		<option value="114">Sultanate</option>
+		<option value="115">Holy Empire</option>
+		<option value="116">Theocracy</option>
+		<option value="117">Most Serene Republic</option>
+		<option value="118">United Socialist States</option>
+		<option value="119">Democratic States</option>
+		<option value="120">Allied States</option>
+		<option value="121">Queendom</option>
+		<option value="122">Fiefdom</option>
+		<option value="123">Constitutional Monarchy</option>
+		<option value="124">Dictatorship</option>
+		<option value="125">Matriarchy</option>
+		<option value="126">Emirate</option>
+		<option value="127">Grand Duchy</option>
+		<option value="128">Free Land</option>
+		<option value="129">Community</option>
+		<option value="130">Disputed Territories</option>
+		<option value="131">Jingoistic States</option>
+		<option value="132">Armed Republic</option>
+		<option value="133">Nomadic Peoples</option>
+		<option value="134">Oppressed Peoples</option>
+		<option value="135">Borderlands</option>
+		<option value="136">Rogue Nation</option>
+		<option value="137">Incorporated States</option>
+		<option value="138">Federal Republic</option>
+    </select>
   </div>
 </div>
 
@@ -55,7 +111,7 @@
 <div class="control-group">
   <label class="control-label" for="currency">Currency:</label>
   <div class="controls">
-    <input id="currency" name="currency" type="text" placeholder="Currency" value="" class="input-xlarge" required="">
+    <input id="currency" maxlength="40" name="currency" type="text" placeholder="Currency" value="" class="input-xlarge">
 	<button id="random_currency" name="random_currency" class="btn">Random Currency</button>
   </div>
 </div>
@@ -63,7 +119,7 @@
 <div class="control-group">
   <label class="control-label" for="animal">Animal:</label>
   <div class="controls">
-    <input id="animal" name="animal" type="text" placeholder="National Animal" value="" class="input-xlarge" required="">
+    <input id="animal" maxlength="40" name="animal" type="text" placeholder="National Animal" value="" class="input-xlarge">
 	<button id="random_animal" name="random_animal" class="btn">Random Animal</button>
   </div>
 </div>
@@ -71,27 +127,49 @@
 <div class="control-group">
   <label class="control-label" for="motto">Motto:</label>
   <div class="controls">
-    <input id="motto" name="motto" type="text" placeholder="National Motto" value="" class="input-xlarge" required="">
+    <input id="motto" name="motto" maxlength="55" type="text" placeholder="National Motto" value="" class="input-xlarge">
 	<button id="random_motto" name="random_motto" class="btn">Random Motto</button>
   </div>
 </div>
 
 <div class="control-group">
   <label class="control-label" for="flag">Flag:</label>
-  <div class="controls">
-    <input id="flag" name="flag" type="text" placeholder="Optional - Flag URL" value="" class="input-xlarge" >
+	<div class="controls">
+		<div class="fileupload fileupload-new" data-provides="fileupload"><input type="hidden"><input type="hidden">
+		  <div class="input-append">
+			<div class="uneditable-input span3" style="width: 270px;"><i class="icon-file fileupload-exists"></i> <span class="fileupload-preview">(Optional)</span></div><span class="btn btn-file"><span class="fileupload-new">Select file</span><span class="fileupload-exists">Change</span><input name="import_buttons" id="import_buttons" type="file"></span><a href="#" class="btn fileupload-exists" data-dismiss="fileupload">Remove</a>
+			<button id="import_puppets_btn" class="btn btn-default" style="margin-top: -1px; margin-left: 20px;">Upload Flag</button>
+		  </div>
+		</div>
   </div>
 </div>
 
-<!-- Text input-->
 <div class="control-group">
   <label class="control-label" for="destination">Destination:</label>
   <div class="controls">
-    <input id="destination" name="destination" type="text" placeholder="Region Name" class="input-xlarge" required="">
+    <input id="destination" name="destination" type="text" placeholder="Region Name" class="input-xlarge">
+	<button id="random_region" maxlength="40" name="random_region" class="btn">Random Region</button>
   </div>
 </div>
 
-<!-- Button -->
+<div class="control-group">
+  <label class="control-label" for="add_to_puppets_list">Puppet List:</label>
+  <div class="controls">
+    <input type="checkbox" id="add_to_puppets_list" name="add_to_puppets_list" class="btn btn-primary" checked></input>
+	<label class="control-label" for="add_to_puppets_list" style="float: none;display: inline; position: relative;top: 4px;">Add Nation to Puppets</label>
+  </div>
+</div>
+
+<div class="control-group">
+  <label class="control-label" for="apply_to_wa">Apply to WA:</label>
+  <div class="controls">
+    <input type="checkbox" id="apply_to_wa" name="apply_to_wa" class="btn btn-primary" disabled title="Coming Soon."></input>
+	<label class="control-label" for="apply_to_wa" style="float: none;display: inline; position: relative;top: 4px;" title="Coming Soon.">Apply for World Assembly Membership Email</label>
+  </div>
+</div>
+
+<span class="danger_alert" id="error_label"></span>
+
 <div class="control-group">
   <label class="control-label" for="found_nation">Found Nation</label>
   <div class="controls">
@@ -100,7 +178,6 @@
   </div>
 </div>
 
-<!-- Button -->
 <div class="control-group">
   <label class="control-label" for="move_to_destination">Relocate:</label>
   <div class="controls">
