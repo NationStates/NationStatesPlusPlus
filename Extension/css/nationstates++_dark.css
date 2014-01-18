@@ -74,3 +74,7 @@ h1, h1 a, h2, h3, h4, h5, h6 {
 	border: 1px solid #383838;
 	color: #D0D0D0 !important;
 }
+
+#nspp_trophy {
+	-webkit-filter: none !important;
+}
