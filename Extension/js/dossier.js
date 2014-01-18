@@ -105,11 +105,21 @@
 		});
 		$('body').on('click', ".dossier_element", function(event) {
 			var target = $(event.target).attr("id");
-			if ($("#iframe-" + target).length == 0) {
-				$("#nation_dossier").find("#" + target).append("<div id='iframe-" + target + "' class='nation-frame'><iframe style='width: 100%; height: 495px;' src='http://embed.nationstates.net/nation=" + target + "'/></div>");
-				$("#nation_dossier").find("#iframe-" + target).hide();
+			var region = $(event.target).parents("#region_dossier").length == 1;
+			if (region) {
+				if ($("#region_dossier").find("#iframe-" + target).length == 0) {
+					$(event.target).append("<div id='iframe-" + target + "' class='nation-frame'><iframe style='width: 100%; height: 495px;' src='http://embed.nationstates.net/region=" + target + "'/></div>");
+					$("#region_dossier").find("#iframe-" + target).hide();
+				}
+				$("#region_dossier").find("#iframe-" + target).animate({ height: 'toggle'}, 800);
+			} else {
+				if ($("#nation_dossier").find("#iframe-" + target).length == 0) {
+					$(event.target).append("<div id='iframe-" + target + "' class='nation-frame'><iframe style='width: 100%; height: 495px;' src='http://embed.nationstates.net/nation=" + target + "'/></div>");
+					$("#nation_dossier").find("#iframe-" + target).hide();
+					
+				}
+				$("#nation_dossier").find("#iframe-" + target).animate({ height: 'toggle'}, 800);
 			}
-			$("#nation_dossier").find("#iframe-" + target).animate({ height: 'toggle'}, 800);
 		});
 		$('body').on('click', ".remove-dossier", function(event) {
 			if ($(event.target).attr("nation") != null) {
