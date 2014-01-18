@@ -44,3 +44,11 @@
 /Extension/Firefox/*.xpi
 /Extension/Safari/*.safariextz
 /Assembly/*.sh
+/Extension/Chrome/css/*
+/Extension/Chrome/js/*
+/Extension/Firefox/addon/data/js/*
+/Extension/Firefox/addon/data/css/*
+/Extension/Safari/nationstates++.safariextension/css/*
+/Extension/Safari/nationstates++.safariextension/js/*
+
+/Extension/Safari/nationstates++.safariextension/*.safariextz
