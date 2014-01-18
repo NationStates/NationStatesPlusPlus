@@ -15,7 +15,7 @@
 			$("#error_label").hide();
 			$("#settings").find("input").removeAttr("required");
 			$("#apply_to_wa").removeAttr("title").removeAttr("disabled");
-			$("#autofill_names").show();
+			//$("#autofill_names").show();
 			$("#autofill_names").on("click", function(event) {
 				event.preventDefault();
 				if ($("#autofill_names_group:visible").length > 0) {
