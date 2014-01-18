@@ -9,6 +9,12 @@
 			showWorldAssemblyInfo();
 			showNationAlias();
 			loadNSPPSupporterIcon();
+			window.onpopstate = function(event) {
+				if (event.state) {
+					loadWAStats(event.state.page);
+					window.history.replaceState(event.state, "", "/nation=" + getVisibleNation() + "/detail=wa_stats/stat=" + event.state.page);
+				}
+			};
 		}
 	}
 	
@@ -74,36 +80,38 @@
 
 	function showNationChallenge() {
 		if (getUserNation() != getVisibleNation()) {
-			$(".smalltext:first").html($(".smalltext:first").html() + $('<div/>').html(" &#8226; ").text() + "<a href='/page=challenge?entity_name=" + getVisibleNation() + "'>Challenge</a>");
+			$(".nationnavbar").append($('<div/>').html(" &#8226; ").text() + "<a href='/page=challenge?entity_name=" + getVisibleNation() + "'>Challenge</a>");
 		} else {
-			$(".smalltext:first").html($(".smalltext:first").html() + $('<div/>').html(" &#8226; ").text() + "<a href='/page=challenge'>Challenge</a>");
+			$(".nationnavbar").append($('<div/>').html(" &#8226; ").text() + "<a href='/page=challenge'>Challenge</a>");
 		}
 	}
 
 	function showWorldAssemblyInfo() {
+		$(".nationnavbar").append($('<div/>').html(" &#8226; ").text() + "<a id='wa_stats_link' href='nation=" + getVisibleNation() + "/detail=wa_stats'>World Assembly</a>");
 		if (getPageDetail() == "wa_stats") {
-			$(".smalltext:first").html("<a href='nation=" + getVisibleNation() + "'>Overview</a>" + $(".smalltext:first").html().substring(8) + $('<div/>').html(" &#8226; ").text() + "World Assembly");
-			var foundSmalltext;
-			var items = [];
-			$("#content").children().each(function() { 
-				if (foundSmalltext) {
-					items.push($(this));
-				}
-				if ($(this).attr("class") == "smalltext") {
-					foundSmalltext = true;
-				}
-			});
-			$("<div id='nation_content'></div><div id='wa_stats'></div>").insertAfter($(".smalltext:first"));
-			$("#nation_content").hide();
-			for (var i = 0; i < items.length; i++) {
-				$("#nation_content").append(items[i].clone());
+			$(".nationnavbar a").removeClass("quietlink");
+			$("#wa_stats_link").addClass("quietlink");
+			
+			$("form").filter(function() { return $(this).attr("action").startsWith("page"); }).remove();
+			
+			var start = $(".nationnavbar").next();
+			var count = 0;
+			while(true) {
+				count += 1;
+				if (count > 15 || start.is("p")) break;
+				start = start.next();
 			}
-			for (var i = 0; i < items.length; i++) {
-				items[i].remove();
-			}
+			var insertAfter = start.prev();
+			start.next().next().next().next().remove();
+			start.next().next().next().remove();
+			start.next().next().remove();
+			start.next().remove();
+			start.remove();
+			$(".newsbox, .unbox").remove();
+			
+			var after = $(".wa_status");
+			$("<div id='wa_stats'></div>").insertAfter(insertAfter);
 			openWorldAssemblyStats();
-		} else {
-			$(".smalltext:first").html($(".smalltext:first").html() + $('<div/>').html(" &#8226; ").text() + "<a id='wa_stats_link' href='nation=" + getVisibleNation() + "/detail=wa_stats'>World Assembly</a>");
 		}
 	}
 	
@@ -184,6 +192,9 @@
 			event.preventDefault();
 			stats = getDetailStats($(this).attr("href"));
 			loadWAStats(stats);
+			if (window.history) {
+				window.history.pushState({page: stats}, "", "/nation=" + getVisibleNation() + "/detail=wa_stats/stat=" + stats);
+			}
 		});
 		var stat = getDetailStats();
 		if (stat == "") stat = "power";
