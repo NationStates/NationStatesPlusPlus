@@ -67,8 +67,29 @@
 				}
 			}
 		});
-		$("button").on('click', function() {
-			selectOption($(this).prop('name') == "choice--1" ? -1 : parseInt($(this).prop('name').split("-")[1]), getVisibleDilemma());
+		$('body').on('click', 'button', function() {
+			event.preventDefault();
+			console.log("Selecting issue");
+			var choice = $(this).prop('name') == "choice--1" ? -1 : parseInt($(this).prop('name').split("-")[1]);
+			selectOption(choice, getVisibleDilemma());
+			$(".diloptions li").removeClass("chosendiloption");
+			$(".diloptions li").find("em").parent().remove();
+			var government = "The government is preparing to dismiss this issue.";
+			if (choice > -1) {
+				government = "The government has indicated its intention to follow the recommendations of Option " + (choice + 1) + ".";
+				$(this).parents("li").addClass("chosendiloption");
+				$(this).parents("li").append("<p><em>This is the position your government is preparing to adopt.</em></p>");
+			}
+			var choice = 0;
+			$(".diloptions li").each(function() {
+				if ($(this).find("button").length == 0) {
+					$(this).append("<p><button type='submit' name='choice-" + choice + "' value='1' class='button icon approve'>Accept</button></p>");
+				}
+				choice += 1;
+			});
+			$("button[type='submit']").show();
+			$(this).hide();
+			$("h5:contains('The Government Position')").next().html(government);
 		});
 	}
 })();
@@ -88,6 +109,10 @@ function selectOption(choice, issueNumber) {
 			}
 		}
 		issues[issueNumber].push({timestamp: now, choice: choice});
-		nationData.pushUpdate();
+		nationData.pushUpdate(function() { updateNSOption(choice) });
 	});
+}
+
+function updateNSOption(choice) {
+	$.post(window.location.href, "choice-" + choice + "=1", function() { });
 }
