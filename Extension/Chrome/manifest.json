@@ -7,15 +7,15 @@
   "version": "2.2.1",
   "content_scripts": [ {
 	  "run_at": "document_end",
-      "js": [ "jquery-2.0.2.min.js", "js/nationstates++_common.js", "background.js"],
+      "js": [ "jquery-2.0.3.min.js", "js/nationstates++_common.js", "background.js"],
 	  "css": ["css/bootstrap-button.css", "css/nationstates++.css", "css/forum.css"],
       "matches": [ "http://forum.nationstates.net/*" ],
 	  "all_frames": true
 	}, {
 	  "run_at": "document_end",
-      "js": [ "jquery-2.0.2.min.js", "jquery-ui.min.js", "js/Blob.js", "js/FileSaver.js", "js/bootstrap-fileupload.min.js",
+      "js": [ "jquery-2.0.3.min.js", "jquery-ui.min.js", "js/Blob.js", "js/FileSaver.js", "js/bootstrap-fileupload.min.js",
 				"js/jquery.caret.js","js/jquery.highlight.js","background.js", "js/jquery.nouislider.min.js",
-				"js/textFit.min.js", "js/nprogress.js", "js/nationstates++_common.js", 
+				"js/textFit.min.js", "js/nprogress.js", "js/nationstates++_common.js", "js/sjcl.js",
 				"js/nationstates.js", "js/region.js", "js/nation.js", "js/newspapers.js",
 				"js/happenings.js", "js/census_slider.js", "js/embassy_flags.js", "js/telegrams.js",
 				"js/issues.js", "js/help.js", "js/irc.js", "js/dossier.js", "js/world.js", "js/banhammer.js",
@@ -26,13 +26,9 @@
 	},
 	{
 	  "run_at": "document_end",
-      "js": [ "jquery-2.0.2.min.js", "js/nspp.js" ],
+      "js": [ "jquery-2.0.3.min.js", "js/nspp.js" ],
       "matches": [ "http://nationstatesplusplus.net/api.html", "http://nationstatesplusplus.com/api.html", "http://nationstatesplusplus.org/api.html"],
 	  "all_frames": true
 	}],
-  "background": {
-    "scripts": ["background.js"],
-    "persistent": false
-  },
   "permissions": ["storage", "http://www.nationstates.net/*", "http://forum.nationstates.net/*", "http://nationstatesplusplus.net/*", "http://nationstatesplusplus.com/*", "http://nationstatesplusplus.org/*"]
 }

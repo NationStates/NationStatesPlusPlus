@@ -89,7 +89,6 @@ $.get(urlPrefix + "cache_buster.txt?time=" + Date.now() , function(value) {
 	if (document.head.innerHTML.indexOf("ns.dark") != -1) {
 		addStylesheet(urlPrefix + 'nationstates++_dark.css', true);
 	}
-	//addStylesheet("//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css", false);
 
 	if (pageUrl.indexOf("page=blank") != -1) {
 		addStylesheet(staticUrlPrefix + 'newspaper_bootstrap.min.css', true);
@@ -109,10 +108,6 @@ $.get(urlPrefix + "cache_buster.txt?time=" + Date.now() , function(value) {
 function loadJavascript() {
 	if (pageUrl.indexOf('http://www.nationstates.net/') > -1) {
 		console.log('[NationStates++] Detected NationStates Page. Loading...');
-
-		if (document.head.innerHTML.indexOf("antiquity") != -1) {
-			addStylesheet(staticUrlPrefix + "prefix-ghbuttons_v2.css", false);
-		}
 
 		addJavascript(urlPrefix + 'highcharts-adapter.js', true);
 
@@ -242,13 +237,6 @@ function addStylesheet(url, cacheBuster) {
 	style.setAttribute('href', url + (cacheBuster ? (localStorage.getItem("cache_buster") != null ? ("?cache=" + localStorage.getItem("cache_buster")) : "") : ""));
 	var split = url.split("/");
 	style.id = split[split.length - 1];
-	var styles = document.head.getElementsByTagName("style");
-	for (var i = 0; i < styles.length; i++) {
-		if (styles[i].id == style.id) {
-			console.log("WARNING - DUPLICATE STYLE: " + style.id);
-			return;
-		}
-	}
 	document.head.appendChild(style);
 }
 
@@ -260,13 +248,5 @@ function addJavascript(url, cacheBuster, onLoad) {
 	if (onLoad) {
 		script.addEventListener('load', onLoad);
 	}
-	var scripts = document.head.getElementsByTagName("script");
-	for (var i = 0; i < scripts.length; i++) {
-		if (scripts[i].id == script.id) {
-			console.log("WARNING - DUPLICATE SCRIPT: " + script.id);
-			return;
-		}
-	}
-	console.log("Loading [" + script.id + "]");
 	document.head.appendChild(script);
 }
