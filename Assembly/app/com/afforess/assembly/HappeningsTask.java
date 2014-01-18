@@ -216,12 +216,13 @@ public class HappeningsTask implements Runnable {
 					if (happeningType == HappeningType.getType("REFOUNDED").getId()) {
 						//Ensure nation is dead
 						access.markNationDead(nationId, conn);
-						PreparedStatement alive = conn.prepareStatement("UPDATE assembly.nation SET alive = 1 WHERE id = ?");
-						alive.setInt(1, nationId);
+						PreparedStatement alive = conn.prepareStatement("UPDATE assembly.nation SET alive = 1, flag = ? WHERE id = ?");
+						alive.setString(1, "http://nationstates.net/images/flags/Default.png");
+						alive.setInt(2, nationId);
 						alive.executeUpdate();
 						DbUtils.closeQuietly(alive);
 					}
-					
+
 					//Update region
 					Matcher regions = Utils.REGION_PATTERN.matcher(text);
 					if(regions.find()) {
