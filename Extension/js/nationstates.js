@@ -48,7 +48,7 @@
 	}
 	
 	//Unread forum posts
-	if (getSettings().isEnabled("show_unread_forum_posts")) {
+	if (window.chrome && getSettings().isEnabled("show_unread_forum_posts")) {
 		var count = getUserData().getValue("unread_forum_posts", 0)
 		if (count > 0) {
 			$(".menu").find("a:contains('FORUM')").html("FORUM (" + count + ")");
@@ -185,7 +185,7 @@
 					panel.find("a[href='page=news']").html(page.find("a[href='page=news']").html());
 				}
 			});
-			if (getSettings().isEnabled("show_unread_forum_posts", false)) {
+			if (window.chrome && getSettings().isEnabled("show_unread_forum_posts", false)) {
 				$.get("http://forum.nationstates.net/search.php?search_id=egosearch", function(data) {
 					var count = 0;
 					var userData = getUserData();

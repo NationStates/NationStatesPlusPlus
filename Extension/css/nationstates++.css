@@ -181,7 +181,8 @@
 }
 
 #puppet_password, #puppet_nation {
-	width: 170px;
+	width: 170px !important;
+	height: 16px !important;
 }
 
 .puppet-form-remove {

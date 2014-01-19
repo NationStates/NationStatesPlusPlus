@@ -274,7 +274,7 @@ function getSettings(autoupdate) {
 					api.save();
 					if (typeof callback != "undefined") callback(data, textStatus, xhr);
 				});
-			} else if (data.timestamp < api.last_update) {
+			} else if (data.timestamp <= api.last_update) {
 				api.pushUpdate(callback);
 			} else {
 				if (typeof callback != "undefined") callback();
@@ -362,7 +362,7 @@ function getUserData(autoupdate) {
 					api.save();
 					if (typeof callback != "undefined") callback();
 				});
-			} else if (data.timestamp < api.last_update) {
+			} else if (data.timestamp <= api.last_update) {
 				api.pushUpdate(callback);
 			} else {
 				if (typeof callback != "undefined") callback();
