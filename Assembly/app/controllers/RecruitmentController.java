@@ -183,14 +183,13 @@ public class RecruitmentController extends NationStatesController {
 				final String clientKey = Utils.getPostValue(request(), "clientKey");
 				final String tgid = Utils.getPostValue(request(), "tgid");
 				final String secretKey = Utils.getPostValue(request(), "secretKey");
-				final boolean avoidFull = "true".equalsIgnoreCase(Utils.getPostValue(request(), "avoidFull"));
 				final boolean randomize = "true".equalsIgnoreCase(Utils.getPostValue(request(), "randomize"));
 				final boolean feedersOnly = "true".equalsIgnoreCase(Utils.getPostValue(request(), "feedersOnly"));
 				final String filterRegex = Utils.getPostValue(request(), "filterRegex");
 				if (id == null) {
 					Integer percent = Math.min(100, Math.max(0, Integer.parseInt(Utils.getPostValue(request(), "percent"))));
 					final RecruitmentType type = RecruitmentType.getById(Integer.parseInt(Utils.getPostValue(request(), "type")));
-					PreparedStatement insert = conn.prepareStatement("INSERT INTO assembly.recruitment (region, client_key, tgid, secret_key, percent, type, feeders_only, filter_regex, avoid_full, randomize) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+					PreparedStatement insert = conn.prepareStatement("INSERT INTO assembly.recruitment (region, client_key, tgid, secret_key, percent, type, feeders_only, filter_regex, randomize) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
 					insert.setInt(1, getDatabase().getRegionIdCache().get(region));
 					insert.setString(2, clientKey.trim());
 					insert.setString(3, tgid.trim());
@@ -199,8 +198,7 @@ public class RecruitmentController extends NationStatesController {
 					insert.setInt(6, type.getId());
 					insert.setByte(7, (byte)(feedersOnly ? 1 : 0));
 					insert.setString(8, filterRegex.trim());
-					insert.setByte(9, (byte)(avoidFull ? 1 : 0));
-					insert.setByte(10, (byte)(randomize ? 1 : 0));
+					insert.setByte(9, (byte)(randomize ? 1 : 0));
 					insert.executeUpdate();
 					DbUtils.closeQuietly(insert);
 				} else if (cancel != null) {
@@ -222,7 +220,6 @@ public class RecruitmentController extends NationStatesController {
 							action.type = type;
 							action.feedersOnly = feedersOnly;
 							action.filterRegex = filterRegex;
-							action.avoidFull = avoidFull;
 							action.randomize = randomize;
 							action.error = 0;
 							action.update(conn);
