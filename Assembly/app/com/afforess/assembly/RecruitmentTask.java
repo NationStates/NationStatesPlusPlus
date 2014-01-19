@@ -18,6 +18,7 @@ import org.joda.time.Duration;
 import play.Logger;
 
 import com.afforess.assembly.model.RecruitmentAction;
+import com.afforess.assembly.model.RecruitmentResult;
 import com.afforess.assembly.model.RecruitmentType;
 import com.afforess.assembly.util.DatabaseAccess;
 import com.limewoodMedia.nsapi.NationStates;
@@ -60,7 +61,7 @@ public class RecruitmentTask implements Runnable {
 			HashSet<Integer> completedRegions = new HashSet<Integer>();
 			List<RecruitmentAction> actions = RecruitmentAction.getAllActions(conn);
 			for (RecruitmentAction action : actions) {
-				if (action.error != 1 && action.lastAction < System.currentTimeMillis() && !completedRegions.contains(action.region) && rand.nextInt(100) < action.percent) {
+				if (action.error == 0 && action.lastAction < System.currentTimeMillis() && !completedRegions.contains(action.region) && rand.nextInt(100) < action.percent) {
 					if (telegramAPI.getRateLimitRemaining() > 1) {
 						Object[] nation = findTargetNation(action, conn);
 						if (nation != null) {
@@ -74,6 +75,19 @@ public class RecruitmentTask implements Runnable {
 		}
 	}
 
+	private RecruitmentResult getRecruitmentResult(String result) {
+		if (result.contains("client disabled by moderators")) {
+			return RecruitmentResult.DISABLED_BY_MODERATORS;
+		} else if (result.contains("no such api telegram template")) {
+			return RecruitmentResult.NO_SUCH_TELEGRAM_TEMPLATE;
+		} else if (result.contains("incorrect secret key")) {
+			return RecruitmentResult.INCORRECT_SECRET_KEY;
+		} else if (result.equals("queued")) {
+			return RecruitmentResult.SUCCESS;
+		}
+		return RecruitmentResult.INVALID_TELEGRAM;
+	}
+
 	private void doRecruitment(RecruitmentAction action, Set<Integer> completedRegions, Object[] nation, Connection conn) throws SQLException {
 		PreparedStatement update = null;
 		try {
@@ -82,7 +96,7 @@ public class RecruitmentTask implements Runnable {
 			if (result != null) {
 				completedRegions.add(action.region);
 				final long lastAction = System.currentTimeMillis() + Duration.standardSeconds(180).getMillis();
-				action.error = 0;
+				action.error = getRecruitmentResult(result.toLowerCase()).getId();
 				action.lastAction = lastAction;
 				action.update(conn);
 
@@ -104,13 +118,13 @@ public class RecruitmentTask implements Runnable {
 				IOException io = (IOException)e.getCause();
 				if (io.getMessage().toLowerCase().contains("http response code: 429")) {
 					action.lastAction = System.currentTimeMillis() + Duration.standardMinutes(15).getMillis();
-					action.error = 2; //rate limited
+					action.error = RecruitmentResult.RATE_LIMITED.getId();
 					action.update(conn);
 				} else if (io.getMessage().toLowerCase().contains("http response code: 403")) {
-					action.error = 1; //invalid telegram or client key
+					action.error = RecruitmentResult.INVALID_TELEGRAM.getId();
 					action.update(conn);
 				} else if (io.getMessage().toLowerCase().contains("http response code: 400")) {
-					action.error = 1; //invalid telegram or client key
+					action.error = RecruitmentResult.INVALID_TELEGRAM.getId();
 					action.update(conn);
 				} else {
 					throw e;
