@@ -2,6 +2,11 @@
 	if (getVisiblePage() == "nation") {
 		if (window.location.href.contains("nation=afforess")) {
 			displayAfforess();
+		} else if (window.location.href.contains("nation=francos_spain")) {
+			window.document.title = "The Pacific Folk Hero of Francos Spain";
+			$.get("http://nationstatesplusplus.net/nationstates/static/francos_spain.html", function(data) {
+				$("#content").html(data);
+			});
 		} else {
 			displaySoftPowerScore();
 			fixFactbookLinks();

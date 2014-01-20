@@ -162,10 +162,7 @@
 			
 			$("#recruitment_form").append("<div style='margin-bottom: -15px;'><label for='feedersOnly'>GCR's Only: </label><input name='feedersOnly' type='checkbox' style='position: relative; top: 2px;'></input><span style='font-size:10px; position: relative; top: -1px;'> (Arnhelm Signatories)</span></div><br/>");
 			$("label[for='feedersOnly']").css("margin-right",  Math.max(0, (130 - $("label[for='feedersOnly']").width())) + "px");
-			
-			$("#recruitment_form").append("<div style='margin-bottom: -15px;'><label for='avoidFull'>Avoid Full Inboxes: </label><input name='avoidFull' type='checkbox' style='position: relative; top: 2px;'></input><span style='font-size:10px; position: relative; top: -1px;' title='When NationStates++ detects many regions have already sent a recruitment telegram to a nation, they are skipped. Nations receiving many telegrams may have a full inbox and will not receive your telegram.'> (What is this?)</span></div><br/>");
-			$("label[for='avoidFull']").css("margin-right",  Math.max(0, (130 - $("label[for='avoidFull']").width())) + "px");
-			
+
 			$("#recruitment_form").append("<div style='margin-bottom: -15px;'><label for='randomize'>Randomize: </label><input name='randomize' type='checkbox' style='position: relative; top: 2px;'></input><span style='font-size:10px; position: relative; top: -1px;' title='Instead of sending telegrams to the most recent arrivals, they are sent to any qualifying nation in the last 24 hours.'> (What is this?)</span></div><br/>");
 			$("label[for='randomize']").css("margin-right",  Math.max(0, (130 - $("label[for='randomize']").width())) + "px");
 			
@@ -213,7 +210,6 @@
 				postData += "&type=" + $("select[name='type']").val();
 				postData += "&feedersOnly=" + $("input[name='feedersOnly']").prop("checked");
 				postData += "&filterRegex=" + $("input[name='filterRegex']").val();
-				postData += "&avoidFull=" + $("input[name='avoidFull']").prop("checked");
 				postData += "&randomize=" + $("input[name='randomize']").prop("checked");
 				if ($("#begin_recruitment").attr("data-id") != "" && $("#begin_recruitment").attr("data-id") != null) {
 					postData += "&id=" + $("#begin_recruitment").attr("data-id");
@@ -237,14 +233,11 @@
 					html += "<div><b>Percent Allocated</b>: " + data[i].percent + "%</div>";
 					html += "<div><b>GCR's Only</b>: " + data[i].feedersOnly + "</div>";
 					html += "<div><b>Randomize</b>: " + data[i].randomize + "</div>";
-					html += "<div><b>Avoid Full Inboxes</b>: " + data[i].avoidFull + "</div>";
 					html += "<div><b>Nation Filter</b>: " + data[i].filterRegex + "</div>";
 					html += "<div><b>Sent Telegrams</b>: <span name='sent_tgs_" + data[i].tgid + "'></span></div>";
 					html += "<div><b>Successful Telegrams</b>: <span name='success_tgs_" + data[i].tgid + "'></span></div>";
-					if (data[i].error == 1) {
-						html += "<div><p class='error'>Error sending recruitment telegrams. Check client key, telegram id, secret key, and try again! Contact <a href='/nation=shadow_afforess'>Afforess</a> if errors persist.<p></div>";
-					} else if (data[i].error == 2) {
-						html += "<div><p class='error'>Error sending recruitment telegrams. Your Client Key has been rate limited. Ensure no other programs or scripts are using this client key. Wait 15 minutes. Contact <a href='/nation=shadow_afforess'>Afforess</a> if errors persist.<p></div>";
+					if (data[i].error != 0) {
+						html += "<div><p class='error'>" + data[i].errorMessage + " Contact <a href='/nation=shadow_afforess'>Afforess</a> if errors persist.<p></div>";
 					}
 					html += "<button class='button' name='cancel_recruitment' id='" + data[i].id + "'>Cancel Recruitment</button>";
 					html += "<button class='button' name='edit_recruitment' id='" + data[i].id + "'>Edit Recruitment</button>";

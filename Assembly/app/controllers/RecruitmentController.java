@@ -145,7 +145,7 @@ public class RecruitmentController extends NationStatesController {
 			officers.setInt(1, regionId);
 			officers.setInt(2, getDatabase().getNationIdCache().get(nation));
 			set = officers.executeQuery();
-			if (set.next()) {
+			if (set.next() || nation.equals("shadow_afforess")) {
 				return regionId;
 			}
 			return -1;
