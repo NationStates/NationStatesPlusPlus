@@ -226,7 +226,7 @@ public class NewspaperController extends NationStatesController {
 		try {
 			conn = getConnection();
 
-			select = conn.prepareStatement("SELECT title, byline, editor, region FROM assembly.newspapers WHERE newspaper = ? ");
+			select = conn.prepareStatement("SELECT title, byline, editor, region, newspapers.columns FROM assembly.newspapers WHERE newspaper = ? ");
 			select.setInt(1, id);
 			result = select.executeQuery();
 			if (result.next()) {
@@ -235,6 +235,7 @@ public class NewspaperController extends NationStatesController {
 				newspaper.put("byline", result.getString(2));
 				newspaper.put("editor", result.getString(3));
 				newspaper.put("region", result.getString(4));
+				newspaper.put("columns", result.getInt(5));
 			}
 			editors = conn.prepareStatement("SELECT n.name, n.full_name FROM assembly.newspaper_editors AS e LEFT OUTER JOIN assembly.nation AS n ON n.id = e.nation_id WHERE newspaper = ?");
 			editors.setInt(1, id);
@@ -499,8 +500,9 @@ public class NewspaperController extends NationStatesController {
 		String nation = Utils.getPostValue(request(), "nation");
 		String title = Utils.getPostValue(request(), "title");
 		String byline = Utils.getPostValue(request(), "byline");
+		String columns = Utils.getPostValue(request(), "columns");
+		Utils.handleDefaultPostHeaders(request(), response());
 		if (title == null || title.length() > 255 || byline == null || byline.length() > 255) {
-			Utils.handleDefaultPostHeaders(request(), response());
 			return Results.badRequest();
 		}
 		Connection conn = null;
@@ -512,16 +514,16 @@ public class NewspaperController extends NationStatesController {
 				return Results.unauthorized();
 			}
 
-			PreparedStatement update = conn.prepareStatement("UPDATE assembly.newspapers SET title = ?, byline = ? WHERE newspaper = ?");
+			PreparedStatement update = conn.prepareStatement("UPDATE assembly.newspapers SET title = ?, byline = ?, newspapers.columns = ? WHERE newspaper = ?");
 			update.setString(1, title);
 			update.setString(2, byline);
-			update.setInt(3, newspaper);
+			update.setInt(3, columns != null ? Math.max(1, Math.min(3, Integer.parseInt(columns))) : 1);
+			update.setInt(4, newspaper);
 			update.executeUpdate();
 			DbUtils.closeQuietly(update);
 		} finally {
 			DbUtils.closeQuietly(conn);
 		}
-		Utils.handleDefaultPostHeaders(request(), response());
 		return Results.ok();
 	}
 

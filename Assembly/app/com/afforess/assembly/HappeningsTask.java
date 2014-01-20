@@ -216,9 +216,22 @@ public class HappeningsTask implements Runnable {
 					if (happeningType == HappeningType.getType("REFOUNDED").getId()) {
 						//Ensure nation is dead
 						access.markNationDead(nationId, conn);
-						PreparedStatement alive = conn.prepareStatement("UPDATE assembly.nation SET alive = 1, flag = ? WHERE id = ?");
-						alive.setString(1, "http://nationstates.net/images/flags/Default.png");
-						alive.setInt(2, nationId);
+						
+						//Only erase flag if it was user uploaded
+						PreparedStatement flag = conn.prepareStatement("SELECT flag FROM assembly.nation WHERE id = ?");
+						flag.setInt(1, nationId);
+						ResultSet set = flag.executeQuery();
+						boolean eraseFlag = set.next() && set.getString(1).contains("/uploads/");
+						DbUtils.closeQuietly(set);
+						DbUtils.closeQuietly(flag);
+						
+						PreparedStatement alive = conn.prepareStatement("UPDATE assembly.nation SET alive = 1, wa_member = 2" + (eraseFlag ? ", flag = ?" : "") + " WHERE id = ?");
+						if (eraseFlag) {
+							alive.setString(1, "http://nationstates.net/images/flags/Default.png");
+							alive.setInt(2, nationId);
+						} else {
+							alive.setInt(1, nationId);
+						}
 						alive.executeUpdate();
 						DbUtils.closeQuietly(alive);
 					}

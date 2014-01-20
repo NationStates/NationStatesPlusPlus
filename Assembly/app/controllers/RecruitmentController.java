@@ -213,13 +213,13 @@ public class RecruitmentController extends NationStatesController {
 					List<RecruitmentAction> actions = RecruitmentAction.getActions(getDatabase().getRegionIdCache().get(region), conn);
 					for (RecruitmentAction action : actions) {
 						if (id.equals(String.valueOf(action.id))) {
-							action.clientKey = clientKey;
-							action.tgid = tgid;
-							action.secretKey = secretKey;
+							action.clientKey = clientKey.trim();
+							action.tgid = tgid.trim();
+							action.secretKey = secretKey.trim();
 							action.percent = percent;
 							action.type = type;
 							action.feedersOnly = feedersOnly;
-							action.filterRegex = filterRegex;
+							action.filterRegex = filterRegex.trim();
 							action.randomize = randomize;
 							action.error = 0;
 							action.update(conn);

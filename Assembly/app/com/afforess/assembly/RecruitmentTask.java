@@ -82,7 +82,7 @@ public class RecruitmentTask implements Runnable {
 			return RecruitmentResult.NO_SUCH_TELEGRAM_TEMPLATE;
 		} else if (result.contains("incorrect secret key")) {
 			return RecruitmentResult.INCORRECT_SECRET_KEY;
-		} else if (result.equals("queued")) {
+		} else if (result.contains("queued")) {
 			return RecruitmentResult.SUCCESS;
 		}
 		return RecruitmentResult.INVALID_TELEGRAM;
