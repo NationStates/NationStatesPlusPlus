@@ -156,6 +156,28 @@ public class WorldAssemblyController extends DatabaseController {
 		return ok(Json.toJson(nations)).as("application/json");
 	}
 
+	public Result getWADelegates() throws SQLException {
+		List<String> delegates = new ArrayList<String>();
+		Connection conn = null; 
+		try {
+			conn = getConnection();
+			PreparedStatement select = conn.prepareStatement("SELECT delegate FROM assembly.region WHERE delegate <> \"0\" AND alive = 1");
+			ResultSet set = select.executeQuery();
+			while(set.next()) {
+				delegates.add(set.getString(1));
+			}
+			DbUtils.closeQuietly(set);
+			DbUtils.closeQuietly(select);
+		} finally {
+			DbUtils.closeQuietly(conn);
+		}
+		Result result = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(delegates.hashCode()));
+		if (result != null) {
+			return result;
+		}
+		return ok(Json.toJson(delegates)).as("application/json");
+	}
+
 	private List<Map<String, String>> powerTransfers = null;
 	private long nextCache = 0;
 	public Result getRecentPowerTransfers() throws SQLException {

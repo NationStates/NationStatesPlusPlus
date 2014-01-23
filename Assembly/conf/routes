@@ -36,6 +36,7 @@ GET     /newspaper/recent/            @controllers.NewspaperController.getLatest
 
 GET     /autocomplete/nation/         @controllers.AutocompleteController.autocompleteNation(start: String ?= "")
 GET     /nation/title/                @controllers.AutocompleteController.getFullName(name: String ?= "")
+GET     /nation/name/                 @controllers.AutocompleteController.getTitle(name: String ?= "")
 
 GET     /nation/latest_update/        @controllers.NationController.getLastSettingsUpdate(name: String ?= "")
 GET     /nation/settings/             @controllers.NationController.retrieveSettings(name: String ?= "")
@@ -64,6 +65,7 @@ POST    /region/recruitment/success   @controllers.RecruitmentController.getRecr
 GET     /recruitment/                 @controllers.RecruitmentController.getRecruitmentNations()
 GET     /recruitment/puppet/          @controllers.RecruitmentController.markPuppetNation(nation: String ?= "")
 
+GET     /wa/delegates/                @controllers.WorldAssemblyController.getWADelegates()
 GET     /wa/power_transfers/          @controllers.WorldAssemblyController.getRecentPowerTransfers()
 
 GET    /admin/happenings/             @controllers.AdminController.recalculateHappenings(code: String ?= "", happeningType: Integer ?= -1)
@@ -71,6 +73,8 @@ GET    /admin/invalidate_cache/       @controllers.AdminController.invalidateCac
 
 POST   /xenforo/login/                @controllers.XenforoController.verifyNationLogin()
 POST   /xenforo/register/             @controllers.XenforoController.createXenforoUser()
+
+POST   /nswiki/login/                 @controllers.NSWikiController.verifyNationLogin()
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.at(path="/public", file)
