@@ -36,6 +36,12 @@
 			});
 		});
 	} else if (getVisiblePage() == "show_dilemma") {
+		$(window).unload(function() {
+			if ($("button[disabled]").length > 0) {
+				alert("Saving Issue Selection. Please wait!");
+			}
+		});
+		
 		if (getVisibleDilemma() == 230) {
 			$("<div style='height: 250px; width: 100%; background-image: linear-gradient(-45deg, rgba(255, 255, 0, 1) 25%, transparent 25%, transparent 50%, rgba(255, 255, 0, 1) 50%, rgba(255, 255, 0, 1) 75%, transparent 75%, transparent); background-color: #F00; background-size: 50px 50px;'><div style='height: 1%;'></div><div id='warning-text-container' style='width: 98%; height: 90%; background: white; margin: 1%;'><img src='http://nationstatesplusplus.net/nationstates/static/trap.png' style='height: 223px; border: 1px solid black;'/><span id='warning-text' style='position:absolute; color:black; margin-left: 4px;'></span></div></div>").insertBefore("h5:first");
 			updateSize = function() {
@@ -47,6 +53,7 @@
 			window.onresize = updateSize;
 			updateSize();
 		}
+		
 		getUserData().update(function() {
 			var nationData = getUserData();
 			if (nationData.getValue("issues", {})[getVisibleDilemma()] != null) {
@@ -67,29 +74,48 @@
 				}
 			}
 		});
+		$("h5:contains('The Government Position')").next().addClass("dismiss_option");
+		$("p:contains('The government is preparing to dismiss this issue.')").addClass("dismissed");
+		$(".chosendiloption").attr("style", "background-color: #F6FFF6 !important;");
 		$('body').on('click', 'button', function() {
 			event.preventDefault();
 			console.log("Selecting issue");
 			var choice = $(this).prop('name') == "choice--1" ? -1 : parseInt($(this).prop('name').split("-")[1]);
+			$("button").attr("disabled", true);
 			selectOption(choice, getVisibleDilemma());
 			$(".diloptions li").removeClass("chosendiloption");
+			$(".diloptions li, .dismiss_option").attr("style", "");
 			$(".diloptions li").find("em").parent().remove();
+			$(".dismiss_option").removeClass("dismissed");
 			var government = "The government is preparing to dismiss this issue.";
 			if (choice > -1) {
 				government = "The government has indicated its intention to follow the recommendations of Option " + (choice + 1) + ".";
-				$(this).parents("li").addClass("chosendiloption");
+				if (document.head.innerHTML.indexOf("ns.dark") != -1) {
+					$(this).parents("li").css("border" , "solid 2px white").css("border-radius", "12px").animate({'backgroundColor' : '#F6FFF6', 'color': '#000000'}, 1000);
+				} else {
+					$(this).parents("li").css("border" , "solid 2px black").css("border-radius", "12px").animate({'backgroundColor' : '#F6FFF6'}, 1000);
+				}
 				$(this).parents("li").append("<p><em>This is the position your government is preparing to adopt.</em></p>");
+			} else {
+				if (document.head.innerHTML.indexOf("ns.dark") != -1) {
+					$(".dismiss_option").css("border" , "solid 2px white").css("border-radius", "12px").animate({'backgroundColor' : '#F6FFF6', 'color': '#000000'}, 1000);
+				} else {
+					$(".dismiss_option").css("border" , "solid 2px black").css("border-radius", "12px").animate({'backgroundColor' : '#F6FFF6'}, 1000);
+				}
 			}
 			var choice = 0;
 			$(".diloptions li").each(function() {
 				if ($(this).find("button").length == 0) {
-					$(this).append("<p><button type='submit' name='choice-" + choice + "' value='1' class='button icon approve'>Accept</button></p>");
+					$(this).append("<p><button type='submit' name='choice-" + choice + "' value='1' class='button icon approve' disabled='true'>Accept</button></p>");
 				}
 				choice += 1;
 			});
+			if ($("button[name='choice--1']").length == 0 && choice != -1) {
+				$("<p><button type='submit' name='choice--1' value='1' class='button icon remove danger' disabled='true'>Dismiss This Issue</button></p>").insertAfter($(".dismiss_option"));
+			}
 			$("button[type='submit']").show();
 			$(this).hide();
-			$("h5:contains('The Government Position')").next().html(government);
+			$(".dismiss_option").html(government);
 		});
 	}
 })();
@@ -114,5 +140,16 @@ function selectOption(choice, issueNumber) {
 }
 
 function updateNSOption(choice) {
-	$.post(window.location.href, "choice-" + choice + "=1", function() { });
+	$.post(window.location.href, "choice-" + choice + "=1", function() {
+		$("button").removeAttr("disabled");
+		$(".diloptions li, .dismiss_option").attr("style", "");
+		if (choice != -1) {
+			$("button[name='choice-" + choice + "']").parents("li").addClass("chosendiloption");
+			if (document.head.innerHTML.indexOf("ns.dark") != -1) {
+				$("button[name='choice-" + choice + "']").parents("li").attr("style", "background-color: #F6FFF6 !important;");
+			}
+		} else {
+			$(".dismiss_option").addClass("dismissed");
+		}
+	});
 }

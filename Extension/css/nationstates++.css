@@ -619,3 +619,16 @@ fieldset.preview {
 	margin-top: -8px !important;
 	margin-bottom: 2px !important;
 }
+
+.dismiss_option {
+	padding: 15px;
+	width: -webkit-fit-content;
+	width: -moz-fit-content;
+	width: fit-content;
+}
+
+.dismissed {
+	border: solid 2px #696;
+	background-color: #F6FFF6;
+	border-radius: 12px;
+}

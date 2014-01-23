@@ -78,3 +78,15 @@ h1, h1 a, h2, h3, h4, h5, h6 {
 #nspp_trophy {
 	-webkit-filter: none !important;
 }
+
+.chosendiloption {
+	background-color: #F6FFF6 !important;
+	color: black !important;
+}
+
+.dismissed {
+	border: solid 2px #696;
+	background-color: #F6FFF6;
+	border-radius: 12px;
+	color: black;
+}
