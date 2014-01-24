@@ -563,7 +563,7 @@ function doRMBPost(event) {
 	removeWarning();
 
 	var conversion = encodeRMBPost(messageValue);
-	if (conversion.error) {
+	if (conversion.error || (getVisibleRegion() == "brasil" && !window.chrome)) {
 		//Fallback on RMB form
 		var form = $('textarea[name="message"]').parents("form");
 		form.attr("action", "/page=lodgermbpost/region=" + getVisibleRegion());
