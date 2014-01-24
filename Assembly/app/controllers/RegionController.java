@@ -167,16 +167,19 @@ public class RegionController extends NationStatesController {
 			String[] split = regions.split(",");
 			for (int i = 0; i < split.length; i++) {
 				List<String> nations = new ArrayList<String>();
-				PreparedStatement statement = conn.prepareStatement("SELECT name FROM assembly.nation WHERE alive = 1 AND region = ? ORDER BY update_order ASC");
-				statement.setInt(1, getDatabase().getRegionIdCache().get(Utils.sanitizeName(split[i])));
-				ResultSet result = statement.executeQuery();
-				while(result.next()) {
-					nations.add(result.getString(1));
+				int regionId = getDatabase().getRegionIdCache().get(Utils.sanitizeName(split[i]));
+				if (regionId != -1) {
+					PreparedStatement statement = conn.prepareStatement("SELECT name FROM assembly.nation WHERE alive = 1 AND region = ? ORDER BY update_order ASC");
+					statement.setInt(1, regionId);
+					ResultSet result = statement.executeQuery();
+					while(result.next()) {
+						nations.add(result.getString(1));
+					}
+					Collections.reverse(nations);
+					DbUtils.closeQuietly(result);
+					DbUtils.closeQuietly(statement);
 				}
-				Collections.reverse(nations);
 				regionData.put(split[i], nations);
-				DbUtils.closeQuietly(result);
-				DbUtils.closeQuietly(statement);
 			}
 		} finally {
 			DbUtils.closeQuietly(conn);
