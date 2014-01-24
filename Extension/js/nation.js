@@ -9,7 +9,6 @@
 			});
 		} else {
 			displaySoftPowerScore();
-			fixFactbookLinks();
 			showNationChallenge();
 			showWorldAssemblyInfo();
 			showNationAlias();
@@ -269,29 +268,5 @@
 			html = html + "</a>)</p>"
 			$("#rinf").html(html);
 		});
-	}
-
-	function fixFactbookLinks() {
-		var factbooks = 0;
-		$(".newsbox").find("ul").children("li").each(function() {
-			var search = "published the Factbook";
-			var index = $(this).html().indexOf(search);
-			if (index != -1) {
-				var factbookName = $(this).html().substring(index + search.length + 2, $(this).html().length - 2);
-				$(this).html($(this).html().substring(0, index + search.length + 2) + "<span name='" + factbookName.toLowerCase().replaceAll(" ", "_") + "'>" + factbookName + "</span>\".");
-				factbooks++;
-			}
-		});
-		if (factbooks > 0) {
-			$.get("/nation=" + getVisibleNation() + "/detail=factbook/", function(data) {
-				$(data).find('ul[class=factbooklist]').find("a").each(function() {
-					var link = $("span[name='" + $(this).html().toLowerCase().replaceAll(" ", "_") + "']");
-					if (link.length > 0) {
-						link.attr("href",  $(this).attr("href"));
-						link.changeElementType("a");
-					}
-				});
-			});
-		}
 	}
 })();
