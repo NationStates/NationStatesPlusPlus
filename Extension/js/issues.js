@@ -77,7 +77,7 @@
 		$("h5:contains('The Government Position')").next().addClass("dismiss_option");
 		$("p:contains('The government is preparing to dismiss this issue.')").addClass("dismissed");
 		$(".chosendiloption").attr("style", "background-color: #F6FFF6 !important;");
-		$('body').on('click', 'button', function() {
+		$('body').on('click', 'button', function(event) {
 			event.preventDefault();
 			console.log("Selecting issue");
 			var choice = $(this).prop('name') == "choice--1" ? -1 : parseInt($(this).prop('name').split("-")[1]);
