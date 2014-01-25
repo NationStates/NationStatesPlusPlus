@@ -9,7 +9,7 @@
 		window.document.title = "Puppet Creator";
 		$("#content").html("<h1>Puppet Creation Center</h1>");
 		$("#content").append("<div id='settings'></div>");
-		$.get("http://nationstatesplusplus.net/nationstates/v2_2/puppet_creation.html", function(html) {
+		$.get("http://nationstatesplusplus.net/nationstates/v2_3/puppet_creation.html", function(html) {
 			$("#settings").html(html);
 			$("#import_puppets_btn").hide();
 			$("#error_label").hide();
