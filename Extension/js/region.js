@@ -27,19 +27,22 @@ function setupRegionPage() {
 	
 	var rmbSearchEnabled = getSettings().isEnabled("search_rmb") && $("em:contains('There are no lodged messages at present.')").length == 0;
 	
+	var founder = $("strong:contains('Founder'):first");
+	
 	//Add link to region controls
 	var rControls = $("a[href='page=region_control/region=" + getVisibleRegion() + "']");
 	if (rControls.length > 0) {
 		$("<a href='page=region_admin/region=" + getVisibleRegion() + "'>Administration</a><span> &#8226; </span>").insertBefore(rControls);
 		rControls.html("Regional Controls");
-		$("<span> &#8226; </span><a name='rc' href='page=blank/?banhammer=" + getVisibleRegion() + "'>Banhammer</a>").insertAfter(rControls);
+		
+		var userIsFounder = (founder.length > 0 && (typeof founder.next().attr("href") != "undefined") && founder.next().attr("href").substring(7) == getUserNation());
+		$("<span> &#8226; </span><a name='rc' href='page=blank/?banhammer=" + getVisibleRegion() + (userIsFounder ? "&free=true" : "") + "'>Banhammer</a>").insertAfter(rControls);
 	} else {
 		rControls = $("a[href='page=region_admin/region=" + getVisibleRegion() + "']");
 		$("<span> &#8226; </span><a name='rc' href='page=region_control/region=" + getVisibleRegion() + "'>Regional Controls</a>").insertAfter(rControls);
 	}
 	//Add FA icons
 	$("strong:contains('WA Delegate'):first").html("<i class='fa fa-users'></i> <span id='wa_delegate_title'>WA Delegate</span>");
-	var founder = $("strong:contains('Founder'):first");
 	if (founder.length > 0) {
 		$("strong:contains('Founder'):first").html("<i class='fa fa-star'></i> <span id='founder_title'>Founder</span>");
 	} else {

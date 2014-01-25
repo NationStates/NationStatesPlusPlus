@@ -34,6 +34,8 @@
 				
 				var spdr = parseInt($("#your_spdr").attr("spdr"), 10);
 				
+				var costOverride = (typeof $.QueryString["free"] != "undefined");
+				
 				for (var i = 0; i < data.length; i++) {
 					var nation = data[i];
 					
@@ -42,8 +44,8 @@
 						html += "<img class='bflag miniflag' src='" + nation.flag + "' class='miniflag' alt='' title='" + nation.title + "'><span>"
 						html += nation.title + "</span></a> <span class='spdr'>(SPDR: " + nation.influence + ")</span>";
 						
-						var ejectCost = nation.influence * 0.6;
-						var banCost = nation.influence * 0.7;
+						var ejectCost = (costOverride ? 0 : nation.influence * 0.6);
+						var banCost = (costOverride ? 0 : nation.influence * 0.7);
 						
 						//Eject button
 						html += "<span class='banhammer_span' ><button name='eject' class='button icon remove danger eject_banhammer'";
