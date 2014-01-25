@@ -13,13 +13,14 @@
 	$("<li><a href='http://www.nationstates.net/page=activity/view=world/filter=all'>ACTIVITY</a></li>").insertAfter(menu.find("a[href='page=dossier']").parent());
 	checkPanelAlerts();
 	addWAProposals();
-	var userSettings = getSettings();
+	var userSettings = getSettings(true);
+
 	if ($(".STANDOUT").length > 0 && userSettings.isEnabled("floating_sidepanel")) {
 		var flag = $(".STANDOUT:first").find("img").attr("src");
 		if (flag.match(/t[0-9]?.(jpg|png|gif)/).length > 0) {
 			flag = flag.substring(0, flag.length - 6) + flag.substring(flag.length - 4);
 		}
-		$("<a href='http://www.nationstates.net/nation=" + getUserNation() + "'><img src='" + flag + "' style='max-width: 192px; display: block; margin-left: auto; margin-right: auto; max-height: 400px;'></a>").insertBefore($("#createdby"));
+		$("<a id='panel_flag' href='http://www.nationstates.net/nation=" + getUserNation() + "'><img src='" + flag + "' style='max-width: 192px; display: block; margin-left: auto; margin-right: auto; max-height: 400px;'></a>").insertBefore($("#createdby"));
 		$("#createdby").remove();
 		$(".STANDOUT:first").find("img").hide();
 		$("#panel").css("position", "fixed");
@@ -27,6 +28,20 @@
 		$( window ).scroll(function() {
 			$("#panel").css("margin-top", "-" + Math.min($(window).scrollTop(), 100) + "px");
 		});
+
+		//Check for small screen heights
+		var minHeight = $("#panel").css("min-height");
+		$("#panel").css("min-height", "0px");
+		if ($("#panel").height() - 50 > $(window).height() || ($("#content").length == 0 && userSettings.isEnabled("small_screen_height", false))) {
+			$("#panel_flag").hide();
+			//Use this as a setting to sync with forumside
+			if (!userSettings.isEnabled("small_screen_height", false)) {
+				userSettings.setValue("small_screen_height", true);
+			}
+		} else if (userSettings.isEnabled("small_screen_height", false)) {
+			userSettings.setValue("small_screen_height", false);
+		}
+		$("#panel").css("min-height", minHeight);
 	}
 
 	if ($(".menu").find("a[href='page=dilemmas']").html().match(/[0-9]+/) != null && getUserData().getValue("dismiss_all", false)) {
