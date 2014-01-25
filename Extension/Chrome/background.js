@@ -1,6 +1,6 @@
 
 //versioned files are checked for modifications each page hit (slow)
-var urlPrefix = "http://nationstatesplusplus.net/nationstates/v2_2/";
+var urlPrefix = "http://nationstatesplusplus.net/nationstates/v2_3/";
 //static files are cached by browser for 1 week, not checked for modifications (fast)
 var staticUrlPrefix = "http://nationstatesplusplus.net/nationstates/static/";
 
