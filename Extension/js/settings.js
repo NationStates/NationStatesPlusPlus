@@ -1,109 +1,24 @@
+//Stolen from Modernzr, MIT licensed:
+var supportsColorInput = (function() {
+	var inputElem = document.createElement('input'), bool, docElement = document.documentElement, smile = ':)';
+	inputElem.setAttribute('type', 'color');
+	bool = inputElem.type !== 'text';
+	// We first check to see if the type we give it sticks..
+	// If the type does, we feed it a textual value, which shouldn't be valid.
+	// If the value doesn't stick, we know there's input sanitization which infers a custom UI
+	if (bool) {
+		inputElem.value         = smile;
+		inputElem.style.cssText = 'position:absolute;visibility:hidden;';
+		docElement.appendChild(inputElem);
+		docElement.offsetWidth;
+		bool = inputElem.value != smile;
+		docElement.removeChild(inputElem);
+	}
+	return bool;
+})();
+
 (function() {
 	if (getUserNation() != "") {
-		//Migrate old settings
-		if (localStorage.getItem("embassy_flags") != null) {
-			getSettings();
-			//cleanup unused data
-			for (var key in localStorage) {
-				if (localStorage.hasOwnProperty(key)) {
-					if (key.startsWith("auth-") || key.startsWith("firebase-auth-") || key == "gameplay_enhancements" 
-					|| key == "ns_fall_survey" || key == "region_enhancements" || key.startsWith("report_") || key.startsWith("next_sync")) {
-						localStorage.removeItem(key);
-					}
-					if (key.startsWith("issue-")) {
-						var split = key.split("-");
-						var issue = split[1];
-						var nation = split[2];
-						var choice = (key.endsWith("--1") ? -1 : split[split.length - 1]);
-						var timestamps = localStorage.getItem(key).split(",");
-						var nationData = localStorage.getItem(nation + "-data");
-						if (nationData == null) {
-							nationData = {};
-							nationData.userData = {};
-							nationData.userData.issues = { };
-						} else {
-							nationData = JSON.parse(nationData);
-						}
-						var issueData = nationData.userData.issues[issue];
-						if (issueData == null) {
-							issueData = [];
-						}
-						for (var i = 0; i < timestamps.length; i++) {
-							var timestamp = timestamps[i];
-							issueData.push({timestamp: timestamp, choice: choice});
-						}
-						nationData.userData.issues[issue] = issueData;
-						localStorage.setItem(nation + "-data", JSON.stringify(nationData));
-						localStorage.removeItem(key);
-					} else if (key.startsWith("previous-problems-")) {
-						var split = key.split("-");
-						var nation = split[2];
-						var nationData = localStorage.getItem(nation + "-data");
-						if (nationData == null) {
-							nationData = {};
-							nationData.userData = {};
-							nationData.userData.issues = { };
-						} else {
-							nationData = JSON.parse(nationData);
-						}
-						nationData.userData.ghr = JSON.parse(localStorage.getItem(key));
-						localStorage.setItem(nation + "-data", JSON.stringify(nationData));
-						localStorage.removeItem(key);
-					}
-				}
-			}
-			var settings = { };
-			var options = { };
-			settings["last_update"] = Date.now();
-			var getAndRemove = function(key) {
-				var prev = localStorage.getItem(key);
-				localStorage.removeItem(key);
-				return prev;
-			}
-			options["embassy_flags"] = (getAndRemove("embassy_flags") != "false");
-			options["search_rmb"] = (getAndRemove("search_rmb") != "false");
-			options["infinite_scroll"] = (getAndRemove("infinite_scroll") != "false");
-			options["show_ignore"] = (getAndRemove("show_ignore") != "false");
-			options["auto_update"] = (getAndRemove("auto_update") != "false");
-			options["clickable_links"] = (getAndRemove("clickable_links") != "false");
-			options["hide_ads"] = (getAndRemove("hide_ads") != "false");
-			options["scroll_nation_lists"] = (getAndRemove("scroll_nation_lists") != "false");
-			options["clickable_telegram_links"] = (getAndRemove("clickable_telegram_links") != "false");
-			options["show_puppet_switcher"] = (getAndRemove("show_puppet_switcher") != "false");
-			options["fancy_dossier_theme"] = (getAndRemove("fancy_dossier_theme") != "false");
-			options["use_nationstates_api"] = (getAndRemove("use_nationstates_api") != "false");
-			options["show_gameplay_news"] = (getAndRemove("show_gameplay_news") != "false");
-			options["show_roleplay_news"] = (getAndRemove("show_roleplay_news") != "false");
-			options["show_regional_news"] = (getAndRemove("show_regional_news") != "false");
-			options["irc_username_override"] = getAndRemove("irc_username_override");
-			options["irc_network_override"] = getAndRemove("irc_network_override");
-			options["redirect-puppet-page"] = (getAndRemove("redirect-puppet-page") != "false");
-			options["autologin-puppets"] = (getAndRemove("autologin-puppets") != "false");
-			options["show-region-on-hover"] = (getAndRemove("show-region-on-hover") != "false");
-			options["egosearch_ignore"] = (getAndRemove("egosearch_ignore") != "false");
-			options["post_ids"] = (getAndRemove("post_ids") != "false");
-			options["show_irc"] = (getAndRemove("show_irc") != "false");
-			settings["settings"] = options;
-			
-			options.newspapers = {};
-			for (var key in localStorage) {
-				if (localStorage.hasOwnProperty(key)) {
-					if (key.startsWith("last_read_newspaper")) {
-						var id = key.split("-")[1];
-						if (isNumber(id)) {
-							options.newspapers[id] = getAndRemove(key);
-						} else {
-							localStorage.removeItem(key);
-						}
-					}
-				}
-			}
-			
-			localStorage.setItem("settings", JSON.stringify(settings));
-			
-			var api = getSettings();
-			api.pushUpdate();
-		}
 		if (getSettings().last_update + 300000 < Date.now()) {
 			getSettings().update(function() {console.log("Updating settings...")});
 		}
@@ -115,17 +30,21 @@
 		window.document.title = "NationStates++ Settings"
 		$("#content").html("<div style='margin-top: 25px; margin-left:15px; font-weight:bold; font-size:16px;'><img style='margin-bottom: -2px; margin-right: 4px;' src='/images/loading1.gif'>Loading...</span>");
 		getSettings().update(function() {
-			$.get("http://nationstatesplusplus.net/nationstates/v2_2/settings.html?v=1", function(html) {
+			$.get("http://nationstatesplusplus.net/nationstates/v2_3/settings.html?v=4", function(html) {
 				$("#content").html(html);
+				if (!window.chrome) {
+					$("div[name='chrome_only']").hide();
+				}
+				if (supportsColorInput) {
+					$("input[type='color']").css("width", "15px");
+				}
 				$("#content").find("input[type='checkbox']").each(function() {
 					var settings = getSettings();
 					$(this).prop("checked", settings.isEnabled($(this).attr("id"), $(this).attr("default")));
 				});
-				$("#content").find("input[type='text']").each(function() {
-					$(this).val(getSettings().getValue($(this).attr("id"), ""));
+				$("#content").find("input[type='text'], input[type='color']").each(function() {
+					$(this).val(getSettings().getValue($(this).attr("id"), $(this).attr("default")));
 				});
-				//var blob = new Blob(["Hello, world!"], {type: "text/plain;charset=utf-8"});
-				//saveAs(blob, "hello world.txt");
 				$("#export_puppets").on("click", function(event) {
 					event.preventDefault();
 					var puppetArr = new Array();

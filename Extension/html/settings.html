@@ -6,36 +6,39 @@
 <div class="control-group">
   <label class="control-label" for="region_settings">Regional Settings</label>
   <div class="controls">
-    <label class="checkbox" for="region_settings-0">
-      <input type="checkbox" name="region_settings" id="embassy_flags" default="true" value="Embassy Flags">
+    <label class="checkbox" for="embassy_flags" title="Show scrolling vertical flags of embassies on region pages">
+      <input type="checkbox" name="region_settings" id="embassy_flags" default="true" value="Embassy Flags" title="Show scrolling vertical flags of embassies on region pages">
       Embassy Flags
     </label>
-    <label class="checkbox" for="region_settings-1">
-      <input type="checkbox" name="region_settings" id="search_rmb" default="true" value="Search Message Board">
+    <label class="checkbox" for="search_rmb" title="Show the regional message board search form on region pages">
+      <input type="checkbox" name="region_settings" id="search_rmb" default="true" value="Search Message Board" title="Show the regional message board search form on region pages">
       Search Message Board
     </label>
-    <label class="checkbox" for="region_settings-2">
-      <input type="checkbox" name="region_settings" id="infinite_scroll" default="true" value="Infinite Scroll Message Board">
+    <label class="checkbox" for="infinite_scroll" title="Automatically load older message board posts as you scroll down">
+      <input type="checkbox" name="region_settings" id="infinite_scroll" default="true" value="Infinite Scroll Message Board" title="Automatically load older message board posts as you scroll down">
       Infinite Scroll Message Board
     </label>
-    <label class="checkbox" for="region_settings-3">
-      <input type="checkbox" name="region_settings" id="show_ignore" default="true" value="Show Ignore Button">
+	<!--TODO: Fix this feature!-->
+	<div style="display:none;'>
+    <label class="checkbox" for="show_ignore" title="Show an ignore button on regional message board posts">
+      <input type="checkbox" name="region_settings" id="show_ignore" default="true" value="Show Ignore Button" title="Show an ignore button on regional message board posts">
       Show Ignore Button
     </label>
-    <label class="checkbox" for="region_settings-5">
-      <input type="checkbox" name="region_settings" id="auto_update" default="true" value="Auto Update Messages">
+	</div>
+    <label class="checkbox" for="auto_update" title="Check for new regional messages and display them at the top of the message board automatically">
+      <input type="checkbox" name="region_settings" id="auto_update" default="true" value="Auto Update Messages" title="Check for new regional messages and display them at the top of the message board automatically">
       Auto Update Messages
     </label>
-    <label class="checkbox" for="region_settings-6">
-      <input type="checkbox" name="region_settings" id="clickable_links" default="true" value="Linkify URLs">
+    <label class="checkbox" for="clickable_links" title="Turn www urls into clickable links in regional message board posts">
+      <input type="checkbox" name="region_settings" id="clickable_links" default="true" value="Linkify URLs" title="Turn www urls into clickable links on regional message board posts">
       Linkify URLs
     </label>
-	<label class="checkbox" for="region_settings-7">
-      <input type="checkbox" name="region_settings" id="show_all_suppressed_posts" default="true" value="Auto-Show Suppressed Posts">
+	<label class="checkbox" for="show_all_suppressed_posts" title="Show suppressed posts automatically">
+      <input type="checkbox" name="region_settings" id="show_all_suppressed_posts" default="true" value="Auto-Show Suppressed Posts" title="Show suppressed posts automatically">
       Auto-Show Suppressed Posts
     </label>
-	<label class="checkbox" for="region_settings-8">
-      <input type="checkbox" name="region_settings" id="show_regional_map_preview" default="true" value="Show Regional Map Preview">
+	<label class="checkbox" for="show_regional_map_preview" title="Show a preview image of the regional map when you hover over the regional map link">
+      <input type="checkbox" name="region_settings" id="show_regional_map_preview" default="true" value="Show Regional Map Preview" title="Show a preview image of the regional map when you hover over the regional map link">
       Show Regional Map Preview
     </label>
   </div>
@@ -46,8 +49,8 @@
 <div class="control-group">
   <label class="control-label" for="delegate_settings">WA Delegate Settings</label>
   <div class="controls">
-	<label class="checkbox" for="delegate_settings-0">
-	  <input type="checkbox" name="delegate_settings" id="show_wa_proposals" default="true" value="Show WA Proposals">
+	<label class="checkbox" for="show_wa_proposals" title="Show unread WA proposals in the sidebar (Only for Delegates)">
+	  <input type="checkbox" name="delegate_settings" id="show_wa_proposals" default="true" value="Show WA Proposals" title="Show unread WA proposals in the sidebar (Only for Delegates)">
 	  Show WA Proposals
 	</label>
   </div>
@@ -58,8 +61,8 @@
 <div class="control-group">
   <label class="control-label" for="telegram_settings">Telegram Settings</label>
   <div class="controls">
-    <label class="checkbox" for="telegram_settings-0">
-      <input type="checkbox" name="telegram_settings" id="clickable_telegram_links" default="true" value="Linkify URLs">
+    <label class="checkbox" for="clickable_telegram_links" title="Turn www urls into clickable links in telegrams">
+      <input type="checkbox" name="telegram_settings" id="clickable_telegram_links" default="true" value="Linkify URLs" title="Turn www urls into clickable links in telegrams">
       Linkify URLs
     </label>
   </div>
@@ -70,37 +73,21 @@
 <div class="control-group">
   <label class="control-label" for="nationstates_settings">NationStates Settings</label>
   <div class="controls">
-    <label class="checkbox" for="nationstates_settings-0">
-      <input type="checkbox" name="nationstates_settings" id="hide_ads" default="true" value="Remove Advertisements">
+    <label class="checkbox" for="hide_ads" title="Removes all advertisement content from view">
+      <input type="checkbox" name="nationstates_settings" id="hide_ads" default="true" value="Remove Advertisements" title="Removes all advertisement content from view">
       Remove Advertisements
     </label>
-    <label class="checkbox" for="nationstates_settings-1">
-      <input type="checkbox" name="nationstates_settings" id="scroll_nation_lists" default="true" value="Scrolling Nation Lists">
+    <label class="checkbox" for="scroll_nation_lists" title="Scroll through lists of nations and regions instead of using the paginator">
+      <input type="checkbox" name="nationstates_settings" id="scroll_nation_lists" default="true" value="Scrolling Nation Lists" title="Scroll through lists of nations and regions instead of using the paginator">
       Scrolling Nation Lists
     </label>
-    <label class="checkbox" for="nationstates_settings-2">
-      <input type="checkbox" name="nationstates_settings" id="show_puppet_switcher" default="true" value="Puppet Switcher">
+    <label class="checkbox" for="show_puppet_switcher" title="Show the puppet switcher form on the top menu area">
+      <input type="checkbox" name="nationstates_settings" id="show_puppet_switcher" default="true" value="Puppet Switcher" title="Show the puppet switcher form on the top menu area">
       Puppet Switcher
     </label>
-    <label class="checkbox" for="nationstates_settings-3">
-      <input type="checkbox" name="nationstates_settings" id="show_gameplay_news" default="true" value="Gameplay News">
-      Gameplay News
-    </label>
-    <label class="checkbox" for="nationstates_settings-4">
-      <input type="checkbox" name="nationstates_settings" id="show_roleplay_news" default="true" value="Roleplay News">
-      Roleplay News
-    </label>
-    <label class="checkbox" for="nationstates_settings-5">
-      <input type="checkbox" name="nationstates_settings" id="show_regional_news" default="true" value="Regional News">
-      Regional News
-    </label>
-    <label class="checkbox" for="nationstates_settings-6">
-      <input type="checkbox" name="nationstates_settings" id="fancy_dossier_theme" default="true" value="Fancy Dossier">
+    <label class="checkbox" for="fancy_dossier_theme" title="Use the fancy dossier theme, instead of the default table view">
+      <input type="checkbox" name="nationstates_settings" id="fancy_dossier_theme" default="true" value="Fancy Dossier" title="Use the fancy dossier theme, instead of the default table view">
       Fancy Dossier
-    </label>
-	 <label class="checkbox" for="nationstates_settings-7">
-      <input type="checkbox" name="nationstates_settings" id="floating_sidepanel" default="true" value="Floating Sidepanel">
-      Floating Sidepanel
     </label>
   </div>
 </div>
@@ -108,24 +95,62 @@
 <hr style="width: 40%; margin-left: 1%;"></hr>
 
 <div class="control-group">
+  <label class="control-label" for="sidebar_settings">Sidebar Settings</label>
+  <div class="controls">
+  
+    <label class="checkbox" for="show_gameplay_news" title="Show the gameplay news in the sidebar">
+      <input type="checkbox" name="sidebar_settings" id="show_gameplay_news" default="true" value="Gameplay News" title="Show the gameplay news in the sidebar">
+      Gameplay News
+    </label>
+    <label class="checkbox" for="show_roleplay_news" title="Show the roleplay news in the sidebar">
+      <input type="checkbox" name="sidebar_settings" id="show_roleplay_news" default="true" value="Roleplay News" title="Show the roleplay news in the sidebar">
+      Roleplay News
+    </label>
+    <label class="checkbox" for="show_regional_news" title="Show the regional news in the sidebar (only if your region has a newspaper)">
+      <input type="checkbox" name="sidebar_settings" id="show_regional_news" default="true" value="Regional News" title="Show the regional news in the sidebar (only if your region has a newspaper)">
+      Regional News
+    </label>
+	 <label class="checkbox" for="floating_sidepanel" title="The sidebar are will stay centered on any page, even when you scroll down">
+      <input type="checkbox" name="sidebar_settings" id="floating_sidepanel" default="true" value="Floating Sidebar" title="The sidebar are will stay centered on any page, even when you scroll down">
+      Floating Sidebar
+    </label>
+	<label class="checkbox" for="show_dispatches" title="Show dispatches link on the sidebar">
+      <input type="checkbox" name="sidebar_settings" id="show_dispatches" default="true" value="Show Dispatches" title="Show dispatches link on the sidebar">
+      Show Dispatches
+    </label>
+  </div>
+</div>
+<hr style="width: 40%; margin-left: 1%;"></hr>
+
+<div class="control-group">
   <label class="control-label" for="forum_settings">Forum Settings</label>
   <div class="controls">
-    <label class="checkbox" for="forum_settings-0">
-      <input type="checkbox" name="forum_settings" id="post_ids" value="Post IDs">
+    <label class="checkbox" for="post_ids" title="Show the forum post id on each forum post">
+      <input type="checkbox" name="forum_settings" id="post_ids" value="Post IDs" title="Show the forum post id on each forum post">
       Post IDs
     </label>
-    <label class="checkbox" for="forum_settings-1">
-      <input type="checkbox" name="forum_settings" id="egosearch_ignore" value="Customize Ego-Search Topics">
+    <label class="checkbox" for="egosearch_ignore" title="Allow individual hiding of topics in your 'View Your Posts' (Ego-Search) view">
+      <input type="checkbox" name="forum_settings" id="egosearch_ignore" value="Customize Ego-Search Topics" title="Allow individual hiding of topics in your 'View Your Posts' (Ego-Search) view">
       Customize Ego-Search Topics
     </label>
-	 <label class="checkbox" for="forum_settings-2">
-      <input type="checkbox" name="forum_settings" id="highlight_op_posts" value="Highlight Author Posts">
+	 <label class="checkbox" for="highlight_op_posts" title="Highlight posts by the author in any thread">
+      <input type="checkbox" name="forum_settings" id="highlight_op_posts" value="Highlight Author Posts" title="Highlight posts by the author in any thread">
       Highlight Author Posts
     </label>
-	 <label class="checkbox" for="forum_settings-4">
-      <input type="checkbox" name="forum_settings" id="show_unread_forum_posts" value="Show Unread Forum Posts">
-      Show Unread Forum Posts
+	 <label class="color" for="highlight_color" title="Change the default color of author post highlighting">
+      <input type="color" style="width:45px" name="forum_settings" id="highlight_color" value="Highlight Post Color" title="Change the default color of author post highlighting" default="#39EE00">
+      Highlight Post Color
     </label>
+	<label class="color" for="highlight_color_transparency" title="Change the default transparency of author post highlighting (between 0 and 1)">
+      <input type="text" style="width:30px" maxlength="4" name="forum_settings" id="highlight_color_transparency" value="0.1" title="Change the default transparency of author post highlighting (between 0 and 1)" default="0.1">
+      Highlight Color Transparency
+    </label>
+	<div name='chrome_only'>
+		<label class="checkbox" for="show_unread_forum_posts" title="Show unread forum post count in the sidebar">
+		<input type="checkbox" name="forum_settings" id="show_unread_forum_posts" value="Show Unread Forum Posts" title="Show unread forum post count in the sidebar">
+			Show Unread Forum Posts
+		</label>
+	</div>
   </div>
 </div>
 
@@ -134,7 +159,7 @@
 <div class="control-group">
   <label class="control-label" for="advanced_settings">Advanced</label>
   <div class="controls">
-    <label class="checkbox" for="advanced_settings-0">
+    <label class="checkbox" for="use_nationstates_api">
       <input type="checkbox" name="advanced_settings" id="use_nationstates_api" value="NationStates API">
       NationStates API
     </label>
@@ -211,6 +236,6 @@
 </div>
 
 	<p><a href='http://afforess.uservoice.com/forums/210362-nationstates-'>Suggest Ideas & Features!</a></p>
-	<p style='font-style:italic; font-size:10px;'>NationStates++ v2.1.6</p>
+	<p style='font-style:italic; font-size:10px;'>NationStates++ v2.3.0</p>
 </fieldset>
 </form>

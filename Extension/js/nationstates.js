@@ -14,7 +14,11 @@
 	checkPanelAlerts();
 	addWAProposals();
 	var userSettings = getSettings(true);
-
+	
+	if (!userSettings.isEnabled("show_dispatches", true)) {
+		menu.find("a[href='page=dispatches']").hide();
+	}
+	
 	if ($(".STANDOUT").length > 0 && userSettings.isEnabled("floating_sidepanel")) {
 		var flag = $(".STANDOUT:first").find("img").attr("src");
 		if (flag.match(/t[0-9]?.(jpg|png|gif)/).length > 0) {
