@@ -273,6 +273,8 @@ function getSettings(autoupdate) {
 					api.settings = data;
 					api.save();
 					if (typeof callback != "undefined") callback(data, textStatus, xhr);
+				}).fail(function(jqXHR, textStatus, errorThrown) {
+					if (typeof callback != "undefined") callback(jqXHR, textStatus, errorThrown);
 				});
 			} else if (data.timestamp <= api.last_update) {
 				api.pushUpdate(callback);
@@ -583,20 +585,33 @@ function doAuthorizedPostRequest(url, postData, success, failure) {
 function doAuthorizedPostRequestFor(nation, url, postData, success, failure) {
 	getNationStatesAuth(function(authCode) {
 		var authToken = localStorage.getItem(nation + "-auth-token");
-		postData = "nation=" + nation + "&auth=" + authCode + (authToken != null ? "&auth-token=" + authToken : "") + (postData.length > 0 ? "&" + postData : "");
-		$.post(url, postData, function(data, textStatus, jqXHR) {
-			var authToken = jqXHR.getResponseHeader("X-Auth-Token");
-			if (authToken != null) {
-				localStorage.setItem(nation + "-auth-token", authToken);
-				if (typeof success != "undefined" && success != null) {
-					success(data, textStatus, jqXHR);
-				}
-			}
-		}).fail(function(data, textStatus, jqXHR) {
-			if (typeof failure != "undefined" && failure != null) {
-				failure(data, textStatus, jqXHR);
-			}
-		});
+		if (authToken == null) {
+			$.post("http://nationstatesplusplus.net/api/nation/auth/", "nation=" + nation + "&auth=" + encodeURIComponent(authCode), function(data, textStatus, jqXHR) {
+				localStorage.setItem(nation + "-auth-token", data.code);
+			}).always(function() {
+				doAuthorizedPostRequestInternal(nation, authCode, url, postData, success, failure);
+			});
+		} else {
+			doAuthorizedPostRequestInternal(nation, authCode, url, postData, success, failure);
+		}
+	});
+}
+
+function doAuthorizedPostRequestInternal(nation, authCode, url, postData, success, failure) {
+	var authToken = localStorage.getItem(nation + "-auth-token");
+	postData = "nation=" + nation + "&auth=" + encodeURIComponent(authCode) + (authToken != null ? "&auth-token=" + authToken : "") + (postData.length > 0 ? "&" + postData : "");
+	$.post(url, postData, function(data, textStatus, jqXHR) {
+		var authToken = jqXHR.getResponseHeader("X-Auth-Token");
+		if (authToken != null) {
+			localStorage.setItem(nation + "-auth-token", authToken);
+		}
+		if (typeof success != "undefined" && success != null) {
+			success(data, textStatus, jqXHR);
+		}
+	}).fail(function(data, textStatus, jqXHR) {
+		if (typeof failure != "undefined" && failure != null) {
+			failure(data, textStatus, jqXHR);
+		}
 	});
 }
 
