@@ -125,7 +125,7 @@ function loadJavascript() {
 		if (settings.isEnabled("highlight_op_posts")) {
 			var color = hexToRgb(settings.getValue("highlight_color", "#39EE00"));
 			color.alpha = parseFloat(settings.getValue("highlight_color_transparency", "0.1"));
-			$("body").append("<style type='text/css'>.op_posts { background-color: rgba(" + color.r + ", " + color.g + ", " + color.b + ", " + color.alpha + ") !important; }</style");
+			$("body").append("<style type='text/css'>.op_posts { background-color: rgba(" + color.r + ", " + color.g + ", " + color.b + ", " + color.alpha + ") !important; }</style>");
 			highlightAuthorPosts();
 		}
 		if (settings.isEnabled("floating_sidepanel")) {

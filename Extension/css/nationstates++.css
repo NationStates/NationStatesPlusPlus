@@ -563,10 +563,6 @@ fieldset.preview {
 	border-radius: 5px;
 }
 
-.op_posts {
-	background-color: rgba(57, 238, 0, 0.1) !important;
-}
-
 .last_dossier_element {
 	cursor: default !important;
 	text-align: center !important;
