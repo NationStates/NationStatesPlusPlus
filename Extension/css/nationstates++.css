@@ -632,3 +632,9 @@ fieldset.preview {
 	background-color: #F6FFF6;
 	border-radius: 12px;
 }
+
+.dossier-rss {
+	margin-left: 5px;
+	position: relative;
+	bottom: -5px;
+}

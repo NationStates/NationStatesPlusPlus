@@ -3,7 +3,7 @@ function update(delay){
 	setTimeout(function() {
 		_gaq.push(['_setAccount', 'UA-41267101-1']);
 		_gaq.push(['_trackPageview']);
-		_gaq.push(['_setCustomVar', 1, 'Version', 'v2.2.1', 2]);
+		_gaq.push(['_setCustomVar', 1, 'Version', 'v2.3.0', 2]);
 
 		if (delay == 1) {
 			_gaq.push(['_trackEvent', 'NationStates', 'URL', window.location.href]);
@@ -44,19 +44,33 @@ update(1);
 	function getVisibleNation() {
 		return $(".nationname > a").attr("href") ? $(".nationname > a").attr("href").trim().substring(8) : "";
 	}
-	
-	setTimeout(function() {
-		if (!$(document.head).html().contains("font-awesome.css")) {
-			$("#content").prepend("<div style='height: 60px; width: 100%; background-image: linear-gradient(-45deg, rgba(255, 255, 0, 1) 25%, transparent 25%, transparent 50%, rgba(255, 255, 0, 1) 50%, rgba(255, 255, 0, 1) 75%, transparent 75%, transparent); background-color: #F00; background-size: 50px 50px;font-size: 56px;font-family: impact;text-align: center;'><a style='color: black;' href='http://forum.nationstates.net/viewtopic.php?f=15&t=269464#p17306782'>You are on an outdated version of NationStates++</a></div>");
-		}
-	}, 1000);
 
-	//This polling localStorage sucks, but window.postMessage does
-	//not work in Firefox extensions :(
+	function getUserNation() {
+		if ($(".STANDOUT:first").attr("href")) {
+			return $(".STANDOUT:first").attr("href").substring(7);
+		}
+		return "";
+	}
+
+	if (false) {
+		if (localStorage.getItem("bugger_off") == null) {
+			$(".regional_power").hide();
+			$("#content").prepend("<div id='nag_banner' style='width: 100%; background-color: #F00; background-size: 50px 50px;font-size: 40px;font-family: impact;text-align: center;'>Arr, Matey! Interested in helping liberate <a href='/region=osiris'>Osiris</a> from it's tyrant rule? You can help out, learn how!<button style='font-size:30px; padding: 10px; margin: 10px;' class='button' id='help_out'>Sure!</button> <button style='font-size:30px; padding: 10px; margin: 10px;' class='button' id='bugger_off'>Bugger Off</button><span id='show_help' style='display:none;'>You can help rescue Osiris! <ol><li>Move your World Assembly nation to Osiris</li><li>Endorse <a href='/nation=skypheriania'>Skypheriania</a>, the lead liberator!</li></ol>Visit <a href='https://kiwiirc.com/client/irc.esper.net:+6697/?nick=" + getUserNation() + "?#udl'>#UDL</a> to learn more about how the operation works!</span></div>");
+			$("#bugger_off").on("click", function(event) {
+				event.preventDefault();
+				localStorage.setItem("bugger_off", true);
+				$("#nag_banner").remove();
+			});
+			$("#help_out").on("click", function(event) {
+				event.preventDefault();
+				$("#show_help").show();
+			});
+		}
+	}
+
 	checkUpdates();
 	function checkUpdates() {
-		var chart = localStorage.getItem("chart");
-		if (chart == null && $("#highcharts_graph").length > 0) {
+		if ($("#highcharts_graph").length > 0) {
 			chart = {};
 			chart.type = $("#highcharts_graph").attr("graph");
 			chart.region = $("#highcharts_graph").attr("region");
@@ -66,11 +80,7 @@ update(1);
 			chart.visibleNation = $("#highcharts_graph").attr("visible_nation");
 			chart.showInfluence = $("#highcharts_graph").attr("show_influence") == "true";
 			$("#highcharts_graph").remove();
-			console.log(chart);
-		} else if (chart != null) {
-			chart = JSON.parse(chart);
-		}
-		if (chart != null) {
+			
 			if (chart.type == "region_chart" && getVisibleRegion() == chart.region) {
 				drawRegionPopulationChart(chart.region, chart.title);
 			} else if (chart.type == "set_chart_size") {
@@ -78,9 +88,8 @@ update(1);
 			} else if (chart.type == "national_power" && getVisibleNation() == chart.visibleNation) {
 				drawNationalPowerChart(chart.region, chart.title, chart.visibleNation, chart.showInfluence);
 			}
-			localStorage.removeItem("chart");
 		}
-		
+
 		if ($("div[name='save_file']").length > 0) {
 			$("div[name='save_file']").each(function() {
 				console.log("Attempting to save: " + $(this).attr("file"));
@@ -166,7 +175,8 @@ update(1);
 					bar: {
 						dataLabels: {
 							enabled: true
-						}
+						},
+						animation: false
 					},
 					series: {
 						cursor: 'pointer',
@@ -193,7 +203,7 @@ update(1);
 					});
 				}
 			}
-			setTimeout(function() { $("#snark").remove(); container.appendTo($("#" + (showInfluence ? 'influence' : 'power')));}, 2000);
+			setTimeout(function() { $("#snark").remove(); container.appendTo($("#" + (showInfluence ? 'influence' : 'power')));}, 500);
 		});
 	}
 
@@ -205,7 +215,7 @@ update(1);
 	}
 
 	function drawRegionPopulationChart(region, title) {
-		$.get("http://capitalistparadise.com/api/region/population/?region=" + region, function(data) {
+		$.get("http://capitalistparadise.com/api/region/population/?v=1&region=" + region, function(data) {
 			var populations = [];
 			for (var i = data.region.length - 1; i >= 0; i--) {
 				var element = [];
