@@ -59,6 +59,7 @@ GET    /region/map/                   @controllers.RegionController.getRegionalM
 POST   /region/map/                   @controllers.RegionController.setRegionalMap(region: String ?= "", disband: Boolean ?= false)
 GET    /region/title/                 @controllers.RegionController.getRegionalTitles(region: String ?= "")
 POST   /region/title/                 @controllers.RegionController.setRegionalTitle(region: String ?= "", disband: Boolean ?= false)
+GET    /region/summary/               @controllers.RegionController.getRegionSummary(region: String ?= "")
 
 POST    /region/recruitment/get       @controllers.RecruitmentController.getRecruitmentStrategies(region: String ?= "")
 POST    /region/recruitment/set       @controllers.RecruitmentController.updateRecruitmentStrategies(region: String ?= "")
