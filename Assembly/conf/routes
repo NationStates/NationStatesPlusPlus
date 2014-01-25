@@ -45,6 +45,7 @@ POST    /nation/settings/             @controllers.NationController.updateSettin
 POST    /nation/data/get/             @controllers.NationController.retrieveData()
 POST    /nation/data/set/             @controllers.NationController.updateData()
 GET     /nation/data/                 @controllers.NationController.getLastDataUpdate(name: String ?= "")
+POST    /nation/auth/                 @controllers.NationController.getAuthCode()
 
 GET     /nation/endorsements/         @controllers.WorldAssemblyController.getEndorsements(name: String ?= "")
 GET     /nation/unreturnedendo/       @controllers.WorldAssemblyController.getUnreturnedEndorsements(name: String ?= "")

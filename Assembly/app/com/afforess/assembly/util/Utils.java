@@ -58,7 +58,7 @@ public class Utils {
 		authAPI.setProxyIP("162.243.18.166");
 		authAPI.setProxyPort(3128);
 		
-		recentAuthRequest = CacheBuilder.newBuilder().maximumSize(250).expireAfterWrite(1, TimeUnit.MINUTES).build();
+		recentAuthRequest = CacheBuilder.newBuilder().maximumSize(250).expireAfterWrite(5, TimeUnit.SECONDS).build();
 	}
 
 	public static Result handleDefaultGetHeaders(Request request, Response response, String calculatedEtag) {

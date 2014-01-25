@@ -167,6 +167,17 @@ public class NationController extends NationStatesController {
 		}
 		return Results.noContent();
 	}
+	
+	public Result getAuthCode() throws ExecutionException {
+		Result result = Utils.validateRequest(request(), response(), getAPI(), getDatabase());
+		if (result != null) {
+			return result;
+		}
+		HashMap<String, String> data = new HashMap<String, String>();
+		data.put("code", getDatabase().generateAuthToken(getDatabase().getNationIdCache().get(Utils.sanitizeName(Utils.getPostValue(request(), "nation")))));
+		Utils.handleDefaultPostHeaders(request(), response());
+		return Results.ok(Json.toJson(data)).as("application/json");
+	}
 
 	public Result updateData() throws SQLException, ExecutionException {
 		Result result = Utils.validateRequest(request(), response(), getAPI(), getDatabase());
