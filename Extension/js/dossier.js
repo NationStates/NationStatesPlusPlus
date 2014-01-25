@@ -132,76 +132,7 @@
 				$("#region_dossier").find("#" + target).animate({ height: 'toggle', 'min-height': 'toggle' }, 800);
 			}
 		});
-		
-		/*
-		$(document.body).click(function(event) {
-			var target;
-			if ($(event.target).attr("class") == "dossier_element") {
-				target = $(event.target).attr("id");
-			} else {
-				target = $(event.target).parents(".dossier_element").attr("id");
-			}
-			if (target && target != "last_nation_element") {
-				if ($("#nation_dossier:visible").length == 1) {
-					if (typeof $(event.target).attr("id") != "undefined" && $(event.target).attr("id").startsWith("remove-")) {
-						$.post("page=dossier", "nation=" + target + "&action=remove", function() { });
-						$("#nation_dossier").find("#" + target).animate({ height: 'toggle', 'min-height': 'toggle' }, 800);
-					} else if (typeof $(event.target).attr("id") != "undefined" && $(event.target).attr("id").startsWith("input-alias-")) {
-						return;
-					} else if (typeof $(event.target).attr("id") != "undefined" && $(event.target).attr("id").startsWith("alias-")) {
-						var nation = $(event.target).attr("id").split("alias-")[1];
-						if (getNationAlias(nation) == null) {
-							if ($("#input-alias-" + nation).length == 0) {
-								$(event.target).parent().find(".wa_status, .last_activity").hide();
-								$("<input id='input-alias-" + nation + "' type='text' class='text-input' placeholder='Alias' style='width:250px;margin-left: 10px;'>").insertAfter($(event.target));
-								$("#input-alias-" + nation).on('keydown', function(e) {
-									if (e.which == 13) {
-										var value = $("#input-alias-" + nation).val();
-										$("#input-alias-" + nation).remove();
-										if (value.length > 0) {
-											setNationAlias(nation, value);
-											$("#alias-" + nation).attr("src", "http://nationstatesplusplus.net/nationstates/static/remove-alias.png");
-											$("#alias-" + nation).attr("title", "Remove Alias");
-											$("#nation-link-" + nation).css("text-decoration", "line-through");
-											$("#nation-alias-" + nation).children("pre").html("  " + value);
-											$(event.target).parent().find(".wa_status, .last_activity").show();
-											window.onresize();
-										}
-									}
-								});
-								$("#input-alias-" + nation).focus();
-							}
-						} else {
-							setNationAlias(nation, null);
-							$(event.target).attr("src", "http://nationstatesplusplus.net/nationstates/static/alias.png");
-							$(event.target).attr("title", "Set Alias");
-							$("#nation-link-" + nation).css("text-decoration", "");
-							$("#nation-alias-" + nation).children("pre").html("");
-							window.onresize();
-						}
-					} else {
-						if (typeof $("#iframe-" + target).html() == "undefined") {
-							$("#nation_dossier").find("#" + target).html($("#" + target).html() + "<div id='iframe-" + target + "' class='nation-frame'><iframe style='width: 100%; height: 495px;' src='http://embed.nationstates.net/nation=" + target + "'/></div>");
-							$("#nation_dossier").find("#iframe-" + target).hide();
-						}
-						$("#nation_dossier").find("#iframe-" + target).animate({ height: 'toggle'}, 800);
-					}
-				} else {
-					if (typeof $(event.target).attr("id") != "undefined" && $(event.target).attr("id").startsWith("remove-")) {
-						$.post("page=dossier", "remove_region_" + target + "=on&remove_from_region_dossier=Remove+Marked+Regions", function() { });
-						$("#region_dossier").find("#" + target).animate({ height: 'toggle', 'min-height': 'toggle' }, 800);
-					} else {
-						if (typeof $("#iframe-" + target).html() == "undefined") {
-							$("#region_dossier").find("#" + target).html($("#" + target).html() + "<div id='iframe-" + target + "' class='nation-frame'><iframe style='width: 100%; height: 495px;' src='http://embed.nationstates.net/region=" + target + "'/></div>");
-							$("#region_dossier").find("#iframe-" + target).hide();
-						}
-						$("#region_dossier").find("#iframe-" + target).animate({ height: 'toggle'}, 800);
-					}
-				}
-			}
-		});
-		*/
-		
+
 		function parseRegionDossier(html) {
 			var result = {html: "", animate: []};
 			if ($(html).find("table").find("th:contains('Region')").length > 0) {
@@ -244,12 +175,14 @@
 				result.html = "<div class='last_dossier_element dossier_element'>Your National Dossier is Empty!</div>";
 			} else {
 				nationTable.parents("table").find("tbody").find("tr").each(function() {
+					var alive = true;
 					var nation;
 					var flag;
 					var waMember = $(this).html().contains("WA Delegate") || $(this).html().contains("WA Member");
 					if ($(this).children().length == 2) {
 						nation = $($(this).children()[1]).html().replaceAll(" ", "_").toLowerCase();
 						flag = "http://www.nationstates.net/images/flags/exnation.png";
+						alive = false;
 					} else {
 						nation = $(this).find(".nlink").attr("href").substring(7)
 						flag = $(this).find(".smallflag").attr("src");
@@ -260,10 +193,12 @@
 
 						result.html += "<div id='" + nation + "' class='dossier_element'><img nation='" + nation + "' src='http://nationstatesplusplus.net/nationstates/static/remove.png' class='remove-dossier' title='Remove from Dossier'><img class='smallflag' src='" + flag + "'><a id='nation-link-" + nation + "' style='font-weight:bold; " + (alias != null ? "text-decoration:line-through;" : "") + "' target='_blank' href='http://nationstates.net/nation=" + nation + "'>" + nation.replaceAll("_", " ").toTitleCase() + "</a>";
 						
+						var rssLink = alive ? "<a class='dossier-rss' href='/cgi-bin/rss.cgi?nation=" + nation + "'><img src='/images/rss3.png' alt='RSS' title='National Happenings Feed'></a>" : "<span style='margin-right:13px'></span>";
+
 						if (alias == null) {
-							result.html += "<span id='nation-alias-" + nation + "'><pre style='display: inline;'></pre></span><img src='http://nationstatesplusplus.net/nationstates/static/alias.png' title='Set Alias' class='national_alias' id='alias-" + nation + "'>";
+							result.html += "<span id='nation-alias-" + nation + "'><pre style='display: inline;'></pre></span>" + rssLink + "<img src='http://nationstatesplusplus.net/nationstates/static/alias.png' title='Set Alias' class='national_alias' id='alias-" + nation + "'>";
 						} else {
-							result.html += "<span id='nation-alias-" + nation + "'><pre style='display: inline;'>  " + alias + "</pre></span><img src='http://nationstatesplusplus.net/nationstates/static/remove-alias.png' title='Remove Alias' class='national_alias' id='alias-" + nation + "'>";
+							result.html += "<span id='nation-alias-" + nation + "'><pre style='display: inline;'>  " + alias + "</pre></span>" + rssLink + "<img src='http://nationstatesplusplus.net/nationstates/static/remove-alias.png' title='Remove Alias' class='national_alias' id='alias-" + nation + "'>";
 						}
 						
 						if (waMember) {
