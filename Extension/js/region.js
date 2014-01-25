@@ -32,7 +32,7 @@ function setupRegionPage() {
 	if (rControls.length > 0) {
 		$("<a href='page=region_admin/region=" + getVisibleRegion() + "'>Administration</a><span> &#8226; </span>").insertBefore(rControls);
 		rControls.html("Regional Controls");
-		//$("<span> &#8226; </span><a name='rc' href='page=blank/?banhammer=" + getVisibleRegion() + "'>Banhammer</a>").insertAfter(rControls);
+		$("<span> &#8226; </span><a name='rc' href='page=blank/?banhammer=" + getVisibleRegion() + "'>Banhammer</a>").insertAfter(rControls);
 	} else {
 		rControls = $("a[href='page=region_admin/region=" + getVisibleRegion() + "']");
 		$("<span> &#8226; </span><a name='rc' href='page=region_control/region=" + getVisibleRegion() + "'>Regional Controls</a>").insertAfter(rControls);

@@ -123,6 +123,9 @@ function loadJavascript() {
 		}
 
 		if (settings.isEnabled("highlight_op_posts")) {
+			var color = hexToRgb(settings.getValue("highlight_color", "#39EE00"));
+			color.alpha = parseFloat(settings.getValue("highlight_color_transparency", "0.1"));
+			$("body").append("<style type='text/css'>.op_posts { background-color: rgba(" + color.r + ", " + color.g + ", " + color.b + ", " + color.alpha + ") !important; }</style");
 			highlightAuthorPosts();
 		}
 		if (settings.isEnabled("floating_sidepanel")) {
@@ -249,4 +252,19 @@ function addJavascript(url, cacheBuster, onLoad) {
 		script.addEventListener('load', onLoad);
 	}
 	document.head.appendChild(script);
+}
+
+function hexToRgb(hex) {
+    // Expand shorthand form (e.g. "03F") to full form (e.g. "0033FF")
+    var shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
+    hex = hex.replace(shorthandRegex, function(m, r, g, b) {
+        return r + r + g + g + b + b;
+    });
+
+    var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16)
+    } : null;
 }

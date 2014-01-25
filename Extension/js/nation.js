@@ -128,7 +128,7 @@
 								  "Admiring TBR Banners", "Running, Not Walking", "Drawing Nazi Flags On Passed World Assembly Resolutions",
 								  "Drafting Resolutions In Crayon", "Hiding 'The Rejected Realms' Name Placard", "Scrawling 'I <3 UDL' Into Bathroom Stalls",
 								  "Switching Your Vote While No One Is Looking", "Spinning In A Wheeled Office Chair", "Saving The Rainforest", "Watching Big Brother",
-								  "Building A Metropolis", "Taking Just One More Turn", "Watching Paint Dry"]
+								  "Building A Metropolis", "Taking Just One More Turn", "Watching Paint Dry", "Stealing the head from Milograd's statue"]
 		$("#" + (showInfluence ? 'influence' : 'power')).html("<div id='snark' style='text-align:center; font-weight: bold; font-size: 16px;'><img style='margin-bottom: -2px; margin-right: 4px;' src='/images/loading1.gif'>" + snarkyComments[Math.floor(Math.random() * snarkyComments.length)] + "</div>");
 		$("<div id='highcharts_graph' graph='national_power' region='" + region + "' title='" + region.replaceAll("_", " ").toTitleCase() + "' visible_nation='" + getVisibleNation() + "' show_influence='" + showInfluence + "'></div>").insertAfter($("#snark"));
 	};
@@ -270,3 +270,21 @@
 		});
 	}
 })();
+
+function getSPDR(nation, callback) {
+	$.get("/page=compare/nations=" + nation + "?censusid=65", function(data) {
+		var start = data.indexOf("backgroundColor:'rgba(255, 255, 255, 0.1)");
+		var search = 'y: ';
+		var index = data.indexOf(search, start) + search.length;
+		
+		//Comparing 2 nations, use 2nd compare
+		var other = data.indexOf(search, index + 10);
+		if (other > index && other < index + 100) {
+			index = other + search.length;
+		}
+		
+		var end = data.indexOf('}', index);
+		var score = data.substring(index, end).trim();
+		callback(score);
+	});
+}

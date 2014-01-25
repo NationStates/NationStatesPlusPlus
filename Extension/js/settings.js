@@ -131,10 +131,23 @@ var supportsColorInput = (function() {
 				$("#save_settings").on("click", function(event) {
 					event.preventDefault();
 					var settings = getSettings();
+					if (!isNumber($("#highlight_color_transparency").val()) || parseFloat($("#highlight_color_transparency").val()) > 1 || parseFloat($("#highlight_color_transparency").val()) < 0) {
+						$("#highlight_color_transparency").val($("#highlight_color_transparency").attr('default'));
+					}
+					if (!(/(^#[0-9A-F]{6}$)|(^#[0-9A-F]{3}$)/i.test($("#highlight_color").val()))) {
+						$("#highlight_color").val($("#highlight_color").attr('default'));
+					}
 					$("#content").find("input[type='checkbox']").each(function() {
 						settings.setValue($(this).attr("id"), $(this).prop("checked"));
 					});
 					$("#content").find("input[type='text']").each(function() {
+						if ($(this).val() != "") {
+							settings.setValue($(this).attr("id"), $(this).val());
+						} else {
+							settings.setValue($(this).attr("id"), null);
+						}
+					});
+					$("#content").find("input[type='color']").each(function() {
 						if ($(this).val() != "") {
 							settings.setValue($(this).attr("id"), $(this).val());
 						} else {
@@ -162,7 +175,9 @@ var supportsColorInput = (function() {
 					$("#content").find("input[type='text']").each(function() {
 						settings.setValue($(this).attr("id"), null);
 					});
-
+					$("#content").find("input[type='color']").each(function() {
+						settings.setValue($(this).attr("id"), $(this).attr("default"));
+					});
 					settings.pushUpdate(function() {
 						location.reload();
 					});

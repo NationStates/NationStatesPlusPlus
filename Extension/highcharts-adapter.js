@@ -52,22 +52,6 @@ update(1);
 		return "";
 	}
 
-	if (false) {
-		if (localStorage.getItem("bugger_off") == null) {
-			$(".regional_power").hide();
-			$("#content").prepend("<div id='nag_banner' style='width: 100%; background-color: #F00; background-size: 50px 50px;font-size: 40px;font-family: impact;text-align: center;'>Arr, Matey! Interested in helping liberate <a href='/region=osiris'>Osiris</a> from it's tyrant rule? You can help out, learn how!<button style='font-size:30px; padding: 10px; margin: 10px;' class='button' id='help_out'>Sure!</button> <button style='font-size:30px; padding: 10px; margin: 10px;' class='button' id='bugger_off'>Bugger Off</button><span id='show_help' style='display:none;'>You can help rescue Osiris! <ol><li>Move your World Assembly nation to Osiris</li><li>Endorse <a href='/nation=skypheriania'>Skypheriania</a>, the lead liberator!</li></ol>Visit <a href='https://kiwiirc.com/client/irc.esper.net:+6697/?nick=" + getUserNation() + "?#udl'>#UDL</a> to learn more about how the operation works!</span></div>");
-			$("#bugger_off").on("click", function(event) {
-				event.preventDefault();
-				localStorage.setItem("bugger_off", true);
-				$("#nag_banner").remove();
-			});
-			$("#help_out").on("click", function(event) {
-				event.preventDefault();
-				$("#show_help").show();
-			});
-		}
-	}
-
 	checkUpdates();
 	function checkUpdates() {
 		if ($("#highcharts_graph").length > 0) {

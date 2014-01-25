@@ -638,3 +638,24 @@ fieldset.preview {
 	position: relative;
 	bottom: -5px;
 }
+
+.spdr {
+	font-style: italic;
+	font-size: 10px;
+}
+
+#your_spdr {
+	font-size: 20px;
+	position: relative;
+	left: 45px;
+	top: -5px;
+	font-family: Verdana,Tahoma,sans-serif;
+}
+
+.eject_banhammer {
+	min-width: 170px;
+}
+
+.banject_banhammer {
+	min-width: 230px;
+}
