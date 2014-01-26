@@ -174,7 +174,7 @@ public class DumpUpdateTask implements Runnable {
 			Logger.info("Updating " + set.size() + " nations from daily dump");
 			PreparedStatement select = conn.prepareStatement("SELECT title, fullname, unstatus, influence, lastlogin, flag, region, motto," +
 					"currency, animal, capital, leader, religion, category, civilrights, economy, politicalfreedom, population, tax, majorindustry," + 
-					"governmentpriority, enivornment, socialequality, education, lawandorder, administration, welfare, spirituality, defence," +
+					"governmentpriority, environment, socialequality, education, lawandorder, administration, welfare, spirituality, defence," +
 					"publictransport, healthcare, commerce, civilrightscore, economyscore, politicalfreedomscore, publicsector FROM nations WHERE name = ?");
 			int newNations = 0;
 			
@@ -195,7 +195,7 @@ public class DumpUpdateTask implements Runnable {
 				if (columnMapping == null) {
 					columnMapping = new HashMap<String, Integer>();
 					for (int i = 1; i <= columns; i++) {
-						columnMapping.put(metaData.getColumnName(i), i);
+						columnMapping.put(metaData.getColumnName(i).toLowerCase(), i);
 					}
 				}
 				
