@@ -97,6 +97,11 @@ function setupRegionPage() {
 		
 		//Regional Maps
 		$("<p id='region_map' style='display:none; height: 10px;'><img src='http://nationstatesplusplus.net/nationstates/static/" + (document.head.innerHTML.indexOf("ns.dark") != -1 ? "dark_" : "") + "map3.png' style='width: 16px;'><span style='position: relative; top: -5px;'><strong> Map: </strong><span id='regional_map_link'></span></span></p>").insertAfter(population);
+		
+		//NSWiki
+		
+		$("<strong><i class='fa fa-pencil-square-o'></i> NSWiki: </strong><a href='http://nswiki.org/region/" + getVisibleRegion().replaceAll("_", " ").toTitleCase() + "'>" + getVisibleRegion().replaceAll("_", " ").toTitleCase() + "</a>").insertAfter($("#region_map"));
+		
 		//Fetch region map
 		$.get("http://nationstatesplusplus.net/api/region/map/?region=" + getVisibleRegion(), function(data) {
 			if (data.regional_map != null) {

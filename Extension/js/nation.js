@@ -13,12 +13,27 @@
 			showWorldAssemblyInfo();
 			showNationAlias();
 			loadNSPPSupporterIcon();
+			loadPlayerDispatches();
+			showNSWikiLink();
 			window.onpopstate = function(event) {
 				if (event.state) {
 					loadWAStats(event.state.page);
 					window.history.replaceState(event.state, "", "/nation=" + getVisibleNation() + "/detail=wa_stats/stat=" + event.state.page);
 				}
 			};
+		}
+	}
+	
+	function showNSWikiLink() {
+		$(".nationnavbar").append($('<div/>').html(" &#8226; ").text() + "<a href='http://nswiki.org/Nation/" + getVisibleNation().replaceAll("_", " ").toTitleCase() + "'>NSWiki</a>");
+	}
+	
+	function loadPlayerDispatches() {
+		if (getPageDetail() == "factbook") {
+			$(".dispatchlist").html("<div style='text-align:center; font-weight: bold; font-size: 16px;'><img style='margin-bottom: -2px; margin-right: 4px;' src='/images/loading1.gif'></div>");
+			$.get("http://www.nationstates.net/page=dispatches/nation=" + getVisibleNation(), function(data) {
+				$(".dispatchlist").html($(data).find(".dispatchlist").html());
+			});
 		}
 	}
 	
