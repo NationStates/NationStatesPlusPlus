@@ -197,11 +197,12 @@
 			stats = getDetailStats($(this).attr("href"));
 			loadWAStats(stats);
 			if (window.history) {
-				window.history.pushState({page: stats}, "", "/nation=" + getVisibleNation() + "/detail=wa_stats/stat=" + stats);
+				window.history.pushState({page: stats}, "", "/nation=" + getVisibleNation() + "/detail=wa_stats/stats=" + stats);
 			}
 		});
 		var stat = getDetailStats();
 		if (stat == "") stat = "power";
+		console.log(stat);
 		loadWAStats(stat);
 	}
 

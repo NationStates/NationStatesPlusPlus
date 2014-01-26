@@ -33,6 +33,7 @@
 				var filter = $("input[name='filter_names']").val().toLowerCase();
 				
 				var spdr = parseInt($("#your_spdr").attr("spdr"), 10);
+				spdrSquared = spdr * spdr;
 				
 				var costOverride = (typeof $.QueryString["free"] != "undefined");
 				
@@ -43,10 +44,21 @@
 						html += "<div class='banhammer_row' name='" + nation.name + "'><p><a class='nlink' href='http://www.nationstates.net/nation=" + nation.name + "' target='_blank' >";
 						html += "<img class='bflag miniflag' src='" + nation.flag + "' class='miniflag' alt='' title='" + nation.title + "'><span>"
 						html += nation.title + "</span></a> <span class='spdr'>(SPDR: " + nation.influence + ")</span>";
+						html += (nation.wa_member ? "<span class='wa_status dossier-wa'></span>" : "");
 						
-						var ejectCost = (costOverride ? 0 : nation.influence * 0.6);
-						var banCost = (costOverride ? 0 : nation.influence * 0.7);
+						var ejectCost = (costOverride ? 0 : (nation.influence * nation.influence) * 0.33);
+						var banCost = (costOverride ? 0 : (nation.influence * nation.influence) * 0.5);
 						
+						if (spdrSquared > ejectCost) {
+							ejectCost = spdr - Math.sqrt(spdrSquared - ejectCost);
+						} else {
+							ejectCost = Math.sqrt(ejectCost);
+						}
+						if (spdrSquared > banCost) {
+							banCost = spdr - Math.sqrt(spdrSquared - banCost);
+						} else {
+							banCost = Math.sqrt(banCost);
+						}
 						//Eject button
 						html += "<span class='banhammer_span' ><button name='eject' class='button icon remove danger eject_banhammer'";
 						if (ejectCost > spdr) html += " disabled='true'";
