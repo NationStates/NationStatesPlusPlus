@@ -8,6 +8,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Savepoint;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -29,7 +30,11 @@ import org.joda.time.format.DateTimeFormatterBuilder;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.limewoodMedia.nsapi.NationStates;
+import com.limewoodMedia.nsapi.enums.WAStatus;
 import com.limewoodMedia.nsapi.exceptions.RateLimitReachedException;
+import com.limewoodMedia.nsapi.exceptions.UnknownNationException;
+import com.limewoodMedia.nsapi.holders.NationData;
+import com.limewoodMedia.nsapi.holders.NationData.Shards;
 
 import play.Logger;
 import play.mvc.Http.Request;
@@ -304,6 +309,96 @@ public class Utils {
 		} finally {
 			IOUtils.closeQuietly(stream);
 			conn.disconnect();
+		}
+	}
+
+	public static void updateNation(final Connection conn, final DatabaseAccess access, final NationStates api, final String nation, final int id) throws Exception {
+		NationData.Shards.CENSUS_SCORE.clearIds();
+		for (int i = 0; i <= 70; i++) {
+			NationData.Shards.CENSUS_SCORE.addIds(i);
+		}
+		try {
+			NationData data = api.getNationInfo(nation, Shards.ENDORSEMENTS, Shards.WA_STATUS, Shards.INFLUENCE, Shards.CENSUS_SCORE, Shards.FLAG, Shards.FULL_NAME, Shards.NAME, Shards.LAST_LOGIN, Shards.REGION);
+
+			PreparedStatement updateNation = conn.prepareStatement("UPDATE assembly.nation SET influence = ?, influence_desc = ?, flag = ?, full_name = ?, title = ?, last_login = ?, last_endorsement_baseline = ?, wa_member = ?, region = ? WHERE id = ?");
+			updateNation.setInt(1, data.censusScore.get(65).intValue());
+			updateNation.setString(2, data.influence);
+			updateNation.setString(3, data.flagURL);
+			updateNation.setString(4, data.fullName);
+			updateNation.setString(5, data.name);
+			updateNation.setLong(6, data.lastLogin);
+			updateNation.setLong(7, System.currentTimeMillis());
+			updateNation.setByte(8, (byte)(data.worldAssemblyStatus != WAStatus.NON_MEMBER ? 1 : 0));
+			updateNation.setInt(9, access.getRegionIdCache().get(Utils.sanitizeName(data.region)));
+			updateNation.setInt(10, id);
+			updateNation.executeUpdate();
+			DbUtils.closeQuietly(updateNation);
+			
+			updateShards(conn, data, id);
+			updateEndorsements(conn, data, access, id);
+		} catch (UnknownNationException e) {
+			access.markNationDead(id, conn);
+		}
+	}
+
+	private static void updateShards(final Connection conn, final NationData data, final int nationId) throws SQLException {
+		StringBuilder statement = new StringBuilder("INSERT INTO assembly.nation_shards (nation, timestamp, ");
+		for (int i = 0; i <= 70; i++) {
+			statement.append("shard_").append(i);
+			if ( i != 70 ) statement.append(", ");
+		}
+		statement.append(") VALUES (?, ?, ");
+		for (int i = 0; i <= 70; i++) {
+			statement.append("?");
+			if ( i != 70 ) statement.append(", ");
+		}
+		statement.append(")");
+		
+		PreparedStatement insert = conn.prepareStatement(statement.toString());
+		insert.setInt(1, nationId);
+		insert.setLong(2, System.currentTimeMillis());
+		for (int i = 0; i <= 70; i++) {
+			insert.setFloat((3 + i), data.censusScore.get(i));
+		}
+		insert.executeUpdate();
+	}
+
+	public static void updateEndorsements(final Connection conn, final NationData data, final DatabaseAccess access, final int nationId) throws Exception {
+		conn.setAutoCommit(false);
+		Savepoint save =  conn.setSavepoint();
+		try {
+			PreparedStatement endorsements = conn.prepareStatement("INSERT INTO assembly.endorsements (endorser, endorsed) VALUES (?, ?)");
+			for (String endorsed : data.endorsements) {
+				if (endorsed.trim().length() > 0) {
+					endorsements.setInt(1, access.getNationIdCache().get(endorsed));
+					endorsements.setInt(2, nationId);
+					endorsements.addBatch();
+				}
+			}
+
+			PreparedStatement hasEndorsement = conn.prepareStatement("DELETE FROM assembly.endorsements WHERE endorsed = ?");
+			hasEndorsement.setInt(1, nationId);
+			hasEndorsement.executeUpdate();
+			DbUtils.closeQuietly(hasEndorsement);
+			
+			endorsements.executeBatch();
+			DbUtils.closeQuietly(endorsements);
+			
+			PreparedStatement updateEndorsementTrends = conn.prepareStatement("INSERT INTO assembly.nation_endorsement_trends (nation, endorsements, timestamp) VALUES (?, ?, ?)");
+			updateEndorsementTrends.setInt(1, nationId);
+			updateEndorsementTrends.setInt(2, data.endorsements.length);
+			updateEndorsementTrends.setLong(3, System.currentTimeMillis());
+			updateEndorsementTrends.executeUpdate();
+			DbUtils.closeQuietly(updateEndorsementTrends);
+			
+			conn.commit();
+			conn.releaseSavepoint(save);
+		} catch (Exception e) {
+			conn.rollback(save);
+			Logger.error("Rolling back endorsement transaction");
+			throw e;
+		} finally {
+			conn.setAutoCommit(true);
 		}
 	}
 }

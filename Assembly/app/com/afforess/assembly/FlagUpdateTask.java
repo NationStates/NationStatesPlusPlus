@@ -11,11 +11,10 @@ import org.joda.time.Duration;
 import play.Logger;
 
 import com.afforess.assembly.util.DatabaseAccess;
+import com.afforess.assembly.util.Utils;
 import com.limewoodMedia.nsapi.NationStates;
 import com.limewoodMedia.nsapi.exceptions.RateLimitReachedException;
-import com.limewoodMedia.nsapi.exceptions.UnknownNationException;
 import com.limewoodMedia.nsapi.exceptions.UnknownRegionException;
-import com.limewoodMedia.nsapi.holders.NationData;
 import com.limewoodMedia.nsapi.holders.RegionData;
 
 public class FlagUpdateTask implements Runnable{
@@ -100,17 +99,8 @@ public class FlagUpdateTask implements Runnable{
 				result = select.executeQuery();
 				if (result.next()) {
 					String name = result.getString(1);
-					try {
-						NationData data = api.getNationInfo(name, NationData.Shards.FLAG);
-						
-						PreparedStatement updateFlag = conn.prepareStatement("UPDATE assembly.nation SET flag = ? WHERE id = ?"); 
-						updateFlag.setString(1, data.flagURL != null ? data.flagURL : "");
-						updateFlag.setInt(2, nation);
-						updateFlag.executeUpdate();
-						DbUtils.closeQuietly(updateFlag);
-					} catch (UnknownNationException e) {
-						Logger.warn("Unknown nation: " + name);
-					}
+					
+					Utils.updateNation(conn, access, api, name, nation);
 				}
 				
 				DbUtils.closeQuietly(result);

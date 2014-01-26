@@ -44,6 +44,10 @@ public class NSWikiController  extends NationStatesController {
 		nswikiPass = nswiki.getChild("password").getString(null);
 	}
 
+//	public Result calculateNationalStats(String nation) {
+		
+//	}
+
 	public Result verifyNationLogin() throws IOException, SQLException {
 		Result ret = Utils.validateRequest(request(), response(), getAPI(), getDatabase(), false);
 		if (ret != null) {

@@ -135,7 +135,7 @@ public class RegionController extends NationStatesController {
 		Connection conn = null;
 		try {
 			conn = getConnection();
-			PreparedStatement statement = conn.prepareStatement("SELECT name, title, flag, influence FROM assembly.nation WHERE alive = 1 AND region = ? ORDER BY update_order ASC");
+			PreparedStatement statement = conn.prepareStatement("SELECT name, title, flag, influence, wa_member FROM assembly.nation WHERE alive = 1 AND region = ? ORDER BY update_order ASC");
 			statement.setInt(1, getDatabase().getRegionIdCache().get(Utils.sanitizeName(region)));
 			ResultSet result = statement.executeQuery();
 			while(result.next()) {
@@ -144,6 +144,7 @@ public class RegionController extends NationStatesController {
 				nation.put("title", result.getString(2));
 				nation.put("flag", result.getString(3));
 				nation.put("influence", result.getInt(4));
+				nation.put("wa_member", result.getByte(5) == 1);
 				regionData.add(nation);
 			}
 			DbUtils.closeQuietly(result);

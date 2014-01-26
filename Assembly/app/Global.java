@@ -9,7 +9,7 @@ import org.spout.cereal.config.ConfigurationNode;
 import org.spout.cereal.config.yaml.YamlConfiguration;
 
 import com.afforess.assembly.DailyDumps;
-import com.afforess.assembly.EndorsementMonitoring;
+import com.afforess.assembly.NationUpdateTask;
 import com.afforess.assembly.FlagUpdateTask;
 import com.afforess.assembly.HappeningsTask;
 import com.afforess.assembly.HealthMonitor;
@@ -63,7 +63,7 @@ public class Global extends GlobalSettings {
 		}
 		
 		api = new NationStates();
-		api.setRateLimit(47);
+		api.setRateLimit(49);
 		api.setUserAgent(settings.getChild("User-Agent").getString());
 		api.setRelaxed(true);
 		this.access = new DatabaseAccess(pool, settings.getChild("cache-size").getInt(1000));
@@ -96,11 +96,11 @@ public class Global extends GlobalSettings {
 
 		HappeningsTask task = new HappeningsTask(access, api, health);
 
-		Akka.system().scheduler().schedule(Duration.create(5, TimeUnit.SECONDS), Duration.create(3, TimeUnit.SECONDS), task, Akka.system().dispatcher());
-		Akka.system().scheduler().schedule(Duration.create(60, TimeUnit.SECONDS), Duration.create(31, TimeUnit.SECONDS), new EndorsementMonitoring(api, access, 13, health, task), Akka.system().dispatcher());
-		Akka.system().scheduler().schedule(Duration.create(30, TimeUnit.SECONDS), Duration.create(30, TimeUnit.SECONDS), new RecruitmentTask(access), Akka.system().dispatcher());
-		Akka.system().scheduler().schedule(Duration.create(120, TimeUnit.SECONDS), Duration.create(31, TimeUnit.SECONDS), new UpdateOrderTask(api, access), Akka.system().dispatcher());
-		Akka.system().scheduler().schedule(Duration.create(120, TimeUnit.SECONDS), Duration.create(31, TimeUnit.SECONDS), new FlagUpdateTask(api, access), Akka.system().dispatcher());
+		Akka.system().scheduler().schedule(Duration.create(5, TimeUnit.SECONDS), Duration.create(3, TimeUnit.SECONDS), task, Akka.system().dispatcher()); //3-10 api calls
+		Akka.system().scheduler().schedule(Duration.create(60, TimeUnit.SECONDS), Duration.create(31, TimeUnit.SECONDS), new NationUpdateTask(api, access, 12, 12, health, task), Akka.system().dispatcher());
+		Akka.system().scheduler().schedule(Duration.create(30, TimeUnit.SECONDS), Duration.create(30, TimeUnit.SECONDS), new RecruitmentTask(access), Akka.system().dispatcher()); // 1 api calls
+		Akka.system().scheduler().schedule(Duration.create(120, TimeUnit.SECONDS), Duration.create(31, TimeUnit.SECONDS), new UpdateOrderTask(api, access), Akka.system().dispatcher()); // 2 api calls
+		Akka.system().scheduler().schedule(Duration.create(120, TimeUnit.SECONDS), Duration.create(31, TimeUnit.SECONDS), new FlagUpdateTask(api, access), Akka.system().dispatcher()); // 4 api calls
 	}
 
 	@Override
