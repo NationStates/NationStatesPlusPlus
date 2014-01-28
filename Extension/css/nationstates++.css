@@ -5,6 +5,21 @@
 	display: inline-block !important;
 }
 
+.census_slider {
+	text-align: center;
+	width:75%;
+	width: calc(75% - 50px);
+	width: -moz-calc(75% - 50px);
+	width: -webkit-calc(75% - 50px);
+	margin-left:12.5%;
+}
+
+.page_slider {
+	text-align: center;
+	width:70%;
+	margin-left:100px;
+}
+
 .highlight {
 	background: #FFFF00;
 }

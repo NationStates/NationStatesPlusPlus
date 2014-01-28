@@ -27,13 +27,13 @@
 				paginator.html("<button name='prev-shiny-page' class='button' style='left: 210px; position: absolute; margin-top: -10px;'>Prev Page</button>");
 				if (getVisiblePage() == "tag_search") {
 					$(getShinyTableSelector()).css("min-width", "99%");
-					paginator.html(paginator.html() + "<div id='page-slider' style='text-align: center; width:75%; margin-left:12.5%;' class='noUiSlider'></div>");
+					paginator.html(paginator.html() + "<div id='page-slider' class='census_slider noUiSlider'></div>");
 				} else if (getVisiblePage() == "region" || getVisibleRegion() == "") {
 					if (getVisibleSorting() == "alpha" || window.location.href.contains("un=")) $(getShinyTableSelector()).css("min-width", "98%");
-					paginator.html(paginator.html() + "<div id='page-slider' style='text-align: center; width:75%; margin-left:12.5%;' class='noUiSlider'></div>");
+					paginator.html(paginator.html() + "<div id='page-slider' class='census_slider noUiSlider'></div>");
 				} else {
 					$(getShinyTableSelector()).css("min-width", "75%");
-					paginator.html(paginator.html() + "<div id='page-slider' style='text-align: center; width:70%; margin-left:100px;' class='noUiSlider'></div>");
+					paginator.html(paginator.html() + "<div id='page-slider' class='page_slider noUiSlider'></div>");
 				}
 				paginator.html(paginator.html() + "<button name='next-shiny-page' class='button' style='right: 20px; position: absolute; margin-top: -10px;'>Next Page</button>");
 				addPageSlider(maxPage);

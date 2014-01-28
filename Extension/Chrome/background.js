@@ -153,6 +153,7 @@ function loadJavascript() {
 }
 
 function highlightAuthorPosts() {
+	if (window.location.href.indexOf("search.php") != -1) return;
 	if (window.location.href.match("t=[0-9]+") != null && $(".postprofile:first").length > 0) {
 		var highlightPosts = function(opNation) {
 			$(".post").each(function() {
