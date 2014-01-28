@@ -589,11 +589,12 @@ public class RegionalStats {
 	
 	public String getNationsDescription() {
 		String description = "";
-		if (this.numNations < 5) description = "inhabited by a few solitary nations";
+		if (this.numNations == 1) description = "inhabited by a sole nation";
+		else if (this.numNations < 5) description = "inhabited by a few solitary nations";
 		else if (this.numNations < 10) description = "sparsely populated by only " + numNations + " nations";
 		else if (this.numNations < 50) description = "with a thriving community with " + numNations + " nations";
 		else if (this.numNations < 100) description = "with a bustling and busy community, numbering over " + numNations + " nations";
-		else if (this.numNations < 500) description = "with a large community, renown for its " + numNations + " member nations";
+		else if (this.numNations < 500) description = "with a large community, renowned for its " + numNations + " member nations";
 		else description = "with a massive community, boasting over " + numNations + " nations in the region";
 		
 		if (this.numWaMembers == 0) description += " and without any [[World Assembly]] representation.";
