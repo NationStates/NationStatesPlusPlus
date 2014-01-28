@@ -9,6 +9,7 @@ import org.spout.cereal.config.ConfigurationNode;
 import org.spout.cereal.config.yaml.YamlConfiguration;
 
 import com.afforess.assembly.DailyDumps;
+import com.afforess.assembly.NSWikiTask;
 import com.afforess.assembly.NationUpdateTask;
 import com.afforess.assembly.FlagUpdateTask;
 import com.afforess.assembly.HappeningsTask;
@@ -101,6 +102,7 @@ public class Global extends GlobalSettings {
 		Akka.system().scheduler().schedule(Duration.create(30, TimeUnit.SECONDS), Duration.create(30, TimeUnit.SECONDS), new RecruitmentTask(access), Akka.system().dispatcher()); // 1 api calls
 		Akka.system().scheduler().schedule(Duration.create(120, TimeUnit.SECONDS), Duration.create(31, TimeUnit.SECONDS), new UpdateOrderTask(api, access), Akka.system().dispatcher()); // 2 api calls
 		Akka.system().scheduler().schedule(Duration.create(120, TimeUnit.SECONDS), Duration.create(31, TimeUnit.SECONDS), new FlagUpdateTask(api, access), Akka.system().dispatcher()); // 4 api calls
+		Akka.system().scheduler().schedule(Duration.create(120, TimeUnit.SECONDS), Duration.create(60, TimeUnit.SECONDS), new NSWikiTask(access, config), Akka.system().dispatcher()); // 0 api calls
 	}
 
 	@Override
