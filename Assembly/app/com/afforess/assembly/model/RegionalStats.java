@@ -242,7 +242,7 @@ public class RegionalStats {
 			return "small region";
 		}
 		if (numNations < 50) {
-			return "medium region";
+			return "medium-sized region";
 		}
 		if (numNations < 100) {
 			return "large region";
@@ -411,7 +411,7 @@ public class RegionalStats {
 
 	private String getCivilRightsDescription() {
 		String civilRights = "";
-		if (this.civilRights == 0) civilRights = "Denizens of the <!--REGION_NAME_START--> <!--REGION_NAME_END--> have the right to remain silent.";
+		if (this.civilRights == 0) civilRights = "Denizens of <!--REGION_NAME_START--> <!--REGION_NAME_END--> have the right to remain silent.";
 		else if (this.civilRights < 10) civilRights = "In <!--REGION_NAME_START--> <!--REGION_NAME_END-->, denizens scatter at the sight of strangers and are careful to keep carefully blank faces when approached.";
 		else if (this.civilRights < 25) civilRights = "Throughout <!--REGION_NAME_START--> <!--REGION_NAME_END-->, traditions are kept strictly throughout the region, punishing upstarts and rabble-rousers harshly.";
 		else if (this.civilRights < 50) civilRights = "The straight-backed, broad-smiling populace of <!--REGION_NAME_START--> <!--REGION_NAME_END--> eagerly dismissed concerns of oppression.";
