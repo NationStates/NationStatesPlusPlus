@@ -489,7 +489,7 @@ public class RegionalStats {
 		else if (this.administration < 15) description = "Throughout <!--REGION_NAME_START--> <!--REGION_NAME_END-->, governments find themselves confused, with administration departments being so bloated that staff do not know what other staff are doing, with an average of over " + this.administration + "% of government budgets being devoted to Administration.";
 		else if (this.administration < 50) description = "The administration departments of <!--REGION_NAME_START--> <!--REGION_NAME_END--> are all-consuming, soaking up budgets in aid of supporting a bureaucracy of millions, with an average of " + this.administration + "% of government budgets being devoted to Administration.";
 		else if (this.administration < 100) description = "In <!--REGION_NAME_START--> <!--REGION_NAME_END-->, government departments are frequently completely unaware of one another, such is size of administration departments.";
-		else if (this.administration == 100) description = "In terms of evaluating the impact of the administration in <!--REGION_NAME_START--> <!--REGION_NAME_END-->, observers were required to fill in forms F11, LM16 and BRF761, then take a IO41(a), paginate the bundle with a précis, refer it up to Deborah in HR, who'll return a G14(c) to certificate the receival of the request, then expect a response within six to eight weeks.";
+		else if (this.administration == 100) description = "In terms of evaluating the impact of the administration in <!--REGION_NAME_START--> <!--REGION_NAME_END-->, observers were required to fill in forms F11, LM16 and BRF761, then take a IO41(a), paginate the bundle with a précis, refer it up to Deborah in HR, who'll return a G14(c) to certificate the receipt of the request, then to expect a response within six to eight weeks.";
 		return description;
 	}
 
@@ -500,7 +500,7 @@ public class RegionalStats {
 		else if (this.welfare < 10) description = "Welfare is a large part of government expenditure, with denizens amply provided for.";
 		else if (this.welfare < 25) description = "Denizens in the region suckle at the teat of government, with welfare comprising a large percentage of total government budgets.";
 		else if (this.welfare < 75) description = "Governments in the region have a pathological fixation on welfare, with welfare budgets soaking up huge amounts of government expenditure.";
-		else if (this.welfare <= 100) description = "The 'net through which none shall fall' in the region is more of a hammock.";
+		else if (this.welfare <= 100) description = "The 'net through which none shall fall' in the region is more of a 'hammock on which all shall lie'.";
 		return description;
 	}
 
