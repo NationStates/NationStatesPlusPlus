@@ -599,7 +599,7 @@ public class RegionalStats {
 		if (this.numWaMembers == 0) description += " and without any [[World Assembly]] representation.";
 		else if (this.numWaMembers == 1) description += " and only one [[World Assembly]] Member.";
 		else if (this.numWaMembers < 25) description += " and only " + numWaMembers + " [[World Assembly]] Members.";
-		else if (this.numWaMembers < 50) description += ". <!--REGION_NAME_START--> <!--REGION_NAME_END--> features a very respectable representation in the [[World Assembly]], with " + numWaMembers + " members nations.";
+		else if (this.numWaMembers < 50) description += ". <!--REGION_NAME_START--> <!--REGION_NAME_END--> features a very respectable representation in the [[World Assembly]], with " + numWaMembers + " member nations.";
 		else if (this.numWaMembers < 100) description += ". <!--REGION_NAME_START--> <!--REGION_NAME_END--> also has a very large representation in the [[World Assembly]], with  " + numWaMembers + " member nations.";
 		else if (this.numWaMembers < 500) description += ". <!--REGION_NAME_START--> <!--REGION_NAME_END--> is also feared by [[World Assembly]] members everywhere, with votes from " + numWaMembers + " member nations.";
 		else description += ". <!--REGION_NAME_START--> <!--REGION_NAME_END--> is a truly dominating [[World Assembly]] bloc, with over " + numWaMembers + " member nations.";
