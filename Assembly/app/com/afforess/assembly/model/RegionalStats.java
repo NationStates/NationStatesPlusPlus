@@ -564,12 +564,12 @@ public class RegionalStats {
 	private String getPublicSectorDescription() {
 		String description = "";
 		if (this.publicsector == 0) description = "The region is a beacon of capitalism, with the public sector not existing in any meaningful way in constituent economies.";
-		else if (this.publicsector < 10) description = "The economies of nations in the region tends to be dominated by the private sector, with on average only " + this.publicsector + "% of the economy comprising the public sector.";
-		else if (this.publicsector < 40) description = "The economies of nations in the region tends to be heavily weighted towards the private sector, with on average only " + this.publicsector + "% of the economy comprising the public sector.";
-		else if (this.publicsector < 50) description = "The economies of nations in the region tends to be weighted more towards the private sector, with on average only " + this.publicsector + "% of the economy comprising the public sector.";
+		else if (this.publicsector < 10) description = "The economies of nations in the region tend to be dominated by the private sector, with on average only " + this.publicsector + "% of the economy comprising the public sector.";
+		else if (this.publicsector < 40) description = "The economies of nations in the region tend to be heavily weighted towards the private sector, with on average " + this.publicsector + "% of the economy comprising the public sector.";
+		else if (this.publicsector < 50) description = "The economies of nations in the region tend to be weighted more towards the private sector, with on average only " + this.publicsector + "% of the economy comprising the public sector.";
 		else if (this.publicsector == 50) description = "The economies of nations in the region are perfectly balanced between public and private sectors, with both comprising 50% of economic activity within the nations.";
-		else if (this.publicsector < 60) description = "The economy of nations in the region tends to be weighted more towards the public sector, with on average only " + (100-this.publicsector) + "% of the economy comprising the private sector.";
-		else if (this.publicsector < 90) description = "The economy of nations in the region tends to be heavily weighted towards the public sector, with on average only " + (100-this.publicsector) + "% of the economy comprising the private sector.";
+		else if (this.publicsector < 60) description = "The economies of nations in the region tend to be weighted more towards the public sector, with on average only " + (100-this.publicsector) + "% of the economy comprising the private sector.";
+		else if (this.publicsector < 90) description = "The economies of nations in the region tend to be heavily weighted towards the public sector, with on average only " + (100-this.publicsector) + "% of the economy comprising the private sector.";
 		else if (this.publicsector < 100) description = "The region is a workers' paradise, as the governments of the region control nearly all of the economic output.";
 		else if (this.publicsector == 100) description = "The region is a socialist utopia: private enterprise is strictly prohibited in the constituent economies.";
 		return description;
@@ -578,10 +578,12 @@ public class RegionalStats {
 	public String getEconomyDescription() {
 		String description = "";
 		if (this.economy == 0) description = "The economy of the region exists only in the imaginations of its members.";
+		else if (this.economy < 5) description = "The almost total lack of economic activity in the country is a constant sore spot for politicians.";
 		else if (this.economy < 10) description = "Underwater basket weaving is a popular tradition amongst the denizens of the region, as well as its primary economic export.";
 		else if (this.economy < 25) description = "Most denizens subsist off of basic farming or menial factory jobs, with few economic imports or exports.";
 		else if (this.economy < 50) description = "The economy of the region is remarkably unremarkable, with members being neither powerhouses nor basket cases.";
 		else if (this.economy < 75) description = "Economies in the region tend to be stronger than average, although most are not big enough to be considered heavyweights.";
+		else if )this.economy < 90) description = "The economy of the region is very strong, with a large number of very powerful trading powers."
 		else if (this.economy < 100) description = "Families in the region are so obsessed with the economy that the discussion of laffer curves and supply-side reforms over supper is a regular occurrence in member nations.";
 		else if (this.economy == 100) description = "It’s the economy, stupid... and in this region, it’s massive.";
 		return description;
@@ -592,10 +594,10 @@ public class RegionalStats {
 		if (this.numNations == 1) description = "inhabited by a sole nation";
 		else if (this.numNations < 5) description = "inhabited by a few solitary nations";
 		else if (this.numNations < 10) description = "sparsely populated by only " + numNations + " nations";
-		else if (this.numNations < 50) description = "with a thriving community with " + numNations + " nations";
-		else if (this.numNations < 100) description = "with a bustling and busy community, numbering over " + numNations + " nations";
-		else if (this.numNations < 500) description = "with a large community, renowned for its " + numNations + " member nations";
-		else description = "with a massive community, boasting over " + numNations + " nations in the region";
+		else if (this.numNations < 50) description = "with a thriving community of " + numNations + " nations";
+		else if (this.numNations < 100) description = "with a bustling and busy community, numbering " + numNations + " nations";
+		else if (this.numNations < 500) description = "with a very large community of  " + numNations + " member nations";
+		else description = "with a massive community, boasting over " + numNations + " member nations";
 		
 		if (this.numWaMembers == 0) description += " and without any [[World Assembly]] representation.";
 		else if (this.numWaMembers == 1) description += " and only one [[World Assembly]] Member.";
