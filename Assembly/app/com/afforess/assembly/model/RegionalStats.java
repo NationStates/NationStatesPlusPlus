@@ -436,10 +436,10 @@ public class RegionalStats {
 	private String getEnvironmentDescription() {
 		String description = "";
 		if (this.environment == 0) description = "The landscapes of the region are no longer recognizable as such, the atmosphere being unbreathable and the only jungles being made of concrete.";
-		else if (this.environment < 10) description = "The environments of the nations in the region are almost universally appalling.";
-		else if (this.environment < 25) description = "Natural environments are quite bad, although some measures have been undertaken to ensure that the environment is protected.";
-		else if (this.environment < 50) description = "The region's landscapes are reasonably good, although the impact of the denizens has had a noticeable effect.";
-		else if (this.environment < 75) description = "Environments within the region are very good, with a healthy balance of denizen's activity and regard for protection of nature.";
+		else if (this.environment < 3) description = "The environments of the nations in the region are almost universally appalling.";
+		else if (this.environment < 8) description = "Natural environments are quite bad, although some measures have been undertaken to ensure that the environment is protected.";
+		else if (this.environment < 12) description = "The region's landscapes are reasonably good, although the impact of the denizens has had a noticeable effect.";
+		else if (this.environment < 20) description = "Environments within the region are very good, with a healthy balance of denizen's activity and regard for protection of nature.";
 		else if (this.environment < 100) description = "Denizens live in stunning natural environments.";
 		else if (this.environment == 100) description = "There is nothing in the nations of the region: the construction of anything which may affect the pristine natural environments being strictly prohibited.";
 		return description;
@@ -448,10 +448,10 @@ public class RegionalStats {
 	private String getSocialEqualityDescription() {
 		String description = "";
 		if (this.socialEquality == 0) description = "In <!--REGION_NAME_START--> <!--REGION_NAME_END-->, Social inequality is total, with wealth being held by a tiny fraction of the region's populace.";
-		else if (this.socialEquality < 10) description = "Social inequality is rife amongst the nations within <!--REGION_NAME_START--> <!--REGION_NAME_END-->.";
-		else if (this.socialEquality < 25) description = "Social inequality is a major problem within <!--REGION_NAME_START--> <!--REGION_NAME_END-->, although some effort has been made to correct the problem.";
-		else if (this.socialEquality < 50) description = "In <!--REGION_NAME_START--> <!--REGION_NAME_END-->, denizens benefit from a good balance of social equality and motivation for advancement, although aspiration is the priority.";
-		else if (this.socialEquality < 75) description = "In <!--REGION_NAME_START--> <!--REGION_NAME_END-->, denizens benefit from a good balance of social equality and motivation for advancement, although equality is the priority.";
+		else if (this.socialEquality < 3) description = "Social inequality is rife amongst the nations within <!--REGION_NAME_START--> <!--REGION_NAME_END-->.";
+		else if (this.socialEquality < 8) description = "Social inequality is a major problem within <!--REGION_NAME_START--> <!--REGION_NAME_END-->, although some effort has been made to correct the problem.";
+		else if (this.socialEquality < 12) description = "In <!--REGION_NAME_START--> <!--REGION_NAME_END-->, denizens benefit from a good balance of social equality and motivation for advancement, although aspiration is the priority.";
+		else if (this.socialEquality < 20) description = "In <!--REGION_NAME_START--> <!--REGION_NAME_END-->, denizens benefit from a good balance of social equality and motivation for advancement, although equality is the priority.";
 		else if (this.socialEquality < 100) description = "Throughout <!--REGION_NAME_START--> <!--REGION_NAME_END-->, denizens enjoy great equality, although sometimes wonder why they bother working at all.";
 		else if (this.socialEquality == 100) description = "In <!--REGION_NAME_START--> <!--REGION_NAME_END-->, all the pigs are equal, but some are more equal than others.";
 		return description;
@@ -460,10 +460,10 @@ public class RegionalStats {
 	private String getEducationDescription() {
 		String description = "";
 		if (this.education == 0) description = "In <!--REGION_NAME_START--> <!--REGION_NAME_END--> education, when conducted, is done with sticks and mud.";
-		else if (this.education < 10) description = "Denizens of the <!--REGION_NAME_START--> <!--REGION_NAME_END--> are poorly educated, with rampant illiteracy.";
-		else if (this.education < 25) description = "<!--REGION_NAME_START--> <!--REGION_NAME_END--> does not prioritize education in any meaningful way.";
-		else if (this.education < 50) description = "In <!--REGION_NAME_START--> <!--REGION_NAME_END-->, denizens are afforded a reasonable education, although funding is somewhat wanting.";
-		else if (this.education < 75) description = "Education is a priority for governments throughout <!--REGION_NAME_START--> <!--REGION_NAME_END-->, with ample funding being provided and teachers enjoying a great deal of support.";
+		else if (this.education < 3) description = "Denizens of the <!--REGION_NAME_START--> <!--REGION_NAME_END--> are poorly educated, with rampant illiteracy.";
+		else if (this.education < 7) description = "<!--REGION_NAME_START--> <!--REGION_NAME_END--> does not prioritize education in any meaningful way.";
+		else if (this.education < 12) description = "In <!--REGION_NAME_START--> <!--REGION_NAME_END-->, denizens are afforded a reasonable education, although funding is somewhat wanting.";
+		else if (this.education < 18) description = "Education is a priority for governments throughout <!--REGION_NAME_START--> <!--REGION_NAME_END-->, with ample funding being provided and teachers enjoying a great deal of support.";
 		else if (this.education < 100) description = "<!--REGION_NAME_START--> <!--REGION_NAME_END--> values education extremely highly, and denizens compete for the largest number of university degrees and sprawling book collections";
 		else if (this.education == 100) description = "In <!--REGION_NAME_START--> <!--REGION_NAME_END-->, everyone enjoys a classical education, which are the envy of the world.";
 		return description;
@@ -472,10 +472,10 @@ public class RegionalStats {
 	private String getLawAndOrderDescription() {
 		String description = "";
 		if (this.lawAndOrder == 0) description = "The region is a lawless wasteland, nations regularly being the subject of documentaries by brave filmmakers. Governments make no provision for law and order.";
-		else if (this.lawAndOrder < 10) description = "Criminality is rife within the region, with law enforcement struggling to cope. Governments allocate a meagre " + this.lawAndOrder + "%, on average, of their budgets to law and order.";
-		else if (this.lawAndOrder < 25) description = "There is a very high level of crime within the region and law enforcement resources are stretched thin.";
-		else if (this.lawAndOrder < 50) description = "The region's law enforcement officials try hard to combat a relatively high level of crime, but are hampered by a lack of funding.";
-		else if (this.lawAndOrder < 75) description = "Crime is low: the region enjoys well-equipped and well-funded police forces, coupled with efficient but fair judicial systems.";
+		else if (this.lawAndOrder < 3) description = "Criminality is rife within the region, with law enforcement struggling to cope. Governments allocate a meagre " + this.lawAndOrder + "%, on average, of their budgets to law and order.";
+		else if (this.lawAndOrder < 7) description = "There is a very high level of crime within the region and law enforcement resources are stretched thin.";
+		else if (this.lawAndOrder < 12) description = "The region's law enforcement officials try hard to combat a relatively high level of crime, but are hampered by a lack of funding.";
+		else if (this.lawAndOrder < 18) description = "Crime is low: the region enjoys well-equipped and well-funded police forces, coupled with efficient but fair judicial systems.";
 		else if (this.lawAndOrder < 100) description = "The region's law enforcement is arguably too well-equipped and overzealous, arresting citizens who dare to commit the most minor of infractions.";
 		else if (this.lawAndOrder == 100) description = "GET YOUR HANDS UP! FACE THE WALL! THIS IS A RAID!";
 		return description;
@@ -486,8 +486,8 @@ public class RegionalStats {
 		if (this.administration == 0) description = "Nobody really knows about the state of administration in <!--REGION_NAME_START--> <!--REGION_NAME_END-->. Observers asked for information, but found nobody was available to take calls.";
 		else if (this.administration < 2) description = "Governments in <!--REGION_NAME_START--> <!--REGION_NAME_END--> find themselves in a constant state of disarray, with very little co-ordination, only " + this.administration + "% on average of government budgets being devoted to Administration.";
 		else if (this.administration < 8) description = "Governments in <!--REGION_NAME_START--> <!--REGION_NAME_END--> communicate very well amongst themselves, with administration departments working smoothly, with " + this.administration + "% on average of government budgets being devoted to Administration.";
-		else if (this.administration < 15) description = "Throughout <!--REGION_NAME_START--> <!--REGION_NAME_END-->, governments find themselves confused, with administration departments being so bloated that staff do not know what other staff are doing, with an average of over " + this.administration + "% of government budgets being devoted to Administration.";
-		else if (this.administration < 50) description = "The administration departments of <!--REGION_NAME_START--> <!--REGION_NAME_END--> are all-consuming, soaking up budgets in aid of supporting a bureaucracy of millions, with an average of " + this.administration + "% of government budgets being devoted to Administration.";
+		else if (this.administration < 12) description = "Throughout <!--REGION_NAME_START--> <!--REGION_NAME_END-->, governments find themselves confused, with administration departments being so bloated that staff do not know what other staff are doing, with an average of over " + this.administration + "% of government budgets being devoted to Administration.";
+		else if (this.administration < 25) description = "The administration departments of <!--REGION_NAME_START--> <!--REGION_NAME_END--> are all-consuming, soaking up budgets in aid of supporting a bureaucracy of millions, with an average of " + this.administration + "% of government budgets being devoted to Administration.";
 		else if (this.administration < 100) description = "In <!--REGION_NAME_START--> <!--REGION_NAME_END-->, government departments are frequently completely unaware of one another, such is size of administration departments.";
 		else if (this.administration == 100) description = "In terms of evaluating the impact of the administration in <!--REGION_NAME_START--> <!--REGION_NAME_END-->, observers were required to fill in forms F11, LM16 and BRF761, then take a IO41(a), paginate the bundle with a précis, refer it up to Deborah in HR, who'll return a G14(c) to certificate the receipt of the request, then to expect a response within six to eight weeks.";
 		return description;
@@ -496,10 +496,10 @@ public class RegionalStats {
 	private String getWelfareDescription() {
 		String description = "";
 		if (this.welfare == 0) description = "No welfare is provided in the region. Those unlucky enough to fall into unemployment are forgotten and abandoned.";
-		else if (this.welfare < 5) description = "Welfare in the region is minimal, with only a small amount of expenditure being devoted to spending on social security.";
-		else if (this.welfare < 10) description = "Welfare is a large part of government expenditure, with denizens amply provided for.";
-		else if (this.welfare < 25) description = "Denizens in the region suckle at the teat of government, with welfare comprising a large percentage of total government budgets.";
-		else if (this.welfare < 75) description = "Governments in the region have a pathological fixation on welfare, with welfare budgets soaking up huge amounts of government expenditure.";
+		else if (this.welfare < 3) description = "Welfare in the region is minimal, with only a small amount of expenditure being devoted to spending on social security.";
+		else if (this.welfare < 12) description = "Welfare is a large part of government expenditure, with denizens amply provided for.";
+		else if (this.welfare < 20) description = "Denizens in the region suckle at the teat of government, with welfare comprising a large percentage of total government budgets.";
+		else if (this.welfare < 35) description = "Governments in the region have a pathological fixation on welfare, with welfare budgets soaking up huge amounts of government expenditure.";
 		else if (this.welfare <= 100) description = "The 'net through which none shall fall' in the region is more of a 'hammock on which all shall lie'.";
 		return description;
 	}
@@ -510,8 +510,8 @@ public class RegionalStats {
 		else if (this.spirituality < 2) description = "Spirituality is a moderate priority of governments within the region, with" + this.spirituality + "% of government budgets being devoted to Spirituality.";
 		else if (this.spirituality < 5) description = "Spirituality is a major priority of governments in the region, with a relatively high average of " + this.spirituality + "% of government budgets being devoted to Spirituality.";
 		else if (this.spirituality < 10) description = "Spirituality is an obsession of governments in the region, with a relatively very high average of " + this.spirituality + "% of government budgets being devoted to Spirituality.";
-		else if (this.spirituality < 50) description = "Governments within the region are fixated with religious worship, with nations having an inordinately high average of " + this.spirituality + "% of total government funds devoted to it.";
-		else if (this.spirituality < 100) description = "Religion is an all-consuming priority within the region, with most government funds devoted to the study of scripture.";
+		else if (this.spirituality < 25) description = "Governments within the region are fixated with religious worship, with nations having an inordinately high average of " + this.spirituality + "% of total government funds devoted to it.";
+		else if (this.spirituality < 50) description = "Religion is an all-consuming priority within the region, with most government funds devoted to the study of scripture.";
 		else if (this.spirituality == 100) description = "The region is a model of religious conformity, with all government funds devoted unto the study of the most holy scriptures.";
 		return description;
 	}
@@ -519,10 +519,10 @@ public class RegionalStats {
 	private String getDefenceDescription() {
 		String description = "";
 		if (this.defence == 0) description = "Nations within the region are forced to use soft fruit and harsh language in the field of battle, with no government funds being set aside for defense.";
-		else if (this.defence <5) description = "Denizens have small defense forces. ";
-		else if (this.defence < 10) description = "Denizens have well-funded defense forces.";
-		else if (this.defence < 20) description = "Denizens have very well-funded, well equipped defense forces.";
-		else if (this.defence < 50) description = "Defense is a major priority for governments within the region, with a large chunk of government budgets being devoted to it.";
+		else if (this.defence < 3) description = "Denizens have small defense forces. ";
+		else if (this.defence < 7) description = "Denizens have well-funded defense forces.";
+		else if (this.defence < 12) description = "Denizens have very well-funded, well equipped defense forces.";
+		else if (this.defence < 25) description = "Defense is a major priority for governments within the region, with a large chunk of government budgets being devoted to it.";
 		else if (this.defence < 100) description = "Defense is an overarching priority for governments within the region. One might suggest they are compensating for something.";
 		else if (this.defence == 100) description = "The region is armed to the teeth. Defense is all-consuming.";
 		return description;
@@ -552,10 +552,10 @@ public class RegionalStats {
 	private String getCommerceDescription() {
 		String description = "";
 		if (this.commerce == 0) description = "Commerce within the region is an irrelevant annoyance to governments.";
-		else if (this.commerce < 5) description = "Commerce is low priority for governments, accounting for an average of " + this.commerce + "% of public expenditure, although commerce is generally seen as a source of tax revenue.";
-		else if (this.commerce < 10) description = "Commerce is a priority for governments, accounting for an average of " + this.commerce + "% of public expenditure.";
-		else if (this.commerce < 20) description = "Stoking commercial activity is a major priority for governments, accounting for an average of " + this.commerce + "% of public expenditure.";
-		else if (this.commerce < 50) description = "Commerce is a major priority of national governments within the region, most of whom are trading nations, as is evidenced by the fact that commerce budgets account for an average of " + this.commerce + "% of public expenditure in the region.";
+		else if (this.commerce < 3) description = "Commerce is low priority for governments, accounting for an average of " + this.commerce + "% of public expenditure, although commerce is generally seen as a source of tax revenue.";
+		else if (this.commerce < 8) description = "Commerce is a priority for governments, accounting for an average of " + this.commerce + "% of public expenditure.";
+		else if (this.commerce < 15) description = "Stoking commercial activity is a major priority for governments, accounting for an average of " + this.commerce + "% of public expenditure.";
+		else if (this.commerce < 30) description = "Commerce is a major priority of national governments within the region, most of whom are trading nations, as is evidenced by the fact that commerce budgets account for an average of " + this.commerce + "% of public expenditure in the region.";
 		else if (this.commerce < 100) description = "National governments within the region are more concerned with corporate welfare than the welfare of ordinary citizens, with commerce budgets accounting for an average of " + this.commerce + "% of public expenditure.";
 		else if (this.commerce == 100) description = "Major trade deals are negotiated at the family dinner table and during lovemaking.";
 		return description;
