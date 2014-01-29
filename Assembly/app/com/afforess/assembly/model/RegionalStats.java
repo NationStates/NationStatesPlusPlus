@@ -99,7 +99,7 @@ public class RegionalStats {
 				DbUtils.closeQuietly(result);
 				DbUtils.closeQuietly(select);
 				
-				PreparedStatement stats = conn.prepareStatement("SELECT count(id) AS population, sum(population) as total_population, median(civilrightscore) as civilrights, median(economyscore) AS economy, median(politicalfreedomscore) as politicalfreedom, median(environment) as environment, median(socialequality) as socialequality, median(education) as education, median(lawandorder) as lawandorder, median(administration) as administration, median(welfare) as welfare, median(spirituality) as spirituality, median(defence) as defence, median(publictransport) as publictransport, median(healthcare) as healthcare, median(commerce) as commerce, median(publicsector) as publicsector, median(tax) as tax FROM assembly.nation WHERE alive = 1 AND region = ?");
+				PreparedStatement stats = conn.prepareStatement("SELECT count(id) AS population, sum(population) as total_population, median(civilrightscore) as civilrights, median(economyscore) AS economy, median(politicalfreedomscore) as politicalfreedom, avg(environment) as environment, avg(socialequality) as socialequality, median(education) as education, median(lawandorder) as lawandorder, median(administration) as administration, avg(welfare) as welfare, median(spirituality) as spirituality, median(defence) as defence, median(publictransport) as publictransport, median(healthcare) as healthcare, median(commerce) as commerce, median(publicsector) as publicsector, median(tax) as tax FROM assembly.nation WHERE alive = 1 AND region = ?");
 				stats.setInt(1, this.id);
 				result = stats.executeQuery();
 				result.next();
@@ -583,7 +583,7 @@ public class RegionalStats {
 		else if (this.economy < 25) description = "Most denizens subsist off of basic farming or menial factory jobs, with few economic imports or exports.";
 		else if (this.economy < 50) description = "The economy of the region is remarkably unremarkable, with members being neither powerhouses nor basket cases.";
 		else if (this.economy < 75) description = "Economies in the region tend to be stronger than average, although most are not big enough to be considered heavyweights.";
-		else if )this.economy < 90) description = "The economy of the region is very strong, with a large number of very powerful trading powers."
+		else if (this.economy < 90) description = "The economy of the region is very strong, with a large number of very powerful trading powers.";
 		else if (this.economy < 100) description = "Families in the region are so obsessed with the economy that the discussion of laffer curves and supply-side reforms over supper is a regular occurrence in member nations.";
 		else if (this.economy == 100) description = "It’s the economy, stupid... and in this region, it’s massive.";
 		return description;
