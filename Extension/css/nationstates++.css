@@ -7,16 +7,16 @@
 
 .census_slider {
 	text-align: center;
-	width:75%;
-	width: calc(75% - 50px);
-	width: -moz-calc(75% - 50px);
-	width: -webkit-calc(75% - 50px);
-	margin-left:12.5%;
+	width: 75%;
+	width: calc(75% - 50px) !important;
+	width: -moz-calc(75% - 50px) !important;
+	width: -webkit-calc(75% - 50px) !important;
+	margin-left: 12.5%;
 }
 
 .page_slider {
 	text-align: center;
-	width:70%;
+	width:70% !important;
 	margin-left:100px;
 }
 
