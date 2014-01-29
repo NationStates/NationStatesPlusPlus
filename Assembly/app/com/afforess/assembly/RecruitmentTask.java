@@ -34,14 +34,10 @@ public class RecruitmentTask implements Runnable {
 		}
 	}
 	private final DatabaseAccess access;
-	private final NationStates telegramAPI = new NationStates();
-	public RecruitmentTask(final DatabaseAccess access) {
+	private final NationStates telegramAPI;
+	public RecruitmentTask(final DatabaseAccess access, NationStates api) {
 		this.access = access;
-		telegramAPI.setRateLimit(40);
-		telegramAPI.setUserAgent("-- NationStates++ Recruitment Server --");
-		telegramAPI.setRelaxed(true);
-		telegramAPI.setProxyIP("162.243.18.166");
-		telegramAPI.setProxyPort(3128);
+		this.telegramAPI = api;
 	}
 
 	@Override
@@ -59,7 +55,7 @@ public class RecruitmentTask implements Runnable {
 			Random rand = new Random();
 			conn = access.getPool().getConnection();
 			HashSet<Integer> completedRegions = new HashSet<Integer>();
-			List<RecruitmentAction> actions = RecruitmentAction.getAllActions(conn);
+			List<RecruitmentAction> actions = RecruitmentAction.getActions(1837, conn);
 			for (RecruitmentAction action : actions) {
 				if (action.error == 0 && action.lastAction < System.currentTimeMillis() && !completedRegions.contains(action.region) && rand.nextInt(100) < action.percent) {
 					if (telegramAPI.getRateLimitRemaining() > 1) {
