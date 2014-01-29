@@ -14,6 +14,7 @@ import net.sourceforge.jwbf.core.contentRep.Article;
 import net.sourceforge.jwbf.mediawiki.bots.MediaWikiBot;
 
 import org.apache.commons.dbutils.DbUtils;
+import org.apache.commons.lang.WordUtils;
 import org.joda.time.Duration;
 import org.spout.cereal.config.ConfigurationNode;
 import org.spout.cereal.config.yaml.YamlConfiguration;
@@ -82,7 +83,7 @@ public class NSWikiTask implements Runnable {
 		text = updateRegionVariable(text, "GRP", "N/A");
 		text = updateRegionVariable(text, "STYLE", stats.getRegionDescription());
 		
-		text = updateRegionVariable(text, "NAME", stats.getTitle());
+		text = updateRegionVariable(text, "NAME", WordUtils.capitalize(stats.getTitle()));
 		
 		if (!text.equals(origText)) {
 			article.setText(text);
