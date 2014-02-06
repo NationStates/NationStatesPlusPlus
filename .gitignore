@@ -52,3 +52,5 @@
 /Extension/Safari/nationstates++.safariextension/js/*
 
 /Extension/Safari/nationstates++.safariextension/*.safariextz
+
+/Extension/Firefox/addon/*.xpi
