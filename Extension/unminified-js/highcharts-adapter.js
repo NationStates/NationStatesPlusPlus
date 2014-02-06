@@ -1,55 +1,25 @@
-var _gaq = _gaq || [];
-function update(delay){
-	setTimeout(function() {
-		_gaq.push(['_setAccount', 'UA-41267101-1']);
-		_gaq.push(['_trackPageview']);
-		_gaq.push(['_setCustomVar', 1, 'Version', 'v2.3.0', 2]);
-
-		if (delay == 1) {
-			_gaq.push(['_trackEvent', 'NationStates', 'URL', window.location.href]);
-		}
-		update(60000);
-	}, delay);
-}
-update(1);
-
 (function() {
 	//Add string.startsWith
 	String.prototype.startsWith = function (str){
 		return this.slice(0, str.length) == str;
-	};
-	//Add string.contains
-	String.prototype.contains = function (str){
-		return this.indexOf(str) != -1;
-	};
-	//Add regex escape
-	RegExp.escape = function(text) {
-		return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
-	}
-	//Add replaceAll
-	String.prototype.replaceAll = function(search, replace) {
-		return this.replace(new RegExp(RegExp.escape(search),'g'), replace);
 	};
 
 	function getVisibleRegion() {
 		var split = window.location.href.split(/[/#/?]/);
 		for (var i = 0; i < split.length; i++) {
 			if (split[i].startsWith("region=")) {
-				return split[i].substring(7).toLowerCase().replaceAll(" ", "_");
+				return split[i].substring(7).toLowerCase().split(" ").join("_");
 			}
 		}
 		return "";
 	}
 
+	function isDarkTheme() {
+		return $("link[href^='/ns.dark']").length > 0;
+	}	
+
 	function getVisibleNation() {
 		return $(".nationname > a").attr("href") ? $(".nationname > a").attr("href").trim().substring(8) : "";
-	}
-
-	function getUserNation() {
-		if ($(".STANDOUT:first").attr("href")) {
-			return $(".STANDOUT:first").attr("href").substring(7);
-		}
-		return "";
 	}
 
 	checkUpdates();
@@ -128,15 +98,15 @@ update(1);
 					renderTo: container[0],
 					width: $("#" + (showInfluence ? 'influence' : 'power')).width(),
 					height: Math.max(300, 100 + (categoryTitles.length * 26 * (showInfluence ? 2 : 1))),
-					backgroundColor: 'rgba(255, 255, 255, ' + (document.head.innerHTML.indexOf("ns.dark") != -1 ? '0.1' : '1.0') + ')'
+					backgroundColor: 'rgba(255, 255, 255, ' + (isDarkTheme() ? '0.1' : '1.0') + ')'
 				},
 				title: {
 					text: 'World Assembly Endorsements',
-					color: (document.head.innerHTML.indexOf("ns.dark") != -1 ? '#D0D0D0' : '#000000')
+					color: (isDarkTheme() ? '#D0D0D0' : '#000000')
 				},
 				subtitle: {
 					text: 'Region: ' + title,
-					color: (document.head.innerHTML.indexOf("ns.dark") != -1 ? '#D0D0D0' : '#000000')
+					color: (isDarkTheme() ? '#D0D0D0' : '#000000')
 				},
 				xAxis: {
 					categories: categoryTitles,
@@ -211,15 +181,15 @@ update(1);
 				chart: {
 					type: 'line',
 					renderTo: 'regional-pop',
-					backgroundColor: 'rgba(255, 255, 255, ' + (document.head.innerHTML.indexOf("ns.dark") != -1 ? '0.1' : '1.0') + ')'
+					backgroundColor: 'rgba(255, 255, 255, ' + (isDarkTheme() ? '0.1' : '1.0') + ')'
 				},
 				title: {
 					text: 'Regional Population',
-					color: (document.head.innerHTML.indexOf("ns.dark") != -1 ? '#D0D0D0' : '#000000')
+					color: (isDarkTheme() ? '#D0D0D0' : '#000000')
 				},
 				subtitle: {
 					text: title,
-					color: (document.head.innerHTML.indexOf("ns.dark") != -1 ? '#D0D0D0' : '#000000')
+					color: (isDarkTheme() ? '#D0D0D0' : '#000000')
 				},
 				xAxis: {
 					dateTimeLabelFormats: {

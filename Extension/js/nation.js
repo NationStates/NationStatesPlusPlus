@@ -154,42 +154,39 @@
 								"<h4>World Assembly Member Nations who have not given " + nation + " an Endorsement</h4><div id='unreturnedendo'>Loading...</div><hr></hr>" + 
 								"<h4>Endorsements given by " + nation + "</h4><div id='endorsements-given'>Loading...</div>");
 								
-		$.get("http://nationstatesplusplus.net/api/nation/missingendo/?name=" + getVisibleNation(), function(data) {
+		$.get("http://nationstatesplusplus.net/api/nation/missingendo/?fullData=true&name=" + getVisibleNation(), function(data) {
 			var html = "";
 			for (var i = 0; i < data.length; i++) {
 				var nation = data[i];
-				var formatted = nation.toLowerCase().replaceAll(" ", "_");
 				if (i > 0) html += ", ";
-				html += "<a href='nation=" + formatted + "' class='nlink'><img class='miniflag' alt='" + nation + 
-				"' src='http://nationstatesplusplus.net/api/flag/nation/?nation=" + formatted + "'>" + nation + "</a>";
+				html += "<a href='nation=" + nation.name + "' class='nlink' title='" + nation.fullName + "'><img class='miniflag' alt='" + nation.fullName + 
+				"' src='" + nation.flag + "'>" + nation.title + "</a>";
 			}
 			if (html.length == 0) {
 				html = getVisibleNation().replaceAll("_", " ").toTitleCase() + " has endorsed all the nations in " + $(".rlink:first").attr("href").substring(7).replaceAll("_", " ").toTitleCase();
 			}
 			$("#missingendo").html(html);
 		});
-		$.get("http://nationstatesplusplus.net/api/nation/unreturnedendo/?name=" + getVisibleNation(), function(data) {
+		$.get("http://nationstatesplusplus.net/api/nation/unreturnedendo/?fullData=true&name=" + getVisibleNation(), function(data) {
 			var html = "";
 			for (var i = 0; i < data.length; i++) {
 				var nation = data[i];
-				var formatted = nation.toLowerCase().replaceAll(" ", "_");
 				if (i > 0) html += ", ";
-				html += "<a href='nation=" + formatted + "' class='nlink'><img class='miniflag' alt='" + nation + 
-				"' src='http://nationstatesplusplus.net/api/flag/nation/?nation=" + formatted + "'>" + nation + "</a>";
+				html += "<a href='nation=" + nation.name + "' class='nlink' title='" + nation.fullName + "'><img class='miniflag' alt='" + nation.fullName + 
+				"' src='" + nation.flag + "'>" + nation.title + "</a>";
 			}
 			if (html.length == 0) {
 				html = getVisibleNation().replaceAll("_", " ").toTitleCase() + " has been mutually endorsed by every nation.";
 			}
 			$("#unreturnedendo").html(html);
 		});
-		$.get("http://nationstatesplusplus.net/api/nation/endorsements/?name=" + getVisibleNation(), function(data) {
+		$.get("http://nationstatesplusplus.net/api/nation/endorsements/?fullData=true&name=" + getVisibleNation(), function(data) {
 			var html = "";
 			for (var i = 0; i < data.length; i++) {
 				var nation = data[i];
-				var formatted = nation.toLowerCase().replaceAll(" ", "_");
 				if (i > 0) html += ", ";
-				html += "<a href='nation=" + formatted + "' class='nlink'><img class='miniflag' alt='" + nation + 
-				"' src='http://nationstatesplusplus.net/api/flag/nation/?nation=" + formatted + "'>" + nation + "</a>";
+				html += "<a href='nation=" + nation.name + "' class='nlink' title='" + nation.fullName + "'><img class='miniflag' alt='" + nation.fullName + 
+				"' src='" + nation.flag + "'>" + nation.title + "</a>";
 			}
 			if (html.length == 0) {
 				html = getVisibleNation().replaceAll("_", " ").toTitleCase() + " has not endorsed any World Assembly Member Nations!";

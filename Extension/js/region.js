@@ -57,7 +57,7 @@ function setupRegionPage() {
 		}
 	});
 	$.get("http://nationstatesplusplus.net/api/newspaper/region/?region=" + getVisibleRegion(), function(json) {
-		$("<p><strong><img style='height: 13px;' src='http://nationstatesplusplus.net/nationstates/static/" + (document.head.innerHTML.indexOf("ns.dark") != -1 ? "dark_" : "") + "newspaper_icon.png'> Newspaper: </strong><a id='rnewspaper_link'><a></p>").insertAfter(founder.parent());
+		$("<p><strong><img style='height: 13px;' src='http://nationstatesplusplus.net/nationstates/static/" + (isDarkTheme() ? "dark_" : "") + "newspaper_icon.png'> Newspaper: </strong><a id='rnewspaper_link'><a></p>").insertAfter(founder.parent());
 		$("#rnewspaper_link").html(parseBBCodes(json.title)).attr("href", "/page=blank?lookup_newspaper=" + json.newspaper_id);
 		$("strong:contains('WA Delegate'):first").parent().css("min-height", "0px");
 	});
@@ -96,7 +96,7 @@ function setupRegionPage() {
 		population.html("<strong><i class='fa fa-bar-chart-o'></i> Population: </strong>" + population.html());
 		
 		//Regional Maps
-		$("<p id='region_map' style='display:none; height: 10px;'><img src='http://nationstatesplusplus.net/nationstates/static/" + (document.head.innerHTML.indexOf("ns.dark") != -1 ? "dark_" : "") + "map3.png' style='width: 16px;'><span style='position: relative; top: -5px;'><strong> Map: </strong><span id='regional_map_link'></span></span></p>").insertAfter(population);
+		$("<p id='region_map' style='display:none; height: 10px;'><img src='http://nationstatesplusplus.net/nationstates/static/" + (isDarkTheme() ? "dark_" : "") + "map3.png' style='width: 16px;'><span style='position: relative; top: -5px;'><strong> Map: </strong><span id='regional_map_link'></span></span></p>").insertAfter(population);
 		
 		//NSWiki
 		
@@ -118,7 +118,7 @@ function setupRegionPage() {
 						if ($("#regional_map_preview:visible").length == 0) {
 							$("#regional_map_preview").show();
 							$("#regional_map_preview").css("position", "absolute").css("left", "200px").css("top", $("#regional_map_link").offset().top + $("#regional_map_link").height());
-							if (document.head.innerHTML.indexOf("ns.dark") != -1) {
+							if (isDarkTheme()) {
 								$("#regional_map_preview").css("border", "2px solid white");
 							} else {
 								$("#regional_map_preview").css("border", "2px solid grey");
@@ -286,7 +286,6 @@ function setupRegionPage() {
 		});
 		//Trim off the 'Tired of life in...' crap
 		var passworded = $("img[alt='Password required']").length > 0;
-		console.log("passworded: " + passworded);
 		var moveRegion = $("button[name='move_region']");
 		if (moveRegion.length > 0) {
 			moveRegion.parent().html(moveRegion[0].outerHTML + "<input type='password' placeholder='Region Password' class='region_password text-input' style='display:none;' id='region_password_input'><span id='invalid-pass' style='display:none; margin-left: 7px; color:red;'>Invalid Password'</span>");

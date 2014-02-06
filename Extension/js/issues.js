@@ -90,14 +90,14 @@
 			var government = "The government is preparing to dismiss this issue.";
 			if (choice > -1) {
 				government = "The government has indicated its intention to follow the recommendations of Option " + (choice + 1) + ".";
-				if (document.head.innerHTML.indexOf("ns.dark") != -1) {
+				if (isDarkTheme()) {
 					$(this).parents("li").css("border" , "solid 2px white").css("border-radius", "12px").animate({'backgroundColor' : '#F6FFF6', 'color': '#000000'}, 1000);
 				} else {
 					$(this).parents("li").css("border" , "solid 2px black").css("border-radius", "12px").animate({'backgroundColor' : '#F6FFF6'}, 1000);
 				}
 				$(this).parents("li").append("<p><em>This is the position your government is preparing to adopt.</em></p>");
 			} else {
-				if (document.head.innerHTML.indexOf("ns.dark") != -1) {
+				if (isDarkTheme()) {
 					$(".dismiss_option").css("border" , "solid 2px white").css("border-radius", "12px").animate({'backgroundColor' : '#F6FFF6', 'color': '#000000'}, 1000);
 				} else {
 					$(".dismiss_option").css("border" , "solid 2px black").css("border-radius", "12px").animate({'backgroundColor' : '#F6FFF6'}, 1000);
@@ -145,7 +145,7 @@ function updateNSOption(choice) {
 		$(".diloptions li, .dismiss_option").attr("style", "");
 		if (choice != -1) {
 			$("button[name='choice-" + choice + "']").parents("li").addClass("chosendiloption");
-			if (document.head.innerHTML.indexOf("ns.dark") != -1) {
+			if (isDarkTheme()) {
 				$("button[name='choice-" + choice + "']").parents("li").attr("style", "background-color: #F6FFF6 !important;");
 			}
 		} else {

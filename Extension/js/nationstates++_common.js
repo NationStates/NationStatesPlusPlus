@@ -208,6 +208,10 @@
 	$("textarea, input[type='text'], td input[type='password'], input[name='region_name']").addClass("text-input");
 })();
 
+function isDarkTheme() {
+	return $("link[href^='/ns.dark']").length > 0;
+}
+
 function getSettings(autoupdate) {
 	autoupdate = autoupdate || false;
 	var SettingsContainer = function() {
@@ -571,7 +575,8 @@ function addPuppetNation(nation, password) {
 
 function getNationStatesAuth(callback) {
 	$.get("http://www.nationstates.net/page=verify_login", function(data) {
-		var authCode = $(data).find("#proof_of_login_checksum").html();
+		//Prevent image requests by replacing src attribute with data-src
+		var authCode = $(data.replace(/[ ]src=/gim," data-src=")).find("#proof_of_login_checksum").html();
 		//Regenerate localid if nessecary
 		$(window).trigger("page/update");
 		callback(authCode);
@@ -583,23 +588,34 @@ function doAuthorizedPostRequest(url, postData, success, failure) {
 }
 
 function doAuthorizedPostRequestFor(nation, url, postData, success, failure) {
-	getNationStatesAuth(function(authCode) {
-		var authToken = localStorage.getItem(nation + "-auth-token");
-		if (authToken == null) {
+	var authToken = localStorage.getItem(nation + "-auth-token");
+	//Check out NS++ auth token to see if it good enough first, avoid making a page=verify request
+	if (authToken != null) {
+		$.post("http://nationstatesplusplus.net/api/nation/auth/", "nation=" + nation + "&auth-token=" + encodeURIComponent(authToken), function(data, textStatus, jqXHR) {
+			console.log("Auth token up to date");
+			localStorage.setItem(nation + "-auth-token", data.code);
+			doAuthorizedPostRequestInternal(nation, url, postData, success, failure);
+		}).fail(function() {
+			localStorage.removeItem(nation + "-auth-token");
+			//Repeat request, get valid auth token
+			console.log("Auth token out of date");
+			doAuthorizedPostRequestFor(nation, true, url, postData, success, failure);
+		});
+	} else {
+		getNationStatesAuth(function(authCode) {
+			console.log("Getting auth token");
 			$.post("http://nationstatesplusplus.net/api/nation/auth/", "nation=" + nation + "&auth=" + encodeURIComponent(authCode), function(data, textStatus, jqXHR) {
 				localStorage.setItem(nation + "-auth-token", data.code);
 			}).always(function() {
-				doAuthorizedPostRequestInternal(nation, authCode, url, postData, success, failure);
+				doAuthorizedPostRequestInternal(nation, url, postData, success, failure);
 			});
-		} else {
-			doAuthorizedPostRequestInternal(nation, authCode, url, postData, success, failure);
-		}
-	});
+		});
+	}
 }
 
-function doAuthorizedPostRequestInternal(nation, authCode, url, postData, success, failure) {
+function doAuthorizedPostRequestInternal(nation, url, postData, success, failure) {
 	var authToken = localStorage.getItem(nation + "-auth-token");
-	postData = "nation=" + nation + "&auth=" + encodeURIComponent(authCode) + (authToken != null ? "&auth-token=" + authToken : "") + (postData.length > 0 ? "&" + postData : "");
+	postData = "nation=" + nation + (authToken != null ? "&auth-token=" + authToken : "") + (postData.length > 0 ? "&" + postData : "");
 	$.post(url, postData, function(data, textStatus, jqXHR) {
 		var authToken = jqXHR.getResponseHeader("X-Auth-Token");
 		if (authToken != null) {

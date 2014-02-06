@@ -8,7 +8,7 @@
 					var network = settings.getValue("irc_network_override", region["network"]);
 					var nick = settings.getValue("irc_username_override", getUserNation().replaceAll("_", " ").toTitleCase().replaceAll(" ", "_"));
 					var ircUrl = "https://kiwiirc.com/client/" + network;
-					if (document.head.innerHTML.indexOf("ns.dark") != -1) {
+					if (isDarkTheme()) {
 						ircUrl += "/?theme=cli&nick=";
 					} else {
 						ircUrl += "/?theme=relaxed&nick=";

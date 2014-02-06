@@ -30,3 +30,10 @@ pageMod.PageMod({
   contentStyleFile: [ self.data.url("css/nouislider.fox.css"), self.data.url("css/bootstrap-button.css"), self.data.url("css/two_column.css"), 
 					  self.data.url("css/bootstrap-fileupload.min.css"), self.data.url("css/nprogress.css"), self.data.url("css/nationstates++.css")],
 });
+
+pageMod.PageMod({
+  include: ["http://www.nationstates.net/page=blank*"],
+  contentScriptWhen: "ready",
+  contentScriptFile: [self.data.url("js/bootstrap-dropdown.min.js"), self.data.url("js/bootstrap-fileupload.min.js")],
+  contentStyleFile: [ self.data.url("css/bootstrap-fileupload.min.css"), self.data.url("css/newspaper_bootstrap.min.css")],
+});

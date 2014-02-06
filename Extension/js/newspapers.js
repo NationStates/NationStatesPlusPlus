@@ -139,7 +139,7 @@
 			console.log("fetched newspaper contents:" + html);
 			//$("#inner-content").hide();
 			$("#inner-content").html(html);
-			if (document.head.innerHTML.indexOf("ns.dark") != -1) $("select").css("color", "white");
+			if (isDarkTheme()) $("select").css("color", "white");
 			$.get("http://nationstatesplusplus.net/api/newspaper/details/?id=" + newspaper, function(data) {
 				$("#newspaper_name").val(data.newspaper);
 				$("#newspaper_name").attr("newspaper_id", newspaper);
@@ -339,7 +339,7 @@
 		settings.getValue("newspapers", {})[id] = Date.now();
 		settings.pushUpdate();
 		$("#ns_news_nag").remove();
-		$("#content").html("<div id='news_header' style='text-align: center;'><h1 id='newspaper_name'></h1><div id='manage_newspaper'><p class='newspaper_controls'>Newspaper Controls</p><a class='button' style='font-weight: bold;' href='page=blank/?manage_newspaper=" + id + "'>Manage Newspaper</a><a class='button' style='font-weight: bold;' href='page=blank/?article_editor=" + id + "&article=-1'>Submit Article</a><a class='button pending_articles' style='font-weight: bold; display:none; background:red;' href='page=blank/?view_articles=" + id + "&pending=1'>View Pending Articles</a><a class='button' style='font-weight: bold;' href='page=blank/?view_articles=" + id + "'>View All Articles</a></div><div id='view_newspaper'><p class='newspaper_controls'>Newspaper Database</p><a class='button' style='font-weight: bold;' href='page=blank/?archived_articles=" + id + "'>View Archived Articles</a><a class='button' style='font-weight: bold;' href='page=blank/?article_editor=" + id + "&article=-1&volunteer=1'>Submit Article</a></div><i id='newspaper_byline'></i><hr></div><div id='inner-content'><iframe id='article-content' seamless='seamless' frameborder='no' scrolling='no' src='http://nationstatesplusplus.net/newspaper?id=" + id + "&embed=true" + (document.head.innerHTML.indexOf("ns.dark") != -1 ? "&dark=true" : "") + "' style='width: 100%;height: 1000px;'></iframe></div>");
+		$("#content").html("<div id='news_header' style='text-align: center;'><h1 id='newspaper_name'></h1><div id='manage_newspaper'><p class='newspaper_controls'>Newspaper Controls</p><a class='button' style='font-weight: bold;' href='page=blank/?manage_newspaper=" + id + "'>Manage Newspaper</a><a class='button' style='font-weight: bold;' href='page=blank/?article_editor=" + id + "&article=-1'>Submit Article</a><a class='button pending_articles' style='font-weight: bold; display:none; background:red;' href='page=blank/?view_articles=" + id + "&pending=1'>View Pending Articles</a><a class='button' style='font-weight: bold;' href='page=blank/?view_articles=" + id + "'>View All Articles</a></div><div id='view_newspaper'><p class='newspaper_controls'>Newspaper Database</p><a class='button' style='font-weight: bold;' href='page=blank/?archived_articles=" + id + "'>View Archived Articles</a><a class='button' style='font-weight: bold;' href='page=blank/?article_editor=" + id + "&article=-1&volunteer=1'>Submit Article</a></div><i id='newspaper_byline'></i><hr></div><div id='inner-content'><iframe id='article-content' seamless='seamless' frameborder='no' scrolling='no' src='http://nationstatesplusplus.net/newspaper?id=" + id + "&embed=true" + (isDarkTheme() ? "&dark=true" : "") + "' style='width: 100%;height: 1000px;'></iframe></div>");
 		loadingAnimation();
 		window.document.title = "NationStates | Newspaper"
 		//$(window).unbind("scroll");

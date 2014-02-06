@@ -26,6 +26,13 @@
 	},
 	{
 	  "run_at": "document_end",
+      "js": [ "js/bootstrap-dropdown.min.js", "js/bootstrap-fileupload.min.js" ],
+	  "css": ["css/bootstrap-fileupload.min.css", "css/newspaper_bootstrap.min.css"],
+      "matches": [ "http://www.nationstates.net/page=blank*"],
+	  "all_frames": true
+	},
+	{
+	  "run_at": "document_end",
       "js": [ "jquery-2.0.3.min.js", "js/nspp.js" ],
       "matches": [ "http://nationstatesplusplus.net/api.html", "http://nationstatesplusplus.com/api.html", "http://nationstatesplusplus.org/api.html"],
 	  "all_frames": true
