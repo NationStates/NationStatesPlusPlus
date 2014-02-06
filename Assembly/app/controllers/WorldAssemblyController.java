@@ -19,6 +19,7 @@ import play.libs.Json;
 import play.mvc.Result;
 
 import com.afforess.assembly.model.HappeningType;
+import com.afforess.assembly.model.Nation;
 import com.afforess.assembly.util.DatabaseAccess;
 import com.afforess.assembly.util.Utils;
 
@@ -57,17 +58,17 @@ public class WorldAssemblyController extends DatabaseController {
 		return ok(Json.toJson(json)).as("application/json");
 	}
 
-	public Result getEndorsements(String name) throws SQLException, ExecutionException {
-		List<String> nations = new ArrayList<String>();
+	public Result getEndorsements(String name, boolean fullData) throws SQLException, ExecutionException {
+		List<Object> nations = new ArrayList<Object>();
 		Connection conn = null; 
 		try {
 			conn = getConnection();
-			PreparedStatement statement = conn.prepareStatement("SELECT n.title FROM assembly.nation AS n LEFT OUTER JOIN assembly.endorsements AS e ON n.id = e.endorsed WHERE e.endorser = ?");
+			PreparedStatement statement = conn.prepareStatement("SELECT n.title " + (fullData ? ", n.name, n.id, n.full_name, n.flag " : "") + "FROM assembly.nation AS n LEFT OUTER JOIN assembly.endorsements AS e ON n.id = e.endorsed WHERE e.endorser = ?");
 			statement.setInt(1, getDatabase().getNationIdCache().get(Utils.sanitizeName(name)));
 			ResultSet result = statement.executeQuery();
 			while(result.next()) {
 				String title = result.getString(1);
-				nations.add(title);
+				nations.add(fullData ? (new Nation(result.getString(2), title, result.getString(4), result.getString(5), result.getInt(3), true, true)) : title);
 			}
 			DbUtils.closeQuietly(result);
 			DbUtils.closeQuietly(statement);
@@ -82,8 +83,8 @@ public class WorldAssemblyController extends DatabaseController {
 		return ok(Json.toJson(nations)).as("application/json");
 	}
 
-	public Result getMissingEndorsements(String name) throws SQLException, ExecutionException {
-		List<String> nations = new ArrayList<String>();
+	public Result getMissingEndorsements(String name, boolean fullData) throws SQLException, ExecutionException {
+		List<Object> nations = new ArrayList<Object>();
 		Connection conn = null; 
 		try {
 			int nationId = getDatabase().getNationIdCache().get(Utils.sanitizeName(name));
@@ -98,12 +99,12 @@ public class WorldAssemblyController extends DatabaseController {
 			DbUtils.closeQuietly(result);
 			DbUtils.closeQuietly(statement);
 			
-			statement = conn.prepareStatement("SELECT id, title FROM assembly.nation WHERE alive = 1 AND wa_member = 1 AND region = (SELECT region FROM assembly.nation WHERE id = ?)");
+			statement = conn.prepareStatement("SELECT id, title " + (fullData ? ", name, full_name, flag " : "") + "FROM assembly.nation WHERE alive = 1 AND wa_member = 1 AND region = (SELECT region FROM assembly.nation WHERE id = ?)");
 			statement.setInt(1, nationId);
 			result = statement.executeQuery();
 			while(result.next()) {
 				if (!endorsements.contains(result.getInt(1)) && result.getInt(1) != nationId) {
-					nations.add(result.getString(2));
+					nations.add(fullData ? (new Nation(result.getString(3), result.getString(2), result.getString(4), result.getString(5), result.getInt(1), true, true)) : result.getString(2));
 				}
 			}
 			DbUtils.closeQuietly(result);
@@ -119,8 +120,8 @@ public class WorldAssemblyController extends DatabaseController {
 		return ok(Json.toJson(nations)).as("application/json");
 	}
 
-	public Result getUnreturnedEndorsements(String name) throws SQLException, ExecutionException {
-		List<String> nations = new ArrayList<String>();
+	public Result getUnreturnedEndorsements(String name, boolean fullData) throws SQLException, ExecutionException {
+		List<Object> nations = new ArrayList<Object>();
 		Connection conn = null; 
 		try {
 			int nationId = getDatabase().getNationIdCache().get(Utils.sanitizeName(name));
@@ -135,12 +136,12 @@ public class WorldAssemblyController extends DatabaseController {
 			DbUtils.closeQuietly(result);
 			DbUtils.closeQuietly(statement);
 			
-			statement = conn.prepareStatement("SELECT id, title FROM assembly.nation WHERE alive = 1 AND wa_member = 1 AND region = (SELECT region FROM assembly.nation WHERE id = ?)");
+			statement = conn.prepareStatement("SELECT id, title " + (fullData ? ", name, full_name, flag " : "") + "FROM assembly.nation WHERE alive = 1 AND wa_member = 1 AND region = (SELECT region FROM assembly.nation WHERE id = ?)");
 			statement.setInt(1, nationId);
 			result = statement.executeQuery();
 			while(result.next()) {
 				if (!endorsements.contains(result.getInt(1)) && result.getInt(1) != nationId) {
-					nations.add(result.getString(2));
+					nations.add(fullData ? (new Nation(result.getString(3), result.getString(2), result.getString(4), result.getString(5), result.getInt(1), true, true)) : result.getString(2));
 				}
 			}
 			DbUtils.closeQuietly(result);

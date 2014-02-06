@@ -41,6 +41,9 @@ public class AdminController extends DatabaseController {
 			Connection conn = null;
 			try {
 				conn = getConnection();
+				
+				HappeningType.initialize(conn);
+				
 				PreparedStatement update = conn.prepareStatement("UPDATE assembly.global_happenings SET type = ? WHERE id = ?");
 				PreparedStatement select = conn.prepareStatement("SELECT id, happening, nation FROM assembly.global_happenings WHERE type = ? LIMIT 0, 1000");
 				select.setInt(1, happeningType);

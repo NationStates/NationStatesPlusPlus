@@ -1,6 +1,7 @@
 package com.afforess.assembly.model;
 
 import java.sql.Connection;
+
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -8,8 +9,10 @@ import java.sql.SQLException;
 import org.apache.commons.dbutils.DbUtils;
 
 import com.afforess.assembly.util.Utils;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class Nation {
 	@JsonProperty
 	private String name;

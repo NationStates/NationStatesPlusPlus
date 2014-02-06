@@ -47,9 +47,9 @@ POST    /nation/data/set/             @controllers.NationController.updateData()
 GET     /nation/data/                 @controllers.NationController.getLastDataUpdate(name: String ?= "")
 POST    /nation/auth/                 @controllers.NationController.getAuthCode()
 
-GET     /nation/endorsements/         @controllers.WorldAssemblyController.getEndorsements(name: String ?= "")
-GET     /nation/unreturnedendo/       @controllers.WorldAssemblyController.getUnreturnedEndorsements(name: String ?= "")
-GET     /nation/missingendo/          @controllers.WorldAssemblyController.getMissingEndorsements(name: String ?= "")
+GET     /nation/endorsements/         @controllers.WorldAssemblyController.getEndorsements(name: String ?= "", fullData: Boolean ?= false)
+GET     /nation/unreturnedendo/       @controllers.WorldAssemblyController.getUnreturnedEndorsements(name: String ?= "", fullData: Boolean ?= false)
+GET     /nation/missingendo/          @controllers.WorldAssemblyController.getMissingEndorsements(name: String ?= "", fullData: Boolean ?= false)
 
 GET     /region/wa/                   @controllers.WorldAssemblyController.getWAMembers(region: String ?= "")
 GET     /region/population/           @controllers.RegionController.getPopulationTrends(region: String ?= "")
