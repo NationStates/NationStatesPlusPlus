@@ -342,6 +342,7 @@ public class Utils {
 	}
 
 	private static void updateShards(final Connection conn, final NationData data, final int nationId) throws SQLException {
+		//nation shards
 		StringBuilder statement = new StringBuilder("INSERT INTO assembly.nation_shards (nation, timestamp, ");
 		for (int i = 0; i <= 70; i++) {
 			statement.append("shard_").append(i);
@@ -361,6 +362,51 @@ public class Utils {
 			insert.setFloat((3 + i), data.censusScore.get(i));
 		}
 		insert.executeUpdate();
+
+		//Check if insert
+		PreparedStatement select = conn.prepareStatement("SELECT nation FROM assembly.newest_nation_shards WHERE nation = ?");
+		select.setInt(1, nationId);
+		ResultSet result = select.executeQuery();
+		if (!result.next()) {
+			statement = new StringBuilder("INSERT INTO assembly.newest_nation_shards (nation, ");
+			for (int i = 0; i <= 70; i++) {
+				statement.append("shard_").append(i);
+				if ( i != 70 ) statement.append(", ");
+			}
+			statement.append(") VALUES (?, ");
+			for (int i = 0; i <= 70; i++) {
+				statement.append("?");
+				if ( i != 70 ) statement.append(", ");
+			}
+			statement.append(")");
+	
+			DbUtils.closeQuietly(insert);
+			insert = conn.prepareStatement(statement.toString());
+			insert.setInt(1, nationId);
+			for (int i = 0; i <= 70; i++) {
+				insert.setFloat((2 + i), data.censusScore.get(i));
+			}
+			insert.executeUpdate();
+			DbUtils.closeQuietly(insert);
+		} else {
+			statement = new StringBuilder("UPDATE assembly.newest_nation_shards SET ");
+			for (int i = 0; i <= 70; i++) {
+				statement.append("shard_").append(i).append(" = ?");
+				if ( i != 70 ) statement.append(", ");
+			}
+			statement.append(" WHERE nation = ?");
+	
+			DbUtils.closeQuietly(insert);
+			insert = conn.prepareStatement(statement.toString());
+			for (int i = 0; i <= 70; i++) {
+				insert.setFloat(i + 1, data.censusScore.get(i));
+			}
+			insert.setInt(72, nationId);
+			insert.executeUpdate();
+			DbUtils.closeQuietly(insert);
+		}
+		DbUtils.closeQuietly(select);
+		DbUtils.closeQuietly(result);
 	}
 
 	public static void updateEndorsements(final Connection conn, final NationData data, final DatabaseAccess access, final int nationId) throws Exception {

@@ -115,53 +115,7 @@ public class Global extends GlobalSettings {
 	public <T extends EssentialFilter> Class<T>[] filters() {
 		return (Class[]) ObjectArrays.concat(GzipFilter.class, super.filters());
     }
-/*
 
-	private final AtomicLong requestId = new AtomicLong(0);
-	@SuppressWarnings("rawtypes")
-	@Override
-	public Action onRequest(final Request request, Method actionMethod) {
-		if (logRequests) {
-			final long id = requestId.getAndIncrement();
-			final long start = System.nanoTime();
-			Logger.debug("LOGGING [ID: " + id + "] REQUEST FROM [" + request.remoteAddress() + "] TO [" + request.uri() + "]");
-			final Action superAction = super.onRequest(request, actionMethod);
-			final Action logAction = new StatusCodeAction(superAction, id, start);
-			return logAction;
-		}
-		return super.onRequest(request, actionMethod);
-	}
-	private static class StatusCodeAction extends Action.Simple {
-		@SuppressWarnings("rawtypes")
-		private final Action superAction;
-		private final long id;
-		private final long start;
-		public StatusCodeAction(@SuppressWarnings("rawtypes") Action superAction, long id, long start) {
-			this.superAction = superAction;
-			this.id = id;
-			this.start = start;
-		}
-
-		@SuppressWarnings("unchecked")
-		@Override
-		public play.mvc.Result call(Context ctx) throws Throwable {
-			if (superAction.delegate == null) {
-				superAction.delegate = delegate;
-			}
-			int status = -1;
-			try {
-				play.mvc.Result superResult = superAction.call(ctx);
-				if (superResult.getWrappedResult() instanceof PlainResult) {
-					PlainResult plain = (PlainResult)(superResult.getWrappedResult());
-					status = plain.header().status();
-				}
-				return superResult;
-			} finally {
-				Logger.debug("LOGGING [ID: " + id + "] REQUEST COMPLETED [STATUS: " + status + "] IN [" + ((System.nanoTime() - start) / 1E6D) + " ms]");
-			}
-		}
-	}
-*/
 	@SuppressWarnings("unchecked")
 	@Override
 	public <A> A getControllerInstance(Class<A> controllerClass) throws Exception {

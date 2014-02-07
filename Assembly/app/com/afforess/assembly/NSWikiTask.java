@@ -24,7 +24,6 @@ import play.Logger;
 import com.afforess.assembly.model.RegionalStats;
 import com.afforess.assembly.util.DatabaseAccess;
 import com.afforess.assembly.util.Utils;
-import com.mchange.v2.c3p0.ComboPooledDataSource;
 
 public class NSWikiTask implements Runnable {
 	private final DatabaseAccess access;
@@ -56,17 +55,15 @@ public class NSWikiTask implements Runnable {
 		return conn.getResponseCode() / 100 == 2;
 	}
 
-	private void updateRegionPage(String region) throws IOException, SQLException {
-		MediaWikiBot wikibot = new MediaWikiBot("http://nswiki.org/");
-		wikibot.login(botUser, botPassword);
+	private void updateRegionPage(MediaWikiBot wikibot, String region) throws IOException, SQLException {
 		if (!doesNSWikiRegionExist(region)) {
 			createRegionPage(region, wikibot);
 		}
-		
+
 		Article article = wikibot.getArticle("Region/" + region);
 		String text = article.getText();
 		final String origText = text;
-		
+
 		RegionalStats stats = new RegionalStats(region);
 		stats.updateStats(access);
 
@@ -114,11 +111,11 @@ public class NSWikiTask implements Runnable {
 	}
 
 	public static void main(String[] args) throws IOException, SQLException {
-		YamlConfiguration config = Start.loadConfig();
-		ComboPooledDataSource pool = Start.loadDatabase(config.getChild("settings"));
-		DatabaseAccess access = new DatabaseAccess(pool, 100);
-		NSWikiTask task = new NSWikiTask(access, config);
-		task.updateRegionPage("Capitalist Paradise");
+		//YamlConfiguration config = Start.loadConfig();
+		//ComboPooledDataSource pool = Start.loadDatabase(config.getChild("settings"));
+		//DatabaseAccess access = new DatabaseAccess(pool, 100);
+		//NSWikiTask task = new NSWikiTask(access, config);
+		//task.updateRegionPage("Capitalist Paradise");
 	}
 
 	@Override
@@ -136,10 +133,10 @@ public class NSWikiTask implements Runnable {
 		Connection conn = null;
 		try {
 			conn = access.getPool().getConnection();
-			PreparedStatement select = conn.prepareStatement("SELECT title FROM assembly.region WHERE last_wiki_update < ? ORDER BY last_wiki_update DESC LIMIT 0, 14");
+			PreparedStatement select = conn.prepareStatement("SELECT title FROM assembly.region WHERE last_wiki_update < ? ORDER BY last_wiki_update ASC LIMIT 0, 15");
 			select.setInt(1, (int)((System.currentTimeMillis() - Duration.standardHours(24).getMillis()) / 1000L));
 			ResultSet result = select.executeQuery();
-			
+
 			while(result.next()) {
 				String region = result.getString(1);
 				regions.add(region);
@@ -147,13 +144,16 @@ public class NSWikiTask implements Runnable {
 			DbUtils.closeQuietly(result);
 			DbUtils.closeQuietly(select);
 
+			MediaWikiBot wikibot = new MediaWikiBot("http://nswiki.org/");
+			wikibot.login(botUser, botPassword);
+
 			PreparedStatement update = conn.prepareStatement("UPDATE assembly.region SET last_wiki_update = ? WHERE name = ?");
 			for (String region : regions) {
 				update.setInt(1, (int)(System.currentTimeMillis() / 1000L));
 				update.setString(2, Utils.sanitizeName(region));
 				
 				Logger.info("Updating NSWiki region page for [" + region + "]");
-				updateRegionPage(region);
+				updateRegionPage(wikibot, region);
 				
 				update.executeUpdate();
 			}

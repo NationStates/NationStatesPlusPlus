@@ -135,7 +135,7 @@ public class RegionalStats {
 				DbUtils.closeQuietly(result);
 				DbUtils.closeQuietly(stats);
 				
-				stats = conn.prepareStatement("SELECT median(shard_68) AS hdi FROM assembly.latest_nation_shards AS l LEFT JOIN assembly.nation AS n ON n.id = l.nation WHERE n.region = ?");
+				stats = conn.prepareStatement("SELECT median(shard_68) AS hdi FROM assembly.newest_nation_shards AS l LEFT JOIN assembly.nation AS n ON n.id = l.nation WHERE n.region = ?");
 				stats.setInt(1, this.id);
 				result = stats.executeQuery();
 				result.next();
@@ -464,7 +464,7 @@ public class RegionalStats {
 		else if (this.education < 7) description = "<!--REGION_NAME_START--> <!--REGION_NAME_END--> does not prioritize education in any meaningful way.";
 		else if (this.education < 12) description = "In <!--REGION_NAME_START--> <!--REGION_NAME_END-->, denizens are afforded a reasonable education, although funding is somewhat wanting.";
 		else if (this.education < 18) description = "Education is a priority for governments throughout <!--REGION_NAME_START--> <!--REGION_NAME_END-->, with ample funding being provided and teachers enjoying a great deal of support.";
-		else if (this.education < 100) description = "<!--REGION_NAME_START--> <!--REGION_NAME_END--> values education extremely highly, and denizens compete for the largest number of university degrees and sprawling book collections";
+		else if (this.education < 100) description = "<!--REGION_NAME_START--> <!--REGION_NAME_END--> values education extremely highly, and denizens compete for the largest number of university degrees and sprawling book collections.";
 		else if (this.education == 100) description = "In <!--REGION_NAME_START--> <!--REGION_NAME_END-->, everyone enjoys a classical education, which are the envy of the world.";
 		return description;
 	}
@@ -530,8 +530,8 @@ public class RegionalStats {
 
 	private String getPublicTransportDescription() {
 		String description = "";
-		if (this.publictransport == 0) description = "Public transport is considered dirty and trampish in the region. You would be mad to use it.";
-		else if (this.publictransport < 3) description = "Public transport is something of an afterthought in government budgeting, with only " + this.publictransport + "% of total government budgets in the region being devoted to it.";
+		if (this.publictransport == 0) description = "Due to the lack of any Public transport, streets are packed with cars, bikes, and assorted noisy vehicles.";
+		else if (this.publictransport < 3) description = "Public transport is an afterthought, with only " + this.publictransport + "% of total government budgets in the region being devoted to it.";
 		else if (this.publictransport < 20) description = "Public transport is a popular mode of transport in the region, receiving on average of " + this.publictransport + "% of total government budgets.";
 		else if (this.publictransport < 100) description = "Public transport is tremendously well-funded and of exceptionally high-quality, receiving on average of " + this.publictransport + "% of total government budgets. The usage of private transport is frowned upon.";
 		else if (this.publictransport == 100) description = "Public transport is the only way to get around, is never late, and is clinically clean. Even cyclists are shot on sight for daring to use a private mode of transport.";
@@ -582,40 +582,45 @@ public class RegionalStats {
 		else if (this.economy < 10) description = "Underwater basket weaving is a popular tradition amongst the denizens of the region, as well as its primary economic export.";
 		else if (this.economy < 25) description = "Most denizens subsist off of basic farming or menial factory jobs, with few economic imports or exports.";
 		else if (this.economy < 50) description = "The economy of the region is remarkably unremarkable, with members being neither powerhouses nor basket cases.";
-		else if (this.economy < 75) description = "Economies in the region tend to be stronger than average, although most are not big enough to be considered heavyweights.";
+		else if (this.economy < 75) description = "Economies in the region tend to be stronger than average.";
 		else if (this.economy < 90) description = "The economy of the region is very strong, with a large number of very powerful trading powers.";
-		else if (this.economy < 100) description = "Families in the region are so obsessed with the economy that the discussion of laffer curves and supply-side reforms over supper is a regular occurrence in member nations.";
+		else if (this.economy < 100) description = "Families in the region are so obsessed with the economy that the discussion of laffer curves and supply-side reforms over dinner is a regular occurrence in member nations.";
 		else if (this.economy == 100) description = "It’s the economy, stupid... and in this region, it’s massive.";
 		return description;
 	}
-	
+
 	public String getNationsDescription() {
 		String description = "";
-		if (this.numNations == 1) description = "inhabited by a sole nation";
+		if (this.numNations == 0) description = "devoid of any nations.";
+		else if (this.numNations == 1) description = "inhabited by a sole nation";
 		else if (this.numNations < 5) description = "inhabited by a few solitary nations";
 		else if (this.numNations < 10) description = "sparsely populated by only " + numNations + " nations";
 		else if (this.numNations < 50) description = "with a thriving community of " + numNations + " nations";
 		else if (this.numNations < 100) description = "with a bustling and busy community, numbering " + numNations + " nations";
 		else if (this.numNations < 500) description = "with a very large community of  " + numNations + " member nations";
 		else description = "with a massive community, boasting over " + numNations + " member nations";
-		
-		if (this.numWaMembers == 0) description += " and without any [[World Assembly]] representation.";
-		else if (this.numWaMembers == 1) description += " and only one [[World Assembly]] Member.";
-		else if (this.numWaMembers < 25) description += " and only " + numWaMembers + " [[World Assembly]] Members.";
-		else if (this.numWaMembers < 50) description += ". <!--REGION_NAME_START--> <!--REGION_NAME_END--> features a very respectable representation in the [[World Assembly]], with " + numWaMembers + " member nations.";
-		else if (this.numWaMembers < 100) description += ". <!--REGION_NAME_START--> <!--REGION_NAME_END--> also has a very large representation in the [[World Assembly]], with  " + numWaMembers + " member nations.";
-		else if (this.numWaMembers < 500) description += ". <!--REGION_NAME_START--> <!--REGION_NAME_END--> is also feared by [[World Assembly]] members everywhere, with votes from " + numWaMembers + " member nations.";
-		else description += ". <!--REGION_NAME_START--> <!--REGION_NAME_END--> is a truly dominating [[World Assembly]] bloc, with over " + numWaMembers + " member nations.";
-		
+
+		if (this.numNations > 0) {
+			if (this.numWaMembers == 0) description += ".";
+			else if (this.numWaMembers == 1) description += " and only one [[World Assembly]] Member.";
+			else if (this.numWaMembers < 25) description += " and only " + numWaMembers + " [[World Assembly]] Members.";
+			else if (this.numWaMembers < 50) description += ". <!--REGION_NAME_START--> <!--REGION_NAME_END--> features a very respectable representation in the [[World Assembly]], with " + numWaMembers + " member nations.";
+			else if (this.numWaMembers < 100) description += ". <!--REGION_NAME_START--> <!--REGION_NAME_END--> also has a very large representation in the [[World Assembly]], with  " + numWaMembers + " member nations.";
+			else if (this.numWaMembers < 500) description += ". <!--REGION_NAME_START--> <!--REGION_NAME_END--> is also feared by [[World Assembly]] members everywhere, with votes from " + numWaMembers + " member nations.";
+			else description += ". <!--REGION_NAME_START--> <!--REGION_NAME_END--> is a truly dominating [[World Assembly]] bloc, with over " + numWaMembers + " member nations.";
+		}
+
 		return description;
 	}
 
 	public String getRegionDescription() {
 		StringBuilder builder = new StringBuilder(getNationsDescription());
-		builder.append("\n\n").append(getCivilRightsDescription()).append(" ").append(getPoliticalFreedomsDescription()).append(" ").append(getEconomyDescription()).append(" ").append(getTaxDescription()).append(" ").append(getPublicSectorDescription()).append(" ").append(getCommerceDescription());
-		builder.append("\n\n").append(getEducationDescription()).append(" ").append(getLawAndOrderDescription()).append(" ").append(getDefenceDescription()).append(" ").append(getPublicTransportDescription());
-		builder.append("\n\n").append(getAdministrationDescription()).append(" ").append(getHealthcareDescription()).append(" ").append(getWelfareDescription()).append(" ").append(getSpiritualityDescription());
-		builder.append("\n\n").append(getSocialEqualityDescription()).append(" ").append(getEnvironmentDescription());
+		if (this.numNations > 0) {
+			builder.append("\n\n").append(getCivilRightsDescription()).append(" ").append(getPoliticalFreedomsDescription()).append(" ").append(getEconomyDescription()).append(" ").append(getTaxDescription()).append(" ").append(getPublicSectorDescription()).append(" ").append(getCommerceDescription());
+			builder.append("\n\n").append(getEducationDescription()).append(" ").append(getLawAndOrderDescription()).append(" ").append(getDefenceDescription()).append(" ").append(getPublicTransportDescription());
+			builder.append("\n\n").append(getAdministrationDescription()).append(" ").append(getHealthcareDescription()).append(" ").append(getWelfareDescription()).append(" ").append(getSpiritualityDescription());
+			builder.append("\n\n").append(getSocialEqualityDescription()).append(" ").append(getEnvironmentDescription());
+		}
 		return builder.toString();
 	}
 }
