@@ -97,7 +97,6 @@ public class Utils {
 	}
 
 	public static String formatHappeningText(String text, Connection conn, String owner) throws SQLException {
-		text = text.replaceAll("%%capitalist_paradise%rmb%%", "<a href=\"http://www.nationstates.net/region=capitalist_paradise#rmb \">Regional Message Board</a>");
 		do {
 			Matcher match = NATION_PATTERN.matcher(text);
 			if (match.find()) {
@@ -113,18 +112,18 @@ public class Utils {
 			Matcher match = REGION_PATTERN.matcher(text);
 			if (match.find()) {
 				String region = text.substring(match.start() + 2, match.end() - 2);
-				String replacement = "<a href=\"http://www.nationstates.net/region=" + region + "\">" + formatName(region) + "</a>";
+				String replacement = "<a href=\"//www.nationstates.net/region=" + region + "\">" + formatName(region) + "</a>";
 				text = match.replaceFirst(replacement);
 			} else {
 				break;
 			}
 		} while (true);
-		
+
 		do {
 			Matcher match = RMB_PATTERN.matcher(text);
 			if (match.find()) {
 				String region = text.substring(match.start() + 2, match.end() - 2);
-				String replacement = "<a href=\"http://www.nationstates.net/region=" + region + "#rmb\">Regional Message Board</a>";
+				String replacement = "<a href=\"//www.nationstates.net/region=" + region + "#rmb\">Regional Message Board</a>";
 				text = match.replaceFirst(replacement);
 			} else {
 				break;
@@ -146,7 +145,7 @@ public class Utils {
 				if (result.getByte(3) != 1) {
 					return result.getString(1);
 				} else {
-					return "<a href=\"http://www.nationstates.net/nation=" + nation + "\"><img src=\"" + result.getString(2) + "\" class=\"miniflag\" alt=\"\" title=\"" + result.getString(1) + "\">" + (fullName ? result.getString(1) : result.getString(4)) + "</a>";
+					return "<a href=\"//www.nationstates.net/nation=" + nation + "\"><img src=\"" + result.getString(2) + "\" class=\"miniflag\" alt=\"\" title=\"" + result.getString(1) + "\">" + (fullName ? result.getString(1) : result.getString(4)) + "</a>";
 				}
 			}
 			return formatNationLink(nation);
@@ -165,11 +164,11 @@ public class Utils {
 	}
 
 	public static String formatNationLink(String nation) {
-		return "<a href=\"http://www.nationstates.net/nation=" + nation + "\">" + formatName(nation) + "</a>";
+		return "<a href=\"//www.nationstates.net/nation=" + nation + "\">" + formatName(nation) + "</a>";
 	}
 
 	public static String getNationFlag(String nation, Connection conn) throws SQLException {
-		return getNationFlag(nation, conn, "http://www.nationstates.net/images/flags/Default.png");
+		return getNationFlag(nation, conn, "//www.nationstates.net/images/flags/Default.png");
 	}
 
 	public static String getNationFlag(String nation, Connection conn, String defaultFlag) throws SQLException {
@@ -184,12 +183,12 @@ public class Utils {
 				if (flag != null && !flag.trim().isEmpty()) {
 					if (result.getByte(2) == 1) {
 						//Return png copy, even if older jpg version
-						if (flag.startsWith("http://www.nationstates.net/images/flags/Default")) {
-							return "http://www.nationstates.net/images/flags/Default.png";
+						if (flag.contains("www.nationstates.net/images/flags/Default")) {
+							return "//www.nationstates.net/images/flags/Default.png";
 						}
 						return flag;
 					}
-					return "http://www.nationstates.net/images/flags/exnation.png";
+					return "//www.nationstates.net/images/flags/exnation.png";
 				}
 			}
 			return defaultFlag;
@@ -200,7 +199,7 @@ public class Utils {
 	}
 
 	public static String getRegionFlag(String region, Connection conn) throws SQLException {
-		return getRegionFlag(region, conn, "http://www.nationstates.net/images/flags/Default.png");
+		return getRegionFlag(region, conn, "//www.nationstates.net/images/flags/Default.png");
 	}
 
 	public static String getRegionFlag(String region, Connection conn, String defaultFlag) throws SQLException {
@@ -216,7 +215,7 @@ public class Utils {
 					if (result.getByte(2) == 1) {
 						return flag;
 					}
-					return "http://nationstatesplusplus.com/nationstates/static/exregion.png";
+					return "https://nationstatesplusplus.net/nationstates/static/exregion.png";
 				}
 			}
 			return defaultFlag;
@@ -305,7 +304,7 @@ public class Utils {
 			@SuppressWarnings("unchecked")
 			Map<String, Object> data = (Map<String, Object>) result.get("data");
 			String link = (String) data.get("link");
-			return link;
+			return "https://" + link.substring(7);
 		} finally {
 			IOUtils.closeQuietly(stream);
 			conn.disconnect();

@@ -37,7 +37,7 @@ public class Start {
 			pool.setMaxPoolSize(50);
 			pool.setMinPoolSize(1);
 
-			pool.setMaxIdleTime(600); // 10 min after being unused, conn is closed
+			pool.setMaxIdleTime(180); // 3 min after being unused, conn is closed
 			pool.setMaxConnectionAge(60 * 60); //1 hr after connection is open, it is closed
 
 			//Connection Debugging

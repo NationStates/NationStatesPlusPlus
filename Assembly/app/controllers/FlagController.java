@@ -24,7 +24,7 @@ public class FlagController extends DatabaseController {
 			conn = getConnection();
 			final String flag = Utils.getNationFlag(nation, conn, null);
 			if (flag != null) {
-				Result result = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(flag.hashCode()), "3600");
+				Result result = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(flag.hashCode()), "21600");
 				if (result == null) {
 					return Results.redirect(flag);
 				}
@@ -88,7 +88,7 @@ public class FlagController extends DatabaseController {
 		} finally {
 			DbUtils.closeQuietly(conn);
 		}
-		Result result = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(json.hashCode()), "3600");
+		Result result = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(json.hashCode()), "21600");
 		if (result != null) {
 			return result;
 		}

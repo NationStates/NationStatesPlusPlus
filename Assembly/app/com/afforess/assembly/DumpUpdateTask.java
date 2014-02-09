@@ -126,6 +126,10 @@ public class DumpUpdateTask implements Runnable {
 			insert.setLong(3, System.currentTimeMillis());
 			insert.executeUpdate();
 			DbUtils.closeQuietly(insert);
+			
+			if (flag.startsWith("http://")) {
+				flag = "//" + flag.substring(7);
+			}
 
 			PreparedStatement update = null;
 			if (regionId == -1) {
@@ -267,6 +271,9 @@ public class DumpUpdateTask implements Runnable {
 			wasWA = result.getBoolean(2);
 			prevRegion = result.getInt(3);
 		}
+		DbUtils.closeQuietly(result);
+		DbUtils.closeQuietly(select);
+		
 		select = conn.prepareStatement("SELECT id FROM assembly.region WHERE name = ?");
 		select.setString(1, Utils.sanitizeName(region));
 		result = select.executeQuery();
@@ -274,6 +281,13 @@ public class DumpUpdateTask implements Runnable {
 		if (result.next()) {
 			regionId = result.getInt(1);
 		}
+		DbUtils.closeQuietly(result);
+		DbUtils.closeQuietly(select);
+		
+		if (flag.startsWith("http://")) {
+			flag = "//" + flag.substring(7);
+		}
+		
 		Logger.info("Updating nation [" + nation + "] from the daily dump");
 		PreparedStatement insert = null;
 		if (id == -1) {

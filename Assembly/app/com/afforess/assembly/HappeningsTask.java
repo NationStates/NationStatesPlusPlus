@@ -227,7 +227,7 @@ public class HappeningsTask implements Runnable {
 						
 						PreparedStatement alive = conn.prepareStatement("UPDATE assembly.nation SET alive = 1, wa_member = 2" + (eraseFlag ? ", flag = ?" : "") + " WHERE id = ?");
 						if (eraseFlag) {
-							alive.setString(1, "http://nationstates.net/images/flags/Default.png");
+							alive.setString(1, "//nationstates.net/images/flags/Default.png");
 							alive.setInt(2, nationId);
 						} else {
 							alive.setInt(1, nationId);

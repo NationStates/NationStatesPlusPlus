@@ -58,7 +58,7 @@ public class RegionalStats {
 					flag = null;
 				}
 				if (result.getByte("alive") == 0) {
-					flag = "http://nationstatesplusplus.com/nationstates/static/exregion.png";
+					flag = "https://nationstatesplusplus.net/nationstates/static/exregion.png";
 				}
 				this.flag = flag;
 
@@ -496,8 +496,8 @@ public class RegionalStats {
 	private String getWelfareDescription() {
 		String description = "";
 		if (this.welfare == 0) description = "No welfare is provided in the region. Those unlucky enough to fall into unemployment are forgotten and abandoned.";
-		else if (this.welfare < 3) description = "Welfare in the region is minimal, with only a small amount of expenditure being devoted to spending on social security.";
-		else if (this.welfare < 12) description = "Welfare is a large part of government expenditure, with denizens amply provided for.";
+		else if (this.welfare < 7) description = "Welfare in the region is minimal, with only a small amount of expenditure being devoted to spending on social security.";
+		else if (this.welfare < 14) description = "Welfare is a large part of government expenditure, with denizens amply provided for.";
 		else if (this.welfare < 20) description = "Denizens in the region suckle at the teat of government, with welfare comprising a large percentage of total government budgets.";
 		else if (this.welfare < 35) description = "Governments in the region have a pathological fixation on welfare, with welfare budgets soaking up huge amounts of government expenditure.";
 		else if (this.welfare <= 100) description = "The 'net through which none shall fall' in the region is more of a 'hammock on which all shall lie'.";

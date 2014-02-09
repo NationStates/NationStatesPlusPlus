@@ -66,13 +66,18 @@ public class NSWikiTask implements Runnable {
 
 		RegionalStats stats = new RegionalStats(region);
 		stats.updateStats(access);
+		
+		if (text.contains("{{bot author}}") && !text.contains("{{#seo:")) {
+			int start = text.indexOf("{{bot author}}");
+			text = text.substring(0, start + "{{bot author}}".length()) + "\n{{#seo:\n |title=<!--REGION_NAME_START-->Blank Region<!--REGION_NAME_END-->\n |keywords=NationStates,<!--REGION_NAME_START-->Blank Region<!--REGION_NAME_END-->,NSWiki,\n }}" + text.substring(start + "{{bot author}}".length());
+		}
 
 		text = updateRegionVariable(text, "FLAG", stats.getFlag());
 		text = updateRegionVariable(text, "FOUNDER", stats.getFounder());
 		text = updateRegionVariable(text, "DELEGATE", stats.getDelegate());
 		text = updateRegionVariable(text, "WA_POPULATION", stats.getNumWaMembers());
 		text = updateRegionVariable(text, "POPULATION", stats.getNumNations());
-		text = updateRegionVariable(text, "LINK", "[http://www.nationstates.net/region=" + stats.getName().toLowerCase().replaceAll(" ", "_") + " " + stats.getName() + "]");
+		text = updateRegionVariable(text, "LINK", "[https://www.nationstates.net/region=" + stats.getName().toLowerCase().replaceAll(" ", "_") + " " + stats.getName() + "]");
 		text = updateRegionVariable(text, "POPULATION_AMT", stats.getTotalPopulationDescription());
 		text = updateRegionVariable(text, "POPULATION_AMT_YEAR", "2014");
 		text = updateRegionVariable(text, "POPULATION_DESC", stats.getNumNationsDescription());
@@ -133,7 +138,7 @@ public class NSWikiTask implements Runnable {
 		Connection conn = null;
 		try {
 			conn = access.getPool().getConnection();
-			PreparedStatement select = conn.prepareStatement("SELECT title FROM assembly.region WHERE last_wiki_update < ? ORDER BY last_wiki_update ASC LIMIT 0, 15");
+			PreparedStatement select = conn.prepareStatement("SELECT title FROM assembly.region WHERE last_wiki_update < ? AND (alive = 1 OR last_wiki_update <> 0) ORDER BY last_wiki_update ASC LIMIT 0, 15");
 			select.setInt(1, (int)((System.currentTimeMillis() - Duration.standardHours(24).getMillis()) / 1000L));
 			ResultSet result = select.executeQuery();
 
