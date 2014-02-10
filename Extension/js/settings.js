@@ -30,7 +30,7 @@ var supportsColorInput = (function() {
 		window.document.title = "NationStates++ Settings"
 		$("#content").html("<div style='margin-top: 25px; margin-left:15px; font-weight:bold; font-size:16px;'><img style='margin-bottom: -2px; margin-right: 4px;' src='/images/loading1.gif'>Loading...</span>");
 		getSettings().update(function() {
-			$.get("http://nationstatesplusplus.net/nationstates/v2_3/settings.html?v=4", function(html) {
+			$.get("https://nationstatesplusplus.net/nationstates/v2_3/settings.html?v=4", function(html) {
 				$("#content").html(html);
 				if (!window.chrome) {
 					$("div[name='chrome_only']").hide();

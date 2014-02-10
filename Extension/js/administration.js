@@ -6,11 +6,11 @@
 		//Found Newspaper button
 		$("<div id='regional_newspaper'></div>").insertBefore("h4:contains('Welcome Telegrams')");
 		$("#regional_newspaper").html("<h4>Regional Newspaper</h4>");
-		$.get("http://nationstatesplusplus.net/api/newspaper/region/?region=" + getVisibleRegion() + "&time=" + Date.now(), function(data) {
+		$.get("https://nationstatesplusplus.net/api/newspaper/region/?region=" + getVisibleRegion() + "&time=" + Date.now(), function(data) {
 			$("#regional_newspaper").append("<button id='disband_news' class='button danger'>Disband Regional Newspaper</button><span id='lack_authority' style='display:none;margin-left: 5px;color:red;'>You do not have authority to disband.</span><span id='disbanded_success' style='display:none;margin-left: 5px;color:green;'>The regional newspaper has been disbanded.</span>");
 			$("#disband_news").on("click", function(event) {
 				event.preventDefault();
-				doAuthorizedPostRequest("http://nationstatesplusplus.net/api/newspaper/disband/?region=" + getVisibleRegion(), "", function(data) {
+				doAuthorizedPostRequest("https://nationstatesplusplus.net/api/newspaper/disband/?region=" + getVisibleRegion(), "", function(data) {
 					$("#disband_news").toggleDisabled();
 					$("#disbanded_success").show();
 				}, function() {
@@ -22,8 +22,8 @@
 			$("#regional_newspaper").append("<button id='found_news' class='button'>Found Regional Newspaper</button><span id='lack_authority' style='display:none;margin-left: 5px;color:red;'>You do not have authority.</span>");
 			$("#found_news").on("click", function(event) {
 				event.preventDefault();
-				doAuthorizedPostRequest("http://nationstatesplusplus.net/api/newspaper/found/?region=" + getVisibleRegion(), "", function(json) {
-					window.location.href = "http://www.nationstates.net/page=blank?manage_newspaper=" + json.newspaper_id;
+				doAuthorizedPostRequest("https://nationstatesplusplus.net/api/newspaper/found/?region=" + getVisibleRegion(), "", function(json) {
+					window.location.href = nsProtocol() + "nationstates.net/page=blank?manage_newspaper=" + json.newspaper_id;
 				}, function() {
 					$("#lack_authority").show();
 					$("#found_news").toggleDisabled();
@@ -45,7 +45,7 @@
 				$("#title_error").html("You can not have blank titles.").show();
 			} else {
 				$("#update_titles").attr("disabled", true);
-				doAuthorizedPostRequest("http://nationstatesplusplus.net/api/region/title/?region=" + getVisibleRegion(), "delegate_title=" + encodeURIComponent($("#rd_title").val()) + 
+				doAuthorizedPostRequest("https://nationstatesplusplus.net/api/region/title/?region=" + getVisibleRegion(), "delegate_title=" + encodeURIComponent($("#rd_title").val()) + 
 																														"&founder_title=" + encodeURIComponent($("#rf_title").val()), function(data) {
 					$("#update_titles").attr("disabled", false);
 					$("#title_error").css("color", "green").html("Updated Titles Successfully!").show();
@@ -63,7 +63,7 @@
 			event.preventDefault();
 			$("#reset_titles").attr("disabled", true);
 			$("#title_error").css("color", "red").hide();
-			doAuthorizedPostRequest("http://nationstatesplusplus.net/api/region/title/?region=" + getVisibleRegion() + "&disband=true", "", function(data) {
+			doAuthorizedPostRequest("https://nationstatesplusplus.net/api/region/title/?region=" + getVisibleRegion() + "&disband=true", "", function(data) {
 				$("#reset_titles").attr("disabled", false);
 				$("#title_error").css("color", "green").html("Reset Titles Successfully!").show();
 			}, function(error) {
@@ -75,7 +75,7 @@
 				$("#reset_titles").attr("disabled", false);
 			});
 		});
-		$.get("http://nationstatesplusplus.net/api/region/title/?region=" + getVisibleRegion(), function(data) {
+		$.get("https://nationstatesplusplus.net/api/region/title/?region=" + getVisibleRegion(), function(data) {
 			if (data.delegate_title != null) {
 				$("#rd_title").val(data.delegate_title).removeAttr("disabled");
 			} else {
@@ -109,7 +109,7 @@
 				$("#map_error").html("Invalid Region Map Preview Image. Must be a valid url.").show();
 			} else {
 				$("#update_map").attr("disabled", true);
-				doAuthorizedPostRequest("http://nationstatesplusplus.net/api/region/map/?region=" + getVisibleRegion(), "regional_map=" + encodeURIComponent($("#region_map_link").val()) + 
+				doAuthorizedPostRequest("https://nationstatesplusplus.net/api/region/map/?region=" + getVisibleRegion(), "regional_map=" + encodeURIComponent($("#region_map_link").val()) + 
 																														"&regional_map_preview=" + encodeURIComponent($("#region_map_preview").val()), function(data) {
 					$("#update_map").attr("disabled", false);
 					$("#map_error").css("color", "green").html("Updated Map Successfully!").show();
@@ -127,7 +127,7 @@
 			event.preventDefault();
 			$("#disband_map").attr("disabled", true);
 			$("#map_error").css("color", "red").hide();
-			doAuthorizedPostRequest("http://nationstatesplusplus.net/api/region/map/?region=" + getVisibleRegion() + "&disband=true", "", function(data) {
+			doAuthorizedPostRequest("https://nationstatesplusplus.net/api/region/map/?region=" + getVisibleRegion() + "&disband=true", "", function(data) {
 				$("#disband_map").attr("disabled", false);
 				$("#map_error").css("color", "green").html("Disbanded Map Successfully!").show();
 			}, function(error) {
@@ -148,10 +148,10 @@
 			$("#recruitment_form").append("<label for='client_key'>Client Key: </label><input class='text-input' placeholder='Client Key' name='client_key' type='text' style='width:400px'></input> <span title='A Client Key can be requested from a Getting Help Request. Once it has been requested, it may take up to 24 hours for the request to be filled, so be patient.' style='font-size:10px'><a href='/page=help?recruitment'>(What is this?)</a></span><br/>");
 			$("label[for='client_key']").css("margin-right", Math.max(0, (130 - $("label[for='client_key']").width())) + "px");
 			
-			$("#recruitment_form").append("<label for='tgid'>TGID: </label><input name='tgid' class='text-input' placeholder='Telegram Id' type='text' style='width:400px'></input> <span title='Send your recruitment telegram to \"tag:api\" to receive a tgid and secret key' style='font-size:10px'> <a href='http://www.nationstates.net/pages/api.html#telegrams'>(What is this?)</a></span><br/>");
+			$("#recruitment_form").append("<label for='tgid'>TGID: </label><input name='tgid' class='text-input' placeholder='Telegram Id' type='text' style='width:400px'></input> <span title='Send your recruitment telegram to \"tag:api\" to receive a tgid and secret key' style='font-size:10px'> <a href='" + nsProtocol() + "nationstates.net/pages/api.html#telegrams'>(What is this?)</a></span><br/>");
 			$("label[for='tgid']").css("margin-right", Math.max(0, (130 - $("label[for='tgid']").width())) + "px");
 			
-			$("#recruitment_form").append("<label for='secretKey'>Secret Key: </label><input class='text-input' placeholder='Telegram Secret Key' name='secretKey' type='text' style='width:400px'></input> <span title='Send your recruitment telegram to \"tag:api\" to receive a tgid and secret key' style='font-size:10px'> <a href='http://www.nationstates.net/pages/api.html#telegrams'>(What is this?)</a></span><br/>");
+			$("#recruitment_form").append("<label for='secretKey'>Secret Key: </label><input class='text-input' placeholder='Telegram Secret Key' name='secretKey' type='text' style='width:400px'></input> <span title='Send your recruitment telegram to \"tag:api\" to receive a tgid and secret key' style='font-size:10px'> <a href='" + nsProtocol() + "nationstates.net/pages/api.html#telegrams'>(What is this?)</a></span><br/>");
 			$("label[for='secretKey']").css("margin-right",  Math.max(0, (130 - $("label[for='secretKey']").width())) + "px");
 			
 			$("#recruitment_form").append("<div style='margin-bottom: -15px;'><label for='percent'>Percent: </label><input name='percent' type='range' min='1' value='100' max='100' style='width:426px; position: relative; top: 6px;'></input> <span style='font-size:10px;'><input style='min-width:26px; width:26px;' class='text-input' name='percent_input' type='text' max='100' min='1' size='2' value='100'> (Percent of requests allocated)</span></div><br/>");
@@ -214,7 +214,7 @@
 				if ($("#begin_recruitment").attr("data-id") != "" && $("#begin_recruitment").attr("data-id") != null) {
 					postData += "&id=" + $("#begin_recruitment").attr("data-id");
 				}
-				doAuthorizedPostRequest("http://nationstatesplusplus.net/api/region/recruitment/set?region=" + getVisibleRegion(), postData, function(data) {
+				doAuthorizedPostRequest("https://nationstatesplusplus.net/api/region/recruitment/set?region=" + getVisibleRegion(), postData, function(data) {
 					addRecruitmentForm();
 					fetchRecruitmentActions();
 				}, function() {
@@ -225,7 +225,7 @@
 		addRecruitmentForm();
 		
 		var fetchRecruitmentActions = function() {
-			doAuthorizedPostRequest("http://nationstatesplusplus.net/api/region/recruitment/get?region=" + getVisibleRegion(), "", function(data) {
+			doAuthorizedPostRequest("https://nationstatesplusplus.net/api/region/recruitment/get?region=" + getVisibleRegion(), "", function(data) {
 				var html = "";
 				for (var i = 0; i < data.length; i++) {
 					html += "<div id='recruitment_" + data[i].id + "'><div><b>Recruitment Type</b>: " + data[i].type.replaceAll("_", " ") + "</div>";
@@ -242,7 +242,7 @@
 					html += "<button class='button' name='cancel_recruitment' id='" + data[i].id + "'>Cancel Recruitment</button>";
 					html += "<button class='button' name='edit_recruitment' id='" + data[i].id + "'>Edit Recruitment</button>";
 					html += "<hr style='width: 55%; color:black; border: 1px solid black; margin-left: 0;'></hr></div>";
-					doAuthorizedPostRequest("http://nationstatesplusplus.net/api/region/recruitment/success?region=" + getVisibleRegion() + "&tgid=" + data[i].tgid, "", function(data) {
+					doAuthorizedPostRequest("https://nationstatesplusplus.net/api/region/recruitment/success?region=" + getVisibleRegion() + "&tgid=" + data[i].tgid, "", function(data) {
 						$("span[name='sent_tgs_" + data.tgid + "']").html(data.sent_telegrams);
 						var rate = Math.floor((data.successful_telegrams / (data.sent_telegrams + 1)) * 10000) / 100;
 						$("span[name='success_tgs_" + data.tgid + "']").html(data.successful_telegrams + " (" + rate + "%)");
@@ -251,14 +251,14 @@
 				$("#existing_recruitment").html(html);
 				$("button[name='cancel_recruitment']").on("click", function(event) {
 					event.preventDefault();
-					doAuthorizedPostRequest("http://nationstatesplusplus.net/api/region/recruitment/set?region=" + getVisibleRegion(), "id=" + $(this).attr("id") + "&cancel=1", function(data) {
+					doAuthorizedPostRequest("https://nationstatesplusplus.net/api/region/recruitment/set?region=" + getVisibleRegion(), "id=" + $(this).attr("id") + "&cancel=1", function(data) {
 						fetchRecruitmentActions();
 					});
 				});
 				$("button[name='edit_recruitment']").on("click", function(event) {
 					event.preventDefault();
 					var id = $(this).attr("id");
-					doAuthorizedPostRequest("http://nationstatesplusplus.net/api/region/recruitment/get?region=" + getVisibleRegion(), "", function(data) {
+					doAuthorizedPostRequest("https://nationstatesplusplus.net/api/region/recruitment/get?region=" + getVisibleRegion(), "", function(data) {
 						addRecruitmentForm();
 						for (var i = 0; i < data.length; i++) {
 							if (data[i].id == id) {

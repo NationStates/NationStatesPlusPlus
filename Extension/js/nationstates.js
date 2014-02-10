@@ -3,14 +3,14 @@
 		return;
 	}
 	if (window.location.href.indexOf("/page=ajax2/a=reports/") != -1) {
-		$(".rlink, .nlink").each(function() { $(this).attr("href", "http://www.nationstates.net/" + $(this).attr("href")); });
+		$(".rlink, .nlink").each(function() { $(this).attr("href", nsProtocol() + "nationstates.net/" + $(this).attr("href")); });
 		return;
 	}
 	if (getUserNation() == "") {
 		return;
 	}
 	var menu = $(".menu");
-	$("<li><a href='http://www.nationstates.net/page=activity/view=world/filter=all'>ACTIVITY</a></li>").insertAfter(menu.find("a[href='page=dossier']").parent());
+	$("<li><a href='" + nsProtocol() + "nationstates.net/page=activity/view=world/filter=all'>ACTIVITY</a></li>").insertAfter(menu.find("a[href='page=dossier']").parent());
 	checkPanelAlerts();
 	addWAProposals();
 	var userSettings = getSettings(true);
@@ -24,7 +24,7 @@
 		if (flag.match(/t[0-9]?.(jpg|png|gif)/).length > 0) {
 			flag = flag.substring(0, flag.length - 6) + flag.substring(flag.length - 4);
 		}
-		$("<a id='panel_flag' href='http://www.nationstates.net/nation=" + getUserNation() + "'><img src='" + flag + "' style='max-width: 192px; display: block; margin-left: auto; margin-right: auto; max-height: 400px;'></a>").insertBefore($("#createdby"));
+		$("<a id='panel_flag' href='" + nsProtocol() + "nationstates.net/nation=" + getUserNation() + "'><img src='" + flag + "' style='max-width: 192px; display: block; margin-left: auto; margin-right: auto; max-height: 400px;'></a>").insertBefore($("#createdby"));
 		$("#createdby").remove();
 		$(".STANDOUT:first").find("img").hide();
 		$("#panel").css("position", "fixed");
@@ -51,7 +51,7 @@
 	}
 
 	if ($(".menu").find("a[href='page=dilemmas']").html().match(/[0-9]+/) != null && getUserData().getValue("dismiss_all", false)) {
-		$.post("http://www.nationstates.net/page=dilemmas", "dismiss_all=1", function() { });
+		$.post(nsProtocol() + "nationstates.net/page=dilemmas", "dismiss_all=1", function() { });
 		updatePanelAlerts();
 	}
 
@@ -79,7 +79,7 @@
 	}
 
 	function updateProposals(start) {
-		$.get("http://www.nationstates.net/page=UN_proposal/council=0?start=" + start, function(data) {
+		$.get(nsProtocol() + "nationstates.net/page=UN_proposal/council=0?start=" + start, function(data) {
 			var totalProposals = 0;
 			$(data).find("table.shiny").find("td[colspan='3']:contains('ID: ')").find("a").each(function() {
 				var userData = getUserData();
@@ -123,7 +123,7 @@
 		}
 		if (getSettings().isEnabled("show_wa_proposals") && (delegateCache == null || delegateCache.wa_delegate)) {
 			if (delegateCache == null) {
-				$.get("http://www.nationstates.net/nation=" + getUserNation(), function(data) {
+				$.get(nsProtocol() + "nationstates.net/nation=" + getUserNation(), function(data) {
 					if ($(data).find(".wa_status:contains('WA Delegate')").length > 0) {
 						getUserData(true).setValue("wa_delegate", {wa_delegate: true, timestamp: Date.now()});
 					} else {
@@ -131,7 +131,8 @@
 					}
 				});
 			} else {
-				$("<li id='wa_props'><a id='wa_proposals' href='http://www.nationstates.net/page=UN_proposal/council=0'>WA PROPOSALS</a></li").insertAfter($(".menu").find("a[href='page=un']").parent());
+				$("<li id='wa_props'><a id='wa_proposals' href='" + nsProtocol() + "nationstates.net/page=UN_proposal/council=0'>WA PROPOSALS</a></li").insertAfter($(".menu").find("a[href='page=un']").parent());
+				updateProposals(0);
 				$(window).on("page/update", function() {
 					updateProposals(0);
 					

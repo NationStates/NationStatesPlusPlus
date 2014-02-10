@@ -208,6 +208,10 @@
 	$("textarea, input[type='text'], td input[type='password'], input[name='region_name']").addClass("text-input");
 })();
 
+function nsProtocol() {
+	return ('https:' == document.location.protocol ? 'https://www.' : 'http://www.');
+}
+
 function isDarkTheme() {
 	return $("link[href^='/ns.dark']").length > 0;
 }
@@ -269,11 +273,11 @@ function getSettings(autoupdate) {
 
 	api.update = function(callback) {
 		var api = this;
-		$.get("http://nationstatesplusplus.net/api/nation/latest_update/?name=" + getUserNation(), function(data, textStatus, xhr) {
+		$.get("https://nationstatesplusplus.net/api/nation/latest_update/?name=" + getUserNation(), function(data, textStatus, xhr) {
 			data = data || {}
 			if (xhr.status != 204 && data.timestamp > api.last_update) {
 				api.last_update = data.timestamp;
-				$.get("http://nationstatesplusplus.net/api/nation/settings/?name=" + getUserNation(), function(data, textStatus, xhr) {
+				$.get("https://nationstatesplusplus.net/api/nation/settings/?name=" + getUserNation(), function(data, textStatus, xhr) {
 					api.settings = data;
 					api.save();
 					if (typeof callback != "undefined") callback(data, textStatus, xhr);
@@ -298,7 +302,7 @@ function getSettings(autoupdate) {
 	api.pushUpdate = function(callback) {
 		this.save();
 		var api = this;
-		doAuthorizedPostRequest("http://nationstatesplusplus.net/api/nation/settings/", "settings=" + encodeURIComponent(JSON.stringify(this.settings)), function(data, textStatus, xhr) {
+		doAuthorizedPostRequest("https://nationstatesplusplus.net/api/nation/settings/", "settings=" + encodeURIComponent(JSON.stringify(this.settings)), function(data, textStatus, xhr) {
 			api.last_update = Date.now();
 			if (typeof callback != "undefined") callback(data, textStatus, xhr);
 		});
@@ -359,11 +363,11 @@ function getUserData(autoupdate) {
 
 	api.update = function(callback) {
 		var api = this;
-		$.get("http://nationstatesplusplus.net/api/nation/data/?name=" + getUserNation(), function(data, textStatus, xhr) {
+		$.get("https://nationstatesplusplus.net/api/nation/data/?name=" + getUserNation(), function(data, textStatus, xhr) {
 			data = data || {}
 			if (xhr.status != 204 && data.timestamp > api.last_update) {
 				api.last_update = data.timestamp;
-				doAuthorizedPostRequest("http://nationstatesplusplus.net/api/nation/data/get/", "", function(data) {
+				doAuthorizedPostRequest("https://nationstatesplusplus.net/api/nation/data/get/", "", function(data) {
 					api.userData = data;
 					api.save();
 					if (typeof callback != "undefined") callback();
@@ -386,7 +390,7 @@ function getUserData(autoupdate) {
 	api.pushUpdate = function(callback) {
 		this.last_update = Date.now();
 		this.save();
-		doAuthorizedPostRequest("http://nationstatesplusplus.net/api/nation/data/set/", "data=" + encodeURIComponent(JSON.stringify(this.userData)), callback);
+		doAuthorizedPostRequest("https://nationstatesplusplus.net/api/nation/data/set/", "data=" + encodeURIComponent(JSON.stringify(this.userData)), callback);
 	}
 
 	return api;
@@ -448,7 +452,7 @@ function showPuppets() {
 		if (name.length > 0) {
 			var cache = getPuppetCache(name);
 			var region = cache.region;
-			html += "<li><div class='puppet-form-inner' style='margin-bottom: -15px;'><p style='margin-top: 3px;'><a class='puppet-name' id='" + name + "' href='/nation=" + name + "' style='color: white;'>" + name.split("_").join(" ").toTitleCase() + "</a>" + (cache.wa == "true" ? "<span style='color:green'> (WA) </span>" : "") + "</p><ul style='display:none;'><li id='puppet-region-" + name + "'>(<a style='color: white;' href='/region=" + region + "'>" + region.split("_").join(" ").toTitleCase() + "</a>)</li></ul></div><img name='" + name + "' class='puppet-form-remove' src='http://nationstatesplusplus.net/nationstates/static/remove.png'></img></li>";
+			html += "<li><div class='puppet-form-inner' style='margin-bottom: -15px;'><p style='margin-top: 3px;'><a class='puppet-name' id='" + name + "' href='/nation=" + name + "' style='color: white;'>" + name.split("_").join(" ").toTitleCase() + "</a>" + (cache.wa == "true" ? "<span style='color:green'> (WA) </span>" : "") + "</p><ul style='display:none;'><li id='puppet-region-" + name + "'>(<a style='color: white;' href='/region=" + region + "'>" + region.split("_").join(" ").toTitleCase() + "</a>)</li></ul></div><img name='" + name + "' class='puppet-form-remove' src='https://nationstatesplusplus.net/nationstates/static/remove.png'></img></li>";
 			numPuppets++;
 		}
 	}
@@ -458,7 +462,7 @@ function showPuppets() {
 	html += "</ul>";
 	html += "<p style='margin-top: -20px; margin-bottom: 1px;'><input class='text-input' type='text' id='puppet_nation' size='18' placeholder='Nation'></p>";
 	html += "<p style='margin-top: 1px;'><input class='text-input' type='password' id='puppet_password' size='18' placeholder='Password'></p>";
-	html += "<div id='puppet_invalid_login' style='display:none;'><p>Invalid Login</p></div><p class='puppet_creator'><a style='color:white;' href='http://www.nationstates.net/page=blank?puppet_creator'>Create New Puppet Nations</a></p>";
+	html += "<div id='puppet_invalid_login' style='display:none;'><p>Invalid Login</p></div><p class='puppet_creator'><a style='color:white;' href='" + nsProtocol() + "nationstates.net/page=blank?puppet_creator'>Create New Puppet Nations</a></p>";
 
 	$("#puppet_setting_form").html(html);
 	
@@ -509,7 +513,7 @@ function getPuppetCache(name) {
 
 function switchToPuppet(name) {
 	localStorage.removeItem("puppet-" + name + "-region");
-	$.post("http://www.nationstates.net/", "logging_in=1&nation=" + encodeURIComponent(name) + "&password=" + encodeURIComponent(localStorage.getItem("puppet-" + name)) + (getSettings().isEnabled("autologin-puppets", false) ?"&autologin=yes" : ""), function(data) {
+	$.post(nsProtocol() + "nationstates.net/", "logging_in=1&nation=" + encodeURIComponent(name) + "&password=" + encodeURIComponent(localStorage.getItem("puppet-" + name)) + (getSettings().isEnabled("autologin-puppets", false) ?"&autologin=yes" : ""), function(data) {
 		if (data.contains("Would you like to restore it?")) {
 			$("#content").html($(data).find("#content").html());
 		} else {
@@ -574,7 +578,7 @@ function addPuppetNation(nation, password) {
 }
 
 function getNationStatesAuth(callback) {
-	$.get("http://www.nationstates.net/page=verify_login", function(data) {
+	$.get(nsProtocol() + "nationstates.net/page=verify_login", function(data) {
 		//Prevent image requests by replacing src attribute with data-src
 		var authCode = $(data.replace(/[ ]src=/gim," data-src=")).find("#proof_of_login_checksum").html();
 		//Regenerate localid if nessecary
@@ -591,7 +595,7 @@ function doAuthorizedPostRequestFor(nation, url, postData, success, failure) {
 	var authToken = localStorage.getItem(nation + "-auth-token");
 	//Check out NS++ auth token to see if it good enough first, avoid making a page=verify request
 	if (authToken != null) {
-		$.post("http://nationstatesplusplus.net/api/nation/auth/", "nation=" + nation + "&auth-token=" + encodeURIComponent(authToken), function(data, textStatus, jqXHR) {
+		$.post("https://nationstatesplusplus.net/api/nation/auth/", "nation=" + nation + "&auth-token=" + encodeURIComponent(authToken), function(data, textStatus, jqXHR) {
 			console.log("Auth token up to date");
 			localStorage.setItem(nation + "-auth-token", data.code);
 			doAuthorizedPostRequestInternal(nation, url, postData, success, failure);
@@ -604,7 +608,7 @@ function doAuthorizedPostRequestFor(nation, url, postData, success, failure) {
 	} else {
 		getNationStatesAuth(function(authCode) {
 			console.log("Getting auth token");
-			$.post("http://nationstatesplusplus.net/api/nation/auth/", "nation=" + nation + "&auth=" + encodeURIComponent(authCode), function(data, textStatus, jqXHR) {
+			$.post("https://nationstatesplusplus.net/api/nation/auth/", "nation=" + nation + "&auth=" + encodeURIComponent(authCode), function(data, textStatus, jqXHR) {
 				localStorage.setItem(nation + "-auth-token", data.code);
 			}).always(function() {
 				doAuthorizedPostRequestInternal(nation, url, postData, success, failure);

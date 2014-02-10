@@ -43,7 +43,7 @@
 		});
 		
 		if (getVisibleDilemma() == 230) {
-			$("<div style='height: 250px; width: 100%; background-image: linear-gradient(-45deg, rgba(255, 255, 0, 1) 25%, transparent 25%, transparent 50%, rgba(255, 255, 0, 1) 50%, rgba(255, 255, 0, 1) 75%, transparent 75%, transparent); background-color: #F00; background-size: 50px 50px;'><div style='height: 1%;'></div><div id='warning-text-container' style='width: 98%; height: 90%; background: white; margin: 1%;'><img src='http://nationstatesplusplus.net/nationstates/static/trap.png' style='height: 223px; border: 1px solid black;'/><span id='warning-text' style='position:absolute; color:black; margin-left: 4px;'></span></div></div>").insertBefore("h5:first");
+			$("<div style='height: 250px; width: 100%; background-image: linear-gradient(-45deg, rgba(255, 255, 0, 1) 25%, transparent 25%, transparent 50%, rgba(255, 255, 0, 1) 50%, rgba(255, 255, 0, 1) 75%, transparent 75%, transparent); background-color: #F00; background-size: 50px 50px;'><div style='height: 1%;'></div><div id='warning-text-container' style='width: 98%; height: 90%; background: white; margin: 1%;'><img src='https://nationstatesplusplus.net/nationstates/static/trap.png' style='height: 223px; border: 1px solid black;'/><span id='warning-text' style='position:absolute; color:black; margin-left: 4px;'></span></div></div>").insertBefore("h5:first");
 			updateSize = function() {
 				$("#warning-text").css("height", $("#warning-text-container").height() + "px").css("width", ($("#warning-text-container").width() - 175) + "px");
 				$("#warning-text").removeAttr("boxfitted");
@@ -79,7 +79,6 @@
 		$(".chosendiloption").attr("style", "background-color: #F6FFF6 !important;");
 		$('body').on('click', 'button', function(event) {
 			event.preventDefault();
-			console.log("Selecting issue");
 			var choice = $(this).prop('name') == "choice--1" ? -1 : parseInt($(this).prop('name').split("-")[1]);
 			$("button").attr("disabled", true);
 			selectOption(choice, getVisibleDilemma());
@@ -136,11 +135,20 @@ function selectOption(choice, issueNumber) {
 		}
 		issues[issueNumber].push({timestamp: now, choice: choice});
 		nationData.pushUpdate(function() { updateNSOption(choice) });
+		choosingOption = true;
+		$(window).on('beforeunload', function() {
+			if (choosingOption) {
+				return 'Your Issue Selection Has Not Yet Been Saved!';
+			}
+		});
 	});
 }
 
+var choosingOption = false;
+
 function updateNSOption(choice) {
 	$.post(window.location.href, "choice-" + choice + "=1", function() {
+		choosingOption = false;
 		$("button").removeAttr("disabled");
 		$(".diloptions li, .dismiss_option").attr("style", "");
 		if (choice != -1) {

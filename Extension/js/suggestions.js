@@ -11,7 +11,7 @@
 function showSuggestions() {
 	if ($("#nationstates_suggestions").length == 0) {
 		var forums = $("#wrap").length == 1;
-		$.get("http://nationstatesplusplus.net/nationstates/v1_9/suggestions.html", function(data) {
+		$.get("https://nationstatesplusplus.net/nationstates/v1_9/suggestions.html", function(data) {
 			if (forums) {
 				var html = $("#wrap").html();
 				var classes = $("#wrap").attr('class');

@@ -3,9 +3,9 @@
 		return;
 	}
 	var menu = $(".menu");
-	$("<li id='regional_newspaper' style='display:none;'><a id='rnews' style='display: inline;' href='http://www.nationstates.net/page=blank/?regional_news=" + getUserRegion() + "'>REGIONAL NEWS</a></li>").insertAfter($("#wa_props").length > 0 ? $("#wa_props") : menu.find("a[href='page=un']").parent());
-	$("<li id='gameplay_newspaper'><a id='gnews' style='display: inline;' href='http://www.nationstates.net/page=blank/?gameplay_news'>GAMEPLAY NEWS</a></li>").insertAfter($("#regional_newspaper"));
-	$("<li id='roleplay_newspaper'><a id='rpnews' style='display: inline;' href='http://www.nationstates.net/page=blank/?roleplay_news'>ROLEPLAY NEWS</a></li>").insertAfter($("#gameplay_newspaper"));
+	$("<li id='regional_newspaper' style='display:none;'><a id='rnews' style='display: inline;' href='" + nsProtocol() + "nationstates.net/page=blank/?regional_news=" + getUserRegion() + "'>REGIONAL NEWS</a></li>").insertAfter($("#wa_props").length > 0 ? $("#wa_props") : menu.find("a[href='page=un']").parent());
+	$("<li id='gameplay_newspaper'><a id='gnews' style='display: inline;' href='" + nsProtocol() + "nationstates.net/page=blank/?gameplay_news'>GAMEPLAY NEWS</a></li>").insertAfter($("#regional_newspaper"));
+	$("<li id='roleplay_newspaper'><a id='rpnews' style='display: inline;' href='" + nsProtocol() + "nationstates.net/page=blank/?roleplay_news'>ROLEPLAY NEWS</a></li>").insertAfter($("#gameplay_newspaper"));
 	var settings = getSettings();
 	if (!settings.isEnabled("show_gameplay_news")) {
 		$("#gameplay_newspaper").hide();
@@ -14,7 +14,7 @@
 		$("#roleplay_newspaper").hide();
 	}
 	if (getUserRegion() != "") {
-		$.get("http://nationstatesplusplus.net/api/newspaper/region/?region=" + getUserRegion(), function(json) {
+		$.get("https://nationstatesplusplus.net/api/newspaper/region/?region=" + getUserRegion(), function(json) {
 			if (getSettings().isEnabled("show_regional_news")) {
 				$("#regional_newspaper").show();
 			}
@@ -23,7 +23,7 @@
 	}
 
 	if (window.location.href.indexOf("regional_news") != -1) {
-		$.get("http://nationstatesplusplus.net/api/newspaper/region/?region=" + $.QueryString["regional_news"], function(json) {
+		$.get("https://nationstatesplusplus.net/api/newspaper/region/?region=" + $.QueryString["regional_news"], function(json) {
 			openNationStatesNews(json.newspaper_id);
 		}).fail(function() {
 			$("#content").html("<div id='news_header' style='text-align: center;'><h1>Newspaper</h1><hr></div><div id='inner-content' style='text-align:center'>No regional newspaper exists for " + $.QueryString["regional_news"].replaceAll("_", " ").toTitleCase() + "! Contact their delegate or founder to establish one.</div>");
@@ -49,7 +49,7 @@
 	function viewNewspaperArticle(newspaper, articleId) {
 		window.document.title = "NationStates | Newspaper"
 		$("#content").html("<div id='news_header' style='text-align: center;'><h1 id='newspaper_name'></h1><div id='manage_newspaper'></div><i id='newspaper_byline'></i><hr></div><div id='inner-content'></div>");
-		$.get("http://nationstatesplusplus.net/api/newspaper/lookup/?id=" + newspaper + "&visible=2&lookupArticleId=" + articleId, function(json) {
+		$.get("https://nationstatesplusplus.net/api/newspaper/lookup/?id=" + newspaper + "&visible=2&lookupArticleId=" + articleId, function(json) {
 			var articles = json.articles;
 			var html = "";
 			$("#newspaper_name").html("<a href='page=blank?lookup_newspaper=" + newspaper + "'>" + parseBBCodes(json.newspaper) + "</a>");
@@ -72,7 +72,7 @@
 	function viewNewspaperArchive(newspaper) {
 		window.document.title = "NationStates | Newspaper"
 		$("#content").html("<div id='news_header' style='text-align: center;'><h1>Newspaper Article Archive</h1><hr></div><div id='inner-content'></div>");
-		$.get("http://nationstatesplusplus.net/api/newspaper/lookup/?id=" + newspaper + "&visible=2&hideBody=true", function(json) {
+		$.get("https://nationstatesplusplus.net/api/newspaper/lookup/?id=" + newspaper + "&visible=2&hideBody=true", function(json) {
 			var articles = json.articles;
 			var html = "";
 			for (var i = 0; i < articles.length; i++) {
@@ -86,7 +86,7 @@
 	
 	function updateNewspaperNags() {
 		var checkUpdates = function(id, selector) {
-			$.get("http://nationstatesplusplus.net/api/newspaper/latest/?id=" + id, function(json) {
+			$.get("https://nationstatesplusplus.net/api/newspaper/latest/?id=" + id, function(json) {
 				var lastRead = getSettings().getValue("newspapers", {})[id];
 				var menu = $("#" + selector);
 				if (lastRead == null || json.timestamp > parseInt(lastRead)) {
@@ -116,8 +116,8 @@
 	function viewNewspaperArticles(newspaper) {
 		window.document.title = "NationStates | Newspaper"
 		$("#content").html("<div id='news_header' style='text-align: center;'><h1>Newspaper Article Database</h1><hr></div><div id='inner-content'></div>");
-		$.get("http://nationstatesplusplus.net/api/newspaper/editor/?newspaper=" + newspaper + "&nation=" + getUserNation(), function(data, textStatus, jqXHR) {
-			$.get("http://nationstatesplusplus.net/api/newspaper/lookup/?id=" + newspaper + (window.location.href.contains("pending=1") ? "&visible=3" : "&visible=-1") + "&hideBody=true", function(json) {
+		$.get("https://nationstatesplusplus.net/api/newspaper/editor/?newspaper=" + newspaper + "&nation=" + getUserNation(), function(data, textStatus, jqXHR) {
+			$.get("https://nationstatesplusplus.net/api/newspaper/lookup/?id=" + newspaper + (window.location.href.contains("pending=1") ? "&visible=3" : "&visible=-1") + "&hideBody=true", function(json) {
 				var articles = json.articles;
 				var html = "";
 				for (var i = 0; i < articles.length; i++) {
@@ -135,12 +135,12 @@
 		window.document.title = "NationStates | Newspaper"
 		$("#content").html("<div id='news_header' style='text-align: center;'><h1>Newspaper Administration</h1><hr></div><div id='inner-content'></div>");
 		console.log("fetching newspaper contents...");
-		$.get("http://nationstatesplusplus.net/nationstates/v2_3/newspaper_administration.html", function(html) {
+		$.get("https://nationstatesplusplus.net/nationstates/v2_3/newspaper_administration.html", function(html) {
 			console.log("fetched newspaper contents:" + html);
 			//$("#inner-content").hide();
 			$("#inner-content").html(html);
 			if (isDarkTheme()) $("select").css("color", "white");
-			$.get("http://nationstatesplusplus.net/api/newspaper/details/?id=" + newspaper, function(data) {
+			$.get("https://nationstatesplusplus.net/api/newspaper/details/?id=" + newspaper, function(data) {
 				$("#newspaper_name").val(data.newspaper);
 				$("#newspaper_name").attr("newspaper_id", newspaper);
 				$("#newspaper_byline").val(data.byline);
@@ -177,7 +177,7 @@
 							if (request.term.length < 3) {
 								response(new Array());
 							} else {
-								$.get("http://nationstatesplusplus.net/api/autocomplete/nation/?start=" + request.term, function(nations) {
+								$.get("https://nationstatesplusplus.net/api/autocomplete/nation/?start=" + request.term, function(nations) {
 									response(nations);
 								});
 							}
@@ -195,7 +195,7 @@
 							return;
 						}
 						$("#editor_error").hide();
-						$.get("http://nationstatesplusplus.net/api/nation/title/?name=" + name, function(json) {
+						$.get("https://nationstatesplusplus.net/api/nation/title/?name=" + name, function(json) {
 							if (json[name] != null && $("#newspaper_editors").find("option[name='" + name + "']").length == 0) {
 								var title = json[name]
 								$("#newspaper_editors").append("<option value='" + $("#newspaper_editors").find("option").length + "' name='" + name + "'>" + title + "</option>");
@@ -220,7 +220,7 @@
 					postData += "&byline=" + encodeURIComponent($("#newspaper_byline").val());
 					postData += "&columns=" + $("#newspaper_columns").val();
 					
-					doAuthorizedPostRequest("http://nationstatesplusplus.net/api/newspaper/administrate/?newspaper=" + $("#newspaper_name").attr("newspaper_id"), postData, function(data, textStatus, jqXHR) {
+					doAuthorizedPostRequest("https://nationstatesplusplus.net/api/newspaper/administrate/?newspaper=" + $("#newspaper_name").attr("newspaper_id"), postData, function(data, textStatus, jqXHR) {
 						var postData = "";
 						if (typeof $("#newspaper_editors").attr("remove") != "undefined") {
 							postData += "&remove=" + $("#newspaper_editors").attr("remove");
@@ -229,11 +229,11 @@
 							postData += "&add=" + $("#newspaper_editors").attr("add");
 						}
 						if (postData.length > 0) {
-							doAuthorizedPostRequest("http://nationstatesplusplus.net/api/newspaper/editors/?newspaper=" + $("#newspaper_name").attr("newspaper_id"), "editors=1" + postData, function(json) {
-								window.location.href = "http://www.nationstates.net/page=blank/?lookup_newspaper=" + $("#newspaper_name").attr("newspaper_id");
+							doAuthorizedPostRequest("https://nationstatesplusplus.net/api/newspaper/editors/?newspaper=" + $("#newspaper_name").attr("newspaper_id"), "editors=1" + postData, function(json) {
+								window.location.href = nsProtocol() + "nationstates.net/page=blank/?lookup_newspaper=" + $("#newspaper_name").attr("newspaper_id");
 							});
 						} else {
-							window.location.href = "http://www.nationstates.net/page=blank/?lookup_newspaper=" + $("#newspaper_name").attr("newspaper_id");
+							window.location.href = nsProtocol() + "nationstates.net/page=blank/?lookup_newspaper=" + $("#newspaper_name").attr("newspaper_id");
 						}
 					}, function(data) {
 						if (data.status == 401) {
@@ -245,7 +245,7 @@
 				});
 				$("#cancel_changes").on("click", function(event) {
 					event.preventDefault();
-					window.location.href = "http://www.nationstates.net/page=blank/?lookup_newspaper=" + $("#newspaper_name").attr("newspaper_id");
+					window.location.href = nsProtocol() + "nationstates.net/page=blank/?lookup_newspaper=" + $("#newspaper_name").attr("newspaper_id");
 				});
 				$("#inner-content").show();
 			});
@@ -255,7 +255,7 @@
 	function openArticleEditor(newspaper, article_id) {
 		window.document.title = "NationStates | Article Editor"
 		$("#content").html("<div id='news_header' style='text-align: center;'><h1>Newspaper Article Editor</h1><hr></div><div id='inner-content'></div>");
-		$.get("http://nationstatesplusplus.net/nationstates/v2_3/newspaper_editor.html", function(html) {
+		$.get("https://nationstatesplusplus.net/nationstates/v2_3/newspaper_editor.html", function(html) {
 			$("#inner-content").html(html);
 			var submitArticle = function(deleteArticle) {
 				var postData = "title=" + encodeURIComponent($("#article_title").val());
@@ -269,8 +269,8 @@
 				} else {
 					postData += "&visible=" + ($("#article_visible-2").prop("checked") ? "2" : ($("#article_visible-1").prop("checked") ? "1" : "0"));
 				}
-				doAuthorizedPostRequest("http://nationstatesplusplus.net/api/newspaper/submit/?newspaper=" + newspaper + "&articleId=" + article_id, postData, function(json) {
-					window.location.href = "http://www.nationstates.net/page=blank/?lookup_newspaper=" + newspaper;
+				doAuthorizedPostRequest("https://nationstatesplusplus.net/api/newspaper/submit/?newspaper=" + newspaper + "&articleId=" + article_id, postData, function(json) {
+					window.location.href = nsProtocol() + "nationstates.net/page=blank/?lookup_newspaper=" + newspaper;
 				}, function(data, textStatus, jqXHR) {
 					$(".error, .info").remove();
 					$("<p class='error'>" + (data.status == 401 ? "You do not have permission" : "Error Submitting Article") + "</p>").insertAfter($("#news_header"));
@@ -288,7 +288,7 @@
 			});
 			$("#cancel_article").on("click", function(event) {
 				event.preventDefault();
-				window.location.href = "http://www.nationstates.net/page=blank/?gameplay_news";
+				window.location.href = nsProtocol() + "nationstates.net/page=blank/?gameplay_news";
 			});
 			$("#delete_article").on("click", function(event) {
 				event.preventDefault();
@@ -307,7 +307,7 @@
 			if (article_id > -1) {
 				$("#minor-edit-group").show();
 				$("#minor_edit-0").prop("checked", true);
-				$.get("http://nationstatesplusplus.net/api/newspaper/lookup/?id=" + newspaper + "&visible=-1&lookupArticleId=" + article_id, function(json) {
+				$.get("https://nationstatesplusplus.net/api/newspaper/lookup/?id=" + newspaper + "&visible=-1&lookupArticleId=" + article_id, function(json) {
 					for (var i = 0; i < json.articles.length; i++) {
 						var article = json.articles[i];
 						if (article.article_id == article_id) {
@@ -339,17 +339,17 @@
 		settings.getValue("newspapers", {})[id] = Date.now();
 		settings.pushUpdate();
 		$("#ns_news_nag").remove();
-		$("#content").html("<div id='news_header' style='text-align: center;'><h1 id='newspaper_name'></h1><div id='manage_newspaper'><p class='newspaper_controls'>Newspaper Controls</p><a class='button' style='font-weight: bold;' href='page=blank/?manage_newspaper=" + id + "'>Manage Newspaper</a><a class='button' style='font-weight: bold;' href='page=blank/?article_editor=" + id + "&article=-1'>Submit Article</a><a class='button pending_articles' style='font-weight: bold; display:none; background:red;' href='page=blank/?view_articles=" + id + "&pending=1'>View Pending Articles</a><a class='button' style='font-weight: bold;' href='page=blank/?view_articles=" + id + "'>View All Articles</a></div><div id='view_newspaper'><p class='newspaper_controls'>Newspaper Database</p><a class='button' style='font-weight: bold;' href='page=blank/?archived_articles=" + id + "'>View Archived Articles</a><a class='button' style='font-weight: bold;' href='page=blank/?article_editor=" + id + "&article=-1&volunteer=1'>Submit Article</a></div><i id='newspaper_byline'></i><hr></div><div id='inner-content'><iframe id='article-content' seamless='seamless' frameborder='no' scrolling='no' src='http://nationstatesplusplus.net/newspaper?id=" + id + "&embed=true" + (isDarkTheme() ? "&dark=true" : "") + "' style='width: 100%;height: 1000px;'></iframe></div>");
+		$("#content").html("<div id='news_header' style='text-align: center;'><h1 id='newspaper_name'></h1><div id='manage_newspaper'><p class='newspaper_controls'>Newspaper Controls</p><a class='button' style='font-weight: bold;' href='page=blank/?manage_newspaper=" + id + "'>Manage Newspaper</a><a class='button' style='font-weight: bold;' href='page=blank/?article_editor=" + id + "&article=-1'>Submit Article</a><a class='button pending_articles' style='font-weight: bold; display:none; background:red;' href='page=blank/?view_articles=" + id + "&pending=1'>View Pending Articles</a><a class='button' style='font-weight: bold;' href='page=blank/?view_articles=" + id + "'>View All Articles</a></div><div id='view_newspaper'><p class='newspaper_controls'>Newspaper Database</p><a class='button' style='font-weight: bold;' href='page=blank/?archived_articles=" + id + "'>View Archived Articles</a><a class='button' style='font-weight: bold;' href='page=blank/?article_editor=" + id + "&article=-1&volunteer=1'>Submit Article</a></div><i id='newspaper_byline'></i><hr></div><div id='inner-content'><iframe id='article-content' seamless='seamless' frameborder='no' scrolling='no' src='https://nationstatesplusplus.net/newspaper?id=" + id + "&embed=true" + (isDarkTheme() ? "&dark=true" : "") + "' style='width: 100%;height: 1000px;'></iframe></div>");
 		loadingAnimation();
 		window.document.title = "NationStates | Newspaper"
 		//$(window).unbind("scroll");
-		$.get("http://nationstatesplusplus.net/api/newspaper/lookup/?id=" + id, function(json) {
-			$.get("http://nationstatesplusplus.net/api/newspaper/editor/?newspaper=" + id + "&nation=" + getUserNation(), function(data, textStatus, jqXHR) {
+		$.get("https://nationstatesplusplus.net/api/newspaper/lookup/?id=" + id, function(json) {
+			$.get("https://nationstatesplusplus.net/api/newspaper/editor/?newspaper=" + id + "&nation=" + getUserNation(), function(data, textStatus, jqXHR) {
 				$(".edit_article").show();
 				$("#manage_newspaper").show();
 				//This just prevents GP and RP news editors from approving articles...sick of their sloppy approvals
 				if (getUserNation() == "shadow_afforess" || id > 1) {
-					$.get("http://nationstatesplusplus.net/api/newspaper/lookup/?id=" + id + "&hideBody=true&visible=3", function(json) {
+					$.get("https://nationstatesplusplus.net/api/newspaper/lookup/?id=" + id + "&hideBody=true&visible=3", function(json) {
 						if (json.articles.length > 0) {
 							$("a.pending_articles").html("Pending Articles (" + json.articles.length + ")").show();
 						}
@@ -359,7 +359,7 @@
 				$("#view_newspaper").show();
 			});
 			window.document.title = json.newspaper;
-			$("#newspaper_name").html("<a href='http://nationstatesplusplus.net/newspaper?id=" + id + "'>" + parseBBCodes(json.newspaper) + "</a>");
+			$("#newspaper_name").html("<a href='https://nationstatesplusplus.net/newspaper?id=" + id + "'>" + parseBBCodes(json.newspaper) + "</a>");
 			$("#newspaper_byline").html(parseBBCodes(json.byline));
 			window.addEventListener('message', receiveMessage, false);
 			function receiveMessage(event) {

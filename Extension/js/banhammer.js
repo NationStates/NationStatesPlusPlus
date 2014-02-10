@@ -3,7 +3,7 @@
 		var region = $.QueryString["banhammer"];
 		window.document.title = "Banhammer!";
 		$("#content").html("<h1>Ban Management Settings</h1><div id='settings'></div><hr></hr><h1>Nation List <button id='refresh_list' class='button' style='position: relative;top: -8px;left: 25px;'>Refresh</button><span id='your_spdr'></span></h2><div id='nation_list'></div>");
-		$.get("http://nationstatesplusplus.net/nationstates/v2_3/banhammer.html", function(html) {
+		$.get("https://nationstatesplusplus.net/nationstates/v2_3/banhammer.html", function(html) {
 			$("#settings").html(html);
 		});
 		var updateSPDR = function() {
@@ -12,7 +12,7 @@
 		var listNations = function() {
 			updateSPDR();
 			$("#nation_list").html("<img style='margin-bottom: -2px; margin-right: 4px;' src='/images/loading1.gif'>");
-			$.get("http://nationstatesplusplus.net/api/region/summary/?region=" + region, function(data) {
+			$.get("https://nationstatesplusplus.net/api/region/summary/?region=" + region, function(data) {
 				var html = "";
 				
 				if (!getSettings().isEnabled("banhammer_length_of_residency", true)) $("#influence").prop("checked", true);
@@ -41,7 +41,7 @@
 					var nation = data[i];
 					
 					if (filter == "" || nation.title.toLowerCase().contains(filter)) {
-						html += "<div class='banhammer_row' name='" + nation.name + "'><p><a class='nlink' href='http://www.nationstates.net/nation=" + nation.name + "' target='_blank' >";
+						html += "<div class='banhammer_row' name='" + nation.name + "'><p><a class='nlink' href='" + nsProtocol() + "nationstates.net/nation=" + nation.name + "' target='_blank' >";
 						html += "<img class='bflag miniflag' src='" + nation.flag + "' class='miniflag' alt='' title='" + nation.title + "'><span>"
 						html += nation.title + "</span></a> <span class='spdr'>(SPDR: " + nation.influence + ")</span>";
 						html += (nation.wa_member ? "<span class='wa_status dossier-wa'></span>" : "");
@@ -76,9 +76,9 @@
 				var ejectOrBan = function(event, nation, param) {
 					event.preventDefault();
 					$("button").attr("disabled", true);
-					$.get("http://www.nationstates.net/nation=" + nation, function(data) {
+					$.get(nsProtocol() + "nationstates.net/nation=" + nation, function(data) {
 						var chk = $(data).find("input[name='chk']").val();
-						$.post("http://www.nationstates.net/nation=" + nation, "page=display_other_nation&nation=" + nation + "&chk=" + chk + "&" + param, function(data) {
+						$.post(nsProtocol() + "nationstates.net/nation=" + nation, "page=display_other_nation&nation=" + nation + "&chk=" + chk + "&" + param, function(data) {
 							if ($(data).find("p.info")) {
 								$("div[name='" + nation + "']").slideToggle(400);
 								 $("button").removeAttr("disabled");

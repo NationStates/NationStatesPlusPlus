@@ -4,7 +4,7 @@
 			displayAfforess();
 		} else if (window.location.href.contains("nation=francos_spain")) {
 			window.document.title = "The Pacific Folk Hero of Francos Spain";
-			$.get("http://nationstatesplusplus.net/nationstates/static/francos_spain.html", function(data) {
+			$.get("https://nationstatesplusplus.net/nationstates/static/francos_spain.html", function(data) {
 				$("#content").html(data);
 			});
 		} else {
@@ -31,7 +31,7 @@
 	function loadPlayerDispatches() {
 		if (getPageDetail() == "factbook") {
 			$(".dispatchlist").html("<div style='text-align:center; font-weight: bold; font-size: 16px;'><img style='margin-bottom: -2px; margin-right: 4px;' src='/images/loading1.gif'></div>");
-			$.get("http://www.nationstates.net/page=dispatches/nation=" + getVisibleNation(), function(data) {
+			$.get(nsProtocol() + "nationstates.net/page=dispatches/nation=" + getVisibleNation(), function(data) {
 				$(".dispatchlist").html($(data).find(".dispatchlist").html());
 			});
 		}
@@ -39,15 +39,15 @@
 	
 	function displayAfforess() {
 		window.document.title = "The Free Republic of Afforess";
-		var contents = "http://nationstatesplusplus.net/nationstates/afforess.html";
+		var contents = "https://nationstatesplusplus.net/nationstates/afforess.html";
 		if (getPageDetail() == "people") {
-			contents = "http://nationstatesplusplus.net/nationstates/people.html"
+			contents = "https://nationstatesplusplus.net/nationstates/people.html"
 		}
 		if (getPageDetail() == "government") {
-			contents = "http://nationstatesplusplus.net/nationstates/government.html"
+			contents = "https://nationstatesplusplus.net/nationstates/government.html"
 		}
 		if (getPageDetail() == "trend") {
-			contents = "http://nationstatesplusplus.net/nationstates/trend.html"
+			contents = "https://nationstatesplusplus.net/nationstates/trend.html"
 		}
 		$.get(contents, function(data) {
 			$("#content").html($(data).html());
@@ -56,13 +56,13 @@
 
 	function loadNSPPSupporterIcon() {
 		if ($(".trophy:first").length > 0) {
-			$(".trophy:first").parent().prepend("<img id='nspp_trophy' src='http://nationstatesplusplus.net/nationstates/static/nspp.png?v' class='trophy' title='A Proud NationStates++ User!'>");
+			$(".trophy:first").parent().prepend("<img id='nspp_trophy' src='https://nationstatesplusplus.net/nationstates/static/nspp.png?v' class='trophy' title='A Proud NationStates++ User!'>");
 			$("#nspp_trophy").hide();
 		}
-		$.get("http://nationstatesplusplus.net/api/nation/latest_update/?name=" + getVisibleNation(), function(data, textStatus, xhr) {
+		$.get("https://nationstatesplusplus.net/api/nation/latest_update/?name=" + getVisibleNation(), function(data, textStatus, xhr) {
 			if (xhr.status != 204 && data.timestamp > (Date.now() - 30 * 24 * 60 * 60 * 1000)) {
 				if (data.timestamp > (Date.now() - 15 * 60 * 1000)) {
-					$("#nspp_trophy").attr("src", "http://nationstatesplusplus.net/nationstates/static/nspp_online.png");
+					$("#nspp_trophy").attr("src", "https://nationstatesplusplus.net/nationstates/static/nspp_online.png");
 					$("#nspp_trophy").attr("title", $("#nspp_trophy").attr("title") + "\nCurrently Online!");
 				} else {
 					var opacity = 1 - ((Date.now() - data.timestamp + 3 * 24 * 60 * 60 * 1000) / (30 * 24 * 60 * 60 * 1000));
@@ -75,12 +75,12 @@
 				$("#nspp_trophy").show();
 			}
 		});
-		$.get("http://nationstatesplusplus.net/nationstates/feature_authors.json", function(data) {
+		$.get("https://nationstatesplusplus.net/nationstates/feature_authors.json", function(data) {
 			var nation = getVisibleNation();
 			for (var i = 0; i < data.authors.length; i += 1) {
 				if (data.authors[i] == nation) {
 					if ($("#nspp_trophy").length > 0) {
-						$("<img src='http://nationstatesplusplus.net/nationstates/static/nspp_idea.png' class='trophy' title='NationStates++ Feature Author!'>").insertAfter("#nspp_trophy");
+						$("<img src='https://nationstatesplusplus.net/nationstates/static/nspp_idea.png' class='trophy' title='NationStates++ Feature Author!'>").insertAfter("#nspp_trophy");
 					}
 				}
 			}
@@ -154,7 +154,7 @@
 								"<h4>World Assembly Member Nations who have not given " + nation + " an Endorsement</h4><div id='unreturnedendo'>Loading...</div><hr></hr>" + 
 								"<h4>Endorsements given by " + nation + "</h4><div id='endorsements-given'>Loading...</div>");
 								
-		$.get("http://nationstatesplusplus.net/api/nation/missingendo/?fullData=true&name=" + getVisibleNation(), function(data) {
+		$.get("https://nationstatesplusplus.net/api/nation/missingendo/?fullData=true&name=" + getVisibleNation(), function(data) {
 			var html = "";
 			for (var i = 0; i < data.length; i++) {
 				var nation = data[i];
@@ -167,7 +167,7 @@
 			}
 			$("#missingendo").html(html);
 		});
-		$.get("http://nationstatesplusplus.net/api/nation/unreturnedendo/?fullData=true&name=" + getVisibleNation(), function(data) {
+		$.get("https://nationstatesplusplus.net/api/nation/unreturnedendo/?fullData=true&name=" + getVisibleNation(), function(data) {
 			var html = "";
 			for (var i = 0; i < data.length; i++) {
 				var nation = data[i];
@@ -180,7 +180,7 @@
 			}
 			$("#unreturnedendo").html(html);
 		});
-		$.get("http://nationstatesplusplus.net/api/nation/endorsements/?fullData=true&name=" + getVisibleNation(), function(data) {
+		$.get("https://nationstatesplusplus.net/api/nation/endorsements/?fullData=true&name=" + getVisibleNation(), function(data) {
 			var html = "";
 			for (var i = 0; i < data.length; i++) {
 				var nation = data[i];

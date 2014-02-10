@@ -30,7 +30,7 @@
 				if (j > start) 	list += ",";
 				list += regions[j]
 			}
-			$.getJSON("http://nationstatesplusplus.net/api/regionflag/?region=" + list, function(jsonData) {
+			$.getJSON("https://nationstatesplusplus.net/api/regionflag/?region=" + list, function(jsonData) {
 				var maxTop = -106;
 				$(".animate-flags").each(function() {
 					if ($(this).position().top > maxTop) {
@@ -42,9 +42,9 @@
 						var flag = jsonData[regionName];
 						if (flag != null && flag.length > 0) {
 							maxTop += 106;
-							$("#embassy-inner").append("<div class='animate-flags' style='position:absolute; left:6px; top:" + maxTop + "px; padding: 2px 2px 2px 2px;'><a href='http://nationstates.net/region=" + regionName + "' target='_blank'><img id='" + regionName + "' src='" + flag + "' class='rflag' style='width:140px; height:100px;' alt='' title='Regional Flag of " + regionName.split("_").join(" ") + "'></a></div>");
+							$("#embassy-inner").append("<div class='animate-flags' style='position:absolute; left:6px; top:" + maxTop + "px; padding: 2px 2px 2px 2px;'><a href='https://wwwnationstates.net/region=" + regionName + "' target='_blank'><img id='" + regionName + "' src='" + flag + "' class='rflag' style='width:140px; height:100px;' alt='' title='Regional Flag of " + regionName.split("_").join(" ") + "'></a></div>");
 							$("#" + regionName).error(function() {
-								$(this).attr('src', "http://www.nationstates.net/images/flags/Default.png");
+								$(this).attr('src', nsProtocol() + "nationstates.net/images/flags/Default.png");
 								return true;
 							});
 						}
