@@ -35,6 +35,8 @@
 				$(".dispatchlist").html($(data).find(".dispatchlist").html());
 			});
 		}
+		$("a:contains('Dispatches')").remove();
+		$(".nationnavbar").html($(".nationnavbar").html().replace(" •  • ", " • "));
 	}
 	
 	function displayAfforess() {
