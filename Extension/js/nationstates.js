@@ -32,22 +32,6 @@
 		$( window ).scroll(function() {
 			$("#panel").css("margin-top", "-" + Math.min($(window).scrollTop(), 100) + "px");
 		});
-
-		//Check for small screen heights
-		if (userSettings.isEnabled("automatically_hide_flag", false)) {
-			var minHeight = $("#panel").css("min-height");
-			$("#panel").css("min-height", "0px");
-			if ($("#panel").height() - 50 > $(window).height() || ($("#content").length == 0 && userSettings.isEnabled("small_screen_height", false))) {
-				$("#panel_flag").hide();
-				//Use this as a setting to sync with forumside
-				if (!userSettings.isEnabled("small_screen_height", false)) {
-					userSettings.setValue("small_screen_height", true);
-				}
-			} else if (userSettings.isEnabled("small_screen_height", false)) {
-				userSettings.setValue("small_screen_height", false);
-			}
-			$("#panel").css("min-height", minHeight);
-		}
 	}
 
 	if ($(".menu").find("a[href='page=dilemmas']").html().match(/[0-9]+/) != null && getUserData().getValue("dismiss_all", false)) {
