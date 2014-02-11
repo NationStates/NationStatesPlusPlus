@@ -113,7 +113,7 @@
 			$(".nationnavbar a").removeClass("quietlink");
 			$("#wa_stats_link").addClass("quietlink");
 			
-			$("form").filter(function() { return $(this).attr("action").startsWith("page"); }).remove();
+			$("form").filter(function() { return $(this).attr("action") == null || $(this).attr("action").startsWith("page"); }).remove();
 			
 			var start = $(".nationnavbar").next();
 			var count = 0;
