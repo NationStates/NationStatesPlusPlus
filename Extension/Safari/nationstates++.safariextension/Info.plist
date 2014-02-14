@@ -17,7 +17,10 @@
 	<key>CFBundleVersion</key>
 	<string>2.3.1</string>
 	<key>Chrome</key>
-	<dict/>
+	<dict>
+		<key>Global Page</key>
+		<string>global.html</string>
+	</dict>
 	<key>Content</key>
 	<dict>
 		<key>Scripts</key>
@@ -26,7 +29,7 @@
 			<array>
 				<string>jquery-2.0.3.min.js</string>
 				<string>jquery-ui.min.js</string>
-				<string>background.js</string>
+				<string>js/nationstates++_common.js</string>
 				<string>js/Blob.js</string>
 				<string>js/FileSaver.js</string>
 				<string>js/bootstrap-fileupload.min.js</string>
@@ -35,27 +38,7 @@
 				<string>js/jquery.nouislider.min.js</string>
 				<string>js/textFit.min.js</string>
 				<string>js/nprogress.js</string>
-				<string>js/nationstates++_common.js</string>
-				<string>js/nationstates.js</string>
-				<string>js/region.js</string>
-				<string>js/nation.js</string>
-				<string>js/newspapers.js</string>
-				<string>js/happenings.js</string>
-				<string>js/census_slider.js</string>
-				<string>js/embassy_flags.js</string>
-				<string>js/telegrams.js</string>
-				<string>js/issues.js</string>
-				<string>js/help.js</string>
-				<string>js/irc.js</string>
-				<string>js/dossier.js</string>
-				<string>js/administration.js</string>
-				<string>js/settings.js</string>
-				<string>js/nspp.js</string>
-				<string>js/activity.js</string>
-				<string>js/history.js</string>
-				<string>js/world.js</string>
-				<string>js/puppet_command.js</string>
-				<string>js/banhammer.js</string>
+				<string>background.js</string>
 			</array>
 		</dict>
 		<key>Stylesheets</key>
@@ -81,6 +64,8 @@
 				<string>*.nationstatesplusplus.org</string>
 				<string>*.nationstatesplusplus.net</string>
 			</array>
+			<key>Include Secure Pages</key>
+			<true/>
 			<key>Level</key>
 			<string>Some</string>
 		</dict>

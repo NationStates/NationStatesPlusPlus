@@ -1,0 +1,30 @@
+<html>
+	<head>
+	</head>
+	<body>
+		<script>
+			var gameplaySite = ["http://www.nationstates.net/*", "https://www.nationstates.net/*"];
+			var gameplayJS = ["js/nationstates.js", "js/region.js", "js/nation.js", "js/newspapers.js",
+				"js/happenings.js", "js/census_slider.js", "js/embassy_flags.js", "js/telegrams.js",
+				"js/issues.js", "js/help.js", "js/irc.js", "js/dossier.js", "js/world.js", "js/banhammer.js",
+				"js/administration.js", "js/settings.js", "js/history.js", "js/puppet_command.js"];
+				
+			for (var i = 0; i < gameplayJS.length; i += 1) {
+				safari.extension.addContentScriptFromURL(safari.extension.baseURI + gameplayJS[i], gameplaySite, [], true);
+			}
+
+			var blankPageCSS = ["css/bootstrap-fileupload.min.css", "css/newspaper_bootstrap.min.css"];
+			var blankPageJS = ["js/bootstrap-dropdown.min.js", "js/bootstrap-fileupload.min.js"];
+			var blankPage = ["http://www.nationstates.net/page=blank*", "https://www.nationstates.net/page=blank*"];
+			for (var i = 0; i < blankPageJS.length; i += 1) {
+				safari.extension.addContentScriptFromURL(safari.extension.baseURI + blankPageJS[i], blankPage, [], true);
+			}
+			for (var i = 0; i < blankPageCSS.length; i += 1) {
+				safari.extension.addContentStyleSheetFromURL(safari.extension.baseURI + blankPageCSS[i], blankPage, []);
+			}
+			
+			var forumSite = ["http://forum.nationstates.net/*", "https://forum.nationstates.net/*"];
+			console.log(safari.extension.addContentStyleSheet(".post-id-text {margin-top: 3px !important;}", forumSite, []));
+		</script>
+	</body>
+</html>

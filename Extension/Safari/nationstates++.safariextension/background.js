@@ -53,23 +53,6 @@ var pageUrl = window.location.href;
 		}
 	}
 
-	if ($("#ns_setting").length == 0) {
-		var bannerStyle = "position:absolute; top:0px; margin:6px 60px 0px 0px; z-index:98; font-weight:bold; color: white !important; font-weight: bold; font-size: 8pt; padding: 2px 8px 2px 8px; background: black; 	background-color: rgba(0,0,0,0.2); 	border-radius: 8px;";
-		if (document.head.innerHTML.indexOf("ns.dark") != -1) {
-			bannerStyle += "background: #2A2A2A; border: 1px solid #383838;"
-		}
-
-		if (pageUrl.indexOf("hideBanner=true") != -1) {
-			$("#banner").hide();
-		} else {
-			var banner = $("#banner, #nsbanner");
-			$(banner).append("<div id='ns_setting'><a href='//www.nationstates.net/page=blank?ns_settings=true' style='" + bannerStyle + " right: 78px;'>NS++ Settings</a></div>");
-			if (pageUrl.indexOf('forum.nationstates.net/') == -1 ) {
-				$(banner).append("<div id='puppet_setting' style='display:none;'><a href='javascript:void(0)' style='" + bannerStyle + " right: 188px;'>Puppets</a></div>");
-			}
-		}
-	}
-
 	if (pageUrl.indexOf("hidePanel=true") != -1) {
 		$("#panel").hide();
 		$("#content").css("margin-left", "0");
