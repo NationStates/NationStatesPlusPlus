@@ -41,7 +41,7 @@
 					var nation = data[i];
 					
 					if (filter == "" || nation.title.toLowerCase().contains(filter)) {
-						html += "<div class='banhammer_row' name='" + nation.name + "'><p><a class='nlink' href='" + nsProtocol() + "nationstates.net/nation=" + nation.name + "' target='_blank' >";
+						html += "<div class='banhammer_row' name='" + nation.name + "'><p><a class='nlink' href='//www.nationstates.net/nation=" + nation.name + "' target='_blank' >";
 						html += "<img class='bflag miniflag' src='" + nation.flag + "' class='miniflag' alt='' title='" + nation.title + "'><span>"
 						html += nation.title + "</span></a> <span class='spdr'>(SPDR: " + nation.influence + ")</span>";
 						html += (nation.wa_member ? "<span class='wa_status dossier-wa'></span>" : "");
@@ -76,9 +76,9 @@
 				var ejectOrBan = function(event, nation, param) {
 					event.preventDefault();
 					$("button").attr("disabled", true);
-					$.get(nsProtocol() + "nationstates.net/nation=" + nation, function(data) {
+					$.get("//www.nationstates.net/nation=" + nation, function(data) {
 						var chk = $(data).find("input[name='chk']").val();
-						$.post(nsProtocol() + "nationstates.net/nation=" + nation, "page=display_other_nation&nation=" + nation + "&chk=" + chk + "&" + param, function(data) {
+						$.post("//www.nationstates.net/nation=" + nation, "page=display_other_nation&nation=" + nation + "&chk=" + chk + "&" + param, function(data) {
 							if ($(data).find("p.info")) {
 								$("div[name='" + nation + "']").slideToggle(400);
 								 $("button").removeAttr("disabled");

@@ -109,11 +109,11 @@
 					$.get("https://nationstatesplusplus.net/api/region/nations/?region=" + $("#destination").val().replaceAll(" ", "_").toLowerCase(), function(population) {
 						if (population.length == 0) {
 							$("#error_label").html("Creating New Region...").show();
-							$.get(nsProtocol() + "nationstates.net/page=create_region", function(data) {
+							$.get("//www.nationstates.net/page=create_region", function(data) {
 								if ($(data).find(".STANDOUT:first").attr("href").substring(7) != $("#puppet_name").val().replaceAll(" ", "_").toLowerCase()) {
 									$("#error_label").removeClass("progress_alert").addClass("danger_alert").html("Not logged in as '" + $("#puppet_name").val() + "'. Log in or found '" + $("#puppet_name").val() + "' and try again.").show();
 								} else {
-									$.post(nsProtocol() + "nationstates.net/page=create_region", "page=create_region&region_name=" + encodeURIComponent($("#destination").val()) + "&desc=+&founder_control=1&delegate_control=0&create_region=+Create+Region+", function(data) {
+									$.post("//www.nationstates.net/page=create_region", "page=create_region&region_name=" + encodeURIComponent($("#destination").val()) + "&desc=+&founder_control=1&delegate_control=0&create_region=+Create+Region+", function(data) {
 										if ($(data).find("p.info").length > 0) {
 											$("#error_label").removeClass("progress_alert").addClass("success_alert").html($(data).find("p.info").html());
 										} else {
@@ -124,13 +124,13 @@
 							});
 						} else {
 							$("#error_label").html("Moving To Existing Region...").show();
-							$.get(nsProtocol() + "nationstates.net/region=" + $("#destination").val().replaceAll(" ", "_").toLowerCase(), function(data) {
+							$.get("//www.nationstates.net/region=" + $("#destination").val().replaceAll(" ", "_").toLowerCase(), function(data) {
 								if ($(data).find(".STANDOUT:first").attr("href").substring(7) != $("#puppet_name").val().replaceAll(" ", "_").toLowerCase()) {
 									$("#error_label").removeClass("progress_alert").addClass("danger_alert").html("Not logged in as '" + $("#puppet_name").val() + "'. Log in or found '" + $("#puppet_name").val() + "' and try again.").show();
 								} else if ($(data).find("img[alt='Password required']").length > 0) {
 									$("#error_label").removeClass("progress_alert").addClass("danger_alert").html("Can not move into passworded regions. Move the nation manually.").show();
 								} else {
-									$.post(nsProtocol() + "nationstates.net/page=change_region", "localid=" + $(data).find("input[name='localid']").val() + "&region_name=" + $(data).find("input[name='region_name']").val() + "&move_region=1", function(data) {
+									$.post("//www.nationstates.net/page=change_region", "localid=" + $(data).find("input[name='localid']").val() + "&region_name=" + $(data).find("input[name='region_name']").val() + "&move_region=1", function(data) {
 										$("#error_label").removeClass("progress_alert").addClass("success_alert").html("Moved Into " + $("#destination").val() + " Successfully!").show();
 									});
 								}
@@ -172,7 +172,7 @@
 						$("#error_label").html("Attempting Puppet Creation...").removeClass("success_alert").removeClass("danger_alert").addClass("progress_alert").show();
 						var type = ($("#type").val() == "random" ? Math.floor(Math.random() * 38) + 100 : $("#type").val());
 						var history = ($("#history").val() == "random" ? Math.floor(($("#history").find("option").length - 1) * Math.random()) : $("#history").val());
-						$.post(nsProtocol() + "nationstates.net/cgi-bin/build_nation.cgi", questions + "&name=" + encodeURIComponent($("#puppet_name").val()) +
+						$.post("//www.nationstates.net/cgi-bin/build_nation.cgi", questions + "&name=" + encodeURIComponent($("#puppet_name").val()) +
 								"&type=" + type + "&flag=Default.png&history=" + history +
 								"&style=" + $("#style").val() + "&currency=" + encodeURIComponent($("#currency").val()) +
 								"&animal=" + encodeURIComponent($("#animal").val()) + "&slogan=" +
@@ -191,9 +191,9 @@
 								//Disable recruitment/wa telegrams
 								var disableRecruitment = function(callback) {
 									$("#error_label").html("10% - Blocking Recruitment Telegrams...").show();
-									$.get(nsProtocol() + "nationstates.net/page=tgsettings", function(data) {
+									$.get("//www.nationstates.net/page=tgsettings", function(data) {
 										$("#error_label").html("20% - Blocking Recruitment Telegrams...").show();
-										$.post(nsProtocol() + "nationstates.net/page=tgsettings", "chk=" + $(data).find('input[name="chk"]').val() + "&C1=3&C2=3&C3=3&C4=0&update_filter=1", function(data) {
+										$.post("//www.nationstates.net/page=tgsettings", "chk=" + $(data).find('input[name="chk"]').val() + "&C1=3&C2=3&C3=3&C4=0&update_filter=1", function(data) {
 											if (typeof callback != "undefined") callback();
 										});
 									});
@@ -202,12 +202,12 @@
 								//Delete existing telegrams
 								var deleteTelegrams = function(callback) {
 									$("#error_label").html("30% - Cleaning Up Telegram Inbox...").show();
-									$.get(nsProtocol() + "nationstates.net/page=telegrams", function(data) {
+									$.get("//www.nationstates.net/page=telegrams", function(data) {
 										$("#error_label").html("40% - Cleaning Up Telegram Inbox...").show();
 										$(data).find(".tgsentline").each(function() {
 											var tgid = $(this).attr("href").split("=")[$(this).attr("href").split("=").length - 1]
 											var chk = $(data).find('input[name="chk"]').val();
-											$.get(nsProtocol() + "nationstates.net/page=ajax3/a=tgdelete/tgid=" + tgid + "/chk=" + chk, callback);
+											$.get("//www.nationstates.net/page=ajax3/a=tgdelete/tgid=" + tgid + "/chk=" + chk, callback);
 										});
 									});
 								};
@@ -215,16 +215,16 @@
 								//Dismiss all issues
 								var dismissIssues = function(callback) {
 									$("#error_label").html("50% - Dismissing Issues...").show();
-									$.post(nsProtocol() + "nationstates.net/page=dilemmas", "dismiss_all=1", callback);
+									$.post("//www.nationstates.net/page=dilemmas", "dismiss_all=1", callback);
 								};
 
 								var applyToWorldAssembly = function(callback) {
 									if ($("#apply_to_wa").prop("checked")) {
 										$("#error_label").html("60% - Apply for World Assembly Membership...").show();
-										$.get(nsProtocol() + "nationstates.net/page=un", function(data) {
+										$.get("//www.nationstates.net/page=un", function(data) {
 											$("#error_label").html("70% - Apply for World Assembly Membership...").show();
 											var chk = $(data).find('input[name="chk"]').val();
-											$.post(nsProtocol() + "nationstates.net/page=UN_status", "action=join_UN&chk=" + chk + "&submit=+Apply+to+Join+", callback);
+											$.post("//www.nationstates.net/page=UN_status", "action=join_UN&chk=" + chk + "&submit=+Apply+to+Join+", callback);
 										});
 									} else {
 										callback();
@@ -235,14 +235,14 @@
 								var finalizePuppet = function() {
 									if ($(".fileupload-preview").html().length > 0 && $(".fileupload-preview").html() != "(Optional)") {
 										$("#error_label").html("80% - Uploading Puppet Flag...").show();
-										$.get(nsProtocol() + "nationstates.net/page=upload_flag", function(data) {
+										$.get("//www.nationstates.net/page=upload_flag", function(data) {
 											var file = $("input[type='file']")[0].files[0];
 											var flagForm = new FormData();
 											flagForm.append("nationname", $("#puppet_name").val().toLowerCase());
 											flagForm.append("localid", $(data).find("input[name='localid']").val());
 											flagForm.append("file", file);
 											var flagUpload = new XMLHttpRequest();
-											flagUpload.open("POST", nsProtocol() + "nationstates.net/cgi-bin/upload.cgi");
+											flagUpload.open("POST", "//www.nationstates.net/cgi-bin/upload.cgi");
 											$("#error_label").html("90% - Uploading Puppet Flag...").show();
 											flagUpload.onload = function(event) {
 												$("#error_label").html("100% - Puppet Created Successfully!").removeClass("danger_alert").removeClass("progress_alert").addClass("success_alert").show();

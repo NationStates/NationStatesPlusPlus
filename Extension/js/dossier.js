@@ -154,7 +154,7 @@
 						}
 					} catch (error) { }
 					if ($("#region_dossier").find("#" + region).length == 0 && !result.html.contains("<div id='" + region + "'")) {
-						result.html += "<div id='" + region + "' class='dossier_element' style='min-height:28px;'><img region='" + region + "' src='https://nationstatesplusplus.net/nationstates/static/remove.png' class='remove-dossier' title='Remove from Dossier'><img class='smallflag' src='https://nationstatesplusplus.net/api/flag/region/?region=" + region + "'><a style='font-weight:bold' target='_blank' href='" + nsProtocol() + "nationstates.net/region=" + region + "'>" + region.replaceAll("_", " ").toTitleCase() + "</a><div class='last_activity'>Nations: " + nations + "</div>";
+						result.html += "<div id='" + region + "' class='dossier_element' style='min-height:28px;'><img region='" + region + "' src='https://nationstatesplusplus.net/nationstates/static/remove.png' class='remove-dossier' title='Remove from Dossier'><img class='smallflag' src='https://nationstatesplusplus.net/api/flag/region/?region=" + region + "'><a style='font-weight:bold' target='_blank' href='//www.nationstates.net/region=" + region + "'>" + region.replaceAll("_", " ").toTitleCase() + "</a><div class='last_activity'>Nations: " + nations + "</div>";
 						if (delegateFlag.length > 0) {
 							result.html += "<div class='region_activity'><b>Delegate:</b><img class='smallflag' src='" + delegateFlag + "'><a target='_blank' href='/nation=" + delegate + "'>" + delegate.replaceAll("_", " ").toTitleCase() + "</a></div>";
 						}
@@ -181,7 +181,7 @@
 					var waMember = $(this).html().contains("WA Delegate") || $(this).html().contains("WA Member");
 					if ($(this).children().length == 2) {
 						nation = $($(this).children()[1]).html().replaceAll(" ", "_").toLowerCase();
-						flag = nsProtocol() + "nationstates.net/images/flags/exnation.png";
+						flag = "//www.nationstates.net/images/flags/exnation.png";
 						alive = false;
 					} else {
 						nation = $(this).find(".nlink").attr("href").substring(7)
@@ -191,7 +191,7 @@
 						result.animate.push(nation);
 						var alias = getNationAlias(nation);
 
-						result.html += "<div id='" + nation + "' class='dossier_element'><img nation='" + nation + "' src='https://nationstatesplusplus.net/nationstates/static/remove.png' class='remove-dossier' title='Remove from Dossier'><img class='smallflag' src='" + flag + "'><a id='nation-link-" + nation + "' style='font-weight:bold; " + (alias != null ? "text-decoration:line-through;" : "") + "' target='_blank' href='" + nsProtocol() + "nationstates.net/nation=" + nation + "'>" + nation.replaceAll("_", " ").toTitleCase() + "</a>";
+						result.html += "<div id='" + nation + "' class='dossier_element'><img nation='" + nation + "' src='https://nationstatesplusplus.net/nationstates/static/remove.png' class='remove-dossier' title='Remove from Dossier'><img class='smallflag' src='" + flag + "'><a id='nation-link-" + nation + "' style='font-weight:bold; " + (alias != null ? "text-decoration:line-through;" : "") + "' target='_blank' href='//www.nationstates.net/nation=" + nation + "'>" + nation.replaceAll("_", " ").toTitleCase() + "</a>";
 						
 						var rssLink = alive ? "<a class='dossier-rss' href='/cgi-bin/rss.cgi?nation=" + nation + "'><img src='/images/rss3.png' alt='RSS' title='National Happenings Feed'></a>" : "<span style='margin-right:13px'></span>";
 

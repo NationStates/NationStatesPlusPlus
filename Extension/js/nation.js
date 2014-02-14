@@ -31,7 +31,7 @@
 	function loadPlayerDispatches() {
 		if (getPageDetail() == "factbook") {
 			$(".dispatchlist").html("<div style='text-align:center; font-weight: bold; font-size: 16px;'><img style='margin-bottom: -2px; margin-right: 4px;' src='/images/loading1.gif'></div>");
-			$.get(nsProtocol() + "nationstates.net/page=dispatches/nation=" + getVisibleNation(), function(data) {
+			$.get("//www.nationstates.net/page=dispatches/nation=" + getVisibleNation(), function(data) {
 				$(".dispatchlist").html($(data).find(".dispatchlist").html());
 			});
 		}

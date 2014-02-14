@@ -23,7 +23,7 @@
 			$("#found_news").on("click", function(event) {
 				event.preventDefault();
 				doAuthorizedPostRequest("https://nationstatesplusplus.net/api/newspaper/found/?region=" + getVisibleRegion(), "", function(json) {
-					window.location.href = nsProtocol() + "nationstates.net/page=blank?manage_newspaper=" + json.newspaper_id;
+					window.location.href = "//www.nationstates.net/page=blank?manage_newspaper=" + json.newspaper_id;
 				}, function() {
 					$("#lack_authority").show();
 					$("#found_news").toggleDisabled();
@@ -148,10 +148,10 @@
 			$("#recruitment_form").append("<label for='client_key'>Client Key: </label><input class='text-input' placeholder='Client Key' name='client_key' type='text' style='width:400px'></input> <span title='A Client Key can be requested from a Getting Help Request. Once it has been requested, it may take up to 24 hours for the request to be filled, so be patient.' style='font-size:10px'><a href='/page=help?recruitment'>(What is this?)</a></span><br/>");
 			$("label[for='client_key']").css("margin-right", Math.max(0, (130 - $("label[for='client_key']").width())) + "px");
 			
-			$("#recruitment_form").append("<label for='tgid'>TGID: </label><input name='tgid' class='text-input' placeholder='Telegram Id' type='text' style='width:400px'></input> <span title='Send your recruitment telegram to \"tag:api\" to receive a tgid and secret key' style='font-size:10px'> <a href='" + nsProtocol() + "nationstates.net/pages/api.html#telegrams'>(What is this?)</a></span><br/>");
+			$("#recruitment_form").append("<label for='tgid'>TGID: </label><input name='tgid' class='text-input' placeholder='Telegram Id' type='text' style='width:400px'></input> <span title='Send your recruitment telegram to \"tag:api\" to receive a tgid and secret key' style='font-size:10px'> <a href='//www.nationstates.net/pages/api.html#telegrams'>(What is this?)</a></span><br/>");
 			$("label[for='tgid']").css("margin-right", Math.max(0, (130 - $("label[for='tgid']").width())) + "px");
 			
-			$("#recruitment_form").append("<label for='secretKey'>Secret Key: </label><input class='text-input' placeholder='Telegram Secret Key' name='secretKey' type='text' style='width:400px'></input> <span title='Send your recruitment telegram to \"tag:api\" to receive a tgid and secret key' style='font-size:10px'> <a href='" + nsProtocol() + "nationstates.net/pages/api.html#telegrams'>(What is this?)</a></span><br/>");
+			$("#recruitment_form").append("<label for='secretKey'>Secret Key: </label><input class='text-input' placeholder='Telegram Secret Key' name='secretKey' type='text' style='width:400px'></input> <span title='Send your recruitment telegram to \"tag:api\" to receive a tgid and secret key' style='font-size:10px'> <a href='//www.nationstates.net/pages/api.html#telegrams'>(What is this?)</a></span><br/>");
 			$("label[for='secretKey']").css("margin-right",  Math.max(0, (130 - $("label[for='secretKey']").width())) + "px");
 			
 			$("#recruitment_form").append("<div style='margin-bottom: -15px;'><label for='percent'>Percent: </label><input name='percent' type='range' min='1' value='100' max='100' style='width:426px; position: relative; top: 6px;'></input> <span style='font-size:10px;'><input style='min-width:26px; width:26px;' class='text-input' name='percent_input' type='text' max='100' min='1' size='2' value='100'> (Percent of requests allocated)</span></div><br/>");

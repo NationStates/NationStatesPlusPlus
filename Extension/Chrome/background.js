@@ -42,9 +42,9 @@ var pageUrl = window.location.href;
 		if ($(".shiny.rmbtable").length != 0 || document.head.innerHTML.indexOf("antiquity") != -1) {
 			$("#fix_theme").on("click", function(event) {
 				event.preventDefault();
-				$.get("http://www.nationstates.net/page=settings", function(html) {
+				$.get("//www.nationstates.net/page=settings", function(html) {
 					var localid = $(html).find("input[name='localid']").val();
-					$.post("http://www.nationstates.net/page=settings", "localid=" + localid + "&newtheme=default&update=+Update+", function(data) {
+					$.post("//www.nationstates.net/page=settings", "localid=" + localid + "&newtheme=default&update=+Update+", function(data) {
 						location.reload();
 					});
 				});

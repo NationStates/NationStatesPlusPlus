@@ -110,7 +110,7 @@ function setupRegionPage() {
 				
 				//Create floating div
 				$(document.body).append("<div id='regional_map_preview' style='display:none;'></div>");
-				$("#regional_map_preview").html("<a href='" + $("#regional_map_link").attr("preview") + "' target='_blank'><img src='" + $("#regional_map_link").attr("preview") + "' style='max-width:500px; max-height:600px; margin-bottom: -3px;'></a>");
+				$("#regional_map_preview").html("<a href='" + $("#regional_map_link").attr("preview") + "' target='_blank'><img src='" + $("#regional_map_link").attr("preview").replace("http://", "//") + "' style='max-width:500px; max-height:600px; margin-bottom: -3px;'></a>");
 				$("#region_map").show();
 				
 				if (getSettings().isEnabled("show_regional_map_preview")) {
@@ -307,7 +307,7 @@ function setupRegionPage() {
 			}
 			$(this).attr("disabled", true);
 			var password = $("#region_password_input").val();
-			$.post(nsProtocol() + "nationstates.net/page=change_region", "localid=" + $("input[name='localid']").val() + "&region_name=" + $("input[name='region_name']").val()
+			$.post("//www.nationstates.net/page=change_region", "localid=" + $("input[name='localid']").val() + "&region_name=" + $("input[name='region_name']").val()
 																	+ "&move_region=1" + (password.length > 0 ? "&password=" + password : ""), function(data) {
 				if (data.toLowerCase().contains("you have not entered the correct password")) {
 					$("#invalid-pass").html("Your password is incorrect!").show();
@@ -318,7 +318,7 @@ function setupRegionPage() {
 					$("button[name='move_region']").attr("disabled", true);
 				} else {
 					$("button[name='move_region']").attr("disabled", false);
-					window.location.href = nsProtocol() + "nationstates.net/region=" + $("input[name='region_name']").val();
+					window.location.href = "//www.nationstates.net/region=" + $("input[name='region_name']").val();
 				}
 			}).fail(function(data) {
 				$("button[name='move_region']").attr("disabled", false);

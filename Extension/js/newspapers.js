@@ -3,9 +3,9 @@
 		return;
 	}
 	var menu = $(".menu");
-	$("<li id='regional_newspaper' style='display:none;'><a id='rnews' style='display: inline;' href='" + nsProtocol() + "nationstates.net/page=blank/?regional_news=" + getUserRegion() + "'>REGIONAL NEWS</a></li>").insertAfter($("#wa_props").length > 0 ? $("#wa_props") : menu.find("a[href='page=un']").parent());
-	$("<li id='gameplay_newspaper'><a id='gnews' style='display: inline;' href='" + nsProtocol() + "nationstates.net/page=blank/?gameplay_news'>GAMEPLAY NEWS</a></li>").insertAfter($("#regional_newspaper"));
-	$("<li id='roleplay_newspaper'><a id='rpnews' style='display: inline;' href='" + nsProtocol() + "nationstates.net/page=blank/?roleplay_news'>ROLEPLAY NEWS</a></li>").insertAfter($("#gameplay_newspaper"));
+	$("<li id='regional_newspaper' style='display:none;'><a id='rnews' style='display: inline;' href='//www.nationstates.net/page=blank/?regional_news=" + getUserRegion() + "'>REGIONAL NEWS</a></li>").insertAfter($("#wa_props").length > 0 ? $("#wa_props") : menu.find("a[href='page=un']").parent());
+	$("<li id='gameplay_newspaper'><a id='gnews' style='display: inline;' href='//www.nationstates.net/page=blank/?gameplay_news'>GAMEPLAY NEWS</a></li>").insertAfter($("#regional_newspaper"));
+	$("<li id='roleplay_newspaper'><a id='rpnews' style='display: inline;' href='//www.nationstates.net/page=blank/?roleplay_news'>ROLEPLAY NEWS</a></li>").insertAfter($("#gameplay_newspaper"));
 	var settings = getSettings();
 	if (!settings.isEnabled("show_gameplay_news")) {
 		$("#gameplay_newspaper").hide();
@@ -230,10 +230,10 @@
 						}
 						if (postData.length > 0) {
 							doAuthorizedPostRequest("https://nationstatesplusplus.net/api/newspaper/editors/?newspaper=" + $("#newspaper_name").attr("newspaper_id"), "editors=1" + postData, function(json) {
-								window.location.href = nsProtocol() + "nationstates.net/page=blank/?lookup_newspaper=" + $("#newspaper_name").attr("newspaper_id");
+								window.location.href = "//www.nationstates.net/page=blank/?lookup_newspaper=" + $("#newspaper_name").attr("newspaper_id");
 							});
 						} else {
-							window.location.href = nsProtocol() + "nationstates.net/page=blank/?lookup_newspaper=" + $("#newspaper_name").attr("newspaper_id");
+							window.location.href = "//www.nationstates.net/page=blank/?lookup_newspaper=" + $("#newspaper_name").attr("newspaper_id");
 						}
 					}, function(data) {
 						if (data.status == 401) {
@@ -245,7 +245,7 @@
 				});
 				$("#cancel_changes").on("click", function(event) {
 					event.preventDefault();
-					window.location.href = nsProtocol() + "nationstates.net/page=blank/?lookup_newspaper=" + $("#newspaper_name").attr("newspaper_id");
+					window.location.href = "//www.nationstates.net/page=blank/?lookup_newspaper=" + $("#newspaper_name").attr("newspaper_id");
 				});
 				$("#inner-content").show();
 			});
@@ -270,7 +270,7 @@
 					postData += "&visible=" + ($("#article_visible-2").prop("checked") ? "2" : ($("#article_visible-1").prop("checked") ? "1" : "0"));
 				}
 				doAuthorizedPostRequest("https://nationstatesplusplus.net/api/newspaper/submit/?newspaper=" + newspaper + "&articleId=" + article_id, postData, function(json) {
-					window.location.href = nsProtocol() + "nationstates.net/page=blank/?lookup_newspaper=" + newspaper;
+					window.location.href = "//www.nationstates.net/page=blank/?lookup_newspaper=" + newspaper;
 				}, function(data, textStatus, jqXHR) {
 					$(".error, .info").remove();
 					$("<p class='error'>" + (data.status == 401 ? "You do not have permission" : "Error Submitting Article") + "</p>").insertAfter($("#news_header"));
@@ -288,7 +288,7 @@
 			});
 			$("#cancel_article").on("click", function(event) {
 				event.preventDefault();
-				window.location.href = nsProtocol() + "nationstates.net/page=blank/?gameplay_news";
+				window.location.href = "//www.nationstates.net/page=blank/?gameplay_news";
 			});
 			$("#delete_article").on("click", function(event) {
 				event.preventDefault();

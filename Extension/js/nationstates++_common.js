@@ -202,7 +202,7 @@
 
 	if ($("#ns_setting").length == 0) {
 		var bannerStyle = "position:absolute; top:0px; margin:6px 60px 0px 0px; z-index:98; font-weight:bold; color: white !important; font-weight: bold; font-size: 8pt; padding: 2px 8px 2px 8px; background: black; 	background-color: rgba(0,0,0,0.2); 	border-radius: 8px;";
-		if (document.head.innerHTML.indexOf("ns.dark") != -1) {
+		if (isDarkTheme()) {
 			bannerStyle += "background: #2A2A2A; border: 1px solid #383838;"
 		}
 
@@ -225,10 +225,6 @@
 	}
 	$("textarea, input[type='text'], td input[type='password'], input[name='region_name']").addClass("text-input");
 })();
-
-function nsProtocol() {
-	return ('https:' == document.location.protocol ? 'https://www.' : 'http://www.');
-}
 
 function isDarkTheme() {
 	return $("link[href^='/ns.dark']").length > 0;
@@ -480,7 +476,7 @@ function showPuppets() {
 	html += "</ul>";
 	html += "<p style='margin-top: -20px; margin-bottom: 1px;'><input class='text-input' type='text' id='puppet_nation' size='18' placeholder='Nation'></p>";
 	html += "<p style='margin-top: 1px;'><input class='text-input' type='password' id='puppet_password' size='18' placeholder='Password'></p>";
-	html += "<div id='puppet_invalid_login' style='display:none;'><p>Invalid Login</p></div><p class='puppet_creator'><a style='color:white;' href='" + nsProtocol() + "nationstates.net/page=blank?puppet_creator'>Create New Puppet Nations</a></p>";
+	html += "<div id='puppet_invalid_login' style='display:none;'><p>Invalid Login</p></div><p class='puppet_creator'><a style='color:white;' href='//www.nationstates.net/page=blank?puppet_creator'>Create New Puppet Nations</a></p>";
 
 	$("#puppet_setting_form").html(html);
 	
@@ -531,7 +527,7 @@ function getPuppetCache(name) {
 
 function switchToPuppet(name) {
 	localStorage.removeItem("puppet-" + name + "-region");
-	$.post(nsProtocol() + "nationstates.net/", "logging_in=1&nation=" + encodeURIComponent(name) + "&password=" + encodeURIComponent(localStorage.getItem("puppet-" + name)) + (getSettings().isEnabled("autologin-puppets", false) ?"&autologin=yes" : ""), function(data) {
+	$.post("//www.nationstates.net/", "logging_in=1&nation=" + encodeURIComponent(name) + "&password=" + encodeURIComponent(localStorage.getItem("puppet-" + name)) + (getSettings().isEnabled("autologin-puppets", false) ?"&autologin=yes" : ""), function(data) {
 		if (data.contains("Would you like to restore it?")) {
 			$("#content").html($(data).find("#content").html());
 		} else {
@@ -596,7 +592,7 @@ function addPuppetNation(nation, password) {
 }
 
 function getNationStatesAuth(callback) {
-	$.get(nsProtocol() + "nationstates.net/page=verify_login", function(data) {
+	$.get("//www.nationstates.net/page=verify_login", function(data) {
 		//Prevent image requests by replacing src attribute with data-src
 		var authCode = $(data.replace(/[ ]src=/gim," data-src=")).find("#proof_of_login_checksum").html();
 		//Regenerate localid if nessecary
