@@ -68,9 +68,6 @@
 					$("#nspp_trophy").attr("title", $("#nspp_trophy").attr("title") + "\nCurrently Online!");
 				} else {
 					var opacity = 1 - ((Date.now() - data.timestamp + 3 * 24 * 60 * 60 * 1000) / (30 * 24 * 60 * 60 * 1000));
-					console.log(Date.now() - data.timestamp);
-					console.log(Date.now() - data.timestamp + 3 * 24 * 60 * 60 * 1000);
-					console.log(opacity);
 					$("#nspp_trophy").attr("title", $("#nspp_trophy").attr("title") + "\nLast seen " + timestampToTimeAgo(data.timestamp).toLowerCase() + " ago.");
 					$("#nspp_trophy").css("opacity", Math.max(0, Math.min(1, opacity)));
 				}
