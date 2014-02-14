@@ -22,8 +22,10 @@ public class DatabaseAccess {
 	private final LoadingCache<String, Integer> regionIdCache;
 	private final LoadingCache<String, Integer> nationIdCache;
 	private final LoadingCache<Integer, String> reverseIdCache;
+	private final int cacheSize;
 
 	public DatabaseAccess(final ComboPooledDataSource pool, int cacheSize) {
+		this.cacheSize = cacheSize;
 		this.pool = pool;
 		Logger.info("Creating Database Cache. Max Size: " + cacheSize);
 		this.regionIdCache = CacheBuilder.newBuilder()
@@ -97,6 +99,10 @@ public class DatabaseAccess {
 				throw new RuntimeException("No nation with id [" + key + "] found!");
 			}
 		});
+	}
+
+	public final int getMaxCacheSize() {
+		return cacheSize;
 	}
 
 	public LoadingCache<String, Integer> getNationIdCache() {

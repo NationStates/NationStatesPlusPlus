@@ -25,7 +25,6 @@ import org.spout.cereal.config.ConfigurationNode;
 import org.spout.cereal.config.yaml.YamlConfiguration;
 
 import play.Logger;
-import play.libs.Json;
 import play.mvc.Result;
 import play.mvc.Results;
 

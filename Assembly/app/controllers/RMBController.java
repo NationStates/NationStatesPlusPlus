@@ -9,10 +9,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.dbutils.DbUtils;
 import org.apache.commons.lang.builder.ToStringBuilder;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import org.joda.time.Duration;
 import org.spout.cereal.config.yaml.YamlConfiguration;
 
@@ -25,8 +29,11 @@ import com.afforess.assembly.util.Utils;
 import com.limewoodMedia.nsapi.NationStates;
 
 public class RMBController extends NationStatesController {
+	private final Cache<Integer, JsonNode> rmbRatingCache;
+
 	public RMBController(DatabaseAccess access, YamlConfiguration config, NationStates api) {
 		super(access, config, api);
+		rmbRatingCache = CacheBuilder.newBuilder().maximumSize(access.getMaxCacheSize()).expireAfterAccess(5, TimeUnit.MINUTES).expireAfterWrite(1, TimeUnit.HOURS).build();
 	}
 
 	public Result ratePost(int rmbPost, int rating) throws SQLException, ExecutionException {
@@ -61,11 +68,14 @@ public class RMBController extends NationStatesController {
 					DbUtils.closeQuietly(insert);
 				}
 				DbUtils.closeQuietly(update);
-			}
+			}String s = 1 + "hello";
+
 			PreparedStatement update = conn.prepareStatement("UPDATE assembly.region SET rmb_cache = rmb_cache + 1 WHERE id = (SELECT region FROM assembly.nation WHERE nation.id = ?)");
 			update.setInt(1, getDatabase().getNationIdCache().get(nation));
 			update.executeUpdate();
 			DbUtils.closeQuietly(update);
+			
+			rmbRatingCache.invalidate(rmbPost);
 		} finally {
 			DbUtils.closeQuietly(conn);
 		}
@@ -74,9 +84,24 @@ public class RMBController extends NationStatesController {
 	}
 
 	public Result getPostRatings(int rmbPost, int rmbCache) throws SQLException, ExecutionException {
-		Connection conn = getConnection();
+		JsonNode ratings = rmbRatingCache.getIfPresent(rmbPost);
+		if (ratings == null) {
+			ratings = calculatePostRatings(rmbPost);
+			rmbRatingCache.put(rmbPost, ratings);
+		}
+
+		Result result = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(ratings.hashCode()), (rmbCache == -1 ? "10" : "86400"));
+		if (result != null) {
+			return result;
+		}
+		return Results.ok(ratings).as("application/json");
+	}
+
+	private JsonNode calculatePostRatings(int rmbPost) throws SQLException {
+		Connection conn = null;
 		List<Map<String, String>> list = new ArrayList<Map<String, String>>();
 		try {
+			conn = getConnection();
 			PreparedStatement select = conn.prepareStatement("SELECT title, rating_type FROM assembly.rmb_post_ratings AS r LEFT OUTER JOIN assembly.nation AS n ON n.id = r.nation WHERE rmb_post = ?");
 			select.setInt(1, rmbPost);
 			ResultSet result = select.executeQuery();
@@ -91,11 +116,7 @@ public class RMBController extends NationStatesController {
 		} finally {
 			DbUtils.closeQuietly(conn);
 		}
-		Result result = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(list.hashCode()), (rmbCache == -1 ? "10" : "86400"));
-		if (result != null) {
-			return result;
-		}
-		return Results.ok(Json.toJson(list)).as("application/json");
+		return Json.toJson(list);
 	}
 
 	public Result getRMBCache(String region) throws SQLException, ExecutionException {
