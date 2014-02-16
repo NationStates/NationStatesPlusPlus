@@ -1,11 +1,9 @@
 (function(){
+	var banhammerHTML = '<form class=form-horizontal><fieldset><div class=control-group><label class=control-label for=checkboxes>Show Nation Flags</label><div class=controls><label class="checkbox inline" for=show_flags><input type=checkbox name=show_flags id=show_flags value=Flags checked>Flags</label></div></div><div class=control-group><label class=control-label for=filter_names>Filter Nations:</label><div class=controls><input id=filter_names name=filter_names placeholder=Filter class=input-xlarge><p class=help-block>Type part of the nation"s name (press enter to execute filter)</p></div></div><div class=control-group><label class=control-label for=radios>Sorting</label><div class=controls><label class=radio for=length_of_residency><input type=radio name=radio_controls id=length_of_residency value="Length of Residency" checked>Length of Residency</label><label class=radio for=influence><input type=radio name=radio_controls id=influence value=Influence>Influence</label></div></div><div class=control-group><label class=control-label for=inversion>Invert Sorting</label><div class=controls><label class="checkbox inline" for=inversion><input type=checkbox name=inversion id=inversion value="(Low to High)">(Low to High)</label></div></div></fieldset></form>';
 	if (getVisiblePage() == "blank" && typeof $.QueryString["banhammer"] != "undefined") {
 		var region = $.QueryString["banhammer"];
 		window.document.title = "Banhammer!";
-		$("#content").html("<h1>Ban Management Settings</h1><div id='settings'></div><hr></hr><h1>Nation List <button id='refresh_list' class='button' style='position: relative;top: -8px;left: 25px;'>Refresh</button><span id='your_spdr'></span></h2><div id='nation_list'></div>");
-		$.get("https://nationstatesplusplus.net/nationstates/v2_3/banhammer.html", function(html) {
-			$("#settings").html(html);
-		});
+		$("#content").html("<h1>Ban Management Settings</h1><div id='settings'>" + banhammerHTML + "</div><hr></hr><h1>Nation List <button id='refresh_list' class='button' style='position: relative;top: -8px;left: 25px;'>Refresh</button><span id='your_spdr'></span></h2><div id='nation_list'></div>");
 		var updateSPDR = function() {
 			getSPDR(getUserNation(), function(spdr) { $("#your_spdr").attr("spdr", spdr); $("#your_spdr").html("(Current SPDR: " + spdr + ")"); });
 		}
