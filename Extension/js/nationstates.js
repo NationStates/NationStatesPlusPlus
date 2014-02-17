@@ -196,7 +196,7 @@
 					var count = 0;
 					var userData = getUserData();
 					var ignoredTopics = userData.getValue("ignored_topics", {});
-					$(data).find("ul.topiclist.topics").find("li.row").find("h3:first a").each(function() {
+					$(data.replace(/[ ]src=/gim," data-src=")).find("ul.topiclist.topics").find("li.row").find("h3:first a").each(function() {
 						var threadId = $(this).attr("href").match("t=[0-9]+")[0].substring(2);
 						if (!ignoredTopics[threadId]) {
 							if ($(this).parents("li.row").find("dl:first").attr("style").contains("topic_unread_mine")) {
