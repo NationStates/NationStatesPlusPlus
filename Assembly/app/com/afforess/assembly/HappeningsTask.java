@@ -36,6 +36,7 @@ public class HappeningsTask implements Runnable {
 	private int maxEventId = -1;
 	private int newEvents = 0;
 	private long lastRun = 0L;
+	private int newEventSanityCounter = 0;
 	private final Cache<Integer, Boolean> updateCache = CacheBuilder.newBuilder().maximumSize(250).expireAfterWrite(1, TimeUnit.MINUTES).build();
 	/**
 	 * A counter, when set > 0, runs happening update polls at 2s intervals, otherwise at 10s intervals.
@@ -124,12 +125,23 @@ public class HappeningsTask implements Runnable {
 			}
 			final int oldEventId = maxEventId;
 			for (EventHappening happening : data.happenings) {
+				//Set the max id to the largest event id
 				if (maxEventId < happening.eventId) {
 					maxEventId = happening.eventId;
 				}
 				if (oldEventId < happening.eventId) {
 					newEvents++;
 				}
+			}
+			//Sanity check in case some genius decides to reset the event id sequence.
+			if (newEvents == 0) {
+				newEventSanityCounter++;
+			} else {
+				newEventSanityCounter = 0;
+			}
+			if (newEventSanityCounter > 60) {
+				Logger.warn("HAPPENING EVENT IDS OUT OF SEQUENCE - RESETTING MAX EVENT ID!");
+				maxEventId = 0;
 			}
 		}
 		Connection conn = null;
