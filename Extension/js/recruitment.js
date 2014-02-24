@@ -29,11 +29,7 @@
 
 	function setupRecruitment() {
 		if (getVisiblePage() != "panel" && getVisiblePage() != "hpanel") {
-			var rProgress = "<div id='rprogress' style='height: 20px; width: calc(100% - 193px); left: 193px; background: linear-gradient(to right, #006699, #0066FF); position: absolute; top: 100px; z-index: 2;'>" +
-			"<span style='position: absolute;color:white; font-size: 14px;font-weight: bold;font-family: Verdana,Tahoma; top: 1px;left: 5px;'>" + 
-			"<i class='fa fa-envelope-o' style='margin-right: 5px;'></i>Telegramming: <span id='tg-nation'></span></span>" + 
-			"<span id='r-sender' style='float:right; color: white; font-size: 14px; font-weight: bold;'></span>" +
-			"<div id='rprogress-bar' style='height: 20px; width: 0px; background: linear-gradient(to right, #FF3300, #CC0000);'></div></div>";
+			var rProgress = "<div id='rprogress'><span id='rprogress-text'><i class='fa fa-envelope-o' style='margin-right: 5px;'></i>Telegramming: <span id='tg-nation'></span></span><span id='r-sender'></span><div id='rprogress-bar'></div></div>";
 			$("body").prepend(rProgress);
 			$("#content").css("margin-top", "20px");
 			if ($(".regional_power").length > 0) {
