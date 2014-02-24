@@ -107,7 +107,6 @@
 
 	function recruitNation(data) {
 		$.get("//www.nationstates.net/cgi-bin/api.cgi?a=sendTG&client=" + data.client_key + "&tgid=" + data.tgid + "&key=" + data.secret_key + "&to=" + data.nation, function(result) {
-			console.log(result);
 			doAuthorizedPostRequest("https://nationstatesplusplus.net/api/recruitment/target/confirm?region=" + getUserRegion() + "&target=" + data.nation, "", function() {
 				localStorage.setItem(getUserNation() + "-last-recruitment", Date.now());
 				localStorage.setItem(getUserNation() + "-last-recruitment-data", JSON.stringify(data));

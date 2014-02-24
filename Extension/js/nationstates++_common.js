@@ -610,18 +610,15 @@ function doAuthorizedPostRequestFor(nation, url, postData, success, failure) {
 	//Check out NS++ auth token to see if it good enough first, avoid making a page=verify request
 	if (authToken != null) {
 		$.post("https://nationstatesplusplus.net/api/nation/auth/", "nation=" + nation + "&auth-token=" + encodeURIComponent(authToken), function(data, textStatus, jqXHR) {
-			console.log("Auth token up to date");
 			localStorage.setItem(nation + "-auth-token", data.code);
 			doAuthorizedPostRequestInternal(nation, url, postData, success, failure);
 		}).fail(function() {
 			localStorage.removeItem(nation + "-auth-token");
 			//Repeat request, get valid auth token
-			console.log("Auth token out of date");
 			doAuthorizedPostRequestFor(nation, url, postData, success, failure);
 		});
 	} else {
 		getNationStatesAuth(function(authCode) {
-			console.log("Getting auth token");
 			$.post("https://nationstatesplusplus.net/api/nation/auth/", "nation=" + nation + "&auth=" + encodeURIComponent(authCode), function(data, textStatus, jqXHR) {
 				localStorage.setItem(nation + "-auth-token", data.code);
 			}).always(function() {
