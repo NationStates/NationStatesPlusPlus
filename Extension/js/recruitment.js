@@ -36,6 +36,13 @@
 				$(".regional_power").css("top", ($(".regional_power").position().top + 20) + "px");
 			}
 		}
+		//Support old browsers that do not allow css calc
+		if ($("#rprogress").width() < 10) {
+			$(window).resize(function() {
+				$("#rprogress").width($("#content").width() + 25);
+			});
+			$(window).trigger("resize");
+		}
 		updateRecruitmentProgress();
 		var data = localStorage.getItem(getUserNation() + "-last-recruitment-data")
 		var error = localStorage.getItem(getUserNation() + "-last-recruitment-error")
@@ -61,6 +68,7 @@
 		if (progress != null && parseInt(progress) + 180000 < Date.now()) {
 			localStorage.removeItem(getUserNation() + "-last-recruitment");
 			localStorage.removeItem(getUserNation() + "-last-recruitment-data");
+			localStorage.removeItem(getUserNation() + "-last-recruitment-error");
 			progress = null;
 			if (getVisiblePage() != "panel" && getVisiblePage() != "hpanel") {
 				$("#rprogress-bar").width($("#rprogress").width());

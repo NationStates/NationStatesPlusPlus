@@ -188,6 +188,7 @@
 	position: relative;
 	left: -10px;
 	text-align:left;
+	list-style: none;
 }
 
 .puppet-form-inner {
@@ -718,6 +719,7 @@ fieldset.preview {
 	width: -webkit-calc(100% - 193px); 
 	width: calc(100% - 193px); 
 	left: 193px;
+	background: #006699;
 	background: -moz-linear-gradient(to right, #006699, #0066FF);
 	background: -webkit-linear-gradient(to right, #006699, #0066FF);
 	background: linear-gradient(to right, #006699, #0066FF);
@@ -745,6 +747,7 @@ fieldset.preview {
 #rprogress-bar {
 	height: 20px;
 	width: 0px;
+	background: #FF3300;
 	background: -moz-linear-gradient(to right, #FF3300, #CC0000);
 	background: -webkit-linear-gradient(to right, #FF3300, #CC0000);
 	background: linear-gradient(to right, #FF3300, #CC0000);

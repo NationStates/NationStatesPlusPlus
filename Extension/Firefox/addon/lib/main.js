@@ -26,7 +26,7 @@ pageMod.PageMod({
 				self.data.url("js/happenings.js"), self.data.url("js/census_slider.js"), self.data.url("js/embassy_flags.js"), self.data.url("js/telegrams.js"),
 				self.data.url("js/issues.js"), self.data.url("js/help.js"), self.data.url("js/irc.js"), self.data.url("js/dossier.js"), self.data.url("js/world.js"),
 				self.data.url("js/administration.js"), self.data.url("js/settings.js"), self.data.url("js/history.js"), 
-				self.data.url("js/puppet_command.js"), self.data.url("js/banhammer.js")],
+				self.data.url("js/puppet_command.js"), self.data.url("js/banhammer.js"), self.data.url("js/recruitment.js")],
   contentStyleFile: [ self.data.url("css/nouislider.fox.css"), self.data.url("css/bootstrap-button.css"), self.data.url("css/two_column.css"), 
 					  self.data.url("css/bootstrap-fileupload.min.css"), self.data.url("css/nprogress.css"), self.data.url("css/nationstates++.css")],
 });

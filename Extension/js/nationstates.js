@@ -43,6 +43,21 @@
 		$("#main").append("<div id='content'></div>");
 	}
 
+	if (userSettings.isEnabled("automatically_hide_flag", false)) {
+		var minHeight = $("#panel").css("min-height");
+		$("#panel").css("min-height", "0px");
+		if ($("#panel").height() - 50 > $(window).height() || ($("#content").length == 0 && userSettings.isEnabled("small_screen_height", false))) {
+			$("#panel_flag").hide();
+			//Use this as a setting to sync with forumside
+			if (!userSettings.isEnabled("small_screen_height", false)) {
+				userSettings.setValue("small_screen_height", true);
+			}
+		} else if (userSettings.isEnabled("small_screen_height", false)) {
+			userSettings.setValue("small_screen_height", false);
+		}
+		$("#panel").css("min-height", minHeight);
+	}
+
 	if (getVisiblePage() == "UN_proposal") {
 		var userData = getUserData();
 		var proposals = userData.getValue("wa_proposals", {last_viewed: 0});
@@ -65,32 +80,34 @@
 	if (getVisiblePage() != "panel" && getVisiblePage() != "hpanel") {
 		//If anyone on this machine has read the report, don't show it to them again
 		if (localStorage.getItem("read_security_incident") == null) {
-			var readReport = getUserData().getValue("read_security_incident", false);
-			if (readReport) {
-				localStorage.setItem("read_security_incident", true)
-			} else {
-				$("body").prepend("<div id='security_update' style='width: 700px; padding: 5px; position: absolute; top: 150px; left: 0px; z-index: 10; background: white; border: 5px solid red; '><div id='notice'></div><div style='display:none' id='report-content'></div></div>");
-				$("#security_update").css("left", ($("body").width() / 2  - 350) + "px");
-				$("#notice").html("<h2 style='text-align: center;'>NationStates++ Security Notice</h2><p>There was a serious security incident involving NationStates++ on January 23rd, 2014.</p><button id='read_report' class='btn'>Read Full Report</button><button id='continue_game' class='btn' style='float:right;'>Continue to NationStates</button>");
-				$("#report-content").html("<p><b>What Happened:</b></p><p>On January 23rd, <span style='color: #663399'>[violet]</span> added Dispatches, a more advanced type of factbook, to NationStates. As part of the usual round of bug fixing process I was poking around how exactly dispatches work. I was testing some changes to the code that involves how dispatches are upvoted and downvoted. When you upvote or downvote a particular dispatch, your browser is making a request to a location that may look like this:</p><pre>http://www.nationstates.net/page=ajax2/a=setendo/id=210646/v=-1/localid=i3cf8XpWmiWEB</pre>I was writing some javascript to add upvote / downvote arrows on page's national happenings, where it shows a dispatch is published. In the process some test code that I had written for a dispatch was accidentally released and downloaded by about 30 players before it was reverted. As a result, each of these players that downloaded this code, all upvoted the dispatch I had written for testing.<p></p><p>After this incident occurred, I stopped what I was working on to ensure that the released patch was taken down and not downloaded by additional users. The code was only available for a fewer than 10 seconds.</p><p><b>Why This Happened:</b></p><p>Normally new development for NationStates++ updates occurs in a separate location than where the live, production codebase lives. Due to the rushed nature of the 2.2x series of releases (as a result of changes to the NationStates site), I never set up a new development environment for 2.3.x releases.</p><p><b>What Has Been Changed:</b></p><p>I have taken steps to ensure that future NationStates++ development does not interfere with the live codebase. If I had followed my normal procedures, this incident would not have been possible.</p><p>Previously, NationStates++ would load some code on demand from my server. This is where the contamination occurred. NationStates++ no longer loads code from any remote server, and the extension is completely self-contained. This prevents any future occurrence of this problem.</p><p>In addition, NationStates++ now uses https:// instead of http:// to make requests for additional content.</p><button class='btn' id='close_report'>Close Report</button>");
-				$("#read_report").on("click", function(event) {
-					event.preventDefault();
-					$("#report-content").show();
-					$("#notice").hide();
-				});
-				$("#continue_game").on("click", function(event) {
-					event.preventDefault();
-					$("#security_update").remove();
-					localStorage.setItem("read_security_incident", true);
-					getUserData(true).setValue("read_security_incident", true);
-				});
-				$("#close_report").on("click", function(event) {
-					event.preventDefault();
-					$("#security_update").remove();
-					localStorage.setItem("read_security_incident", true);
-					getUserData(true).setValue("read_security_incident", true);
-				});
-			}
+			getUserData().update(function() {
+				var readReport = getUserData().getValue("read_security_incident", false);
+				if (readReport) {
+					localStorage.setItem("read_security_incident", true)
+				} else {
+					$("body").prepend("<div id='security_update' style='width: 700px; padding: 5px; position: absolute; top: 150px; left: 0px; z-index: 10; background: white; border: 5px solid red; '><div id='notice'></div><div style='display:none' id='report-content'></div></div>");
+					$("#security_update").css("left", ($("body").width() / 2  - 350) + "px");
+					$("#notice").html("<h2 style='text-align: center;'>NationStates++ Security Notice</h2><p>There was a serious security incident involving NationStates++ on January 23rd, 2014.</p><button id='read_report' class='btn'>Read Full Report</button><button id='continue_game' class='btn' style='float:right;'>Continue to NationStates</button>");
+					$("#report-content").html("<p><b>What Happened:</b></p><p>On January 23rd, <span style='color: #663399'>[violet]</span> added Dispatches, a more advanced type of factbook, to NationStates. As part of the usual round of bug fixing process I was poking around how exactly dispatches work. I was testing some changes to the code that involves how dispatches are upvoted and downvoted. When you upvote or downvote a particular dispatch, your browser is making a request to a location that may look like this:</p><pre>http://www.nationstates.net/page=ajax2/a=setendo/id=210646/v=-1/localid=i3cf8XpWmiWEB</pre>I was writing some javascript to add upvote / downvote arrows on page's national happenings, where it shows a dispatch is published. In the process some test code that I had written for a dispatch was accidentally released and downloaded by about 30 players before it was reverted. As a result, each of these players that downloaded this code, all upvoted the dispatch I had written for testing.<p></p><p>After this incident occurred, I stopped what I was working on to ensure that the released patch was taken down and not downloaded by additional users. The code was only available for a fewer than 10 seconds.</p><p><b>Why This Happened:</b></p><p>Normally new development for NationStates++ updates occurs in a separate location than where the live, production codebase lives. Due to the rushed nature of the 2.2x series of releases (as a result of changes to the NationStates site), I never set up a new development environment for 2.3.x releases.</p><p><b>What Has Been Changed:</b></p><p>I have taken steps to ensure that future NationStates++ development does not interfere with the live codebase. If I had followed my normal procedures, this incident would not have been possible.</p><p>Previously, NationStates++ would load some code on demand from my server. This is where the contamination occurred. NationStates++ no longer loads code from any remote server, and the extension is completely self-contained. This prevents any future occurrence of this problem.</p><p>In addition, NationStates++ now uses https:// instead of http:// to make requests for additional content.</p><button class='btn' id='close_report'>Close Report</button>");
+					$("#read_report").on("click", function(event) {
+						event.preventDefault();
+						$("#report-content").show();
+						$("#notice").hide();
+					});
+					$("#continue_game").on("click", function(event) {
+						event.preventDefault();
+						$("#security_update").remove();
+						localStorage.setItem("read_security_incident", true);
+						getUserData(true).setValue("read_security_incident", true);
+					});
+					$("#close_report").on("click", function(event) {
+						event.preventDefault();
+						$("#security_update").remove();
+						localStorage.setItem("read_security_incident", true);
+						getUserData(true).setValue("read_security_incident", true);
+					});
+				}
+			});
 		} else {
 			getUserData(true).setValue("read_security_incident", true);
 		}
