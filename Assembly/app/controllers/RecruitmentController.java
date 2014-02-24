@@ -4,13 +4,19 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Savepoint;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
 import org.apache.commons.dbutils.DbUtils;
+import org.joda.time.Duration;
 import org.spout.cereal.config.yaml.YamlConfiguration;
 
 import play.libs.Json;
@@ -19,17 +25,326 @@ import play.mvc.Results;
 
 import com.afforess.assembly.HappeningsTask;
 import com.afforess.assembly.model.HappeningType;
-import com.afforess.assembly.model.RecruitmentAction;
 import com.afforess.assembly.model.RecruitmentType;
 import com.afforess.assembly.util.DatabaseAccess;
 import com.afforess.assembly.util.Utils;
 import com.limewoodMedia.nsapi.NationStates;
 
 public class RecruitmentController extends NationStatesController {
-	private static final String[] FEEDER_REGIONS = {"the_north_pacific", "the_pacific", "the_east_pacific", "the_west_pacific", "the_south_pacific", "the_rejected_realms", "lazarus", "osiris", "balder"};
-
+	private final Random rand = new Random();
 	public RecruitmentController(DatabaseAccess access, YamlConfiguration config, NationStates api) {
 		super(access, config, api);
+	}
+
+	public Result getRecruitmentCampaigns(String region) throws SQLException, ExecutionException {
+		Result ret = Utils.validateRequest(request(), response(), getAPI(), getDatabase());
+		if (ret != null) {
+			return ret;
+		}
+		String nation = Utils.sanitizeName(Utils.getPostValue(request(), "nation"));
+		List<Map<String, Object>> campaigns = new ArrayList<Map<String, Object>>();
+		Connection conn = null;
+		try {
+			conn = getConnection();
+			final int regionId = getRecruitmentAdministrator(conn, nation, region);
+			if (regionId == -1) {
+				Utils.handleDefaultPostHeaders(request(), response());
+				return Results.unauthorized();
+			}
+			PreparedStatement select = conn.prepareStatement("SELECT id, created, retired, type, client_key, tgid, secret_key, allocation, gcrs_only FROM assembly.recruit_campaign WHERE region = ? AND visible = 1 ORDER BY created DESC");
+			select.setInt(1, regionId);
+			ResultSet set = select.executeQuery();
+			while(set.next()) {
+				Map<String, Object> campaign = new HashMap<String, Object>();
+				campaign.put("id", set.getInt("id"));
+				campaign.put("created", set.getLong("created"));
+				campaign.put("retired", set.getLong("retired"));
+				campaign.put("type", set.getInt("type"));
+				campaign.put("client_key", set.getString("client_key"));
+				campaign.put("tgid", set.getInt("tgid"));
+				campaign.put("secret_key", set.getString("secret_key"));
+				campaign.put("allocation", set.getInt("allocation"));
+				campaign.put("gcrs_only", set.getInt("gcrs_only"));
+				campaigns.add(campaign);
+			}
+			DbUtils.closeQuietly(set);
+			DbUtils.closeQuietly(select);
+		} finally {
+			DbUtils.closeQuietly(conn);
+		}
+		Utils.handleDefaultPostHeaders(request(), response());
+		return ok(Json.toJson(campaigns)).as("application/json");
+	}
+
+	public Result hideRecruitmentCampaign(String region, int id) throws SQLException, ExecutionException {
+		Result ret = Utils.validateRequest(request(), response(), getAPI(), getDatabase());
+		if (ret != null) {
+			return ret;
+		}
+		String nation = Utils.sanitizeName(Utils.getPostValue(request(), "nation"));
+		Connection conn = null;
+		try {
+			conn = getConnection();
+			final int regionId = getRecruitmentAdministrator(conn, nation, region);
+			if (regionId == -1) {
+				Utils.handleDefaultPostHeaders(request(), response());
+				return Results.unauthorized();
+			}
+			
+			PreparedStatement update = conn.prepareStatement("UPDATE assembly.recruit_campaign SET visible = 0 WHERE region = ? AND id = ? AND retired IS NOT NULL");
+			update.setInt(1, regionId);
+			update.setInt(2, id);
+			update.executeUpdate();
+			DbUtils.closeQuietly(update);
+		} finally {
+			DbUtils.closeQuietly(conn);
+		}
+		Utils.handleDefaultPostHeaders(request(), response());
+		return Results.ok();
+	}
+
+	public Result retireRecruitmentCampaign(String region, int id) throws SQLException, ExecutionException {
+		Result ret = Utils.validateRequest(request(), response(), getAPI(), getDatabase());
+		if (ret != null) {
+			return ret;
+		}
+		String nation = Utils.sanitizeName(Utils.getPostValue(request(), "nation"));
+		Connection conn = null;
+		try {
+			conn = getConnection();
+			final int regionId = getRecruitmentAdministrator(conn, nation, region);
+			if (regionId == -1) {
+				Utils.handleDefaultPostHeaders(request(), response());
+				return Results.unauthorized();
+			}
+			
+			PreparedStatement update = conn.prepareStatement("UPDATE assembly.recruit_campaign SET retired = ? WHERE region = ? AND id = ? AND retired IS NULL");
+			update.setLong(1, System.currentTimeMillis());
+			update.setInt(2, regionId);
+			update.setInt(3, id);
+			update.executeUpdate();
+			DbUtils.closeQuietly(update);
+		} finally {
+			DbUtils.closeQuietly(conn);
+		}
+		Utils.handleDefaultPostHeaders(request(), response());
+		return Results.ok();
+	}
+
+	public Result createRecruitmentCampaign(String region) throws SQLException, ExecutionException {
+		Result ret = Utils.validateRequest(request(), response(), getAPI(), getDatabase());
+		if (ret != null) {
+			return ret;
+		}
+		Utils.handleDefaultPostHeaders(request(), response());
+		
+		//Validation
+		final int type;
+		try {
+			type = Integer.parseInt(Utils.getPostValue(request(), "type"));
+		} catch (NumberFormatException e) {
+			return Results.badRequest("Invalid recruitment type");
+		}
+		if (RecruitmentType.getById(type) == null) {
+			return Results.badRequest("Unknown recruitment type");
+		}
+
+		final String clientKey = Utils.getPostValue(request(), "clientKey");
+		if (clientKey == null) return Results.badRequest("Invalid client key");
+		
+		final int tgid;
+		try {
+			tgid = Integer.parseInt(Utils.getPostValue(request(), "tgid"));
+		} catch (NumberFormatException e) {
+			return Results.badRequest("Invalid telegram id");
+		}
+		
+		final String secretKey = Utils.getPostValue(request(), "secretKey");
+		if (secretKey == null) return Results.badRequest("Invalid secret key");
+		
+		final int allocation;
+		try {
+			allocation = Integer.parseInt(Utils.getPostValue(request(), "allocation"));
+		} catch (NumberFormatException e) {
+			return Results.badRequest("Invalid percent allocated amount");
+		}
+		
+		final int gcrsOnly;
+		try {
+			gcrsOnly = Integer.parseInt(Utils.getPostValue(request(), "gcrsOnly"));
+		} catch (NumberFormatException e) {
+			return Results.badRequest("Invalid value for GCRS Only.");
+		}
+
+		String filters = Utils.getPostValue(request(), "filters");
+		if (filters != null) {
+			StringBuilder filterText = new StringBuilder("");
+			for (String filter : filters.split(",")) {
+				if (filterText.length() != 0) filterText.append(", ");
+				filterText.append(filter.toLowerCase().trim());
+			}
+			filters = filterText.toString();
+		}
+
+		String nation = Utils.sanitizeName(Utils.getPostValue(request(), "nation"));
+		Connection conn = null;
+		try {
+			conn = getConnection();
+			final int regionId = getRecruitmentAdministrator(conn, nation, region);
+			if (regionId == -1) {
+				Utils.handleDefaultPostHeaders(request(), response());
+				return Results.unauthorized();
+			}
+			
+			PreparedStatement update = conn.prepareStatement("INSERT INTO assembly.recruit_campaign (created, type, region, client_key, tgid, secret_key, allocation, gcrs_only, filters) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+			update.setLong(1, System.currentTimeMillis());
+			update.setInt(2, type);
+			update.setInt(3, regionId);
+			update.setString(4, clientKey);
+			update.setInt(5, tgid);
+			update.setString(6, secretKey);
+			update.setInt(7, Math.min(100, Math.max(0, allocation)));
+			update.setByte(8, (byte)(gcrsOnly == 0 ? 0 : 1));
+			if (filters != null)
+				update.setString(9, filters);
+			else
+				update.setNull(9, Types.LONGVARCHAR);
+			update.executeUpdate();
+			DbUtils.closeQuietly(update);
+		} finally {
+			DbUtils.closeQuietly(conn);
+		}
+
+		return getRecruitmentCampaigns(region);
+	}
+
+	public Result getRecruitmentOfficers(String region, boolean includeAdmins) throws SQLException, ExecutionException {
+		Connection conn = null;
+		List<Object> officers = new ArrayList<Object>();
+		try {
+			conn = getConnection();
+			final int regionId = getDatabase().getRegionIdCache().get(Utils.sanitizeName(region));
+			PreparedStatement select = conn.prepareStatement("SELECT nation.name, nation.full_name FROM assembly.recruitment_officers LEFT JOIN assembly.nation ON nation.id = recruitment_officers.nation WHERE recruitment_officers.region = ?");
+			select.setInt(1, regionId);
+			ResultSet set = select.executeQuery();
+			while(set.next()) {
+				Map<String, String> nation = new HashMap<String, String>(2);
+				nation.put("name", set.getString(1));
+				nation.put("full_name", set.getString(2));
+				officers.add(nation);
+			}
+			DbUtils.closeQuietly(set);
+			DbUtils.closeQuietly(select);
+			
+			if (includeAdmins) {
+				select = conn.prepareStatement("SELECT delegate, founder FROM assembly.region WHERE id = ?");
+				select.setInt(1, regionId);
+				set = select.executeQuery();
+				if(set.next()) {
+					if (set.getString(1) != "0") {
+						Map<String, String> nation = new HashMap<String, String>(2);
+						nation.put("name", set.getString(1));
+						officers.add(nation);
+					}
+					
+					if (set.getString(2) != "0") {
+						Map<String, String> nation = new HashMap<String, String>(2);
+						nation.put("name", set.getString(2));
+						officers.add(nation);
+					}
+				}
+			}
+		} finally {
+			DbUtils.closeQuietly(conn);
+		}
+		Result result = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(officers.hashCode()), "600");
+		if (result != null) {
+			return result;
+		}
+		return ok(Json.toJson(officers)).as("application/json");
+	}
+
+	public Result changeOfficers(String region) throws SQLException, ExecutionException {
+		Result ret = Utils.validateRequest(request(), response(), getAPI(), getDatabase());
+		if (ret != null) {
+			return ret;
+		}
+		Utils.handleDefaultPostHeaders(request(), response());
+		
+		String add = Utils.getPostValue(request(), "add");
+		String remove = Utils.getPostValue(request(), "remove");
+		String submitter = Utils.getPostValue(request(), "nation");
+		
+		Connection conn = null;
+		try {
+			conn = getConnection();
+
+			final int regionId = getRecruitmentAdministrator(conn, submitter, region);
+			if (regionId == -1) {
+				Utils.handleDefaultPostHeaders(request(), response());
+				return Results.unauthorized();
+			}
+
+			Set<Integer> existingOfficers = new HashSet<Integer>();
+			PreparedStatement select = conn.prepareStatement("SELECT nation FROM assembly.recruitment_officers WHERE region = ?");
+			select.setInt(1, regionId);
+			ResultSet set = select.executeQuery();
+			while(set.next()) {
+				existingOfficers.add(set.getInt(1));
+			}
+			
+			DbUtils.closeQuietly(set);
+			DbUtils.closeQuietly(select);
+			
+			Map<String, String> errors = new HashMap<String, String>();
+			conn.setAutoCommit(false);
+			Savepoint save = conn.setSavepoint(String.valueOf(System.currentTimeMillis()));
+			if (add != null) {
+				for (String nation : add.split(",")) {
+					final String format = Utils.sanitizeName(nation);
+					final int nationId = getDatabase().getNationIdCache().get(format);
+					if (nationId > -1) {
+						if (!existingOfficers.contains(nationId)) {
+							PreparedStatement officers = conn.prepareStatement("INSERT INTO assembly.recruitment_officers (region, nation) VALUES (?, ?)");
+							officers.setInt(1, regionId);
+							officers.setInt(2, nationId);
+							officers.executeUpdate();
+							DbUtils.closeQuietly(officers);
+						}
+					} else {
+						errors.put("error", "unknown nation: " + nation);
+						conn.rollback(save);
+						return Results.ok(Json.toJson(errors)).as("application/json");
+					}
+				}
+			}
+			if (remove != null) {
+				for (String nation : remove.split(",")) {
+					final String format = Utils.sanitizeName(nation);
+					final int nationId = getDatabase().getNationIdCache().get(format);
+					if (nationId > -1) {
+						if (existingOfficers.contains(nationId)) {
+							PreparedStatement officer = conn.prepareStatement("DELETE FROM assembly.recruitment_officers WHERE region = ? AND nation = ?");
+							officer.setInt(1, regionId);
+							officer.setInt(2, nationId);
+							officer.executeUpdate();
+							DbUtils.closeQuietly(officer);
+						}
+					} else {
+						errors.put("error", "unknown nation: " + nation);
+						conn.rollback(save);
+						return Results.ok(Json.toJson(errors)).as("application/json");
+					}
+				}
+			}
+			conn.commit();
+		} finally {
+			if (conn != null) {
+				conn.setAutoCommit(true);
+			}
+			DbUtils.closeQuietly(conn);
+		}
+		return Results.ok();
 	}
 
 	public Result getRecruitmentNations() throws SQLException {
@@ -64,67 +379,6 @@ public class RecruitmentController extends NationStatesController {
 		return Results.ok(Json.toJson(nations)).as("application/json");
 	}
 
-	public Result getRecruitmentStrategies(String region) throws SQLException, ExecutionException {
-		Result ret = Utils.validateRequest(request(), response(), getAPI(), getDatabase());
-		if (ret != null) {
-			return ret;
-		}
-		Utils.handleDefaultPostHeaders(request(), response());
-		boolean invalid = false;
-		for (int i = 0; i < FEEDER_REGIONS.length; i++) {
-			if (FEEDER_REGIONS[i].equals(region)) {
-				invalid = true;
-				break;
-			}
-		}
-		if (invalid) {
-			return Results.forbidden("feeder regions cannot recruit");
-		}
-		String nation = Utils.sanitizeName(Utils.getPostValue(request(), "nation"));
-		Connection conn = null;
-		try {
-			conn = getConnection();
-			int regionId = getRecruitmentAdministrator(conn, nation, region);
-			if (regionId != -1) {
-				return Results.ok(Json.toJson(RecruitmentAction.getActions(regionId, conn))).as("application/json");
-			}
-			return Results.forbidden("Invalid nation - must be founder or delegate");
-		} finally {
-			DbUtils.closeQuietly(conn);
-		}
-	}
-
-	public Result getRecruitmentSuccess(String tgid, String region) throws SQLException, ExecutionException {
-		Result ret = Utils.validateRequest(request(), response(), getAPI(), getDatabase());
-		if (ret != null) {
-			return ret;
-		}
-		Utils.handleDefaultPostHeaders(request(), response());
-		String nation = Utils.sanitizeName(Utils.getPostValue(request(), "nation"));
-		Connection conn = null;
-		PreparedStatement recruitment = null;
-		ResultSet data = null;
-		try {
-			conn = getConnection();
-			int regionId = getRecruitmentAdministrator(conn, nation, region);
-			if (regionId != -1) {
-				recruitment = conn.prepareStatement("SELECT (SELECT count(*) FROM assembly.recruitment_success WHERE recruiting_region = ? AND tgid = ? AND recruiting_region = nation_region) AS success, (SELECT count(*) FROM assembly.recruitment_success WHERE recruiting_region = ? AND tgid = ?) AS total");
-				recruitment.setInt(1, regionId);
-				recruitment.setString(2, tgid);
-				recruitment.setInt(3, regionId);
-				recruitment.setString(4, tgid);
-				data = recruitment.executeQuery();
-				data.next();
-				return Results.ok("{\"tgid\": \"" + tgid + "\", \"sent_telegrams\":" + data.getInt(2) + ", \"successful_telegrams\": " + data.getInt(1) + "}").as("application/json");
-			}
-			return Results.forbidden("Invalid nation - must be founder or delegate");
-		} finally {
-			DbUtils.closeQuietly(data);
-			DbUtils.closeQuietly(recruitment);
-			DbUtils.closeQuietly(conn);
-		}
-	}
-
 	private int getRecruitmentAdministrator(Connection conn, String nation, String region) throws SQLException, ExecutionException {
 		PreparedStatement select = null, officers = null;
 		ResultSet set = null;
@@ -156,83 +410,136 @@ public class RecruitmentController extends NationStatesController {
 		}
 	}
 
-	public Result updateRecruitmentStrategies(String region) throws SQLException, ExecutionException {
+	public Result findRecruitmentTarget(String region) throws SQLException, ExecutionException {
 		Result ret = Utils.validateRequest(request(), response(), getAPI(), getDatabase());
 		if (ret != null) {
 			return ret;
 		}
 		Utils.handleDefaultPostHeaders(request(), response());
-		boolean invalid = false;
-		for (int i = 0; i < FEEDER_REGIONS.length; i++) {
-			if (FEEDER_REGIONS[i].equals(region)) {
-				invalid = true;
-				break;
-			}
-		}
-		if (invalid) {
-			return Results.forbidden("feeder regions cannot recruit");
-		}
 		String nation = Utils.sanitizeName(Utils.getPostValue(request(), "nation"));
-		String cancel = Utils.getPostValue(request(), "cancel");
 		Connection conn = null;
 		try {
 			conn = getConnection();
-			int regionId = getRecruitmentAdministrator(conn, nation, region);
-			if (regionId != -1) {
-				final String id = Utils.getPostValue(request(), "id");
-				final String clientKey = Utils.getPostValue(request(), "clientKey");
-				final String tgid = Utils.getPostValue(request(), "tgid");
-				final String secretKey = Utils.getPostValue(request(), "secretKey");
-				final boolean randomize = "true".equalsIgnoreCase(Utils.getPostValue(request(), "randomize"));
-				final boolean feedersOnly = "true".equalsIgnoreCase(Utils.getPostValue(request(), "feedersOnly"));
-				final String filterRegex = Utils.getPostValue(request(), "filterRegex");
-				if (id == null) {
-					Integer percent = Math.min(100, Math.max(0, Integer.parseInt(Utils.getPostValue(request(), "percent"))));
-					final RecruitmentType type = RecruitmentType.getById(Integer.parseInt(Utils.getPostValue(request(), "type")));
-					PreparedStatement insert = conn.prepareStatement("INSERT INTO assembly.recruitment (region, client_key, tgid, secret_key, percent, type, feeders_only, filter_regex, randomize) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-					insert.setInt(1, getDatabase().getRegionIdCache().get(region));
-					insert.setString(2, clientKey.trim());
-					insert.setString(3, tgid.trim());
-					insert.setString(4, secretKey.trim());
-					insert.setInt(5, percent);
-					insert.setInt(6, type.getId());
-					insert.setByte(7, (byte)(feedersOnly ? 1 : 0));
-					insert.setString(8, filterRegex.trim());
-					insert.setByte(9, (byte)(randomize ? 1 : 0));
-					insert.executeUpdate();
-					DbUtils.closeQuietly(insert);
-				} else if (cancel != null) {
-					PreparedStatement delete = conn.prepareStatement("DELETE FROM assembly.recruitment WHERE id = ?");
-					delete.setInt(1, Integer.parseInt(id));
-					delete.executeUpdate();
-					DbUtils.closeQuietly(delete);
-				} else {
-					final Integer percent = Integer.parseInt(Utils.getPostValue(request(), "percent"));
-					final RecruitmentType type = RecruitmentType.getById(Integer.parseInt(Utils.getPostValue(request(), "type")));
-
-					List<RecruitmentAction> actions = RecruitmentAction.getActions(getDatabase().getRegionIdCache().get(region), conn);
-					for (RecruitmentAction action : actions) {
-						if (id.equals(String.valueOf(action.id))) {
-							action.clientKey = clientKey.trim();
-							action.tgid = tgid.trim();
-							action.secretKey = secretKey.trim();
-							action.percent = percent;
-							action.type = type;
-							action.feedersOnly = feedersOnly;
-							action.filterRegex = filterRegex.trim();
-							action.randomize = randomize;
-							action.error = 0;
-							action.update(conn);
-							break;
-						}
-					}
-				}
-				return Results.ok();
+			final int regionId = getRecruitmentAdministrator(conn, nation, region);
+			if (regionId == -1) {
+				Utils.handleDefaultPostHeaders(request(), response());
+				return Results.unauthorized();
 			}
-			return Results.forbidden("Invalid nation - must be founder or delegate");
+
+			if (canRecruit(conn, regionId)) {
+				Map<String, Object> data = getRecruitmentTarget(conn, regionId, nation);
+				if (data != null) {
+					return ok(Json.toJson(data)).as("application/json");
+				}
+			}
+			
+			Map<String, Object> wait = new HashMap<String, Object>();
+			PreparedStatement lastRecruitment = conn.prepareStatement("SELECT nation, timestamp, recruiter FROM assembly.recruitment_results WHERE region = ? ORDER BY timestamp DESC LIMIT 0, 1");
+			lastRecruitment.setInt(1, regionId);
+			ResultSet set = lastRecruitment.executeQuery();
+			if (set.next()) {
+				wait.put("nation", getDatabase().getReverseIdCache().get(set.getInt("nation")));
+				wait.put("timestamp", set.getLong("timestamp"));
+				wait.put("recruiter", getDatabase().getReverseIdCache().get(set.getInt("recruiter")));
+			}
+			DbUtils.closeQuietly(set);
+			DbUtils.closeQuietly(lastRecruitment);
+			
+			wait.put("wait", "30");
+			return ok(Json.toJson(wait)).as("application/json");
 		} finally {
 			DbUtils.closeQuietly(conn);
 		}
+	}
+
+	private boolean canRecruit(Connection conn, int region) throws SQLException {
+		PreparedStatement lastRecruitment = null;
+		ResultSet recruitment = null;
+		try {
+			lastRecruitment = conn.prepareStatement("SELECT timestamp, confirmed FROM assembly.recruitment_results WHERE region = ? ORDER BY timestamp DESC LIMIT 0, 1");
+			lastRecruitment.setInt(1, region);
+			recruitment = lastRecruitment.executeQuery();
+			if (recruitment.next()) {
+				long timestamp = recruitment.getLong(1);
+				int confirmed = recruitment.getInt(2);
+				if (confirmed == 1 && timestamp + Duration.standardMinutes(3).getMillis() < System.currentTimeMillis()) {
+					return true;
+				} else if (confirmed == 0 && timestamp + Duration.standardMinutes(4).getMillis() < System.currentTimeMillis()) {
+					return true;
+				}
+			} else {
+				return true;
+			}
+			return false;
+		} finally {
+			DbUtils.closeQuietly(lastRecruitment);
+			DbUtils.closeQuietly(recruitment);
+		}
+	}
+
+	private Map<String, Object> getRecruitmentTarget(Connection conn, int region, String nation) throws SQLException, ExecutionException {
+		PreparedStatement select = conn.prepareStatement("SELECT id, type, client_key, tgid, secret_key, allocation, gcrs_only, filters FROM assembly.recruit_campaign WHERE region = ? AND visible = 1 AND retired IS NULL ORDER BY RAND()");
+		select.setInt(1, region);
+		ResultSet set = select.executeQuery();
+		while(set.next()) {
+			final int campaign = set.getInt("id");
+			RecruitmentType type = RecruitmentType.getById(set.getInt("type"));
+			final String clientKey = set.getString("client_key");
+			final int tgid = set.getInt("tgid");
+			final String secretKey = set.getString("secret_key");
+			final int allocation = set.getInt("allocation");
+			final boolean gcrsOnly = set.getInt("gcrs_only") == 1;
+			if (rand.nextInt(100) < allocation || set.isLast()) {
+				String target = type.findRecruitmentNation(conn, region, gcrsOnly, set.getString("filters"));
+				if (target != null) {
+					PreparedStatement insert = conn.prepareStatement("INSERT INTO assembly.recruitment_results (region, nation, timestamp, campaign, recruiter) VALUES (?, ?, ?, ?, ?)");
+					insert.setInt(1, region);
+					insert.setInt(2, getDatabase().getNationIdCache().get(target));
+					insert.setLong(3, System.currentTimeMillis());
+					insert.setInt(4, campaign);
+					insert.setInt(5, getDatabase().getNationIdCache().get(nation));
+					insert.executeUpdate();
+					DbUtils.closeQuietly(insert);
+					
+					Map<String, Object> data = new HashMap<String, Object>();
+					data.put("client_key", clientKey);
+					data.put("tgid", tgid);
+					data.put("secret_key", secretKey);
+					data.put("nation", target);
+					return data;
+				}
+			}
+		}
+		DbUtils.closeQuietly(set);
+		DbUtils.closeQuietly(select);
+		return null;
+	}
+
+	public Result confirmRecruitmentSent(String region, String target) throws SQLException, ExecutionException {
+		Result ret = Utils.validateRequest(request(), response(), getAPI(), getDatabase());
+		if (ret != null) {
+			return ret;
+		}
+		Utils.handleDefaultPostHeaders(request(), response());
+		String nation = Utils.sanitizeName(Utils.getPostValue(request(), "nation"));
+		Connection conn = null;
+		try {
+			conn = getConnection();
+			final int regionId = getRecruitmentAdministrator(conn, nation, region);
+			if (regionId == -1) {
+				Utils.handleDefaultPostHeaders(request(), response());
+				return Results.unauthorized();
+			}
+			PreparedStatement update = conn.prepareStatement("UPDATE assembly.recruitment_results SET confirmed = 1 WHERE region = ? AND nation = ? AND timestamp > ?");
+			update.setInt(1, regionId);
+			update.setInt(2, getDatabase().getNationIdCache().get(target));
+			update.setLong(3, System.currentTimeMillis() - Duration.standardHours(1).getMillis()); //Ensure we are not tampering with ancient results
+			update.executeUpdate();
+			DbUtils.closeQuietly(update);
+		} finally {
+			DbUtils.closeQuietly(conn);
+		}
+		return Results.ok();
 	}
 
 	public Result markPuppetNation(String nation) throws ExecutionException {

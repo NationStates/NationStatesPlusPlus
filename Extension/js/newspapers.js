@@ -129,8 +129,10 @@ var newspaperAdminHTML = '<form class=form-horizontal><fieldset><div class=contr
 			}
 		}
 	}
-	updateNewspaperNags();
-	$(window).on("page/update", updateNewspaperNags);
+	if (getUserNation() != "") {
+		updateNewspaperNags();
+		$(window).on("page/update", updateNewspaperNags);
+	}
 	
 	var visibleTypes = ["Draft", "Published", "Archived", "User Submitted, Pending Review"];
 	function viewNewspaperArticles(newspaper) {
@@ -190,14 +192,12 @@ var newspaperAdminHTML = '<form class=form-horizontal><fieldset><div class=contr
 			if (navigator.userAgent.toLowerCase().indexOf('firefox') == -1) {
 				$("#add_editor").autocomplete({
 					source: function( request, response ) {
-						if (request.term.length < 3) {
-							response(new Array());
-						} else {
-							$.get("https://nationstatesplusplus.net/api/autocomplete/nation/?start=" + request.term, function(nations) {
-								response(nations);
-							});
-						}
-					}
+						$.get("https://nationstatesplusplus.net/api/autocomplete/nation/?start=" + request.term, function(nations) {
+							response(nations);
+						});
+					},
+					minLength: 3,
+					delay: 50
 				});
 			}
 			$("#add_editor_btn").on("click", function(event) {

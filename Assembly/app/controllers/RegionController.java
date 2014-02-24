@@ -231,36 +231,6 @@ public class RegionController extends NationStatesController {
 			
 			DbUtils.closeQuietly(result);
 			DbUtils.closeQuietly(statement);
-
-			PreparedStatement global = conn.prepareStatement("CALL assembly.first_seen_history(30)");
-			result = global.executeQuery();
-			population = new ArrayList<Population>();
-			while(result.next()) {
-				population.add(new Population(result.getInt(1), result.getLong(2)));
-			}
-			data.put("global_growth", population);
-			
-			DbUtils.closeQuietly(result);
-			DbUtils.closeQuietly(global);
-
-			global = conn.prepareStatement("CALL assembly.cte_history(30)");
-			result = global.executeQuery();
-			population = new ArrayList<Population>();
-			while(result.next()) {
-				population.add(new Population(result.getInt(1), result.getLong(2)));
-			}
-			data.put("global_cte", population);
-			
-			DbUtils.closeQuietly(result);
-			DbUtils.closeQuietly(global);
-
-			global = conn.prepareStatement("SELECT count(id) FROM assembly.nation WHERE alive = 1;");
-			result = global.executeQuery();
-			result.next();
-			data.put("global_alive", result.getInt(1));
-			
-			DbUtils.closeQuietly(result);
-			DbUtils.closeQuietly(global);
 		} finally {
 			DbUtils.closeQuietly(conn);
 		}
@@ -336,7 +306,7 @@ public class RegionController extends NationStatesController {
 				}
 				String imgurPreview = null;
 				try {
-					imgurPreview = Utils.uploadToImgur(mapPreview, imgurClientKey);
+					imgurPreview = Utils.uploadToImgur(mapPreview, null, imgurClientKey);
 				} catch (Exception e) {
 					Logger.warn("Unable to upload image to imgur for regional map [" + mapPreview + "]", e);
 				}

@@ -281,7 +281,7 @@ public class Utils {
 		return Results.unauthorized(reason);
 	}
 
-	public static String uploadToImgur(String url, String clientKey) throws IOException {
+	public static String uploadToImgur(String url, String base64, String clientKey) throws IOException {
 		HttpsURLConnection conn = (HttpsURLConnection) (new URL("https://api.imgur.com/3/image")).openConnection();
 		conn.addRequestProperty("Authorization", "Client-ID " + clientKey);
 		conn.setDoInput(true);
@@ -291,7 +291,11 @@ public class Utils {
 		OutputStream out = null;
 		try {
 			out = conn.getOutputStream();
-			IOUtils.write("image=" + EncodingUtil.encodeURIComponent(url) + "&type=URL", out);
+			if (url != null) {
+				IOUtils.write("image=" + EncodingUtil.encodeURIComponent(url) + "&type=URL", out);
+			} else {
+				IOUtils.write("image=" + EncodingUtil.encodeURIComponent(base64) + "&type=base64", out);
+			}
 			out.flush();
 		} finally {
 			IOUtils.closeQuietly(out);

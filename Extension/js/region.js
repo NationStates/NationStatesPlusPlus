@@ -41,6 +41,8 @@ function setupRegionPage() {
 		rControls = $("a[href='page=region_admin/region=" + getVisibleRegion() + "']");
 		$("<span> &#8226; </span><a name='rc' href='page=region_control/region=" + getVisibleRegion() + "'>Regional Controls</a>").insertAfter(rControls);
 	}
+	rControls.parent().append("<span id='recruit-admin' style='display:none'> &#8226; <a href='page=blank?recruitment=" + getVisibleRegion() + "'>Recruitment</a></span>");
+	
 	//Add FA icons
 	$("strong:contains('WA Delegate'):first").html("<i class='fa fa-users'></i> <span id='wa_delegate_title'>WA Delegate</span>");
 	if (founder.length > 0) {

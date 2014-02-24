@@ -177,7 +177,6 @@
 	}
 
 	function updatePanelAlerts() {
-		console.log("Updating panel alerts");
 		if (getUserNation() != "") {
 			$.get('/page=panel/template-overall=none', function(html) {
 				//Verify we haven't switched nations/logged out

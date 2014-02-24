@@ -44,34 +44,39 @@ public class RMBController extends NationStatesController {
 		if (rmbPost < 12 || rating > 1) {
 			return Results.badRequest();
 		}
-		String nation = Utils.sanitizeName(Utils.getPostValue(request(), "nation"));
+		final String nation = Utils.sanitizeName(Utils.getPostValue(request(), "nation"));
+		final int nationId = getDatabase().getNationIdCache().get(nation);
+		if (nationId == -1) {
+			return Results.badRequest();
+		}
 		Connection conn = null;
 		try {
 			conn =  getConnection();
 			if (rating < 0) {
-				PreparedStatement delete = conn.prepareStatement("DELETE FROM assembly.rmb_post_ratings WHERE nation = ? AND rmb_post = ?");
-				delete.setInt(1, getDatabase().getNationIdCache().get(nation));
+				PreparedStatement delete = conn.prepareStatement("DELETE FROM assembly.rmb_ratings WHERE nation = ? AND rmb_post = ?");
+				delete.setInt(1, nationId);
 				delete.setInt(2, rmbPost);
 				delete.executeUpdate();
 				DbUtils.closeQuietly(delete);
 			} else {
-				PreparedStatement update = conn.prepareStatement("UPDATE assembly.rmb_post_ratings SET rating_type = ? WHERE nation = ? AND rmb_post = ?");
+				PreparedStatement update = conn.prepareStatement("UPDATE assembly.rmb_ratings SET rating_type = ? WHERE nation = ? AND rmb_post = ?");
 				update.setInt(1, rating);
-				update.setInt(2, getDatabase().getNationIdCache().get(nation));
+				update.setInt(2, nationId);
 				update.setInt(3, rmbPost);
 				if (update.executeUpdate() == 0) {
-					PreparedStatement insert = conn.prepareStatement("INSERT INTO assembly.rmb_post_ratings (nation, rating_type, rmb_post) VALUES (?, ?, ?)");
-					insert.setInt(1, getDatabase().getNationIdCache().get(nation));
-					insert.setInt(2, rating);
-					insert.setInt(3, rmbPost);
+					PreparedStatement insert = conn.prepareStatement("INSERT INTO assembly.rmb_ratings (nation, nation_name, rating_type, rmb_post) VALUES (?, ?, ?, ?)");
+					insert.setInt(1, nationId);
+					insert.setString(2, nation);
+					insert.setInt(3, rating);
+					insert.setInt(4, rmbPost);
 					insert.executeUpdate();
 					DbUtils.closeQuietly(insert);
 				}
 				DbUtils.closeQuietly(update);
-			}String s = 1 + "hello";
+			}
 
 			PreparedStatement update = conn.prepareStatement("UPDATE assembly.region SET rmb_cache = rmb_cache + 1 WHERE id = (SELECT region FROM assembly.nation WHERE nation.id = ?)");
-			update.setInt(1, getDatabase().getNationIdCache().get(nation));
+			update.setInt(1, nationId);
 			update.executeUpdate();
 			DbUtils.closeQuietly(update);
 			
@@ -102,7 +107,7 @@ public class RMBController extends NationStatesController {
 		List<Map<String, String>> list = new ArrayList<Map<String, String>>();
 		try {
 			conn = getConnection();
-			PreparedStatement select = conn.prepareStatement("SELECT title, rating_type FROM assembly.rmb_post_ratings AS r LEFT OUTER JOIN assembly.nation AS n ON n.id = r.nation WHERE rmb_post = ?");
+			PreparedStatement select = conn.prepareStatement("SELECT nation_name, rating_type FROM assembly.rmb_ratings WHERE rmb_post = ?");
 			select.setInt(1, rmbPost);
 			ResultSet result = select.executeQuery();
 			while(result.next()) {

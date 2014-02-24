@@ -35,5 +35,5 @@ pageMod.PageMod({
   include: ["http://www.nationstates.net/page=blank*", "https://www.nationstates.net/page=blank*"],
   contentScriptWhen: "ready",
   contentScriptFile: [self.data.url("js/bootstrap-dropdown.min.js"), self.data.url("js/bootstrap-fileupload.min.js")],
-  contentStyleFile: [ self.data.url("css/bootstrap-fileupload.min.css"), self.data.url("css/newspaper_bootstrap.min.css")],
+  contentStyleFile: [ self.data.url("css/bootstrap-fileupload.min.css"), self.data.url("css/newspaper_bootstrap.min.css"), self.data.url("css/bootstrap-table.min.css")],
 });

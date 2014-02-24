@@ -61,11 +61,16 @@ GET     /region/title/                @controllers.RegionController.getRegionalT
 POST    /region/title/                @controllers.RegionController.setRegionalTitle(region: String ?= "", disband: Boolean ?= false)
 GET     /region/summary/              @controllers.RegionController.getRegionSummary(region: String ?= "")
 
-POST    /region/recruitment/get       @controllers.RecruitmentController.getRecruitmentStrategies(region: String ?= "")
-POST    /region/recruitment/set       @controllers.RecruitmentController.updateRecruitmentStrategies(region: String ?= "")
-POST    /region/recruitment/success   @controllers.RecruitmentController.getRecruitmentSuccess(tgid: String ?= "", region: String ?= "")
 GET     /recruitment/                 @controllers.RecruitmentController.getRecruitmentNations()
 GET     /recruitment/puppet/          @controllers.RecruitmentController.markPuppetNation(nation: String ?= "")
+GET     /recruitment/officers/get     @controllers.RecruitmentController.getRecruitmentOfficers(region: String ?= "", includeAdmins: Boolean ?= false)
+POST    /recruitment/officers/set     @controllers.RecruitmentController.changeOfficers(region: String ?= "")
+POST    /recruitment/campaign/        @controllers.RecruitmentController.getRecruitmentCampaigns(region: String ?= "")
+POST    /recruitment/campaign/create  @controllers.RecruitmentController.createRecruitmentCampaign(region: String ?= "")
+POST    /recruitment/campaign/retire  @controllers.RecruitmentController.retireRecruitmentCampaign(region: String ?= "", id: Integer ?= -1)
+POST    /recruitment/campaign/delete  @controllers.RecruitmentController.hideRecruitmentCampaign(region: String ?= "", id: Integer ?= -1)
+POST    /recruitment/target/get       @controllers.RecruitmentController.findRecruitmentTarget(region: String ?= "")
+POST    /recruitment/target/confirm   @controllers.RecruitmentController.confirmRecruitmentSent(region: String ?= "", target: String ?= "")
 
 GET     /wa/delegates/                @controllers.WorldAssemblyController.getWADelegates()
 GET     /wa/power_transfers/          @controllers.WorldAssemblyController.getRecentPowerTransfers()
@@ -77,6 +82,3 @@ POST   /xenforo/login/                @controllers.XenforoController.verifyNatio
 POST   /xenforo/register/             @controllers.XenforoController.createXenforoUser()
 
 POST   /nswiki/login/                 @controllers.NSWikiController.verifyNationLogin()
-
-# Map static resources from the /public folder to the /assets URL path
-GET     /assets/*file               controllers.Assets.at(path="/public", file)

@@ -138,7 +138,7 @@ public class NSWikiTask implements Runnable {
 		Connection conn = null;
 		try {
 			conn = access.getPool().getConnection();
-			PreparedStatement select = conn.prepareStatement("SELECT title FROM assembly.region WHERE last_wiki_update < ? AND (alive = 1 OR last_wiki_update <> 0) ORDER BY last_wiki_update ASC LIMIT 0, 15");
+			PreparedStatement select = conn.prepareStatement("SELECT title FROM assembly.region WHERE last_wiki_update < ? AND (alive = 1 OR last_wiki_update <> 0) ORDER BY last_wiki_update ASC LIMIT 0, 3");
 			select.setInt(1, (int)((System.currentTimeMillis() - Duration.standardHours(24).getMillis()) / 1000L));
 			ResultSet result = select.executeQuery();
 

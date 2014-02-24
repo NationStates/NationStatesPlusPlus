@@ -133,22 +133,24 @@ public class DumpUpdateTask implements Runnable {
 
 			PreparedStatement update = null;
 			if (regionId == -1) {
-				update = conn.prepareStatement("INSERT INTO assembly.region (name, title, flag, delegate, founder, alive) VALUES (?, ?, ?, ?, ?, 1)");
+				update = conn.prepareStatement("INSERT INTO assembly.region (name, title, flag, delegate, founder, alive, population) VALUES (?, ?, ?, ?, ?, 1, ?)");
 				update.setString(1, region);
 				update.setString(2, title);
 				update.setString(3, flag);
 				update.setString(4, delegate);
 				update.setString(5, founder);
+				update.setInt(6, numNations);
 				update.executeUpdate();
 				DbUtils.closeQuietly(update);
 				return 1;
 			} else {
-				update = conn.prepareStatement("UPDATE assembly.region SET alive = 1, title = ?, flag = ?, delegate = ?, founder = ? WHERE id = ?");
+				update = conn.prepareStatement("UPDATE assembly.region SET alive = 1, title = ?, flag = ?, delegate = ?, founder = ?, population = ? WHERE id = ?");
 				update.setString(1, title);
 				update.setString(2, flag);
 				update.setString(3, delegate);
 				update.setString(4, founder);
-				update.setInt(5, regionId);
+				update.setInt(5, numNations);
+				update.setInt(6, regionId);
 				update.executeUpdate();
 				DbUtils.closeQuietly(update);
 				return 0;

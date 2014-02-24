@@ -712,19 +712,27 @@ public class NewspaperController extends NationStatesController {
 		}
 	}
 
-	private static final Pattern imgTag = Pattern.compile("\\[img\\]\\S*\\[/img\\]");
+	private static final Pattern imgTag = Pattern.compile("\\[img\\]\\S*\\[/img\\]", Pattern.CASE_INSENSITIVE);
 	private static String imgurizeArticle(String article, String imgurClientKey) {
 		if (imgurClientKey != null) {
 			Matcher matcher = imgTag.matcher(article);
 			while(matcher.find()) {
 				final String match = matcher.group();
-				String url = matcher.group().substring(5, match.length() - 6);
-				if (!url.contains("imgur.com")) {
+				String imageData = matcher.group().substring(5, match.length() - 6);
+				if (imageData.startsWith("data:image/jpeg;base64,")) {
 					try {
-						String imgurUrl = Utils.uploadToImgur(url, imgurClientKey);
+						String imgurUrl = Utils.uploadToImgur(null, imageData.substring("data:image/jpeg;base64,".length()), imgurClientKey);
 						return imgurizeArticle(article.replaceAll(Pattern.quote(match), "[img]" + imgurUrl + "[/img]"), imgurClientKey);
 					} catch (IOException e) {
-						Logger.error("Unable to upload url [" + url + "] to imgur", e);
+						Logger.error("Unable to upload base64 data [" + imageData.substring("data:image/jpeg;base64,".length()) + "] to imgur", e);
+					}
+				}
+				else if (!imageData.contains("imgur.com")) {
+					try {
+						String imgurUrl = Utils.uploadToImgur(imageData, null, imgurClientKey);
+						return imgurizeArticle(article.replaceAll(Pattern.quote(match), "[img]" + imgurUrl + "[/img]"), imgurClientKey);
+					} catch (IOException e) {
+						Logger.error("Unable to upload url [" + imageData + "] to imgur", e);
 					}
 				}
 			}
