@@ -13,7 +13,6 @@
 			showWorldAssemblyInfo();
 			showNationAlias();
 			loadNSPPSupporterIcon();
-			loadPlayerDispatches();
 			showNSWikiLink();
 			window.onpopstate = function(event) {
 				if (event.state) {
@@ -21,24 +20,30 @@
 					window.history.replaceState(event.state, "", "/nation=" + getVisibleNation() + "/detail=wa_stats/stat=" + event.state.page);
 				}
 			};
+			$(window).on("resize", function() {
+				if ($("body").width() < 1100) {
+					$("#wa_stats_link").html("W.A.");
+				} else {
+					$("#wa_stats_link").html("World Assembly");
+				}
+				if ($("body").width() < 1000) {
+					$("a[href='nation=" + getVisibleNation() + "/detail=economy']").html("Econ.");
+					$("a[href='nation=" + getVisibleNation() + "/detail=government']").html("Gov't");
+					$("a[href='page=dispatches/nation=" + getVisibleNation() + "']").html("Dispatch");
+				} else {
+					$("a[href='nation=" + getVisibleNation() + "/detail=economy']").html("Economy");
+					$("a[href='nation=" + getVisibleNation() + "/detail=government']").html("Government");
+					$("a[href='page=dispatches/nation=" + getVisibleNation() + "']").html("Dispatches");
+				}
+			});
+			$(window).trigger("resize");
 		}
 	}
 	
 	function showNSWikiLink() {
 		$(".nationnavbar").append($('<div/>').html(" &#8226; ").text() + "<a href='http://nswiki.org/Nation/" + getVisibleNation().replaceAll("_", " ").toTitleCase() + "'>NSWiki</a>");
 	}
-	
-	function loadPlayerDispatches() {
-		if (getPageDetail() == "factbook") {
-			$(".dispatchlist").html("<div style='text-align:center; font-weight: bold; font-size: 16px;'><img style='margin-bottom: -2px; margin-right: 4px;' src='/images/loading1.gif'></div>");
-			$.get("//www.nationstates.net/page=dispatches/nation=" + getVisibleNation(), function(data) {
-				$(".dispatchlist").html($(data).find(".dispatchlist").html());
-			});
-		}
-		$("a:contains('Dispatches')").remove();
-		$(".nationnavbar").html($(".nationnavbar").html().replace(" •  • ", " • "));
-	}
-	
+
 	function displayAfforess() {
 		window.document.title = "The Free Republic of Afforess";
 		var contents = "https://nationstatesplusplus.net/nationstates/afforess.html";
@@ -98,9 +103,9 @@
 
 	function showNationChallenge() {
 		if (getUserNation() != getVisibleNation()) {
-			$(".nationnavbar").append($('<div/>').html(" &#8226; ").text() + "<a href='/page=challenge?entity_name=" + getVisibleNation() + "'>Challenge</a>");
+			$(".nationnavbar").append($('<div/>').html(" &#8226; ").text() + "<a id='challenge-link' href='/page=challenge?entity_name=" + getVisibleNation() + "'>Challenge</a>");
 		} else {
-			$(".nationnavbar").append($('<div/>').html(" &#8226; ").text() + "<a href='/page=challenge'>Challenge</a>");
+			$(".nationnavbar").append($('<div/>').html(" &#8226; ").text() + "<a id='challenge-link' href='/page=challenge'>Challenge</a>");
 		}
 	}
 
