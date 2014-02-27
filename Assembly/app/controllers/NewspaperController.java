@@ -501,6 +501,15 @@ public class NewspaperController extends NationStatesController {
 		String title = Utils.getPostValue(request(), "title");
 		String byline = Utils.getPostValue(request(), "byline");
 		String columns = Utils.getPostValue(request(), "columns");
+		//Temp fix for older versions
+		if (columns != null) {
+			try {
+				Integer.parseInt(columns);
+			} catch(Exception e) {
+				columns = null;
+			}
+		}
+		
 		Utils.handleDefaultPostHeaders(request(), response());
 		if (title == null || title.length() > 255 || byline == null || byline.length() > 255) {
 			return Results.badRequest();
@@ -514,11 +523,15 @@ public class NewspaperController extends NationStatesController {
 				return Results.unauthorized();
 			}
 
-			PreparedStatement update = conn.prepareStatement("UPDATE assembly.newspapers SET title = ?, byline = ?, newspapers.columns = ? WHERE newspaper = ?");
+			PreparedStatement update = conn.prepareStatement("UPDATE assembly.newspapers SET title = ?, byline = ?" + (columns != null ? ", newspapers.columns = ?" : "") + " WHERE newspaper = ?");
 			update.setString(1, title);
 			update.setString(2, byline);
-			update.setInt(3, columns != null ? Math.max(1, Math.min(3, Integer.parseInt(columns))) : 1);
-			update.setInt(4, newspaper);
+			if (columns != null) {
+				update.setInt(3, Math.max(1, Math.min(3, Integer.parseInt(columns))));
+				update.setInt(4, newspaper);
+			} else {
+				update.setInt(3, newspaper);
+			}
 			update.executeUpdate();
 			DbUtils.closeQuietly(update);
 		} finally {
