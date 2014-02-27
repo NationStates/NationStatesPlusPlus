@@ -42,7 +42,7 @@
 						var flag = jsonData[regionName];
 						if (flag != null && flag.length > 0) {
 							maxTop += 106;
-							$("#embassy-inner").append("<div class='animate-flags' style='position:absolute; left:6px; top:" + maxTop + "px; padding: 2px 2px 2px 2px;'><a href='https://wwwnationstates.net/region=" + regionName + "' target='_blank'><img id='" + regionName + "' src='" + flag + "' class='rflag' style='width:140px; height:100px;' alt='' title='Regional Flag of " + regionName.split("_").join(" ") + "'></a></div>");
+							$("#embassy-inner").append("<div class='animate-flags' style='position:absolute; left:6px; top:" + maxTop + "px; padding: 2px 2px 2px 2px;'><a href='//www.nationstates.net/region=" + regionName + "' target='_blank'><img id='" + regionName + "' src='" + flag + "' class='rflag' style='width:140px; height:100px;' alt='' title='Regional Flag of " + regionName.split("_").join(" ") + "'></a></div>");
 							$("#" + regionName).error(function() {
 								$(this).attr('src', "//www.nationstates.net/images/flags/Default.png");
 								return true;
