@@ -50,25 +50,25 @@ public enum RecruitmentType {
 			case EJECTED_NATIONS:
 				return conn.prepareStatement("SELECT nation AS id, name, region FROM assembly.ejected_nations WHERE puppet = 0 AND region <> ? ORDER BY timestamp DESC LIMIT ?, ?");
 			case ACTIVE_GAMERITES:
-				return conn.prepareStatement("SELECT id, name, region FROM assembly.nation WHERE puppet = 0 AND region = 1167 OR region = 6223 OR region = 8243" +
+				return conn.prepareStatement("SELECT id, name, region FROM assembly.nation WHERE alive = 1 AND puppet = 0 AND region = 1167 OR region = 6223 OR region = 8243" +
 											"OR region = 11721 OR region = 13019 OR region = 13338 OR region = 13585 OR region = 14159 ORDER BY last_login DESC LIMIT ?, ?");
 			case ACTIVE_NATIONS:
-				return conn.prepareStatement("SELECT id, name, region FROM assembly.nation WHERE puppet = 0 AND region <> ? ORDER BY last_login DESC LIMIT ?, ?");
+				return conn.prepareStatement("SELECT id, name, region FROM assembly.nation WHERE alive = 1 AND puppet = 0 AND region <> ? ORDER BY last_login DESC LIMIT ?, ?");
 			case ACTIVE_USERITES:
-				return conn.prepareStatement("SELECT id, name, region FROM assembly.nation WHERE puppet = 0 AND region <> ? AND region <> 1167 AND region <> 6223 AND region <> 8243" +
+				return conn.prepareStatement("SELECT id, name, region FROM assembly.nation WHERE alive = 1 AND puppet = 0 AND region <> ? AND region <> 1167 AND region <> 6223 AND region <> 8243" +
 						"AND region <> 11721 AND region <> 13019 AND region <> 13338 AND region <> 13585 AND region <> 14159 ORDER BY last_login DESC LIMIT ?, ?");
 			case AUTHORITARIAN_NATIONS:
-				return conn.prepareStatement("SELECT id, name, region FROM assembly.nation WHERE puppet = 0 AND region <> ? AND civilrightscore BETWEEN 0 AND 25 AND politicalfreedomscore BETWEEN 0 AND 25 ORDER BY last_login DESC LIMIT ?, ?");
+				return conn.prepareStatement("SELECT id, name, region FROM assembly.nation WHERE alive = 1 AND puppet = 0 AND region <> ? AND civilrightscore BETWEEN 0 AND 25 AND politicalfreedomscore BETWEEN 0 AND 25 ORDER BY last_login DESC LIMIT ?, ?");
 			case CAPITALIST_NATIONS:
-				return conn.prepareStatement("SELECT id, name, region FROM assembly.nation WHERE puppet = 0 AND region <> ? AND civilrightscore > 50 AND politicalfreedomscore > 50 AND economyscore > 90 ORDER BY last_login DESC LIMIT ?, ?");
+				return conn.prepareStatement("SELECT id, name, region FROM assembly.nation WHERE alive = 1 AND puppet = 0 AND region <> ? AND civilrightscore > 50 AND politicalfreedomscore > 50 AND economyscore > 90 ORDER BY last_login DESC LIMIT ?, ?");
 			case CENTRIST_NATIONS:
-				return conn.prepareStatement("SELECT id, name, region FROM assembly.nation WHERE puppet = 0 AND region <> ? AND civilrightscore BETWEEN 40 AND 70 AND politicalfreedomscore BETWEEN 40 AND 70 ORDER BY last_login DESC LIMIT ?, ?");
+				return conn.prepareStatement("SELECT id, name, region FROM assembly.nation WHERE alive = 1 AND puppet = 0 AND region <> ? AND civilrightscore BETWEEN 40 AND 70 AND politicalfreedomscore BETWEEN 40 AND 70 ORDER BY last_login DESC LIMIT ?, ?");
 			case LIBERTARIAN_NATIONS:
-				return conn.prepareStatement("SELECT id, name, region FROM assembly.nation WHERE puppet = 0 AND region <> ? AND civilrightscore > 85 AND politicalfreedomscore > 85 ORDER BY last_login DESC LIMIT ?, ?");
+				return conn.prepareStatement("SELECT id, name, region FROM assembly.nation WHERE alive = 1 AND puppet = 0 AND region <> ? AND civilrightscore > 85 AND politicalfreedomscore > 85 ORDER BY last_login DESC LIMIT ?, ?");
 			case LONELY_NATIONS:
-				return conn.prepareStatement("SELECT nation.id, nation.name, nation.region FROM assembly.nation LEFT JOIN assembly.region ON region.id = nation.region WHERE nation.puppet = 0 AND nation.region <> ? AND region.population < 10 ORDER BY last_login DESC LIMIT ?, ?");
+				return conn.prepareStatement("SELECT nation.id, nation.name, nation.region FROM assembly.nation LEFT JOIN assembly.region ON region.id = nation.region WHERE nation.alive = 1 AND nation.puppet = 0 AND nation.region <> ? AND region.population < 10 ORDER BY last_login DESC LIMIT ?, ?");
 			case SOCIALIST_NATIONS:
-				return conn.prepareStatement("SELECT id, name, region FROM assembly.nation WHERE puppet = 0 AND region <> ? AND civilrightscore > 50 AND politicalfreedomscore > 50 AND taxes > 50 AND economyscore < 90 ORDER BY last_login DESC LIMIT ?, ?");
+				return conn.prepareStatement("SELECT id, name, region FROM assembly.nation WHERE alive = 1 AND puppet = 0 AND region <> ? AND civilrightscore > 50 AND politicalfreedomscore > 50 AND taxes > 50 AND economyscore < 90 ORDER BY last_login DESC LIMIT ?, ?");
 		}
 		throw new IllegalStateException("Unknown RecruitmentType: " + name());
 	}
