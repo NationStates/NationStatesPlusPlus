@@ -158,10 +158,10 @@
 			html += "<tr><td>Client Key:</b></td><td> " + campaign.client_key + "</td></tr>";
 			html += "<tr><td>Telegram ID:</b></td><td> " + campaign.tgid + "</td></tr>";
 			html += "<tr><td>Secret Key:</b></td><td> " + campaign.secret_key + "</td></tr>";
-			html += "<tr><td>Total Telegrams Sent:</b></td><td> 0 (0%)</td></tr>";
-			html += "<tr><td>Recruited Nations:</b></td><td> 0 (0%)</td></tr>";
-			html += "<tr><td>Pending Recruits:</b></td><td> 0 (0%)</td></tr>";
-			html += "<tr><td>Recruited & Deceased:</b></td><td> 0 (0%)</td></tr>";
+			html += "<tr><td>Total Telegrams Sent:</b></td><td> Coming Soon!</td></tr>";
+			html += "<tr><td>Recruited Nations:</b></td><td> Coming Soon!</td></tr>";
+			html += "<tr><td>Pending Recruits:</b></td><td> Coming Soon!</td></tr>";
+			html += "<tr><td>Recruited & Deceased:</b></td><td> Coming Soon!</td></tr>";
 			html += "</tbody></table>";
 			if (campaign.retired == 0) {
 				html += "<button name='retire' data-cid='" + campaign.id + "' class='btn btn-danger'>Retire Campaign</button>";
@@ -297,7 +297,10 @@
 			if ($("#secretkey").val() == "") { $("#missing-secret-key").show(); return; }
 			if (!isNumber($("#tgid").val())) { $("#invalid-tgid").show(); return; }
 			var postData = "type=" + $("#rtype").val() + "&clientKey=" + $("#clientkey").val() + "&tgid=" + $("#tgid").val() + "&secretKey=" + $("#secretkey").val();
-			postData += "&allocation=" + $("input[name='allocation']").val() + "&gcrsOnly=" + ($("#gcrs").prop("checked") ? "1" : "0") + "&filters=" + $("#filter").val();
+			postData += "&allocation=" + $("input[name='allocation']").val() + "&gcrsOnly=" + ($("#gcrs").prop("checked") ? "1" : "0");
+			if ($("#filter").val().trim() != "") {
+				postData += "&filters=" + $("#filter").val().trim();
+			}
 			doAuthorizedPostRequest("https://nationstatesplusplus.net/api/recruitment/campaign/create?region=" + region, postData, function() {
 				window.location.reload(true);
 			}, function(data, textStatus, jqXHR) {
