@@ -62,7 +62,7 @@ public class NationUpdateTask implements Runnable {
 				final String name = result.getString(2);
 				
 				Utils.updateNation(conn, access, api, name, id);
-				Logger.info("Updated shard baseline for [" + name + "]");
+				Logger.debug("Updated shard baseline for [" + name + "]");
 			}
 			
 			DbUtils.closeQuietly(result);
@@ -82,7 +82,7 @@ public class NationUpdateTask implements Runnable {
 				final String name = result.getString(2);
 				
 				Utils.updateNation(conn, access, api, name, id);
-				Logger.info("Updated shard baseline for [" + name + "]");
+				Logger.debug("Updated shard baseline for [" + name + "]");
 			}
 		} catch (RateLimitReachedException e) {
 			Logger.warn("Endorsement monitoring rate limited!");
