@@ -4,7 +4,7 @@
   "short_name": "NS++",
   "minimum_chrome_version": "22",
   "description": "Improves the NationStates.net experience",
-  "version": "2.4.0.2",
+  "version": "2.4.0.3",
   "content_scripts": [ {
 	  "run_at": "document_end",
       "js": [ "jquery-2.0.3.min.js", "js/nationstates++_common.js", "background.js"],
