@@ -51,7 +51,8 @@ public class NSWikiController  extends NationStatesController {
 		}
 		String nation = Utils.getPostValue(request(), "nation");
 		String password = Utils.getPostValue(request(), "password");
-		if (password == null || password.isEmpty() || password.length() > 40) {
+		if (password == null || password.isEmpty() || password.length() < 8) {
+			Logger.warn("User [" + nation + "] attempted an invalid password: [" + password + "]");
 			return Results.badRequest("Invalid password");
 		}
 		
