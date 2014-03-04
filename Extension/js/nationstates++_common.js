@@ -230,6 +230,21 @@ function isDarkTheme() {
 	return $("link[href^='/ns.dark']").length > 0;
 }
 
+function isRecruitmentOfficer(callback) {
+	if (getUserNation() != "") {
+		$.get("https://nationstatesplusplus.net/api/recruitment/officers/get?region=" + getUserRegion() + "&includeAdmins=true", function(data) {
+			if (data != null) {
+				for (var i = 0; i < data.length; i += 1) {
+					if (data[i].name == getUserNation()) {
+						callback();
+						return;
+					}
+				}
+			}
+		});
+	}
+}
+
 function getSettings(autoupdate) {
 	autoupdate = autoupdate || false;
 	var SettingsContainer = function() {

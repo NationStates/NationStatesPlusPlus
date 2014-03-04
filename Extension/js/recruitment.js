@@ -3,16 +3,9 @@
 	var recruitmentTypes = ["New Nations", "Refounded Nations", "Ejected Nations", "Active Gamerites", "Active Userites", "Active Nations", "Capitalist Nations", "Socialist Nations", "Centrist Nations", "Authoritarian Nations", "Libertarian Nations", "Lonely Nations"];
 
 	function recruitment() {
-		$.get("https://nationstatesplusplus.net/api/recruitment/officers/get?region=" + getUserRegion() + "&includeAdmins=true", function(data) {
-			if (data != null) {
-				console.log(data);
-				for (var i = 0; i < data.length; i += 1) {
-					if (data[i].name == getUserNation()) {
-						checkForRecruitment();
-						$("#recruit-admin").show();
-					}
-				}
-			}
+		isRecruitmentOfficer(function() {
+			checkForRecruitment();
+			$("#recruit-admin").show();
 		});
 	}
 
@@ -28,20 +21,20 @@
 	}
 
 	function setupRecruitment() {
-		if (getVisiblePage() != "panel" && getVisiblePage() != "hpanel") {
+		if (getVisiblePage() != "panel" && getVisiblePage() != "hpanel" && getSettings().isEnabled("show_recruitment_progress")) {
 			var rProgress = "<div id='rprogress'><span id='rprogress-text'><i class='fa fa-envelope-o' style='margin-right: 5px;'></i>Telegramming: <span id='tg-nation'></span></span><span id='r-sender'></span><div id='rprogress-bar'></div></div>";
 			$("body").prepend(rProgress);
 			$("#content").css("margin-top", "20px");
 			if ($(".regional_power").length > 0) {
 				$(".regional_power").css("top", ($(".regional_power").position().top + 20) + "px");
 			}
-		}
-		//Support old browsers that do not allow css calc
-		if ($("#rprogress").width() < 10) {
-			$(window).resize(function() {
-				$("#rprogress").width($("#content").width() + 25);
-			});
-			$(window).trigger("resize");
+			//Support old browsers that do not allow css calc
+			if ($("#rprogress").width() < 10) {
+				$(window).resize(function() {
+					$("#rprogress").width($("#content").width() + 25);
+				});
+				$(window).trigger("resize");
+			}
 		}
 		updateRecruitmentProgress();
 		var data = localStorage.getItem(getUserNation() + "-last-recruitment-data")
@@ -70,12 +63,12 @@
 			localStorage.removeItem(getUserNation() + "-last-recruitment-data");
 			localStorage.removeItem(getUserNation() + "-last-recruitment-error");
 			progress = null;
-			if (getVisiblePage() != "panel" && getVisiblePage() != "hpanel") {
+			if ($("#rprogress").length > 0) {
 				$("#rprogress-bar").width($("#rprogress").width());
 			}
 		}
 		if (progress != null) {
-			if (getVisiblePage() != "panel" && getVisiblePage() != "hpanel") {
+			if ($("#rprogress").length > 0) {
 				$("#rprogress-bar").width($("#rprogress").width() * ((Date.now() - parseInt(progress)) / 180000));
 			}
 			setTimeout(updateRecruitmentProgress, 100);
@@ -127,11 +120,8 @@
 			setTimeout(updateRecruitment, 100);
 		});
 	}
+	recruitment();
 
-	if (getUserNation() != "") {
-		recruitment();
-	}
-	
 	if (getVisiblePage() == "blank" && typeof $.QueryString["recruitment"] != "undefined") {
 		var region = $.QueryString["recruitment"].toLowerCase().replaceAll(" ", "_");
 		window.document.title = "NS++ Recruitment";

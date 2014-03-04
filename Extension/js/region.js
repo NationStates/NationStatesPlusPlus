@@ -60,6 +60,7 @@ function setupRegionPage() {
 	});
 	$.get("https://nationstatesplusplus.net/api/newspaper/region/?region=" + getVisibleRegion(), function(json) {
 		$("<p><strong><img style='height: 13px;' src='https://nationstatesplusplus.net/nationstates/static/" + (isDarkTheme() ? "dark_" : "") + "newspaper_icon.png'> Newspaper: </strong><a id='rnewspaper_link'><a></p>").insertAfter(founder.parent());
+		console.log(json);
 		$("#rnewspaper_link").html(parseBBCodes(json.title)).attr("href", "/page=blank?lookup_newspaper=" + json.newspaper_id);
 		$("strong:contains('WA Delegate'):first").parent().css("min-height", "0px");
 	});
@@ -101,8 +102,7 @@ function setupRegionPage() {
 		$("<p id='region_map' style='display:none; height: 10px;'><img src='https://nationstatesplusplus.net/nationstates/static/" + (isDarkTheme() ? "dark_" : "") + "map3.png' style='width: 16px;'><span style='position: relative; top: -5px;'><strong> Map: </strong><span id='regional_map_link'></span></span></p>").insertAfter(population);
 		
 		//NSWiki
-		
-		$("<strong><i class='fa fa-pencil-square-o'></i> NSWiki: </strong><a href='http://nswiki.org/region/" + getVisibleRegion().replaceAll("_", " ").toTitleCase() + "'>" + getVisibleRegion().replaceAll("_", " ").toTitleCase() + "</a>").insertAfter($("#region_map"));
+		$("<strong><i class='fa fa-pencil-square-o'></i> NSWiki: </strong><a href='http://nswiki.org/region/" + $("h1 a:first").text() + "'>" + $("h1 a:first").text() + "</a>").insertAfter($("#region_map"));
 		
 		//Fetch region map
 		$.get("https://nationstatesplusplus.net/api/region/map/?region=" + getVisibleRegion(), function(data) {
