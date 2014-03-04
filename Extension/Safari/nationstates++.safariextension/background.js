@@ -143,7 +143,7 @@ function highlightAuthorPosts() {
 		if (window.location.href.match("start=[0-9]+") != null || window.location.href.match("p=[0-9]+") != null || window.location.href.indexOf("view=") != -1) {
 			var regex = new RegExp("t=[0-9]{1,}", "g");
 			var thread = window.location.href.match(regex)[0].substring(2);
-			$.get("http://forum.nationstates.net/viewtopic.php?t=" + thread + "&start=0", function(data) {
+			$.get("//forum.nationstates.net/viewtopic.php?t=" + thread + "&start=0", function(data) {
 				var href = $(data).find(".postprofile:first").find("a:first").attr("href");
 				var nation = href.split("/")[href.split("/").length - 1];
 				highlightPosts(nation);
