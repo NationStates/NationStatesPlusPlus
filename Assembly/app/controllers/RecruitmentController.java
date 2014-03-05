@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 
 import org.apache.commons.dbutils.DbUtils;
@@ -34,6 +35,29 @@ public class RecruitmentController extends NationStatesController {
 	private final Random rand = new Random();
 	public RecruitmentController(DatabaseAccess access, YamlConfiguration config, NationStates api) {
 		super(access, config, api);
+	}
+
+	private boolean isValidAccessKey(String region, String key) throws SQLException {
+		if (key == null || region == null || key.isEmpty() || region.isEmpty()) return false;
+		Connection conn = null;
+		PreparedStatement accessKey = null;
+		ResultSet set = null;
+		try {
+			conn = getConnection();
+			accessKey = conn.prepareStatement("SELECT access_key FROM assembly.recruitment_scripts WHERE region = ?");
+			accessKey.setString(1, Utils.sanitizeName(region));
+			set = accessKey.executeQuery();
+			if (set.next()) {
+				if (set.getString(1).equals(key)) {
+					return true;
+				}
+			}
+		} finally {
+			DbUtils.closeQuietly(set);
+			DbUtils.closeQuietly(accessKey);
+			DbUtils.closeQuietly(conn);
+		}
+		return false;
 	}
 
 	public Result getRecruitmentCampaigns(String region) throws SQLException, ExecutionException {
@@ -410,26 +434,46 @@ public class RecruitmentController extends NationStatesController {
 		}
 	}
 
-	public Result findRecruitmentTarget(String region) throws SQLException, ExecutionException {
-		Result ret = Utils.validateRequest(request(), response(), getAPI(), getDatabase());
-		if (ret != null) {
-			return ret;
+	private final ConcurrentHashMap<Integer, Boolean> regionLock = new ConcurrentHashMap<Integer, Boolean>();
+	public Result findRecruitmentTarget(String region, String accessKey) throws SQLException, ExecutionException {
+		final boolean validScriptAccess = isValidAccessKey(region, accessKey);
+		//Bypass standard nation authentication if we are a valid script
+		if (!validScriptAccess) {
+			Result ret = Utils.validateRequest(request(), response(), getAPI(), getDatabase());
+			if (ret != null) {
+				return ret;
+			}
 		}
 		Utils.handleDefaultPostHeaders(request(), response());
 		String nation = Utils.sanitizeName(Utils.getPostValue(request(), "nation"));
 		Connection conn = null;
 		try {
 			conn = getConnection();
-			final int regionId = getRecruitmentAdministrator(conn, nation, region);
+			
+			final int regionId;
+			//Bypass region officer authentication if we are a valid script
+			if (!validScriptAccess) {
+				regionId = getRecruitmentAdministrator(conn, nation, region);
+			} else {
+				regionId = getDatabase().getRegionIdCache().get(Utils.sanitizeName(region));
+			}
+
 			if (regionId == -1) {
 				Utils.handleDefaultPostHeaders(request(), response());
 				return Results.unauthorized();
 			}
 
-			if (canRecruit(conn, regionId)) {
-				Map<String, Object> data = getRecruitmentTarget(conn, regionId, nation);
-				if (data != null) {
-					return ok(Json.toJson(data)).as("application/json");
+			//Another nation is already recruiting right now, abort
+			if (regionLock.putIfAbsent(regionId, true) == null) {
+				try {
+					if (canRecruit(conn, regionId)) {
+						Map<String, Object> data = getRecruitmentTarget(conn, regionId, nation);
+						if (data != null) {
+							return ok(Json.toJson(data)).as("application/json");
+						}
+					}
+				} finally {
+					regionLock.remove(regionId);
 				}
 			}
 			
@@ -515,17 +559,27 @@ public class RecruitmentController extends NationStatesController {
 		return null;
 	}
 
-	public Result confirmRecruitmentSent(String region, String target) throws SQLException, ExecutionException {
-		Result ret = Utils.validateRequest(request(), response(), getAPI(), getDatabase());
-		if (ret != null) {
-			return ret;
+	public Result confirmRecruitmentSent(String region, String target, String accessKey) throws SQLException, ExecutionException {
+		final boolean validScriptAccess = isValidAccessKey(region, accessKey);
+		//Bypass standard nation authentication if we are a valid script
+		if (!validScriptAccess) {
+			Result ret = Utils.validateRequest(request(), response(), getAPI(), getDatabase());
+			if (ret != null) {
+				return ret;
+			}
 		}
 		Utils.handleDefaultPostHeaders(request(), response());
-		String nation = Utils.sanitizeName(Utils.getPostValue(request(), "nation"));
 		Connection conn = null;
 		try {
 			conn = getConnection();
-			final int regionId = getRecruitmentAdministrator(conn, nation, region);
+			final int regionId;
+			//Bypass region officer authentication if we are a valid script
+			if (validScriptAccess) {
+				regionId = getDatabase().getRegionIdCache().get(Utils.sanitizeName(region));
+			} else {
+				String nation = Utils.sanitizeName(Utils.getPostValue(request(), "nation"));
+				regionId = getRecruitmentAdministrator(conn, nation, region);
+			}
 			if (regionId == -1) {
 				Utils.handleDefaultPostHeaders(request(), response());
 				return Results.unauthorized();

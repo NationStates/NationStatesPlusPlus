@@ -227,9 +227,11 @@ public class Utils {
 
 	public static String getPostValue(Http.Request request, String property) {
 		Map<String, String[]> post = request.body().asFormUrlEncoded();
-		String[] value = post.get(property);
-		if (value != null && value.length > 0) {
-			return value[0];
+		if (post != null) {
+			String[] value = post.get(property);
+			if (value != null && value.length > 0) {
+				return value[0];
+			}
 		}
 		return null;
 	}
@@ -244,7 +246,7 @@ public class Utils {
 		String auth = Utils.getPostValue(request, "auth");
 		String reason = "UNKNOWN NATION ID";
 		try {
-			final int nationId = access.getNationIdCache().get(sanitizeName(nation));
+			final int nationId = nation != null ? access.getNationIdCache().get(sanitizeName(nation)) : -1;
 			if (nation != null && nationId != -1) {
 				if (authToken != null && access.isValidAuthToken(nationId, authToken)) {
 					response.setHeader("Access-Control-Expose-Headers", "X-Auth-Token");

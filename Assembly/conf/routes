@@ -22,7 +22,7 @@ GET    /flag/nation/                  @controllers.FlagController.redirectToNati
 GET    /flag/region/                  @controllers.FlagController.redirectToRegionFlag(region: String ?= "")
 
 GET     /newspaper/details/           @controllers.NewspaperController.getNewspaperDetails(id: Integer ?= 0)
-GET     /newspaper/latest/            @controllers.NewspaperController.getLatestUpdate(id: Integer ?= 0)
+GET     /newspaper/latest/            @controllers.NewspaperController.findLatestUpdate(id: Integer ?= 0)
 GET     /newspaper/region/            @controllers.NewspaperController.findNewspaper(region: String ?= "")
 GET     /newspaper/lookup/            @controllers.NewspaperController.getNewspaper(id: Integer ?= -1, visible: Integer ?= 1, hideBody: Boolean ?= false, lookupArticleId: Integer ?= -1)
 POST    /newspaper/editors/           @controllers.NewspaperController.changeEditors(newspaper: Integer ?= 0)
@@ -69,8 +69,8 @@ POST    /recruitment/campaign/        @controllers.RecruitmentController.getRecr
 POST    /recruitment/campaign/create  @controllers.RecruitmentController.createRecruitmentCampaign(region: String ?= "")
 POST    /recruitment/campaign/retire  @controllers.RecruitmentController.retireRecruitmentCampaign(region: String ?= "", id: Integer ?= -1)
 POST    /recruitment/campaign/delete  @controllers.RecruitmentController.hideRecruitmentCampaign(region: String ?= "", id: Integer ?= -1)
-POST    /recruitment/target/get       @controllers.RecruitmentController.findRecruitmentTarget(region: String ?= "")
-POST    /recruitment/target/confirm   @controllers.RecruitmentController.confirmRecruitmentSent(region: String ?= "", target: String ?= "")
+POST    /recruitment/target/get       @controllers.RecruitmentController.findRecruitmentTarget(region: String ?= "", accessKey: String ?= "")
+POST    /recruitment/target/confirm   @controllers.RecruitmentController.confirmRecruitmentSent(region: String ?= "", target: String ?= "", accessKey: String ?= "")
 
 GET     /wa/delegates/                @controllers.WorldAssemblyController.getWADelegates()
 GET     /wa/power_transfers/          @controllers.WorldAssemblyController.getRecentPowerTransfers()
