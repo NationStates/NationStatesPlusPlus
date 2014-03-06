@@ -621,36 +621,39 @@ function doAuthorizedPostRequest(url, postData, success, failure) {
 }
 
 function doAuthorizedPostRequestFor(nation, url, postData, success, failure) {
-	var authToken = localStorage.getItem(nation + "-auth-token");
-	//Check out NS++ auth token to see if it good enough first, avoid making a page=verify request
+	//Clear out old style token
+	localStorage.removeItem(nation + "-auth-token");
+	
+	var authToken = localStorage.getItem(nation + "-auth-token-v2");
 	if (authToken != null) {
-		$.post("https://nationstatesplusplus.net/api/nation/auth/", "nation=" + nation + "&auth-token=" + encodeURIComponent(authToken), function(data, textStatus, jqXHR) {
-			localStorage.setItem(nation + "-auth-token", data.code);
-			doAuthorizedPostRequestInternal(nation, url, postData, success, failure);
-		}).fail(function() {
-			localStorage.removeItem(nation + "-auth-token");
-			//Repeat request, get valid auth token
-			doAuthorizedPostRequestFor(nation, url, postData, success, failure);
-		});
+		try {
+			console.log("Auth token: " + authToken);
+			authToken = JSON.parse(authToken);
+			if (Date.now() > authToken.expires) {
+				console.log("Auth token expired, removing");
+				localStorage.removeItem(nation + "-auth-token-v2");
+				authToken = null;
+			}
+		} catch(err) {
+			localStorage.removeItem(nation + "-auth-token-v2");
+		}
+	}
+	if (authToken != null) {
+		doAuthorizedPostRequestInternal(nation, url, authToken.code, postData, success, failure);
 	} else {
 		getNationStatesAuth(function(authCode) {
 			$.post("https://nationstatesplusplus.net/api/nation/auth/", "nation=" + nation + "&auth=" + encodeURIComponent(authCode), function(data, textStatus, jqXHR) {
-				localStorage.setItem(nation + "-auth-token", data.code);
-			}).always(function() {
-				doAuthorizedPostRequestInternal(nation, url, postData, success, failure);
-			});
+				console.log("Setting auth token: " + JSON.stringify(data));
+				localStorage.setItem(nation + "-auth-token-v2", JSON.stringify(data));
+				doAuthorizedPostRequestInternal(nation, url, data.code, postData, success, failure);
+			}).fail(failure);
 		});
 	}
 }
 
-function doAuthorizedPostRequestInternal(nation, url, postData, success, failure) {
-	var authToken = localStorage.getItem(nation + "-auth-token");
-	postData = "nation=" + nation + (authToken != null ? "&auth-token=" + authToken : "") + (postData.length > 0 ? "&" + postData : "");
+function doAuthorizedPostRequestInternal(nation, url, authToken, postData, success, failure) {
+	postData = "nation=" + nation + "&auth-token=" + authToken + (postData.length > 0 ? "&" + postData : "");
 	$.post(url, postData, function(data, textStatus, jqXHR) {
-		var authToken = jqXHR.getResponseHeader("X-Auth-Token");
-		if (authToken != null) {
-			localStorage.setItem(nation + "-auth-token", authToken);
-		}
 		if (typeof success != "undefined" && success != null) {
 			success(data, textStatus, jqXHR);
 		}

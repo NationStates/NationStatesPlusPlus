@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 import org.apache.commons.dbutils.DbUtils;
+import org.joda.time.Duration;
 import org.spout.cereal.config.yaml.YamlConfiguration;
 
 import com.afforess.assembly.util.DatabaseAccess;
@@ -167,14 +168,35 @@ public class NationController extends NationStatesController {
 		}
 		return Results.noContent();
 	}
-	
-	public Result getAuthCode() throws ExecutionException {
+
+	public Result getAuthCode() throws ExecutionException, SQLException {
 		Result result = Utils.validateRequest(request(), response(), getAPI(), getDatabase());
 		if (result != null) {
 			return result;
 		}
-		HashMap<String, String> data = new HashMap<String, String>();
-		data.put("code", getDatabase().generateAuthToken(getDatabase().getNationIdCache().get(Utils.sanitizeName(Utils.getPostValue(request(), "nation")))));
+		HashMap<String, Object> data = new HashMap<String, Object>();
+		
+		final int nationId = getDatabase().getNationIdCache().get(Utils.sanitizeName(Utils.getPostValue(request(), "nation")));
+		Connection conn = null;
+		try {
+			conn = getConnection();
+			PreparedStatement statement = conn.prepareStatement("SELECT auth, time from assembly.nation_auth WHERE nation_id = ? AND time > ? LIMIT 0, 1");
+			statement.setInt(1, nationId);
+			//No point giving user a code about to expire...
+			statement.setLong(2, System.currentTimeMillis() + Duration.standardHours(1).getMillis());
+			ResultSet set = statement.executeQuery();
+			if (set.next()) {
+				data.put("code", set.getString(1));
+				data.put("expires", set.getLong(2));
+			} else {
+				data.put("code", getDatabase().generateAuthToken(nationId, true));
+				data.put("expires", System.currentTimeMillis() + Duration.standardDays(1).getMillis());
+			}
+			DbUtils.closeQuietly(set);
+			DbUtils.closeQuietly(statement);
+		} finally {
+			DbUtils.closeQuietly(conn);
+		}
 		Utils.handleDefaultPostHeaders(request(), response());
 		return Results.ok(Json.toJson(data)).as("application/json");
 	}

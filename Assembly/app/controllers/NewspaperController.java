@@ -40,6 +40,7 @@ public class NewspaperController extends NationStatesController {
 	private final Cache<String, JsonNode> newspaperIds;
 	private final JsonNode NO_NEWSPAPER = Json.toJson("{ }");
 	private final Cache<Integer, JsonNode> newspaperUpdates;
+	private final Cache<Integer, JsonNode> newspaperArticles;
 
 	public NewspaperController(DatabaseAccess access, YamlConfiguration config, NationStates api) {
 		super(access, config, api);
@@ -47,6 +48,7 @@ public class NewspaperController extends NationStatesController {
 		imgurClientKey = imgurAuth.getChild("client-key").getString(null);
 		newspaperIds = CacheBuilder.newBuilder().maximumSize(access.getMaxCacheSize()).expireAfterWrite(1, TimeUnit.HOURS).build();
 		newspaperUpdates = CacheBuilder.newBuilder().maximumSize(access.getMaxCacheSize()).expireAfterWrite(1, TimeUnit.HOURS).build();
+		newspaperArticles = CacheBuilder.newBuilder().maximumSize(access.getMaxCacheSize()).expireAfterWrite(1, TimeUnit.HOURS).build();
 	}
 
 	public Result foundNewspaper(String region) throws SQLException, ExecutionException {
@@ -235,7 +237,7 @@ public class NewspaperController extends NationStatesController {
 			newspaperUpdates.put(id, lastUpdate);
 		}
 
-		Result r = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(lastUpdate.hashCode()), "300");
+		Result r = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(lastUpdate.hashCode()), "60");
 		if (r != null) {
 			return r;
 		}
@@ -254,6 +256,15 @@ public class NewspaperController extends NationStatesController {
 			result = articles.executeQuery();
 			if (result.next()) {
 				newspaper.put("timestamp", result.getLong(1));
+			}
+			DbUtils.closeQuietly(result);
+			DbUtils.closeQuietly(articles);
+			
+			articles = conn.prepareStatement("SELECT mod_count FROM assembly.newspapers WHERE newspaper = ?");
+			articles.setInt(1, id);
+			result = articles.executeQuery();
+			if (result.next()) {
+				newspaper.put("mod", result.getInt(1));
 			}
 		} finally {
 			DbUtils.closeQuietly(result);
@@ -310,7 +321,7 @@ public class NewspaperController extends NationStatesController {
 		return ok(Json.toJson(newspaper)).as("application/json");
 	}
 
-	public Result getNewspaper(int id, int visible, boolean hideBody, int lookupArticleId) throws SQLException {
+	private JsonNode getNewspaperImpl(int id, int visible, boolean hideBody, int lookupArticleId) throws SQLException {
 		Map<String, Object> newspaper = new HashMap<String, Object>();
 		ArrayList<Map<String, Object>> news = new ArrayList<Map<String, Object>>();
 		Connection conn = null;
@@ -328,8 +339,7 @@ public class NewspaperController extends NationStatesController {
 				newspaper.put("editor", result.getString(3));
 				newspaper.put("columns", String.valueOf(result.getInt(4)));
 			} else {
-				Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(newspaper.hashCode()), "0");
-				return Results.notFound();
+				return null;
 			}
 			DbUtils.closeQuietly(result);
 
@@ -368,12 +378,33 @@ public class NewspaperController extends NationStatesController {
 		}
 		newspaper.put("articles", news);
 		newspaper.put("newspaper_id", id);
+		return Json.toJson(newspaper);
+	}
 
-		Result r = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(newspaper.hashCode()), "0");
-		if (r != null) {
-			return r;
+	public Result getNewspaper(int id, int visible, boolean hideBody, int lookupArticleId, int mod) throws SQLException {
+		JsonNode newspaper = null;
+		//Standard newspaper lookup
+		boolean canUseCache = visible == 1 && !hideBody && lookupArticleId == -1;
+		if (canUseCache) {
+			newspaper = newspaperArticles.getIfPresent(id);
 		}
-		return ok(Json.toJson(newspaper)).as("application/json");
+		if (newspaper == null) {
+			newspaper = getNewspaperImpl(id, visible, hideBody, lookupArticleId);
+			if (canUseCache && newspaper != null) {
+				newspaperArticles.put(id, newspaper);
+			}
+		}
+
+		if (newspaper != null) {
+			Result r = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(newspaper.hashCode()), mod > -1 ? "86400" : "0");
+			if (r != null) {
+				return r;
+			}
+			return ok(Json.toJson(newspaper)).as("application/json");
+		} else {
+			Utils.handleDefaultGetHeaders(request(), response(), "0");
+			return badRequest();
+		}
 	}
 
 	public Result changeEditors(int newspaper) throws SQLException, ExecutionException {
@@ -583,6 +614,7 @@ public class NewspaperController extends NationStatesController {
 			
 			//Invalidate cache
 			PreparedStatement region = conn.prepareStatement("SELECT region FROM assembly.newspapers WHERE newspaper = ?");
+			region.setInt(1, newspaper);
 			ResultSet set = region.executeQuery();
 			if (set.next() && set.getString(1) != null) {
 				newspaperIds.invalidate(set.getString(1));
@@ -755,8 +787,15 @@ public class NewspaperController extends NationStatesController {
 				updateOrder.executeUpdate();
 				DbUtils.closeQuietly(updateOrder);
 			}
-			
+
+			//update mod count
+			PreparedStatement modCount = conn.prepareStatement("UPDATE assembly.newspapers SET mod_count = mod_count + 1 WHERE newspaper = ?");
+			modCount.setInt(1, newspaper);
+			modCount.executeUpdate();
+			DbUtils.closeQuietly(modCount);
+
 			newspaperUpdates.invalidate(newspaper);
+			newspaperArticles.invalidate(newspaper);
 		} finally {
 			DbUtils.closeQuietly(conn);
 		}

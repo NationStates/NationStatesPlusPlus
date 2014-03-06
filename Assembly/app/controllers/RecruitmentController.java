@@ -60,7 +60,7 @@ public class RecruitmentController extends NationStatesController {
 		return false;
 	}
 
-	public Result getRecruitmentCampaigns(String region) throws SQLException, ExecutionException {
+	public Result getRecruitmentCampaigns(String region, boolean includeStats) throws SQLException, ExecutionException {
 		Result ret = Utils.validateRequest(request(), response(), getAPI(), getDatabase());
 		if (ret != null) {
 			return ret;
@@ -90,6 +90,42 @@ public class RecruitmentController extends NationStatesController {
 				campaign.put("allocation", set.getInt("allocation"));
 				campaign.put("gcrs_only", set.getInt("gcrs_only"));
 				campaigns.add(campaign);
+				
+				if (includeStats) {
+					PreparedStatement totalSent = conn.prepareStatement("SELECT count(id) FROM assembly.recruitment_results WHERE campaign = ?");
+					totalSent.setInt(1, set.getInt("id"));
+					ResultSet total = totalSent.executeQuery();
+					total.next();
+					campaign.put("total_sent", total.getInt(1));
+					DbUtils.closeQuietly(total);
+					DbUtils.closeQuietly(totalSent);
+					
+					PreparedStatement pendingRecruits = conn.prepareStatement("SELECT count(r.id) FROM assembly.recruitment_results AS r LEFT JOIN assembly.nation AS n ON n.id = r.nation WHERE r.timestamp > ? AND r.campaign = ? AND n.alive = 1 AND n.region = r.region");
+					pendingRecruits.setLong(1, System.currentTimeMillis() - Duration.standardDays(14).getMillis());
+					pendingRecruits.setInt(2, set.getInt("id"));
+					total = pendingRecruits.executeQuery();
+					total.next();
+					campaign.put("pending_recruits", total.getInt(1));
+					DbUtils.closeQuietly(total);
+					DbUtils.closeQuietly(pendingRecruits);
+					
+					PreparedStatement recruits = conn.prepareStatement("SELECT count(r.id) FROM assembly.recruitment_results AS r LEFT JOIN assembly.nation AS n ON n.id = r.nation WHERE r.timestamp < ? AND r.campaign = ? AND n.alive = 1 AND n.region = r.region");
+					recruits.setLong(1, System.currentTimeMillis() - Duration.standardDays(14).getMillis());
+					recruits.setInt(2, set.getInt("id"));
+					total = pendingRecruits.executeQuery();
+					total.next();
+					campaign.put("recruits", total.getInt(1));
+					DbUtils.closeQuietly(total);
+					DbUtils.closeQuietly(recruits);
+					
+					PreparedStatement deadRecruits = conn.prepareStatement("SELECT count(r.id) FROM assembly.recruitment_results AS r LEFT JOIN assembly.nation AS n ON n.id = r.nation WHERE AND r.campaign = ? AND n.alive = 0 AND n.region = r.region");
+					deadRecruits.setInt(1, set.getInt("id"));
+					total = deadRecruits.executeQuery();
+					total.next();
+					campaign.put("dead_recruits", total.getInt(1));
+					DbUtils.closeQuietly(total);
+					DbUtils.closeQuietly(recruits);
+				}
 			}
 			DbUtils.closeQuietly(set);
 			DbUtils.closeQuietly(select);
@@ -239,7 +275,7 @@ public class RecruitmentController extends NationStatesController {
 			DbUtils.closeQuietly(conn);
 		}
 
-		return getRecruitmentCampaigns(region);
+		return getRecruitmentCampaigns(region, true);
 	}
 
 	public Result getRecruitmentOfficers(String region, boolean includeAdmins) throws SQLException, ExecutionException {
@@ -435,7 +471,14 @@ public class RecruitmentController extends NationStatesController {
 	}
 
 	private final ConcurrentHashMap<Integer, Boolean> regionLock = new ConcurrentHashMap<Integer, Boolean>();
-	public Result findRecruitmentTarget(String region, String accessKey) throws SQLException, ExecutionException {
+	public Result findRecruitmentTarget(String region, String accessKey, boolean userAgentFix) throws SQLException, ExecutionException {
+		Utils.handleDefaultPostHeaders(request(), response());
+		if (!userAgentFix) {
+			Map<String, Object> temp = new HashMap<String, Object>();
+			temp.put("wait", "30");
+			return ok(Json.toJson(temp)).as("application/json");
+		}
+
 		final boolean validScriptAccess = isValidAccessKey(region, accessKey);
 		//Bypass standard nation authentication if we are a valid script
 		if (!validScriptAccess) {
@@ -444,7 +487,6 @@ public class RecruitmentController extends NationStatesController {
 				return ret;
 			}
 		}
-		Utils.handleDefaultPostHeaders(request(), response());
 		String nation = Utils.sanitizeName(Utils.getPostValue(request(), "nation"));
 		Connection conn = null;
 		try {
@@ -459,7 +501,6 @@ public class RecruitmentController extends NationStatesController {
 			}
 
 			if (regionId == -1) {
-				Utils.handleDefaultPostHeaders(request(), response());
 				return Results.unauthorized();
 			}
 
@@ -488,7 +529,6 @@ public class RecruitmentController extends NationStatesController {
 			}
 			DbUtils.closeQuietly(set);
 			DbUtils.closeQuietly(lastRecruitment);
-			
 			wait.put("wait", "30");
 			return ok(Json.toJson(wait)).as("application/json");
 		} finally {

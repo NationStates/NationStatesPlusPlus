@@ -249,8 +249,6 @@ public class Utils {
 			final int nationId = nation != null ? access.getNationIdCache().get(sanitizeName(nation)) : -1;
 			if (nation != null && nationId != -1) {
 				if (authToken != null && access.isValidAuthToken(nationId, authToken)) {
-					response.setHeader("Access-Control-Expose-Headers", "X-Auth-Token");
-					response.setHeader("X-Auth-Token", authToken);
 					return null;
 				} else {
 					reason = "INVALID AUTH TOKEN";
@@ -324,11 +322,15 @@ public class Utils {
 		}
 		try {
 			NationData data = api.getNationInfo(nation, Shards.ENDORSEMENTS, Shards.WA_STATUS, Shards.INFLUENCE, Shards.CENSUS_SCORE, Shards.FLAG, Shards.FULL_NAME, Shards.NAME, Shards.LAST_LOGIN, Shards.REGION);
-
+			String flag = data.flagURL;
+			if (flag.startsWith("http://")) {
+				flag = "//" + flag.substring(7);
+			}
+			
 			PreparedStatement updateNation = conn.prepareStatement("UPDATE assembly.nation SET influence = ?, influence_desc = ?, flag = ?, full_name = ?, title = ?, last_login = ?, last_endorsement_baseline = ?, wa_member = ?, region = ? WHERE id = ?");
 			updateNation.setInt(1, data.censusScore.get(65).intValue());
 			updateNation.setString(2, data.influence);
-			updateNation.setString(3, data.flagURL);
+			updateNation.setString(3, flag);
 			updateNation.setString(4, data.fullName);
 			updateNation.setString(5, data.name);
 			updateNation.setLong(6, data.lastLogin);

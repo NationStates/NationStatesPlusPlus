@@ -71,9 +71,12 @@ public class FlagUpdateTask implements Runnable{
 					String name = result.getString(1);
 					try {
 						RegionData data = api.getRegionInfo(name, RegionData.Shards.FLAG);
-						
+						String flag = data.flagURL != null ? data.flagURL : "";
+						if (flag.startsWith("http://")) {
+							flag = "//" + flag.substring(7);
+						}
 						PreparedStatement updateFlag = conn.prepareStatement("UPDATE assembly.region SET flag = ? WHERE id = ?"); 
-						updateFlag.setString(1, data.flagURL != null ? data.flagURL : "");
+						updateFlag.setString(1, flag);
 						updateFlag.setInt(2, region);
 						updateFlag.executeUpdate();
 						DbUtils.closeQuietly(updateFlag);

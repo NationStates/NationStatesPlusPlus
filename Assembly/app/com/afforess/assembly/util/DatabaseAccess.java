@@ -1,5 +1,6 @@
 package com.afforess.assembly.util;
 
+import java.security.SecureRandom;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -118,7 +119,8 @@ public class DatabaseAccess {
 	}
 
 	public boolean isValidAuthToken(int id, String authToken) {
-		if (authToken == null) {
+		//Sha256 digest is 64 chars in length
+		if (authToken == null || authToken.length() != 64) {
 			return false;
 		}
 		Connection conn = null;
@@ -142,22 +144,38 @@ public class DatabaseAccess {
 	}
 
 	public String generateAuthToken(int id) {
+		return generateAuthToken(id, false);
+	}
+
+	public String generateAuthToken(int id, boolean force) {
 		Connection conn = null;
 		try {
 			conn = pool.getConnection();
-			PreparedStatement statement = conn.prepareStatement("SELECT auth from assembly.nation_auth WHERE nation_id = ? AND time > ?");
-			statement.setInt(1, id);
-			statement.setLong(2, System.currentTimeMillis());
-			ResultSet result = statement.executeQuery();
-			while (result.next()) {
-				return result.getString(1);
+			if (!force) {
+				PreparedStatement statement = conn.prepareStatement("SELECT auth from assembly.nation_auth WHERE nation_id = ? AND time > ?");
+				statement.setInt(1, id);
+				statement.setLong(2, System.currentTimeMillis());
+				ResultSet result = statement.executeQuery();
+				if (result.next()) {
+					return result.getString(1);
+				}
 			}
-			String auth = Sha.hash256(id + "-" + System.nanoTime());
+			
+			SecureRandom random = new SecureRandom();
+			String auth = Sha.hash256(id + "-" + System.nanoTime() + "-" + random.nextInt(Integer.MAX_VALUE));
+
+			//Clear old codes
+			PreparedStatement statement = conn.prepareStatement("DELETE FROM assembly.nation_auth WHERE nation_id = ?");
+			statement.setInt(1, id);
+			statement.executeUpdate();
+			DbUtils.closeQuietly(statement);
+
 			statement = conn.prepareStatement("INSERT INTO assembly.nation_auth (nation_id, auth, time) VALUES (?, ?, ?)");
 			statement.setInt(1, id);
 			statement.setString(2, auth);
-			statement.setLong(3, System.currentTimeMillis() + Duration.standardDays(7).getMillis());
+			statement.setLong(3, System.currentTimeMillis() + Duration.standardDays(1).getMillis());
 			statement.executeUpdate();
+			DbUtils.closeQuietly(statement);
 			return auth;
 		} catch (SQLException e) {
 			throw new RuntimeException(e);
