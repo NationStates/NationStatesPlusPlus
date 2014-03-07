@@ -237,7 +237,7 @@ public class NewspaperController extends NationStatesController {
 			newspaperUpdates.put(id, lastUpdate);
 		}
 
-		Result r = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(lastUpdate.hashCode()), "60");
+		Result r = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(lastUpdate.hashCode()), "7200");
 		if (r != null) {
 			return r;
 		}
@@ -257,15 +257,6 @@ public class NewspaperController extends NationStatesController {
 			if (result.next()) {
 				newspaper.put("timestamp", result.getLong(1));
 			}
-			DbUtils.closeQuietly(result);
-			DbUtils.closeQuietly(articles);
-			
-			articles = conn.prepareStatement("SELECT mod_count FROM assembly.newspapers WHERE newspaper = ?");
-			articles.setInt(1, id);
-			result = articles.executeQuery();
-			if (result.next()) {
-				newspaper.put("mod", result.getInt(1));
-			}
 		} finally {
 			DbUtils.closeQuietly(result);
 			DbUtils.closeQuietly(articles);
@@ -282,7 +273,6 @@ public class NewspaperController extends NationStatesController {
 		ResultSet result = null, set = null;
 		try {
 			conn = getConnection();
-
 			select = conn.prepareStatement("SELECT title, byline, editor, region, newspapers.columns FROM assembly.newspapers WHERE newspaper = ? ");
 			select.setInt(1, id);
 			result = select.executeQuery();
@@ -381,7 +371,7 @@ public class NewspaperController extends NationStatesController {
 		return Json.toJson(newspaper);
 	}
 
-	public Result getNewspaper(int id, int visible, boolean hideBody, int lookupArticleId, int mod) throws SQLException {
+	public Result getNewspaper(int id, int visible, boolean hideBody, int lookupArticleId) throws SQLException {
 		JsonNode newspaper = null;
 		//Standard newspaper lookup
 		boolean canUseCache = visible == 1 && !hideBody && lookupArticleId == -1;
@@ -396,7 +386,7 @@ public class NewspaperController extends NationStatesController {
 		}
 
 		if (newspaper != null) {
-			Result r = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(newspaper.hashCode()), mod > -1 ? "86400" : "0");
+			Result r = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(newspaper.hashCode()), "0");
 			if (r != null) {
 				return r;
 			}
@@ -787,13 +777,6 @@ public class NewspaperController extends NationStatesController {
 				updateOrder.executeUpdate();
 				DbUtils.closeQuietly(updateOrder);
 			}
-
-			//update mod count
-			PreparedStatement modCount = conn.prepareStatement("UPDATE assembly.newspapers SET mod_count = mod_count + 1 WHERE newspaper = ?");
-			modCount.setInt(1, newspaper);
-			modCount.executeUpdate();
-			DbUtils.closeQuietly(modCount);
-
 			newspaperUpdates.invalidate(newspaper);
 			newspaperArticles.invalidate(newspaper);
 		} finally {

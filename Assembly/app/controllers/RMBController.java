@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
@@ -20,7 +21,12 @@ import com.google.common.cache.CacheBuilder;
 import org.joda.time.Duration;
 import org.spout.cereal.config.yaml.YamlConfiguration;
 
+import play.libs.Akka;
+import play.libs.F.Function;
+import play.libs.F.Promise;
 import play.libs.Json;
+import play.mvc.Http.Request;
+import play.mvc.Http.Response;
 import play.mvc.Result;
 import play.mvc.Results;
 
@@ -88,8 +94,58 @@ public class RMBController extends NationStatesController {
 		return Results.ok();
 	}
 
-	public Result getPostRatings(int rmbPost, int rmbCache) throws SQLException, ExecutionException {
+	private static Function<JsonNode, Promise<Result>> getAsyncResult(final Request request, final Response response, final String cacheLen) {
+		return new Function<JsonNode, Promise<Result>>() {
+			@Override
+			public Promise<Result> apply(final JsonNode node) throws Throwable {
+				return Promise.wrap(akka.dispatch.Futures.future((new Callable<Result>() {
+					@Override
+					public Result call() throws Exception {
+						Result result = Utils.handleDefaultGetHeaders(request, response, String.valueOf(node.hashCode()), cacheLen);
+						if (result != null) {
+							return result;
+						}
+						return Results.ok(node).as("application/json");
+					}
+					
+				}), Akka.system().dispatcher()));
+			}
+		};
+	}
+
+	private static Promise<Result> resultToPromise(final Result r) {
+		return Promise.wrap(akka.dispatch.Futures.future((new Callable<Result>() {
+			@Override
+			public Result call() throws Exception {
+				return r;
+			}
+		}), Akka.system().dispatcher()));
+	}
+
+	public Promise<Result> getPostRatings(final int rmbPost, final int rmbCache) throws SQLException, ExecutionException {
 		JsonNode ratings = rmbRatingCache.getIfPresent(rmbPost);
+		if (ratings == null) {
+			Promise<JsonNode> promise = Promise.wrap(akka.dispatch.Futures.future((new Callable<JsonNode>() {
+				@Override
+				public JsonNode call() throws Exception {
+					JsonNode ratings = calculatePostRatings(rmbPost);
+					rmbRatingCache.put(rmbPost, ratings);
+					return ratings;
+				}
+				
+			}), Akka.system().dispatcher()));
+	
+			Promise<Result> result = promise.flatMap(getAsyncResult(request(), response(), rmbCache == -1 ? "10" : "86400"));
+			
+			return result;
+		} else {
+			Result result = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(ratings.hashCode()), (rmbCache == -1 ? "10" : "86400"));
+			if (result != null) {
+				return resultToPromise(result);
+			}
+			return resultToPromise(Results.ok(ratings).as("application/json"));
+		}
+		/*
 		if (ratings == null) {
 			ratings = calculatePostRatings(rmbPost);
 			rmbRatingCache.put(rmbPost, ratings);
@@ -100,6 +156,7 @@ public class RMBController extends NationStatesController {
 			return result;
 		}
 		return Results.ok(ratings).as("application/json");
+		*/
 	}
 
 	private JsonNode calculatePostRatings(int rmbPost) throws SQLException {
