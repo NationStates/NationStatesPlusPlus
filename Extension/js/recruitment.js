@@ -71,7 +71,11 @@
 			if ($("#rprogress").length > 0) {
 				$("#rprogress-bar").width($("#rprogress").width() * ((Date.now() - parseInt(progress)) / 180000));
 			}
-			setTimeout(updateRecruitmentProgress, 100);
+			if (isScrolledIntoView($("#rprogress"))) {
+				setTimeout(updateRecruitmentProgress, 150);
+			} else {
+				setTimeout(updateRecruitmentProgress, 1000);
+			}
 		} else if (isPageActive()) {
 			updateRecruitment();
 		} else {
@@ -80,7 +84,7 @@
 	}
 
 	function updateRecruitment() {
-		doAuthorizedPostRequest("https://nationstatesplusplus.net/api/recruitment/target/get?region=" + getUserRegion(), "", function(data) {
+		doAuthorizedPostRequest("https://nationstatesplusplus.net/api/recruitment/target/get?region=" + getUserRegion() + "&userAgentFix=true", "", function(data) {
 			if (data.wait) {
 				if (data.nation) {
 					localStorage.setItem(getUserNation() + "-last-recruitment", data.timestamp);
@@ -107,7 +111,7 @@
 	}
 
 	function recruitNation(data) {
-		$.get("//www.nationstates.net/cgi-bin/api.cgi?a=sendTG&client=" + data.client_key + "&tgid=" + data.tgid + "&key=" + data.secret_key + "&to=" + data.nation, function(result) {
+		$.get("//www.nationstates.net/cgi-bin/api.cgi?a=sendTG&client=" + data.client_key + "&tgid=" + data.tgid + "&key=" + data.secret_key + "&to=" + data.nation + "&nspp=1", function(result) {
 			doAuthorizedPostRequest("https://nationstatesplusplus.net/api/recruitment/target/confirm?region=" + getUserRegion() + "&target=" + data.nation, "", function() {
 				localStorage.setItem(getUserNation() + "-last-recruitment", Date.now());
 				localStorage.setItem(getUserNation() + "-last-recruitment-data", JSON.stringify(data));
@@ -148,19 +152,21 @@
 			html += "<tr><td>Client Key:</b></td><td> " + campaign.client_key + "</td></tr>";
 			html += "<tr><td>Telegram ID:</b></td><td> " + campaign.tgid + "</td></tr>";
 			html += "<tr><td>Secret Key:</b></td><td> " + campaign.secret_key + "</td></tr>";
-			html += "<tr><td>Total Telegrams Sent:</b></td><td> Coming Soon!</td></tr>";
-			html += "<tr><td>Recruited Nations:</b></td><td> Coming Soon!</td></tr>";
-			html += "<tr><td>Pending Recruits:</b></td><td> Coming Soon!</td></tr>";
-			html += "<tr><td>Recruited & Deceased:</b></td><td> Coming Soon!</td></tr>";
+			html += "<tr><td>Total Telegrams Sent:</b></td><td> " + campaign.total_sent + "</td></tr>";
+			html += "<tr><td>Recruited Nations:</b></td><td>" + campaign.pending_recruits + "</td></tr>";
+			html += "<tr><td>Pending Recruits:</b></td><td>" + campaign.recruits + "</td></tr>";
+			html += "<tr><td>Recruited & Deceased:</b></td><td>" + campaign.dead_recruits + "</td></tr>";
 			html += "</tbody></table>";
 			if (campaign.retired == 0) {
 				html += "<button name='retire' data-cid='" + campaign.id + "' class='btn btn-danger'>Retire Campaign</button>";
+			} else {
+				html += "<button name='delete_campaign' data-cid='" + campaign.id + "' class='btn btn-danger'>Delete Campaign History</button>";
 			}
 			html += "</div>";
 			return html;
 		}
 
-		doAuthorizedPostRequest("https://nationstatesplusplus.net/api/recruitment/campaign/?region=" + region, "", function(data) {
+		doAuthorizedPostRequest("https://nationstatesplusplus.net/api/recruitment/campaign/?region=" + region + "&includeStats=true", "", function(data) {
 			var html = "";
 			for (var i = 0; i < data.length; i += 1) {
 				if (data[i].retired == 0) {
@@ -186,8 +192,21 @@
 			if ($(this).html() != "Are you sure?") {
 				$(this).html("Are you sure?");
 			} else {
-				doAuthorizedPostRequest("https://nationstatesplusplus.net/api/recruitment/campaign/retire?region=" + region + "&id=" + $(this).data("cid"), "", function() {
-					window.location.reload(true);
+				var cid = $(this).data("cid");
+				doAuthorizedPostRequest("https://nationstatesplusplus.net/api/recruitment/campaign/retire?region=" + region + "&id=" + cid, "", function() {
+					$("li[data-cid='" + cid + "']").animate({height: 'toggle'}, 1000);
+				});
+			}
+		});
+
+		$("body").on("click", "button[name='delete_campaign']", function(event) {
+			event.preventDefault();
+			if ($(this).html() != "Are you sure?") {
+				$(this).html("Are you sure?");
+			} else {
+				var cid = $(this).data("cid");
+				doAuthorizedPostRequest("https://nationstatesplusplus.net/api/recruitment/campaign/delete?region=" + region + "&id=" + cid, "", function() {
+					$("li[data-cid='" + cid + "']").animate({height: 'toggle'}, 1000);
 				});
 			}
 		});

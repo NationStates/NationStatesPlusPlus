@@ -627,10 +627,8 @@ function doAuthorizedPostRequestFor(nation, url, postData, success, failure) {
 	var authToken = localStorage.getItem(nation + "-auth-token-v2");
 	if (authToken != null) {
 		try {
-			console.log("Auth token: " + authToken);
 			authToken = JSON.parse(authToken);
 			if (Date.now() > authToken.expires) {
-				console.log("Auth token expired, removing");
 				localStorage.removeItem(nation + "-auth-token-v2");
 				authToken = null;
 			}
@@ -643,7 +641,6 @@ function doAuthorizedPostRequestFor(nation, url, postData, success, failure) {
 	} else {
 		getNationStatesAuth(function(authCode) {
 			$.post("https://nationstatesplusplus.net/api/nation/auth/", "nation=" + nation + "&auth=" + encodeURIComponent(authCode), function(data, textStatus, jqXHR) {
-				console.log("Setting auth token: " + JSON.stringify(data));
 				localStorage.setItem(nation + "-auth-token-v2", JSON.stringify(data));
 				doAuthorizedPostRequestInternal(nation, url, data.code, postData, success, failure);
 			}).fail(failure);
