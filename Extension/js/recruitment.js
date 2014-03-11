@@ -13,8 +13,8 @@
 		doAuthorizedPostRequest("https://nationstatesplusplus.net/api/recruitment/campaign/?region=" + getUserRegion(), "", function(data) {
 			for (var i = 0; i < data.length; i += 1) {
 				if (data[i].retired == 0) {
-					setupRecruitment();
-					return;
+					getSettings().update(setupRecruitment);
+					break;
 				}
 			}
 		});
@@ -31,7 +31,7 @@
 			//Support old browsers that do not allow css calc
 			if ($("#rprogress").width() < 10) {
 				$(window).resize(function() {
-					$("#rprogress").width($("#content").width() + 25);
+					$("#rprogress").width($("#content").width() + 30);
 				});
 				$(window).trigger("resize");
 			}

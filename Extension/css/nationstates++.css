@@ -440,7 +440,7 @@ fieldset.preview {
 	width: 25%;
 }
 
-.full_article img{
+.full_article img, .preview_content img {
 	max-width: 400px;
 }
 
@@ -458,17 +458,6 @@ fieldset.preview {
 	border-radius: 1em;
 }
 
-.newspaper_legend {
-    font-size: large;
-	padding: 3px 16px 3px 16px;
-    margin-top: 8px;
-	color: #333;
-	background-color: #FFF;
-	border: 1px solid #CCC;
-	font-weight: bold;      
-    width: 95%;
-}
-
 .regional_power {
 	position: absolute;
 	top: 210px;
@@ -476,11 +465,8 @@ fieldset.preview {
 }
 
 .preview_content {
-	width: 40%;
 	margin-left: auto;
 	margin-right: auto;
-	border-left: 1px solid black;
-	border-right: 1px solid black;
 	padding-right: 4px;
 	padding-left: 4px;
 }
@@ -540,9 +526,6 @@ fieldset.preview {
 	font-size: 70%;
 	padding: 5px;
 	margin-top: 10px;
-#	border: 1px solid rgba(0, 83, 139, 1);
-#	border-radius: 5px;
-#	background: rgba(151, 211, 253, 0.4);
 }
 
 .post-rating-desc  {

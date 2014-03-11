@@ -63,7 +63,7 @@
 		var proposals = userData.getValue("wa_proposals", {last_viewed: 0});
 		proposals.last_viewed = Date.now();
 		userData.setValue("wa_proposals", proposals);
-		userData.pushUpdate();
+		userData.save();
 		$("#wa_proposals").html("WA PROPOSALS");
 	}
 

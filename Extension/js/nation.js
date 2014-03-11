@@ -41,7 +41,7 @@
 	}
 	
 	function showNSWikiLink() {
-		$(".nationnavbar").append($('<div/>').html(" &#8226; ").text() + "<a href='http://nswiki.org/Nation/" + getVisibleNation().replaceAll("_", " ").toTitleCase() + "'>NSWiki</a>");
+		$(".nationnavbar").append($('<div/>').html(" &#8226; ").text() + "<a href='http://nswiki.org/Nation/" + $(".nationname span").text() + "'>NSWiki</a>");
 	}
 
 	function displayAfforess() {
