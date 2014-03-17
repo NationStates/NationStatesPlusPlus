@@ -16,6 +16,7 @@ import com.afforess.assembly.HappeningsTask;
 import com.afforess.assembly.HealthMonitor;
 import com.afforess.assembly.Start;
 import com.afforess.assembly.UpdateOrderTask;
+import com.afforess.assembly.WorldAssemblyTask;
 import com.afforess.assembly.model.HappeningType;
 import com.afforess.assembly.util.DatabaseAccess;
 import com.amazonaws.auth.BasicAWSCredentials;
@@ -101,6 +102,9 @@ public class Global extends GlobalSettings {
 		Akka.system().scheduler().schedule(Duration.create(120, TimeUnit.SECONDS), Duration.create(31, TimeUnit.SECONDS), new UpdateOrderTask(api, access), Akka.system().dispatcher()); // 2 api calls
 		Akka.system().scheduler().schedule(Duration.create(120, TimeUnit.SECONDS), Duration.create(31, TimeUnit.SECONDS), new FlagUpdateTask(api, access), Akka.system().dispatcher()); // 4 api calls
 		Akka.system().scheduler().schedule(Duration.create(120, TimeUnit.SECONDS), Duration.create(60, TimeUnit.SECONDS), new NSWikiTask(access, config), Akka.system().dispatcher()); // 0 api calls
+	
+		Akka.system().scheduler().scheduleOnce(Duration.create(120, TimeUnit.SECONDS), new WorldAssemblyTask(access, api, 0), Akka.system().dispatcher());
+		Akka.system().scheduler().scheduleOnce(Duration.create(160, TimeUnit.SECONDS), new WorldAssemblyTask(access, api, 1), Akka.system().dispatcher());
 	}
 
 	@Override

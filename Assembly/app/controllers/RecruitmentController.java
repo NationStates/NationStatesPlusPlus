@@ -112,13 +112,13 @@ public class RecruitmentController extends NationStatesController {
 					PreparedStatement recruits = conn.prepareStatement("SELECT count(r.id) FROM assembly.recruitment_results AS r LEFT JOIN assembly.nation AS n ON n.id = r.nation WHERE r.timestamp < ? AND r.campaign = ? AND n.alive = 1 AND n.region = r.region");
 					recruits.setLong(1, System.currentTimeMillis() - Duration.standardDays(14).getMillis());
 					recruits.setInt(2, set.getInt("id"));
-					total = pendingRecruits.executeQuery();
+					total = recruits.executeQuery();
 					total.next();
 					campaign.put("recruits", total.getInt(1));
 					DbUtils.closeQuietly(total);
 					DbUtils.closeQuietly(recruits);
 					
-					PreparedStatement deadRecruits = conn.prepareStatement("SELECT count(r.id) FROM assembly.recruitment_results AS r LEFT JOIN assembly.nation AS n ON n.id = r.nation WHERE AND r.campaign = ? AND n.alive = 0 AND n.region = r.region");
+					PreparedStatement deadRecruits = conn.prepareStatement("SELECT count(r.id) FROM assembly.recruitment_results AS r LEFT JOIN assembly.nation AS n ON n.id = r.nation WHERE r.campaign = ? AND n.alive = 0 AND n.region = r.region");
 					deadRecruits.setInt(1, set.getInt("id"));
 					total = deadRecruits.executeQuery();
 					total.next();
@@ -151,7 +151,7 @@ public class RecruitmentController extends NationStatesController {
 				return Results.unauthorized();
 			}
 			
-			PreparedStatement update = conn.prepareStatement("UPDATE assembly.recruit_campaign SET visible = 0 WHERE region = ? AND id = ? AND retired IS NOT NULL");
+			PreparedStatement update = conn.prepareStatement("UPDATE assembly.recruit_campaign SET visible = 0 WHERE visible = 1 AND region = ? AND id = ? AND retired IS NOT NULL");
 			update.setInt(1, regionId);
 			update.setInt(2, id);
 			update.executeUpdate();

@@ -7,6 +7,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -177,6 +178,62 @@ public class WorldAssemblyController extends DatabaseController {
 			return result;
 		}
 		return ok(Json.toJson(delegates)).as("application/json");
+	}
+
+	private Map<String, Object> getResolution(Connection conn, int council) throws SQLException {
+		Map<String, Object> resolution = new HashMap<String, Object>();
+		PreparedStatement select = conn.prepareStatement("SELECT id, name FROM assembly.wa_resolutions WHERE council = ? ORDER BY created DESC LIMIT 0, 1");
+		select.setInt(1, council);
+		ResultSet set = select.executeQuery();
+		if (set.next()) {
+			resolution.put("id", set.getInt(1));
+			resolution.put("name", set.getString(2));
+			PreparedStatement votes = conn.prepareStatement("SELECT timestamp, nation_votes_against, nation_votes_for FROM assembly.wa_votes WHERE wa_resolution = ? ORDER BY timestamp DESC LIMIT 0, 1");
+			votes.setInt(1, set.getInt(1));
+			ResultSet voteResults = votes.executeQuery();
+			if (voteResults.next()) {
+				resolution.put("last_update", voteResults.getLong(1));
+				resolution.put("nation_votes_against", voteResults.getInt(2));
+				resolution.put("nation_votes_for", voteResults.getInt(3));
+			}
+			DbUtils.closeQuietly(voteResults);
+			DbUtils.closeQuietly(votes);
+		}
+		DbUtils.closeQuietly(set);
+		DbUtils.closeQuietly(select);
+		return resolution;
+	}
+
+	public Result getIndividualWAVotes() throws SQLException {
+		List<Map<String, Object>> resolutions = new LinkedList<Map<String, Object>>();
+		Connection conn = null;
+		try {
+			conn = getConnection();
+			long lastUpdate = Integer.MAX_VALUE;
+			//We are assuming the newest resolutions are the ones at vote...is this always true?
+			resolutions.add(getResolution(conn, 0));
+			resolutions.add(getResolution(conn, 1));
+			
+			for (Map<String, Object> res : resolutions) {
+				lastUpdate = Math.min(lastUpdate, (Long)res.get("last_update"));
+			}
+			
+			int expires = 300;
+			if (lastUpdate != Integer.MAX_VALUE) {
+				lastUpdate /= 1000L;
+				//Votes update each hour. Tell client to keep response until next hourly update.
+				expires = (int) (lastUpdate + 3600 - (System.currentTimeMillis() / 1000L));
+			} else {
+				expires = 300;
+			}
+			Result result = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(resolutions.hashCode()), String.valueOf(expires));
+			if (result != null) {
+				return result;
+			}
+			return ok(Json.toJson(resolutions)).as("application/json");
+		} finally {
+			DbUtils.closeQuietly(conn);
+		}
 	}
 
 	private List<Map<String, String>> powerTransfers = null;
