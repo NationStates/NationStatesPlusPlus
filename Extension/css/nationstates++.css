@@ -735,3 +735,26 @@ fieldset.preview {
 	background: -webkit-linear-gradient(to right, #FF3300, #CC0000);
 	background: linear-gradient(to right, #FF3300, #CC0000);
 }
+
+.forward-input {
+	width: 50%;
+	min-width: 400px;
+	margin-right: 5px;
+	margin-top: 10px;
+}
+
+.forward-to-recips {
+	margin-top: 4px;
+}
+
+.forward-to-recips span.tgloadedto{
+	background-color: #EAEAE2;
+	margin: 0 10px 4px 0;
+	padding: 0 6px 0 6px;
+	line-height: 2em;
+	display: inline-block;
+}
+
+.forward-to-recips span {
+	display: inline-block;
+}

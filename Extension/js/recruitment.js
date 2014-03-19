@@ -71,7 +71,7 @@
 			if ($("#rprogress").length > 0) {
 				$("#rprogress-bar").width($("#rprogress").width() * ((Date.now() - parseInt(progress)) / 180000));
 			}
-			if (isScrolledIntoView($("#rprogress"))) {
+			if ($("#rprogress").length > 0 && isScrolledIntoView($("#rprogress"))) {
 				setTimeout(updateRecruitmentProgress, 150);
 			} else {
 				setTimeout(updateRecruitmentProgress, 1000);

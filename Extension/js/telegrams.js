@@ -5,6 +5,7 @@
 		}
 		addTelegramSearch();
 		addFormattingButtons();
+		addForwardButton();
 	}
 
 	function linkifyTelegrams() {
@@ -12,6 +13,61 @@
 			if ($(this).attr('class') != "replyline") {
 				$(this).html(linkify($(this).html()));
 			}
+		});
+	}
+	
+	function addForwardButton() {
+		$("<button name='forward' title='Forward Telegram' style='font-weight:bold;' class='button icon arrowright'>Forward Telegram</button>").insertBefore(".tgreplybutton");
+		$('body').on('click', "button[name='forward']", function(event) {
+			event.preventDefault();
+			var tgid = $(this).parents(".tg").attr("id").split("-")[1];			
+			var fowardDiv = $(this).parents(".tg").find("div[name='forward']");
+			if (fowardDiv.length == 0) {
+				fowardDiv = $("<div name='forward' style='display:none;'><input type='text' size='28' value='' placeholder='Forward To' class='text-input forward-input'><button disabled='disabled' name='forward-tg' style='height:30px; font-weight:bold;' class='button icon approve primary' tgid='" + tgid + "'>Forward</button><div class='forward-to-recips' style='display: block;'></div></div>").insertAfter($(this).parents(".tgcontent"));
+			}
+			if (fowardDiv.is(":visible")) {
+				fowardDiv.hide("slow");
+			} else {
+				fowardDiv.show("slow");
+			}
+		});
+
+		$('body').on('click', "button[name='forward-tg']", function(event) {
+			event.preventDefault();
+			var tgid = $(this).attr("tgid");
+			var tgto = $(this).parents(".tg").find("input.forward-input").val();
+			var fwto = $(this).parents(".tg").find("div[name='forward']");
+			$.get("//www.nationstates.net/page=tg/tgid=" + tgid + "/raw=1/template-overall=none", function(html) {
+				var tg = $(html).find(".tgcontent pre").text();				
+				var recipients = $(html).find(".tg_headers").text().replaceAll("→", "&#8594;");
+				var chk = $("#tgcompose form input[name='chk']").val();
+				$.post("//www.nationstates.net/page=telegrams", "chk=" + chk + "&tgto=" + tgto + "&message=" + encodeURIComponent("[i][b]Telegram Forwarded By:[/b] [nation=short]" + getUserNation() + "[/nation]\n[b]Telegram Recipients:[/b] " + recipients + "\n [/i]-------------------------------------------\n\n" + tg) + "&send=1", function(html) {
+					if ($(html).find("p.error").length > 0) {
+						window.alert($(html).find("p.error").text());
+					} else {
+						fwto.hide("slow");
+						fwto.find("input").val("");
+						fwto.find("button").attr("disabled", "disabled");
+						fwto.find("div.forward-to-recips").html("");
+					}
+				});
+			});
+		});
+
+		$('body').on('change', "input.forward-input", function(event) {
+			var recips = $(this).parents(".tg").find("div.forward-to-recips");
+			var forward = $(this).parents(".tg").find("button[name='forward-tg']");
+			recips.hide('fast').html('<p><img src="/images/loading1.gif"></div>').show('slow');
+			$.get('/page=ajax3/a=addrecip/toline=' + $(this).val(), function(data) {
+				recips.html(data);
+				$("<br>").insertBefore(recips.find(".tginfo:first"));
+				recips.show('slow');
+				if (recips.find("span").length > 0 && recips.find(".tgerror").length == 0) {
+					forward.removeAttr("disabled");
+				} else {
+					forward.attr("disabled", "disabled");
+				}
+			});
 		});
 	}
 
