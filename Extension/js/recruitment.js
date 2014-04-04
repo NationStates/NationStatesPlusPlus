@@ -141,7 +141,11 @@
 
 		function generateCampaignHTML(campaign) {
 			var html = ""
-			html += "<li name='campaign' data-cid='" + campaign.id + "'><h3 style='margin-bottom: 0px;'>" + (new Date(campaign.created)).customFormat("#DDD# #MMM#, #YYYY#") + " - Present";
+			if (campaign.retired == 0) {
+				html += "<li name='campaign' data-cid='" + campaign.id + "'><h3 style='margin-bottom: 0px;'>" + (new Date(campaign.created)).customFormat("#DD#, #MMM#, #YYYY#") + " - Present";
+			} else {
+				html += "<li name='campaign' data-cid='" + campaign.id + "'><h3 style='margin-bottom: 0px;'>" + (new Date(campaign.created)).customFormat("#DD#, #MMM#, #YYYY#") + " - " + (new Date(campaign.retired)).customFormat("#DD#, #MMM#, #YYYY#");
+			}
 			html += "<span style='font-weight:normal; font-size:14px; margin-left:115px;'><a href='#campaign' data-cid='" + campaign.id + "'>View Campaign";
 			html += "<span class='arrow-down'></span>";
 			html += "</a></span></h3>";
