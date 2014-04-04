@@ -4,9 +4,12 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+
 import org.apache.commons.dbutils.DbUtils;
 import org.spout.cereal.config.ConfigurationNode;
 import org.spout.cereal.config.yaml.YamlConfiguration;
+
+import akka.dispatch.MessageDispatcher;
 
 import com.afforess.assembly.DailyDumps;
 import com.afforess.assembly.NSWikiTask;
@@ -23,6 +26,8 @@ import com.amazonaws.auth.BasicAWSCredentials;
 import com.google.common.collect.ObjectArrays;
 import com.limewoodMedia.nsapi.NationStates;
 import com.mchange.v2.c3p0.ComboPooledDataSource;
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 
 import controllers.AdminController;
 import controllers.DatabaseController;
@@ -95,16 +100,16 @@ public class Global extends GlobalSettings {
 		dailyDumps.setDaemon(true);
 		dailyDumps.start();
 
+		Config c = ConfigFactory.load();
+		final MessageDispatcher nsTasks = Akka.system().dispatchers().from(c.getObject("play.akka.actor.ns-tasks").toConfig());
 		HappeningsTask task = new HappeningsTask(access, api, health);
-
-		Akka.system().scheduler().schedule(Duration.create(5, TimeUnit.SECONDS), Duration.create(3, TimeUnit.SECONDS), task, Akka.system().dispatcher()); //3-10 api calls
-		Akka.system().scheduler().schedule(Duration.create(60, TimeUnit.SECONDS), Duration.create(31, TimeUnit.SECONDS), new NationUpdateTask(api, access, 12, 12, health, task), Akka.system().dispatcher());
-		Akka.system().scheduler().schedule(Duration.create(120, TimeUnit.SECONDS), Duration.create(31, TimeUnit.SECONDS), new UpdateOrderTask(api, access), Akka.system().dispatcher()); // 2 api calls
-		Akka.system().scheduler().schedule(Duration.create(120, TimeUnit.SECONDS), Duration.create(31, TimeUnit.SECONDS), new FlagUpdateTask(api, access), Akka.system().dispatcher()); // 4 api calls
-		Akka.system().scheduler().schedule(Duration.create(120, TimeUnit.SECONDS), Duration.create(60, TimeUnit.SECONDS), new NSWikiTask(access, config), Akka.system().dispatcher()); // 0 api calls
-	
-		Akka.system().scheduler().scheduleOnce(Duration.create(120, TimeUnit.SECONDS), new WorldAssemblyTask(access, api, 0), Akka.system().dispatcher());
-		Akka.system().scheduler().scheduleOnce(Duration.create(160, TimeUnit.SECONDS), new WorldAssemblyTask(access, api, 1), Akka.system().dispatcher());
+		Akka.system().scheduler().schedule(Duration.create(5, TimeUnit.SECONDS), Duration.create(3, TimeUnit.SECONDS), task, nsTasks); //3-10 api calls
+		Akka.system().scheduler().schedule(Duration.create(60, TimeUnit.SECONDS), Duration.create(31, TimeUnit.SECONDS), new NationUpdateTask(api, access, 12, 12, health, task), nsTasks);
+		Akka.system().scheduler().schedule(Duration.create(120, TimeUnit.SECONDS), Duration.create(31, TimeUnit.SECONDS), new UpdateOrderTask(api, access), nsTasks); // 2 api calls
+		Akka.system().scheduler().schedule(Duration.create(120, TimeUnit.SECONDS), Duration.create(31, TimeUnit.SECONDS), new FlagUpdateTask(api, access), nsTasks); // 4 api calls
+		//Akka.system().scheduler().schedule(Duration.create(120, TimeUnit.SECONDS), Duration.create(60, TimeUnit.SECONDS), new NSWikiTask(access, config), nsTasks); // 0 api calls
+		Akka.system().scheduler().scheduleOnce(Duration.create(120, TimeUnit.SECONDS), new WorldAssemblyTask(access, api, 0), nsTasks);
+		Akka.system().scheduler().scheduleOnce(Duration.create(160, TimeUnit.SECONDS), new WorldAssemblyTask(access, api, 1), nsTasks);
 	}
 
 	@Override

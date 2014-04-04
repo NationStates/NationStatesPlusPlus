@@ -55,15 +55,8 @@ public class Utils {
 			.appendMinuteOfHour(2).appendLiteral(':')
 			.appendSecondOfMinute(2).appendLiteral(" GMT").toFormatter();
 	private static final Cache<String, Boolean> recentAuthRequest;
-	private static final NationStates authAPI = new NationStates();
 	static {
-		authAPI.setRateLimit(47);
-		authAPI.setUserAgent("NationStates++ Authentication Server");
-		authAPI.setRelaxed(true);
-		authAPI.setProxyIP("162.243.18.166");
-		authAPI.setProxyPort(3128);
-		
-		recentAuthRequest = CacheBuilder.newBuilder().maximumSize(250).expireAfterWrite(5, TimeUnit.SECONDS).build();
+		recentAuthRequest = CacheBuilder.newBuilder().maximumSize(250).expireAfterWrite(15, TimeUnit.SECONDS).build();
 	}
 
 	public static Result handleDefaultGetHeaders(Request request, Response response, String calculatedEtag) {
@@ -250,17 +243,17 @@ public class Utils {
 			if (nation != null && nationId != -1) {
 				if (authToken != null && access.isValidAuthToken(nationId, authToken)) {
 					return null;
-				} else {
-					reason = "INVALID AUTH TOKEN";
 				}
+				reason = "INVALID AUTH TOKEN";
 				if (auth != null && (!rateLimit || recentAuthRequest.getIfPresent(nation) == null)) {
 					recentAuthRequest.put(nation, true);
 					boolean verify = false;
 					try {
 						verify = api.verifyNation(nation, auth);
 					} catch (RateLimitReachedException e) {
-						Logger.warn("Auth API Rate limited! Switching to backup...");
-						verify = authAPI.verifyNation(nation, auth);
+						Logger.warn("Auth API Rate limited!");
+					} catch (Exception e) {
+						Logger.error("Unknown exception processing NS Authentication", e);
 					}
 					if (verify) {
 						response.setHeader("Access-Control-Expose-Headers", "X-Auth-Token");

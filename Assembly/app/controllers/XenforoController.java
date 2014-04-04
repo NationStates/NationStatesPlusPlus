@@ -47,13 +47,13 @@ public class XenforoController  extends NationStatesController {
 			if (response / 100 == 2) {
 				stream = conn.getInputStream();
 				Map<String, Object> result = new ObjectMapper().readValue(stream, new TypeReference<HashMap<String,Object>>() {});
-				Logger.info("Verifying Nation Login: " + nation);
-				Logger.info("Verify Nation Login: " + result);
+				Logger.info("Verifying Xenforo Nation Login: " + nation);
+				Logger.info("Verify Xenforo Nation Login: " + result);
 			} else {
 				stream = conn.getErrorStream();
 				Map<String, Object> result = new ObjectMapper().readValue(stream, new TypeReference<HashMap<String,Object>>() {});
-				Logger.warn("Failed User Login: " + nation);
-				Logger.warn("Failed User Login: " + result);
+				Logger.warn("Failed Xenforo User Login: " + nation);
+				Logger.warn("Failed Xenforo User Login: " + result);
 				if (result.containsKey("user_error_phrase")) {
 					return Results.badRequest((String)result.get("user_error_phrase")).as("application/json");
 				}
@@ -89,13 +89,13 @@ public class XenforoController  extends NationStatesController {
 			if (response / 100 == 2) {
 				stream = conn.getInputStream();
 				Map<String, Object> result = new ObjectMapper().readValue(stream, new TypeReference<HashMap<String,Object>>() {});
-				Logger.info("Verifying User Creation: " + nation);
-				Logger.info("Verify User Creation: " + result);
+				Logger.info("Verifying Xenforo User Creation: " + nation);
+				Logger.info("Verify Xenforo User Creation: " + result);
 			} else {
 				stream = conn.getErrorStream();
 				Map<String, Object> result = new ObjectMapper().readValue(stream, new TypeReference<HashMap<String,Object>>() {});
-				Logger.warn("Failed User Creation: " + nation);
-				Logger.warn("Failed User Creation: " + result);
+				Logger.warn("Failed Xenforo User Creation: " + nation);
+				Logger.warn("Failed Xenforo User Creation: " + result);
 				if (result.containsKey("user_error_phrase")) {
 					return Results.badRequest((String)result.get("user_error_phrase")).as("application/json");
 				}

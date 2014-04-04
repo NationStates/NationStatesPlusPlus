@@ -52,10 +52,10 @@ public class NSWikiController  extends NationStatesController {
 		String nation = Utils.getPostValue(request(), "nation");
 		String password = Utils.getPostValue(request(), "password");
 		if (password == null || password.isEmpty() || password.length() < 8) {
-			Logger.warn("User [" + nation + "] attempted an invalid password: [" + password + "]");
+			Logger.warn("NSWiki User [" + nation + "] attempted an invalid password: [" + password + "]");
 			return Results.badRequest("Invalid password");
 		}
-		
+		Logger.info("Attempting NSWiki login for " + nation);
 		final String title;
 		Connection conn = null;
 		PreparedStatement select = null;
@@ -73,7 +73,7 @@ public class NSWikiController  extends NationStatesController {
 			DbUtils.closeQuietly(set);
 		}
 		if (doesNSWikiUserExist(title)) {
-			Logger.info("Updating password for " + title);
+			Logger.info("NSWiki Updating password for " + title);
 			changePassword(title, password);
 			return Results.ok();
 		}
@@ -108,7 +108,7 @@ public class NSWikiController  extends NationStatesController {
 		if (result.contains("success")) {
 			return Results.ok();
 		} else {
-			Logger.warn("Unable to create NS Wiki user: " + result);
+			Logger.warn("Unable to create NSWiki user: " + result);
 			return Results.internalServerError();
 		}
 	}

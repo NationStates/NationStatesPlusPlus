@@ -71,21 +71,28 @@ public class NSWikiTask implements Runnable {
 			int start = text.indexOf("{{bot author}}");
 			text = text.substring(0, start + "{{bot author}}".length()) + "\n{{#seo:\n |title=<!--REGION_NAME_START-->Blank Region<!--REGION_NAME_END-->\n |keywords=NationStates,<!--REGION_NAME_START-->Blank Region<!--REGION_NAME_END-->,NSWiki,\n }}" + text.substring(start + "{{bot author}}".length());
 		}
+		if (text.contains("{{bot author}}") && !text.contains("[[Category: Regions]]")) {
+			text += "\n\n[[Category: Regions]]";
+		}
 
 		text = updateRegionVariable(text, "FLAG", stats.getFlag());
 		text = updateRegionVariable(text, "FOUNDER", stats.getFounder());
 		text = updateRegionVariable(text, "DELEGATE", stats.getDelegate());
 		text = updateRegionVariable(text, "WA_POPULATION", stats.getNumWaMembers());
 		text = updateRegionVariable(text, "POPULATION", stats.getNumNations());
+		if (!text.contains("REGION_NSTRACKER_START")) {
+			text = updateRegionVariable(text, "LINK", "<!--REGION_LINK_START-->[https://www.nationstates.net/region=" + stats.getName().toLowerCase().replaceAll(" ", "_") + " " + stats.getName() + "]<!--REGION_LINK_END-->\n|nstracker                   = <!--REGION_NSTRACKER_START--><!--REGION_NSTRACKER_END-->", false);
+		}
 		text = updateRegionVariable(text, "LINK", "[https://www.nationstates.net/region=" + stats.getName().toLowerCase().replaceAll(" ", "_") + " " + stats.getName() + "]");
+		text = updateRegionVariable(text, "NSTRACKER", "[http://www.nstracker.net/regions?region=" + stats.getName().replaceAll(" ", "_") + " " + stats.getName() + "]");
 		text = updateRegionVariable(text, "POPULATION_AMT", stats.getTotalPopulationDescription());
 		text = updateRegionVariable(text, "POPULATION_AMT_YEAR", "2014");
 		text = updateRegionVariable(text, "POPULATION_DESC", stats.getNumNationsDescription());
 		text = updateRegionVariable(text, "HDI", String.format("%.3f", stats.getHumanDevelopmentIndex() / 100F));
-		text = updateRegionVariable(text, "GRP", "N/A");
+		//text = updateRegionVariable(text, "GRP", "N/A");
 		text = updateRegionVariable(text, "STYLE", stats.getRegionDescription());
 		
-		text = updateRegionVariable(text, "NAME", WordUtils.capitalize(stats.getTitle()));
+		text = updateRegionVariable(text, "NAME", WordUtils.capitalize(stats.getTitle()), false);
 		
 		if (!text.equals(origText)) {
 			article.setText(text);
@@ -96,31 +103,27 @@ public class NSWikiTask implements Runnable {
 	}
 
 	private static String updateRegionVariable(String text, String variable, int replacement) {
-		return updateRegionVariable(text, variable, String.valueOf(replacement));
+		return updateRegionVariable(text, variable, String.valueOf(replacement), true);
 	}
 
 	private static String updateRegionVariable(String text, String variable, String replacement) {
+		return updateRegionVariable(text, variable, replacement, true);
+	}
+
+	private static String updateRegionVariable(String text, String variable, String replacement, boolean preserveVariable) {
 		final String variableStart = (new StringBuilder("<!--REGION_").append(variable).append("_START-->")).toString();
 		final String variableEnd = (new StringBuilder("<!--REGION_").append(variable).append("_END-->")).toString();
 		int index = text.indexOf(variableStart);
 		while(index > -1) {
 			int endIndex = text.indexOf(variableEnd, index + variableStart.length());
 			if (endIndex != -1) {
-				text = (new StringBuilder(text.substring(0, index + variableStart.length())).append(replacement).append(text.substring(endIndex))).toString();
+				text = (new StringBuilder(text.substring(0, index + (preserveVariable ? variableStart.length() : 0))).append(replacement).append(text.substring(endIndex + (preserveVariable ? 0 : variableEnd.length())))).toString();
 				index = text.indexOf(variableStart, endIndex + variableEnd.length());
 			} else {
 				break;
 			}
 		}
 		return text;
-	}
-
-	public static void main(String[] args) throws IOException, SQLException {
-		//YamlConfiguration config = Start.loadConfig();
-		//ComboPooledDataSource pool = Start.loadDatabase(config.getChild("settings"));
-		//DatabaseAccess access = new DatabaseAccess(pool, 100);
-		//NSWikiTask task = new NSWikiTask(access, config);
-		//task.updateRegionPage("Capitalist Paradise");
 	}
 
 	@Override
@@ -133,7 +136,6 @@ public class NSWikiTask implements Runnable {
 	}
 
 	private void runInternal() throws SQLException, IOException {
-		Logger.info("Starting NSWiki Update");
 		ArrayList<String> regions = new ArrayList<String>();
 		Connection conn = null;
 		try {
@@ -156,16 +158,12 @@ public class NSWikiTask implements Runnable {
 			for (String region : regions) {
 				update.setInt(1, (int)(System.currentTimeMillis() / 1000L));
 				update.setString(2, Utils.sanitizeName(region));
-				
-				Logger.info("Updating NSWiki region page for [" + region + "]");
 				updateRegionPage(wikibot, region);
-				
 				update.executeUpdate();
 			}
 			DbUtils.closeQuietly(update);
 		} finally {
 			DbUtils.closeQuietly(conn);
 		}
-		Logger.info("Finished NSWiki Update");
 	}
 }

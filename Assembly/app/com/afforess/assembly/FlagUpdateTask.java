@@ -58,7 +58,7 @@ public class FlagUpdateTask implements Runnable{
 			DbUtils.closeQuietly(result);
 			DbUtils.closeQuietly(select);
 			
-			Logger.info(regionsToUpdate.size() + " Region Flag Updates Pending");
+			Logger.debug(regionsToUpdate.size() + " Region Flag Updates Pending");
 			
 			Iterator<Integer> iter = regionsToUpdate.iterator();
 			for (int i = 0; i < 2 && iter.hasNext(); i++) {
@@ -91,7 +91,7 @@ public class FlagUpdateTask implements Runnable{
 				iter.remove();
 			}
 			
-			Logger.info(nationsToUpdate.size() + " Nation Flag Updates Pending");
+			Logger.debug(nationsToUpdate.size() + " Nation Flag Updates Pending");
 			
 			iter = nationsToUpdate.iterator();
 			for (int i = 0; i < 2 && iter.hasNext(); i++) {

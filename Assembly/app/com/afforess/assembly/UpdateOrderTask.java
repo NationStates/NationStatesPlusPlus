@@ -67,7 +67,7 @@ public class UpdateOrderTask implements Runnable{
 				updateBatch.executeBatch();
 				DbUtils.closeQuietly(updateBatch);
 				lastId = result.getInt(2);
-				Logger.info("Updated update order for region id [" + lastId + "]");
+				Logger.debug("Updated update order for region id [" + lastId + "]");
 			}
 			PreparedStatement update = conn.prepareStatement("UPDATE assembly.settings SET last_update_order_region = ? WHERE id = 1");
 			update.setInt(1, (lastId != startId ? lastId : 0));

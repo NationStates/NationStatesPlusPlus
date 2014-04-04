@@ -9,6 +9,8 @@ import java.util.regex.Pattern;
 import org.apache.commons.dbutils.DbUtils;
 import org.joda.time.Duration;
 
+import play.Logger;
+
 public enum RecruitmentType {
 	NEW_NATIONS(0),
 	REFOUNDED_NATIONS(1),
@@ -50,12 +52,12 @@ public enum RecruitmentType {
 			case EJECTED_NATIONS:
 				return conn.prepareStatement("SELECT nation AS id, name, region FROM assembly.ejected_nations WHERE puppet = 0 AND region <> ? ORDER BY timestamp DESC LIMIT ?, ?");
 			case ACTIVE_GAMERITES:
-				return conn.prepareStatement("SELECT id, name, region FROM assembly.nation WHERE alive = 1 AND puppet = 0 AND region <> ? AND region = 1167 OR region = 6223 OR region = 8243" +
+				return conn.prepareStatement("SELECT id, name, region FROM assembly.nation WHERE alive = 1 AND puppet = 0 AND region <> ? AND region = 1167 OR region = 6223 OR region = 8243 " +
 											"OR region = 11721 OR region = 13019 OR region = 13338 OR region = 13585 OR region = 14159 ORDER BY last_login DESC LIMIT ?, ?");
 			case ACTIVE_NATIONS:
 				return conn.prepareStatement("SELECT id, name, region FROM assembly.nation WHERE alive = 1 AND puppet = 0 AND region <> ? ORDER BY last_login DESC LIMIT ?, ?");
 			case ACTIVE_USERITES:
-				return conn.prepareStatement("SELECT id, name, region FROM assembly.nation WHERE alive = 1 AND puppet = 0 AND region <> ? AND region <> 1167 AND region <> 6223 AND region <> 8243" +
+				return conn.prepareStatement("SELECT id, name, region FROM assembly.nation WHERE alive = 1 AND puppet = 0 AND region <> ? AND region <> 1167 AND region <> 6223 AND region <> 8243 " +
 						"AND region <> 11721 AND region <> 13019 AND region <> 13338 AND region <> 13585 AND region <> 14159 ORDER BY last_login DESC LIMIT ?, ?");
 			case AUTHORITARIAN_NATIONS:
 				return conn.prepareStatement("SELECT id, name, region FROM assembly.nation WHERE alive = 1 AND puppet = 0 AND region <> ? AND civilrightscore BETWEEN 0 AND 25 AND politicalfreedomscore BETWEEN 0 AND 25 ORDER BY last_login DESC LIMIT ?, ?");
@@ -75,7 +77,6 @@ public enum RecruitmentType {
 
 	public String findRecruitmentNation(Connection conn, int region, boolean gcrsOnly, String filters) throws SQLException {
 		PreparedStatement prevRecruitment = conn.prepareStatement("SELECT nation FROM assembly.recruitment_results WHERE region = ? AND nation = ? AND timestamp > ?");
-		
 		try {
 			for (int attempts = 0; attempts < 10; attempts++) {
 				PreparedStatement nations = createRecruitmentStatement(conn);
@@ -128,6 +129,9 @@ public enum RecruitmentType {
 					return name;
 				}
 			}
+		} catch (SQLException e) {
+			Logger.error("Error finding recruitment target (type: " + this.name() + ") [region: " + region + " | gcsrsOnly: " + gcrsOnly + " | filters: " + filters);
+			throw e;
 		} finally {
 			DbUtils.closeQuietly(prevRecruitment);
 		}

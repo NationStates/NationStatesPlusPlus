@@ -117,7 +117,7 @@ public class DumpUpdateTask implements Runnable {
 				regionId = result.getInt(1);
 			}
 
-			Logger.info("Updating region [" + region + "] from the daily dump [numnations: " + numNations + "]");
+			//Logger.info("Updating region [" + region + "] from the daily dump [numnations: " + numNations + "]");
 
 			PreparedStatement insert = null;
 			insert = conn.prepareStatement("INSERT INTO assembly.region_populations (region, population, timestamp) VALUES (?, ?, ?)");
@@ -290,7 +290,7 @@ public class DumpUpdateTask implements Runnable {
 			flag = "//" + flag.substring(7);
 		}
 		
-		Logger.info("Updating nation [" + nation + "] from the daily dump");
+		//Logger.info("Updating nation [" + nation + "] from the daily dump");
 		PreparedStatement insert = null;
 		if (id == -1) {
 			insert = conn.prepareStatement("INSERT INTO assembly.nation (name, title, full_name, flag, region, influence_desc, last_login, wa_member, alive, first_seen) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");

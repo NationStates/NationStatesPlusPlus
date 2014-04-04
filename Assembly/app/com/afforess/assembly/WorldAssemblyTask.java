@@ -131,7 +131,7 @@ public class WorldAssemblyTask implements Runnable {
 			HashSet<Integer> votesAgainst = new HashSet<Integer>();
 			PreparedStatement select = conn.prepareStatement("SELECT nation, type FROM assembly.global_happenings WHERE timestamp > ? AND (type = 20 OR type = 21) AND happening LIKE ? ORDER BY timestamp ASC");
 			select.setLong(1, res.created * 1000L);
-			select.setString(2, "%" + res.name.replaceAll(String.valueOf('"'), Matcher.quoteReplacement("\\\"")).replaceAll("'", Matcher.quoteReplacement("\\'")) + "%");
+			select.setString(2, "%" + res.name.replaceAll(String.valueOf('"'), Matcher.quoteReplacement("&quot;")).replaceAll("'", Matcher.quoteReplacement("\\'")) + "%");
 			ResultSet votes = select.executeQuery();
 			while(votes.next()) {
 				boolean voteFor = votes.getInt(2) == 20;

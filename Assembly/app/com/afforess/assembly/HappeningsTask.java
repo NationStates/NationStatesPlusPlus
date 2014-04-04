@@ -14,6 +14,7 @@ import java.util.regex.Matcher;
 
 import org.apache.commons.dbutils.DbUtils;
 import org.apache.commons.lang.WordUtils;
+import org.apache.http.conn.HttpHostConnectException;
 import org.joda.time.Duration;
 
 import play.Logger;
@@ -101,13 +102,14 @@ public class HappeningsTask implements Runnable {
 
 	public void runImpl() {
 		if (monitor != null) monitor.happeningHeartbeat();
+		Logger.info("Starting Happenings Task: " + maxEventId);
 		HappeningData data;
 		synchronized (api) {
 			//Throttle the happening queries based on how many new happenings occurred last run
 			if (lastRun + Duration.standardSeconds(10).getMillis() > System.currentTimeMillis()) {
 				final int activity = this.highActivity.get();
 				if (newEvents >= 50 || activity > 0) {
-					Logger.info("Very high happenings activity, running at 2s intervals");
+					Logger.debug("Very high happenings activity, running at 2s intervals");
 					this.highActivity.set(newEvents >= 50 ? 10 : activity - 1);
 				} else {
 					Logger.debug("Skipping happening run, little activity, last run was " + (System.currentTimeMillis() - lastRun) + " ms ago");
@@ -122,6 +124,15 @@ public class HappeningsTask implements Runnable {
 			} catch (RateLimitReachedException e) {
 				Logger.warn("Happenings monitoring rate limited!");
 				return;
+			} catch (RuntimeException e) {
+				if (e.getCause() instanceof HttpHostConnectException) {
+					//NS may be down or under high load
+					Logger.warn("Happenings monitoring failed to connect to NationStates.net!", e.getCause());
+					return;
+				} else {
+					Logger.error("Unhandled Exception monitoring happenings", e);
+					return;
+				}
 			}
 			final int oldEventId = maxEventId;
 			for (EventHappening happening : data.happenings) {
@@ -413,7 +424,7 @@ public class HappeningsTask implements Runnable {
 			String title = happening.substring(match.start() + 2, match.end() - 2);
 			newRegion = Utils.sanitizeName(title);
 		}
-		Logger.info("Relocating " + nation + " from " + prevRegion + " to " + newRegion);
+		Logger.debug("Relocating " + nation + " from " + prevRegion + " to " + newRegion);
 		if (prevRegion != null && newRegion != null) {
 			//Double check they are still at their prev region before setting their new region!
 			int newRegionId = getOrCreateRegion(conn, nation, newRegion);
