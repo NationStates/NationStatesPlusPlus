@@ -24,8 +24,9 @@
 		if (flag.match(/t[0-9]?.(jpg|png|gif)/).length > 0) {
 			flag = flag.substring(0, flag.length - 6) + flag.substring(flag.length - 4);
 		}
-		$("<a id='panel_flag' href='//www.nationstates.net/nation=" + getUserNation() + "'><img src='" + flag + "' style='max-width: 192px; display: block; margin-left: auto; margin-right: auto; max-height: 400px;'></a>").insertBefore($("#createdby"));
-		$("#createdby").remove();
+		var createdByAd = $("div[id^='createdby']");
+		$("<a id='panel_flag' href='//www.nationstates.net/nation=" + getUserNation() + "'><img src='" + flag + "' style='max-width: 192px; display: block; margin-left: auto; margin-right: auto; max-height: 400px;'></a>").insertBefore(createdByAd);
+		createdByAd.remove();
 		$(".STANDOUT:first").find("img").hide();
 		$("#panel").css("position", "fixed");
 		$("#nssidebar").css("margin-top", "-" + Math.min($(window).scrollTop(), 100) + "px");

@@ -287,21 +287,3 @@
 		});
 	}
 })();
-
-function getSPDR(nation, callback) {
-	$.get("/page=compare/nations=" + nation + "?censusid=65", function(data) {
-		var start = data.indexOf("backgroundColor:'rgba(255, 255, 255, 0.1)");
-		var search = 'y: ';
-		var index = data.indexOf(search, start) + search.length;
-		
-		//Comparing 2 nations, use 2nd compare
-		var other = data.indexOf(search, index + 10);
-		if (other > index && other < index + 100) {
-			index = other + search.length;
-		}
-		
-		var end = data.indexOf('}', index);
-		var score = data.substring(index, end).trim();
-		callback(score);
-	});
-}
