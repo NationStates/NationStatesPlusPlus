@@ -117,23 +117,17 @@
 			
 			$("form").filter(function() { return $(this).attr("action") == null || $(this).attr("action").startsWith("page"); }).remove();
 			
-			var start = $(".nationnavbar").next();
-			var count = 0;
-			while(true) {
-				count += 1;
-				if (count > 15 || start.is("p")) break;
-				start = start.next();
-			}
-			var insertAfter = start.prev();
-			start.next().next().next().next().remove();
-			start.next().next().next().remove();
-			start.next().next().remove();
-			start.next().remove();
-			start.remove();
-			$(".newsbox, .unbox").remove();
-			
-			var after = $(".wa_status");
-			$("<div id='wa_stats'></div>").insertAfter(insertAfter);
+			$($("#content").children()).each(function() {
+				
+				if ($(this).attr("id") == "namebox" || $(this).attr("class") == "widebox2" || $(this).attr("id") == "rinf") {
+					return;
+				}
+				if ($(this).find("strong .rlink").length > 0 || $(this).attr("class") == "nationnavbar") {
+					return;
+				}
+				$(this).hide();
+			});
+			$("<div id='wa_stats'></div>").insertAfter($(".nationnavbar"));
 			openWorldAssemblyStats();
 		}
 	}
