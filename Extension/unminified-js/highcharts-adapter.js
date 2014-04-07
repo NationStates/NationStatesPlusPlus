@@ -60,7 +60,7 @@
 
 	var activeChart = null;
 	function drawNationalPowerChart(region, title, visibleNation, showInfluence) {
-		$.get("http://capitalistparadise.com/api/region/wa/?region=" + region, function(data) {
+		$.get("https://nationstatesplusplus.net/api/region/wa/?region=" + region, function(data) {
 			var categoryTitles = [];
 			var endorsements = [];
 			var influence = [];
@@ -138,7 +138,8 @@
 							events: {
 								click: function() {
 									var nation = this.category.substring(3, this.category.length - 4);
-									window.location.href = "http://www.nationstates.net/nation=" + nation.toLowerCase().split(" ").join("_") + "/detail=wa_stats/stats=" + (showInfluence ? 'influence' : 'power');
+									var prefix = (window.location.href.startsWith("https://") ? "https:" : "http:");
+									window.location.href = prefix + "//www.nationstates.net/nation=" + nation.toLowerCase().split(" ").join("_") + "/detail=wa_stats/stats=" + (showInfluence ? 'influence' : 'power');
 								}
 							}
 						}
@@ -169,7 +170,7 @@
 	}
 
 	function drawRegionPopulationChart(region, title) {
-		$.get("http://capitalistparadise.com/api/region/population/?v=1&region=" + region, function(data) {
+		$.get("https://nationstatesplusplus.net/api/region/population/?region=" + region, function(data) {
 			var populations = [];
 			for (var i = data.region.length - 1; i >= 0; i--) {
 				var element = [];
