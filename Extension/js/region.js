@@ -310,7 +310,7 @@ function setupRegionPage() {
 			$(this).attr("disabled", true);
 			var password = $("#region_password_input").val();
 			$.post("//www.nationstates.net/page=change_region", "localid=" + $("input[name='localid']").val() + "&region_name=" + $("input[name='region_name']").val()
-																	+ "&move_region=1" + (password.length > 0 ? "&password=" + password : ""), function(data) {
+																	+ "&move_region=1" + (password.length > 0 ? "&password=" + encodeURIComponent(password) : ""), function(data) {
 				if (data.toLowerCase().contains("you have not entered the correct password")) {
 					$("#invalid-pass").html("Your password is incorrect!").show();
 					$("button[name='move_region']").attr("disabled", false);
