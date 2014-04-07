@@ -87,6 +87,7 @@ var newspaperAdminHTML = '<form class="form-horizontal"><fieldset><div class="co
 
 	
 	function updateNewspaperNags() {
+		var settings = getSettings();
 		var checkUpdates = function(id, selector) {
 			$.get("https://nationstatesplusplus.net/api/newspaper/latest/?id=" + id, function(json) {
 				var lastRead = getSettings().getValue("newspapers", {})[id];
@@ -100,7 +101,7 @@ var newspaperAdminHTML = '<form class="form-horizontal"><fieldset><div class="co
 				}
 			});
 			//This just prevents GP and RP news editors from seeing pending articles...sick of their sloppy approvals
-			//Newspapers id 0 and 1 are GP and RP news. Id > 1 means all custom regional newspapers
+			//Newspapers id 0 and 1 are GP and RP news. id > 1 means all custom regional newspapers
 			if (getUserNation() == "shadow_afforess" || id > 1) {
 				$.get("https://nationstatesplusplus.net/api/newspaper/editor/?newspaper=" + id + "&nation=" + getUserNation(), function(data) {
 					$.get("https://nationstatesplusplus.net/api/newspaper/lookup/?id=" + id + "&hideBody=true&visible=3", function(json) {
@@ -116,13 +117,13 @@ var newspaperAdminHTML = '<form class="form-horizontal"><fieldset><div class="co
 				});
 			}
 		}
-		if (getSettings().isEnabled("show_gameplay_news")) {
+		if (settings.isEnabled("show_gameplay_news")) {
 			checkUpdates(0, "gnews");
 		}
-		if (getSettings().isEnabled("show_roleplay_news")) {
+		if (settings.isEnabled("show_roleplay_news")) {
 			checkUpdates(1, "rpnews");
 		}
-		if (getSettings().isEnabled("show_regional_news")) {
+		if (settings.isEnabled("show_regional_news")) {
 			if ($("#regional_newspaper").attr("news-id") != null) {
 				checkUpdates($("#regional_newspaper").attr("news-id"), "rnews");
 			}
