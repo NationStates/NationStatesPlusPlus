@@ -83,3 +83,5 @@ POST   /xenforo/login/                @controllers.XenforoController.verifyNatio
 POST   /xenforo/register/             @controllers.XenforoController.createXenforoUser()
 
 POST   /nswiki/login/                 @controllers.NSWikiController.verifyNationLogin()
+
+GET    /ws/                           @controllers.WebSocketController.index()

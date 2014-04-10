@@ -18,7 +18,10 @@ import java.util.concurrent.ExecutionException;
 
 import org.apache.commons.dbutils.DbUtils;
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.JsonNode;
+
 import org.joda.time.Duration;
 import org.spout.cereal.config.ConfigurationNode;
 import org.spout.cereal.config.yaml.YamlConfiguration;
@@ -41,93 +44,97 @@ public class RegionController extends NationStatesController {
 	}
 
 	public Result getUpdateTime(String region, int std) throws SQLException, ExecutionException {
-		Connection conn = null; 
-		final int regionId = getDatabase().getRegionIdCache().get(Utils.sanitizeName(region));
+		Connection conn = null;
+		int regionId = this.getDatabase().getRegionIdCache().get(Utils.sanitizeName(region));
 		if (regionId == -1) {
 			return Results.badRequest();
 		}
 		try {
 			conn = getConnection();
-			PreparedStatement updateTime = conn.prepareStatement("SELECT normalized_start, major FROM assembly.region_update_calculations WHERE region = ? AND update_time < 200000 ORDER BY start DESC LIMIT 0, 14");
-			updateTime.setInt(1, regionId);
-			ResultSet times = updateTime.executeQuery();
-			List<Long> majorData = new ArrayList<Long>(30);
-			List<Long> minorData = new ArrayList<Long>(30);
-			SummaryStatistics minor = new SummaryStatistics();
-			SummaryStatistics major = new SummaryStatistics();
-			while(times.next()) {
-				if (times.getInt(2) == 1) {
-					major.addValue(times.getLong(1));
-					majorData.add(times.getLong(1));
-				} else {
-					minor.addValue(times.getLong(1));
-					minorData.add(times.getLong(1));
-				}
-			}
-			DbUtils.closeQuietly(times);
-			DbUtils.closeQuietly(updateTime);
-			
-			if (std > 0) {
-				//Check for major update outliers
-				Set<Long> outliers = new HashSet<Long>();
-				for (Long time : majorData) {
-					if (time.longValue() > (major.getMean() + major.getStandardDeviation() * std)) {
-						outliers.add(time);
-					}
-				}
-				if (outliers.size() > 0) {
-					major.clear();
-					for (Long time : majorData) {
-						if (!outliers.contains(time)) {
-							major.addValue(time);
-						}
-					}
-				}
-				
-				outliers.clear();
-				//Check for minor update outliers
-				for (Long time : minorData) {
-					if (time.longValue() > (minor.getMean() + minor.getStandardDeviation() * std)) {
-						outliers.add(time);
-					}
-				}
-				if (outliers.size() > 0) {
-					minor.clear();
-					for (Long time : minorData) {
-						if (!outliers.contains(time)) {
-							minor.addValue(time);
-						}
-					}
-				}
-			}
-			
-			Map<String, Object> data = new HashMap<String, Object>();
-			Map<String, Long> majorUpdate = new HashMap<String, Long>();
-			majorUpdate.put("mean", Double.valueOf(major.getMean()).longValue());
-			majorUpdate.put("std", Double.valueOf(major.getStandardDeviation()).longValue());
-			majorUpdate.put("max", Double.valueOf(major.getMax()).longValue());
-			majorUpdate.put("min", Double.valueOf(major.getMin()).longValue());
-			majorUpdate.put("geomean", Double.valueOf(major.getGeometricMean()).longValue());
-			majorUpdate.put("variance", Double.valueOf(major.getVariance()).longValue());
-			data.put("major", majorUpdate);
-			
-			Map<String, Long> minorUpdate = new HashMap<String, Long>();
-			minorUpdate.put("mean", Double.valueOf(minor.getMean()).longValue());
-			minorUpdate.put("std", Double.valueOf(minor.getStandardDeviation()).longValue());
-			minorUpdate.put("max", Double.valueOf(minor.getMax()).longValue());
-			minorUpdate.put("min", Double.valueOf(minor.getMin()).longValue());
-			minorUpdate.put("geomean", Double.valueOf(minor.getGeometricMean()).longValue());
-			minorUpdate.put("variance", Double.valueOf(minor.getVariance()).longValue());
-			data.put("minor", minorUpdate);
-
-			Result result = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(data.hashCode()), "60");
+			JsonNode updateTime = getUpdateTime(conn, regionId, std);
+			Result result = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(updateTime.hashCode()), "60");
 			if (result != null) {
 				return result;
 			}
-			return ok(Json.toJson(data)).as("application/json");
+			return ok(Json.toJson(updateTime)).as("application/json");
 		} finally {
 			DbUtils.closeQuietly(conn);
 		}
+	}
+
+	public static JsonNode getUpdateTime(Connection conn, int regionId, double std) throws SQLException {
+		PreparedStatement updateTime = conn.prepareStatement("SELECT normalized_start, major FROM assembly.region_update_calculations WHERE region = ? AND update_time < 200000 ORDER BY start DESC LIMIT 0, 14");
+		updateTime.setInt(1, regionId);
+		ResultSet times = updateTime.executeQuery();
+		List<Long> majorData = new ArrayList<Long>(30);
+		List<Long> minorData = new ArrayList<Long>(30);
+		SummaryStatistics minor = new SummaryStatistics();
+		SummaryStatistics major = new SummaryStatistics();
+		while(times.next()) {
+			if (times.getInt(2) == 1) {
+				major.addValue(times.getLong(1));
+				majorData.add(times.getLong(1));
+			} else {
+				minor.addValue(times.getLong(1));
+				minorData.add(times.getLong(1));
+			}
+		}
+		DbUtils.closeQuietly(times);
+		DbUtils.closeQuietly(updateTime);
+		
+		if (std > 0) {
+			//Check for major update outliers
+			Set<Long> outliers = new HashSet<Long>();
+			for (Long time : majorData) {
+				if (time.longValue() > (major.getMean() + major.getStandardDeviation() * std)) {
+					outliers.add(time);
+				}
+			}
+			if (outliers.size() > 0) {
+				major.clear();
+				for (Long time : majorData) {
+					if (!outliers.contains(time)) {
+						major.addValue(time);
+					}
+				}
+			}
+			
+			outliers.clear();
+			//Check for minor update outliers
+			for (Long time : minorData) {
+				if (time.longValue() > (minor.getMean() + minor.getStandardDeviation() * std)) {
+					outliers.add(time);
+				}
+			}
+			if (outliers.size() > 0) {
+				minor.clear();
+				for (Long time : minorData) {
+					if (!outliers.contains(time)) {
+						minor.addValue(time);
+					}
+				}
+			}
+		}
+		
+		Map<String, Object> data = new HashMap<String, Object>();
+		Map<String, Long> majorUpdate = new HashMap<String, Long>();
+		majorUpdate.put("mean", Double.valueOf(major.getMean()).longValue());
+		majorUpdate.put("std", Double.valueOf(major.getStandardDeviation()).longValue());
+		majorUpdate.put("max", Double.valueOf(major.getMax()).longValue());
+		majorUpdate.put("min", Double.valueOf(major.getMin()).longValue());
+		majorUpdate.put("geomean", Double.valueOf(major.getGeometricMean()).longValue());
+		majorUpdate.put("variance", Double.valueOf(major.getVariance()).longValue());
+		data.put("major", majorUpdate);
+		
+		Map<String, Long> minorUpdate = new HashMap<String, Long>();
+		minorUpdate.put("mean", Double.valueOf(minor.getMean()).longValue());
+		minorUpdate.put("std", Double.valueOf(minor.getStandardDeviation()).longValue());
+		minorUpdate.put("max", Double.valueOf(minor.getMax()).longValue());
+		minorUpdate.put("min", Double.valueOf(minor.getMin()).longValue());
+		minorUpdate.put("geomean", Double.valueOf(minor.getGeometricMean()).longValue());
+		minorUpdate.put("variance", Double.valueOf(minor.getVariance()).longValue());
+		data.put("minor", minorUpdate);
+		return Json.toJson(data);
 	}
 
 	public Result getRegionSummary(String region) throws SQLException, ExecutionException {
@@ -326,34 +333,39 @@ public class RegionController extends NationStatesController {
 		return Results.ok();
 	}
 
-	public Result getRegionalMap(String region) throws SQLException, ExecutionException {
+	public static JsonNode getRegionalMap(Connection conn, String region) throws SQLException {
 		Map<String, String> links = new HashMap<String, String>(3);
+		PreparedStatement update = conn.prepareStatement("SELECT regional_map, regional_map_preview FROM assembly.region WHERE name = ?");
+		update.setString(1, Utils.sanitizeName(region));
+		ResultSet set = update.executeQuery();
+		if (set.next()) {
+			String mapLink = set.getString(1);
+			if (!set.wasNull()) {
+				links.put("regional_map", mapLink);
+			}
+			String mapPreview = set.getString(2);
+			if (!set.wasNull()) {
+				links.put("regional_map_preview", mapPreview);
+			}
+		}
+		DbUtils.closeQuietly(set);
+		DbUtils.closeQuietly(update);
+		return Json.toJson(links);
+	}
+
+	public Result getRegionalMap(String region) throws SQLException, ExecutionException {
 		Connection conn = null;
 		try {
 			conn = getConnection();
-			PreparedStatement update = conn.prepareStatement("SELECT regional_map, regional_map_preview FROM assembly.region WHERE name = ?");
-			update.setString(1, Utils.sanitizeName(region));
-			ResultSet set = update.executeQuery();
-			if (set.next()) {
-				String mapLink = set.getString(1);
-				if (!set.wasNull()) {
-					links.put("regional_map", mapLink);
-				}
-				String mapPreview = set.getString(2);
-				if (!set.wasNull()) {
-					links.put("regional_map_preview", mapPreview);
-				}
+			JsonNode map = getRegionalMap(conn, region);
+			Result result = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(map.hashCode()), "60");
+			if (result != null) {
+				return result;
 			}
-			DbUtils.closeQuietly(set);
-			DbUtils.closeQuietly(update);
+			return Results.ok(Json.toJson(map)).as("application/json");
 		} finally {
 			DbUtils.closeQuietly(conn);
 		}
-		Result result = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(links.hashCode()), "60");
-		if (result != null) {
-			return result;
-		}
-		return Results.ok(Json.toJson(links)).as("application/json");
 	}
 
 	public Result setRegionalTitle(String region, boolean disband) throws SQLException, ExecutionException {
@@ -415,36 +427,36 @@ public class RegionController extends NationStatesController {
 		return Results.unauthorized();
 	}
 
-	public Result getRegionalTitles(String region) throws SQLException, ExecutionException {
+	public static JsonNode getRegionalTitles(Connection conn, String region) throws SQLException {
+		Map<String, String> data = new HashMap<String, String>(2);
+		PreparedStatement select = conn.prepareStatement("SELECT delegate_title, founder_title FROM assembly.region WHERE name = ?");
+		select.setString(1, Utils.sanitizeName(region));
+		ResultSet result = select.executeQuery();
+		if (result.next()) {
+			String title = result.getString(1);
+			if (!result.wasNull()) {
+				data.put("delegate_title", title);
+			}
+			title = result.getString(2);
+			if (!result.wasNull()) {
+				data.put("founder_title", title);
+			}
+		}
+		return Json.toJson(data);
+	}
+
+	public Result getRegionalTitles(String region) throws SQLException {
 		Connection conn = null;
 		try {
 			conn = getConnection();
-			PreparedStatement select = conn.prepareStatement("SELECT delegate_title, founder_title FROM assembly.region WHERE name = ?");
-			select.setString(1, Utils.sanitizeName(region));
-			ResultSet result = select.executeQuery();
-			if (result.next()) {
-				Map<String, String> data = new HashMap<String, String>(2);
-				String title = result.getString(1);
-				if (!result.wasNull()) {
-					data.put("delegate_title", title);
-				}
-				title = result.getString(2);
-				if (!result.wasNull()) {
-					data.put("founder_title", title);
-				}
-				Result r = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(data.hashCode()), "600");
-				if (r != null) {
-					return r;
-				}
-				return Results.ok(Json.toJson(data)).as("application/json");
+			JsonNode titles = getRegionalTitles(conn, region);
+			Result r = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(titles.hashCode()), "600");
+			if (r != null) {
+				return r;
 			}
+			return Results.ok(titles).as("application/json");
 		} finally {
 			DbUtils.closeQuietly(conn);
 		}
-		Result r = Utils.handleDefaultGetHeaders(request(), response(), "0", "60");
-		if (r != null) {
-			return r;
-		}
-		return Results.ok("").as("application/json");
 	}
 }

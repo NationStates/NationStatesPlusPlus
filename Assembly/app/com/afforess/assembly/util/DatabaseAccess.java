@@ -23,6 +23,7 @@ public class DatabaseAccess {
 	private final LoadingCache<String, Integer> regionIdCache;
 	private final LoadingCache<String, Integer> nationIdCache;
 	private final LoadingCache<Integer, String> reverseIdCache;
+	private final LoadingCache<Integer, String> nationSettings;
 	private final int cacheSize;
 
 	public DatabaseAccess(final ComboPooledDataSource pool, int cacheSize) {
@@ -100,6 +101,37 @@ public class DatabaseAccess {
 				throw new RuntimeException("No nation with id [" + key + "] found!");
 			}
 		});
+
+		this.nationSettings = CacheBuilder.newBuilder()
+			.maximumSize(cacheSize)
+			.expireAfterAccess(10, TimeUnit.MINUTES)
+			.expireAfterWrite(1, TimeUnit.HOURS)
+			.build(new CacheLoader<Integer, String>() {
+			public String load(Integer key) throws SQLException {
+				Connection conn = null;
+				PreparedStatement select = null;
+				ResultSet set = null;
+				try {
+					conn = pool.getConnection();
+					select = conn.prepareStatement("SELECT settings FROM assembly.ns_settings WHERE id = ?");
+					select.setInt(1, key);
+					set = select.executeQuery();
+					if (set.next()) {
+						String json = set.getString(1);
+						if (!set.wasNull()) {
+							return json;
+						}
+					}
+				} catch (SQLException e) {
+					Logger.error("Unable to look up nation settings", e);
+				} finally {
+					DbUtils.closeQuietly(set);
+					DbUtils.closeQuietly(select);
+					DbUtils.closeQuietly(conn);
+				}
+				return "";
+			}
+		});
 	}
 
 	public final int getMaxCacheSize() {
@@ -112,6 +144,10 @@ public class DatabaseAccess {
 
 	public LoadingCache<Integer, String> getReverseIdCache() {
 		return reverseIdCache;
+	}
+
+	public LoadingCache<Integer, String> getNationSettingsCache() {
+		return nationSettings;
 	}
 
 	public ComboPooledDataSource getPool() {

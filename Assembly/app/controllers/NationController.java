@@ -32,24 +32,9 @@ public class NationController extends NationStatesController {
 		if (nationId == -1) {
 			return Results.badRequest();
 		}
-		Connection conn = null;
-		PreparedStatement select = null;
-		ResultSet set = null;
-		try {
-			conn = getConnection();
-			select = conn.prepareStatement("SELECT settings FROM assembly.ns_settings WHERE id = ?");
-			select.setInt(1, nationId);
-			set = select.executeQuery();
-			if (set.next()) {
-				String json = set.getString(1);
-				if (!set.wasNull()) {
-					return Results.ok(json).as("application/json");
-				}
-			}
-		} finally {
-			DbUtils.closeQuietly(set);
-			DbUtils.closeQuietly(select);
-			DbUtils.closeQuietly(conn);
+		String json = getDatabase().getNationSettingsCache().get(nationId);
+		if (!json.isEmpty()) {
+			return Results.ok(json).as("application/json");
 		}
 		return Results.noContent();
 	}
@@ -128,6 +113,7 @@ public class NationController extends NationStatesController {
 				insert.executeUpdate();
 				DbUtils.closeQuietly(insert);
 			}
+			getDatabase().getNationSettingsCache().put(nationId, settings);
 			return Results.ok();
 		} finally {
 			DbUtils.closeQuietly(set);

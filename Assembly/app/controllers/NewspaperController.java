@@ -183,7 +183,14 @@ public class NewspaperController extends NationStatesController {
 
 		JsonNode newspaper = newspaperIds.getIfPresent(region);
 		if (newspaper == null) {
-			newspaper = getNewspaper(region);
+			Connection conn = null;
+			try {
+				conn = getConnection();
+				newspaper = getNewspaper(conn, region);
+			} finally {
+				DbUtils.closeQuietly(conn);
+			}
+
 			if (newspaper != null)
 				newspaperIds.put(region, newspaper);
 			else
@@ -205,13 +212,11 @@ public class NewspaperController extends NationStatesController {
 		return ok(newspaper).as("application/json");
 	}
 
-	private JsonNode getNewspaper(String region) throws SQLException {
+	public static JsonNode getNewspaper(Connection conn, String region) throws SQLException {
 		Map<String, Object> newspaper = new HashMap<String, Object>();
-		Connection conn = null;
 		PreparedStatement articles = null;
 		ResultSet result = null;
 		try {
-			conn = getConnection();
 			articles = conn.prepareStatement("SELECT newspaper, title FROM assembly.newspapers WHERE disbanded = 0 AND region = ?");
 			articles.setString(1, region);
 			result = articles.executeQuery();
@@ -224,7 +229,6 @@ public class NewspaperController extends NationStatesController {
 		} finally {
 			DbUtils.closeQuietly(result);
 			DbUtils.closeQuietly(articles);
-			DbUtils.closeQuietly(conn);
 		}
 		return Json.toJson(newspaper);
 	}
