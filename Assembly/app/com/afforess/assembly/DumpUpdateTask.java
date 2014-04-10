@@ -7,6 +7,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.Types;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -65,13 +66,13 @@ public class DumpUpdateTask implements Runnable {
 			}
 			DbUtils.closeQuietly(result);
 			Logger.info("Updating " + set.size() + " regions from daily dump");
-			PreparedStatement select = conn.prepareStatement("SELECT title, flag, delegate, founder, numnations FROM regions WHERE name = ?");
+			PreparedStatement select = conn.prepareStatement("SELECT title, flag, delegate, founder, numnations, update_order, embassies FROM regions WHERE name = ?");
 			int newRegions = 0;
 			for (String region : set) {
 				select.setString(1, region);
 				result = select.executeQuery();
 				result.next();
-				newRegions += updateRegion(region, result.getString(1), result.getString(2), result.getString(3), result.getString(4), result.getInt(5));
+				newRegions += updateRegion(region, result.getString(1), result.getString(2), result.getString(3), result.getString(4), result.getInt(5), result.getInt(6), result.getString(7));
 				DbUtils.closeQuietly(result);
 				try {
 					Thread.sleep(1);
@@ -90,7 +91,7 @@ public class DumpUpdateTask implements Runnable {
 			allRegions.removeAll(set);
 			Logger.info("Marking " + allRegions.size() + " regions as dead");
 			
-			PreparedStatement markDead = assembly.prepareStatement("UPDATE assembly.region SET alive = 0 WHERE name = ?");
+			PreparedStatement markDead = assembly.prepareStatement("UPDATE assembly.region SET alive = 0, update_order = -1, embassies = NULL WHERE name = ?");
 			for (String region : allRegions) {
 				markDead.setString(1, region);
 				markDead.addBatch();
@@ -106,7 +107,7 @@ public class DumpUpdateTask implements Runnable {
 		}
 	}
 
-	private int updateRegion(String region, String title, String flag, String delegate, String founder, int numNations) throws SQLException {
+	private int updateRegion(String region, String title, String flag, String delegate, String founder, int numNations, int updateOrder, String embassies) throws SQLException {
 		Connection conn = pool.getConnection();
 		try {
 			PreparedStatement select = conn.prepareStatement("SELECT id FROM assembly.region WHERE name = ?");
@@ -126,31 +127,41 @@ public class DumpUpdateTask implements Runnable {
 			insert.setLong(3, System.currentTimeMillis());
 			insert.executeUpdate();
 			DbUtils.closeQuietly(insert);
-			
+
 			if (flag.startsWith("http://")) {
 				flag = "//" + flag.substring(7);
 			}
 
 			PreparedStatement update = null;
 			if (regionId == -1) {
-				update = conn.prepareStatement("INSERT INTO assembly.region (name, title, flag, delegate, founder, alive, population) VALUES (?, ?, ?, ?, ?, 1, ?)");
+				update = conn.prepareStatement("INSERT INTO assembly.region (name, title, flag, delegate, founder, alive, population, update_order, embassies) VALUES (?, ?, ?, ?, ?, 1, ?, ?, ?)");
 				update.setString(1, region);
 				update.setString(2, title);
 				update.setString(3, flag);
 				update.setString(4, delegate);
 				update.setString(5, founder);
 				update.setInt(6, numNations);
+				update.setInt(7, updateOrder);
+				if (embassies != null && embassies.trim().length() > 0)
+					update.setString(8, embassies);
+				else
+					update.setNull(8, Types.CLOB);
 				update.executeUpdate();
 				DbUtils.closeQuietly(update);
 				return 1;
 			} else {
-				update = conn.prepareStatement("UPDATE assembly.region SET alive = 1, title = ?, flag = ?, delegate = ?, founder = ?, population = ? WHERE id = ?");
+				update = conn.prepareStatement("UPDATE assembly.region SET alive = 1, title = ?, flag = ?, delegate = ?, founder = ?, population = ?, update_order = ?, embassies = ? WHERE id = ?");
 				update.setString(1, title);
 				update.setString(2, flag);
 				update.setString(3, delegate);
 				update.setString(4, founder);
 				update.setInt(5, numNations);
-				update.setInt(6, regionId);
+				update.setInt(6, updateOrder);
+				if (embassies != null && embassies.trim().length() > 0)
+					update.setString(7, embassies);
+				else
+					update.setNull(7, Types.CLOB);
+				update.setInt(8, regionId);
 				update.executeUpdate();
 				DbUtils.closeQuietly(update);
 				return 0;
@@ -159,7 +170,7 @@ public class DumpUpdateTask implements Runnable {
 			DbUtils.closeQuietly(conn);
 		}
 	}
-	
+
 	private static String[] NATION_FIELDS = new String[] {"motto", "currency", "animal", "capital", "leader", "religion", "category", "civilrights", "economy",
 	                                "politicalfreedom", "population", "tax", "majorindustry", "governmentpriority", "environment", "socialequality",
 	                                "education", "lawandorder", "administration", "welfare", "spirituality", "defence",	"publictransport",
