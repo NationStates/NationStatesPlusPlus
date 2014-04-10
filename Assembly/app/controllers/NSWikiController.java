@@ -1,9 +1,8 @@
 package controllers;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
+import java.math.BigInteger;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
@@ -13,6 +12,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 
 import net.sourceforge.jwbf.core.RequestBuilder;
 import net.sourceforge.jwbf.core.actions.util.HttpAction;
@@ -20,7 +20,9 @@ import net.sourceforge.jwbf.mediawiki.ApiRequestBuilder;
 import net.sourceforge.jwbf.mediawiki.actions.util.MWAction;
 import net.sourceforge.jwbf.mediawiki.bots.MediaWikiBot;
 
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.dbutils.DbUtils;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.spout.cereal.config.ConfigurationNode;
 import org.spout.cereal.config.yaml.YamlConfiguration;
 
@@ -67,31 +69,29 @@ public class NSWikiController  extends NationStatesController {
 			set = select.executeQuery();
 			set.next();
 			title = set.getString(1);
+			
+			if (doesNSWikiUserExist(title)) {
+				Logger.info("NSWiki Updating password for " + title);
+				if (changePassword(conn, title, password)) {
+					return Results.ok();
+				}
+				return Results.internalServerError("Unable to change password for " + title);
+			}
 		} finally {
 			DbUtils.closeQuietly(conn);
 			DbUtils.closeQuietly(select);
 			DbUtils.closeQuietly(set);
 		}
-		if (doesNSWikiUserExist(title)) {
-			Logger.info("NSWiki Updating password for " + title);
-			changePassword(title, password);
-			return Results.ok();
-		}
 		return createNSWikiUser(title, password);
 	}
 
-	private static void changePassword(String user, String password) throws IOException {
-		Process cmdProc = Runtime.getRuntime().exec(new String[] {"php", "/etc/mediawiki/maintenance/changePassword.php", "--user=" + user + "", "--password=" + password + ""});
-		BufferedReader stdoutReader = new BufferedReader(new InputStreamReader(cmdProc.getInputStream()));
-		String line;
-		while ((line = stdoutReader.readLine()) != null) {
-			Logger.info("[NSWIKI PASSWORD] " + line);
-		}
-
-		BufferedReader stderrReader = new BufferedReader(new InputStreamReader(cmdProc.getErrorStream()));
-		while ((line = stderrReader.readLine()) != null) {
-			Logger.warn("[NSWIKI PASSWORD] " + line);
-		}
+	private static boolean changePassword(Connection conn, String user, String password) throws SQLException {
+		final String salt = new BigInteger(31, new Random()).toString(16);
+		final String hash = ":B:" + salt + ":" + DigestUtils.md5Hex(salt + "-" + DigestUtils.md5Hex(password));
+		PreparedStatement update = conn.prepareStatement("UPDATE nswiki.user SET user_password = ? WHERE user_name = ?");
+		update.setString(1, hash);
+		update.setString(2, user);
+		return update.executeUpdate() == 1;
 	}
 
 	private static boolean doesNSWikiUserExist(String user) throws IOException {
