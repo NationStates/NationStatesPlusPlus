@@ -572,7 +572,7 @@ function doRMBPost(event) {
 	removeWarning();
 
 	var conversion = encodeRMBPost(messageValue);
-	if (conversion.error || (getVisibleRegion() == "brasil" && !window.chrome)) {
+	if (conversion.error || !window.chrome) {
 		//Fallback on RMB form
 		var form = $('textarea[name="message"]').parents("form");
 		form.attr("action", "/page=lodgermbpost/region=" + getVisibleRegion());
@@ -583,7 +583,7 @@ function doRMBPost(event) {
 			url: url,
 			data: "chk=" + chkValue + "&message=" + conversion.converted + "&lodge_message=1",
 			dataType: "html",
-			contentType: "application/x-www-form-urlencoded;",
+			contentType: "application/x-www-form-urlencoded",
 			beforeSend: function(jqXHR) {
 				jqXHR.overrideMimeType('text/html;');
 			}
