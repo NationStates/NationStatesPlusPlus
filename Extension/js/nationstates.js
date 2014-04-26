@@ -64,7 +64,7 @@
 		var proposals = userData.getValue("wa_proposals", {last_viewed: 0});
 		proposals.last_viewed = Date.now();
 		userData.setValue("wa_proposals", proposals);
-		userData.save();
+		userData.pushUpdate();
 		$("#wa_proposals").html("WA PROPOSALS");
 	}
 
@@ -128,7 +128,7 @@
 					proposals[$(this).text()] = Date.now();
 				}
 				userData.setValue("wa_proposals", proposals);
-				userData.save();
+				userData.pushUpdate();
 				totalProposals++;
 			});
 			if (totalProposals > 0) {

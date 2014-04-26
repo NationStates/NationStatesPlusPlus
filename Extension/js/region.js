@@ -522,7 +522,7 @@ function encodeRMBPost(message) {
 		var ret = new Array(string.length);	
 		for (var i = 0; i < string.length; i++) {
 			var ch = string.charCodeAt(i);
-			if (ch <= 0x7F || (ch >= 0xA0 && ch <= 0xFF)) {
+			if (ch <= 127) {
 				ret[i] = ch;
 			} else {
 				ret[i] = table[string[i]];
@@ -572,7 +572,7 @@ function doRMBPost(event) {
 	removeWarning();
 
 	var conversion = encodeRMBPost(messageValue);
-	if (conversion.error || !window.chrome) {
+	if (conversion.error) {
 		//Fallback on RMB form
 		var form = $('textarea[name="message"]').parents("form");
 		form.attr("action", "/page=lodgermbpost/region=" + getVisibleRegion());

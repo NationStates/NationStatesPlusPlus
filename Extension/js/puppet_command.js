@@ -110,7 +110,7 @@
 			else {
 				var settings = getSettings();
 				settings.setValue("last_puppet_email", $("#puppet_email").val());
-				settings.save();
+				settings.pushUpdate();
 				$("#found_nation").attr("disabled", true);
 				$.get("https://nationstatesplusplus.net/api/recruitment/puppet/?nation=" + $("#puppet_name").val().toLowerCase(), function() {
 					var questions = "";

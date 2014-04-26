@@ -29,7 +29,7 @@
 			var userData = getUserData();
 			var previousRequests = userData.getValue("ghr", {});
 			previousRequests[time] = requestBody;
-			userData.save();
+			userData.pushUpdate();
 		});
 		
 		if (window.location.href.contains("?recruitment")) {
