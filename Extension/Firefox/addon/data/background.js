@@ -20,7 +20,7 @@ var pageUrl = window.location.href;
 	}
 	$("#banneradbox").remove();
 	var settings = localStorage.getItem("settings")
-	if (settings == null || settings.indexOf('"hide_ads":false') == -1) {
+	if (settings != null && settings.indexOf('"hide_ads":false') == -1) {
 		$("#paneladbox").remove();
 		$("a[href='/page=store']").remove()
 		$("#sidebaradbox").remove();
