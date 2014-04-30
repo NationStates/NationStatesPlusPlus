@@ -119,7 +119,7 @@ public class RegionalStats {
 				this.publictransport = (int)Math.floor(result.getFloat("publictransport"));
 				this.healthcare = (int)Math.floor(result.getFloat("healthcare"));
 				this.commerce = (int)Math.floor(result.getFloat("commerce"));
-				this.publicsector = result.getInt("publicsector");
+				this.publicsector = (int)Math.floor(result.getFloat("publicsector"));
 				this.tax = result.getInt("tax");
 				this.totalPopulation = result.getInt("total_population");
 				
