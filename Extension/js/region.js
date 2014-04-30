@@ -397,7 +397,15 @@ function setupRegionPage() {
 	} else if (!getSettings().isEnabled("hide_ads")) {
 		//Move ad from bottom of RMB to above RMB
 		$("<div name='filler' style='height:100px;'></div>").insertBefore($("h3:contains('Regional Message Board')"));
-		$("#regionbanneradbox").css("position", "absolute").css("top", $("div[name='filler']").offset().top + 45 + "px").css("margin-left", "16.5%").css("margin-left", "calc(50% - 600px)").css("border", "2px solid black");
+		var updateAdPosition = function() {
+			$("#regionbanneradbox").css("position", "absolute").css("top", $("div[name='filler']").offset().top + 5 + "px").css("margin-left", "16.5%").css("margin-left", "calc(50% - 600px)").css("border", "2px solid black");
+		};
+		$(window).resize(updateAdPosition);
+		//images are still loading, readjust layout in a bit. Hackish :(
+		setTimeout(updateAdPosition, 1000);
+		setTimeout(updateAdPosition, 2500);
+		setTimeout(updateAdPosition, 5000);
+		updateAdPosition();
 	}
 
 	//Move "Switch to Forum View" to top of RMB posts

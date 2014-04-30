@@ -251,7 +251,7 @@
 			});
 		}
 
-		window.onresize = function() {
+		$(window).resize(function() {
 			if ($("#nation_dossier:visible").length == 1) {
 				var minWidth = Math.min(400, Math.max($(window).width() - 1250, 0));
 				$("#nation_dossier").find(".dossier_element").each(function() {
@@ -264,7 +264,7 @@
 					}
 				});
 			}
-		}
+		});
 
 		loadDossierPage(false, false);
 		currentNationPage += 1;
