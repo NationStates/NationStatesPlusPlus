@@ -394,6 +394,10 @@ function setupRegionPage() {
 				$('.rmbolder .notloading').show();
 			});
 		});
+	} else if (!getSettings().isEnabled("hide_ads")) {
+		//Move ad from bottom of RMB to above RMB
+		$("<div name='filler' style='height:100px;'></div>").insertBefore($("h3:contains('Regional Message Board')"));
+		$("#regionbanneradbox").css("position", "absolute").css("top", $("div[name='filler']").offset().top + 45 + "px").css("margin-left", "16.5%").css("margin-left", "calc(50% - 600px)").css("border", "2px solid black");
 	}
 
 	//Move "Switch to Forum View" to top of RMB posts
@@ -412,6 +416,8 @@ function setupRegionPage() {
 	} else if (rmbSearchEnabled) {
 		$('.rmbolder').css("margin-top", "20px");
 	}
+
+	$("h3:contains('Regional Message Board')").attr("id", "rmb_header");
 
 	//Setup infinite scroll
 	$(window).scroll(handleInfiniteScroll);
@@ -762,11 +768,20 @@ function isAtBottomOfPage() {
 	return isInRange($(window).scrollTop() - 5, $(document).height() - $(window).height(), $(window).scrollTop() + (screen.height / 2.5));
 }
 
+function showFooterLink() {
+	$("#foot #toplink").remove();
+	if ($(document).scrollTop() > ($("#rmb_header").offset().top - 41)) {
+		var bottom = -Math.max(0, $("#rmb_header").offset().top - $(document).scrollTop())
+		$("#foot").css("position", "fixed").css("margin-left", "194px").css("width", $(window).width() - 194 + "px").css("width", "calc(100% - 194px)").css("bottom", bottom + "px");
+	}
+}
+
 var processingRMB = false;
 var atEarliestMessage = false;
 var _rmboffset = 10;
 var lastRMBScroll = (new Date()).getTime();
 function handleInfiniteScroll() {
+	showFooterLink();
 	if (atEarliestMessage) {
 		return;
 	}
