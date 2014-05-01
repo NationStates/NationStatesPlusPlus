@@ -397,14 +397,22 @@ function setupRegionPage() {
 	} else if (!getSettings().isEnabled("hide_ads")) {
 		//Move ad from bottom of RMB to above RMB
 		$("<div name='filler' style='height:100px;'></div>").insertBefore($("h3:contains('Regional Message Board')"));
+		var filler = $("div[name='filler']");
+		var adBox = $("#regionbanneradbox");
+		var adContent = $("#regionbanneradboxinner");
+		var lastTop = 0;
 		var updateAdPosition = function() {
-			$("#regionbanneradbox").css("position", "absolute").css("top", $("div[name='filler']").offset().top + 5 + "px").css("margin-left", "16.5%").css("margin-left", "calc(50% - 600px)").css("border", "2px solid black");
+			if (adContent.width() > 10 && adContent.height() > 10)
+			{
+				adBox.css("border", "2px solid black");
+			}
+			if (lastTop != filler.offset().top) {
+				adBox.css("position", "absolute").css("top", filler.offset().top + 5 + "px").css("margin-left", "16.5%").css("margin-left", "calc(50% - " + (adBox.width() / 2 + 100) + "px")
+				lastTop = filler.offset().top;
+			}
+			setTimeout(updateAdPosition, 50);
 		};
 		$(window).resize(updateAdPosition);
-		//images are still loading, readjust layout in a bit. Hackish :(
-		setTimeout(updateAdPosition, 1000);
-		setTimeout(updateAdPosition, 2500);
-		setTimeout(updateAdPosition, 5000);
 		updateAdPosition();
 	}
 
@@ -608,6 +616,7 @@ function doRMBPost(event) {
 			if ($(data).find("p[class='error']").length > 0) {
 				console.log("Error: " + $(data).find("p[class='error']").text());
 				alert($(data).find("p[class='error']").text());
+				if (!getSettings().isEnabled("search_rmb")) setTimeout(function() { $("#rmb-post-form").animate({ height: 'toggle' }, 1200); }, 1200);
 			} else {
 				$.get('/region=' + getVisibleRegion(), function(data) {
 					$("#rmb").html($(data).find("#rmb").html());
@@ -615,6 +624,9 @@ function doRMBPost(event) {
 					$('textarea[name="message"]').height(120);
 					$("#previewcontent").html("");
 					if ($("em:contains('There are no lodged messages at present.')").length == 0) {
+						if (!getSettings().isEnabled("search_rmb")) {
+							setTimeout(function() { $("#rmb-post-form").animate({ height: 'toggle' }, 1200); }, 1200);
+						}
 						updateRMB();
 					} else {
 						location.reload();
@@ -956,46 +968,6 @@ $('body').on('click', 'a.rmbignore', function(event) {
 			$(this).parents('.rmbrow').append(quote.replace("${id}", postId));
 		}
 	}
-});
-
-$('body').on('click', 'a.rmbcomment', function(event) {
-	event.preventDefault();
-	var split = $(this).attr('id').split('-');
-	var postId = split[split.length - 1];
-	
-	console.log("Open comment");
-	
-	$("#comment-link-" + postId).hide();
-	$("#submit-comment-link-" + postId).show();
-	$("#cancel-comment-link-" + postId).show();
-	$("#comment-rmb-" + postId).hide().animate({height: 'toggle'}, 500);
-});
-
-$('body').on('click', 'a.rmbcomment-submit', function(event) {
-	event.preventDefault();
-	var split = $(this).attr('id').split('-');
-	var postId = split[split.length - 1];
-	
-	console.log("Submitting comment: " + $("#comment-rmb-" + postId).val());
-	
-	$("#comment-link-" + postId).show();
-	$("#submit-comment-link-" + postId).hide();
-	$("#cancel-comment-link-" + postId).hide();
-	$("#comment-rmb-" + postId).show().animate({height: 'toggle'}, 500);
-});
-
-$('body').on('click', 'a.rmbcomment-cancel', function(event) {
-	event.preventDefault();
-	var split = $(this).attr('id').split('-');
-	var postId = split[split.length - 1];
-	
-	console.log("Cancelling comment");
-	
-	$("#comment-link-" + postId).show();
-	$("#submit-comment-link-" + postId).hide();
-	$("#cancel-comment-link-" + postId).hide();
-	$("#comment-rmb-" + postId).val("");
-	$("#comment-rmb-" + postId).show().animate({height: 'toggle'}, 500);
 });
 
 $('body').on('click', 'a.rmbquote', function(event) {
