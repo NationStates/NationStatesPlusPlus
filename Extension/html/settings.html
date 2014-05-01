@@ -4,6 +4,60 @@
 <h1>NationStates++ Settings</h1>
 
 <div class="control-group">
+  <label class="control-label" for="nationstates_settings">NationStates Settings</label>
+  <div class="controls">
+    <label class="checkbox" for="hide_ads" title="Removes all advertisement content from view">
+      <input type="checkbox" name="nationstates_settings" id="hide_ads" default="true" value="Remove Advertisements" title="Removes all advertisement content from view">
+      Remove Advertisements
+    </label>
+    <label class="checkbox" for="scroll_nation_lists" title="Scroll through lists of nations and regions instead of using the paginator">
+      <input type="checkbox" name="nationstates_settings" id="scroll_nation_lists" default="true" value="Scrolling Nation Lists" title="Scroll through lists of nations and regions instead of using the paginator">
+      Scrolling Nation Lists
+    </label>
+    <label class="checkbox" for="show_puppet_switcher" title="Show the puppet switcher form on the top menu area">
+      <input type="checkbox" name="nationstates_settings" id="show_puppet_switcher" default="true" value="Puppet Switcher" title="Show the puppet switcher form on the top menu area">
+      Puppet Switcher
+    </label>
+    <label class="checkbox" for="fancy_dossier_theme" title="Use the fancy dossier theme, instead of the default table view">
+      <input type="checkbox" name="nationstates_settings" id="fancy_dossier_theme" default="true" value="Fancy Dossier" title="Use the fancy dossier theme, instead of the default table view">
+      Fancy Dossier
+    </label>
+	<div id="recruitment" style="display:none;">
+		 <label class="checkbox" for="show_recruitment_progress" title="Show the recruitment progress bar">
+		  <input type="checkbox" name="nationstates_settings" id="show_recruitment_progress" default="true" value="Show Recruitment Progress" title="Show the recruitment progress bar">
+		  Show Recruitment Progress
+		</label>
+	</div>
+  </div>
+</div>
+
+<hr style="width: 60%; margin-left: 1%;"></hr>
+
+<div class="control-group">
+  <label class="control-label" for="delegate_settings">WA Delegate Settings</label>
+  <div class="controls">
+	<label class="checkbox" for="show_wa_proposals" title="Show unread WA proposals in the sidebar (Only for Delegates)">
+	  <input type="checkbox" name="delegate_settings" id="show_wa_proposals" default="true" value="Show WA Proposals" title="Show unread WA proposals in the sidebar (Only for Delegates)">
+	  Show WA Proposals
+	</label>
+  </div>
+</div>
+
+<hr style="width: 60%; margin-left: 1%;"></hr>
+
+<div class="control-group">
+  <label class="control-label" for="telegram_settings">Telegram Settings</label>
+  <div class="controls">
+    <label class="checkbox" for="clickable_telegram_links" title="Turn www urls into clickable links in telegrams">
+      <input type="checkbox" name="telegram_settings" id="clickable_telegram_links" default="true" value="Linkify URLs" title="Turn www urls into clickable links in telegrams">
+      Linkify URLs
+    </label>
+  </div>
+</div>
+
+<hr style="width: 60%; margin-left: 1%;"></hr>
+
+<div class="control-group">
   <label class="control-label" for="region_settings">Regional Settings</label>
   <div class="controls">
     <label class="checkbox" for="embassy_flags" title="Show scrolling vertical flags of embassies on region pages">
@@ -41,60 +95,6 @@
       <input type="checkbox" name="region_settings" id="show_regional_map_preview" default="true" value="Show Regional Map Preview" title="Show a preview image of the regional map when you hover over the regional map link">
       Show Regional Map Preview
     </label>
-  </div>
-</div>
-
-<hr style="width: 60%; margin-left: 1%;"></hr>
-
-<div class="control-group">
-  <label class="control-label" for="delegate_settings">WA Delegate Settings</label>
-  <div class="controls">
-	<label class="checkbox" for="show_wa_proposals" title="Show unread WA proposals in the sidebar (Only for Delegates)">
-	  <input type="checkbox" name="delegate_settings" id="show_wa_proposals" default="true" value="Show WA Proposals" title="Show unread WA proposals in the sidebar (Only for Delegates)">
-	  Show WA Proposals
-	</label>
-  </div>
-</div>
-
-<hr style="width: 60%; margin-left: 1%;"></hr>
-
-<div class="control-group">
-  <label class="control-label" for="telegram_settings">Telegram Settings</label>
-  <div class="controls">
-    <label class="checkbox" for="clickable_telegram_links" title="Turn www urls into clickable links in telegrams">
-      <input type="checkbox" name="telegram_settings" id="clickable_telegram_links" default="true" value="Linkify URLs" title="Turn www urls into clickable links in telegrams">
-      Linkify URLs
-    </label>
-  </div>
-</div>
-
-<hr style="width: 60%; margin-left: 1%;"></hr>
-
-<div class="control-group">
-  <label class="control-label" for="nationstates_settings">NationStates Settings</label>
-  <div class="controls">
-    <label class="checkbox" for="hide_ads" title="Removes all advertisement content from view">
-      <input type="checkbox" name="nationstates_settings" id="hide_ads" default="true" value="Remove Advertisements" title="Removes all advertisement content from view">
-      Remove Advertisements
-    </label>
-    <label class="checkbox" for="scroll_nation_lists" title="Scroll through lists of nations and regions instead of using the paginator">
-      <input type="checkbox" name="nationstates_settings" id="scroll_nation_lists" default="true" value="Scrolling Nation Lists" title="Scroll through lists of nations and regions instead of using the paginator">
-      Scrolling Nation Lists
-    </label>
-    <label class="checkbox" for="show_puppet_switcher" title="Show the puppet switcher form on the top menu area">
-      <input type="checkbox" name="nationstates_settings" id="show_puppet_switcher" default="true" value="Puppet Switcher" title="Show the puppet switcher form on the top menu area">
-      Puppet Switcher
-    </label>
-    <label class="checkbox" for="fancy_dossier_theme" title="Use the fancy dossier theme, instead of the default table view">
-      <input type="checkbox" name="nationstates_settings" id="fancy_dossier_theme" default="true" value="Fancy Dossier" title="Use the fancy dossier theme, instead of the default table view">
-      Fancy Dossier
-    </label>
-	<div id="recruitment" style="display:none;">
-		 <label class="checkbox" for="show_recruitment_progress" title="Show the recruitment progress bar">
-		  <input type="checkbox" name="nationstates_settings" id="show_recruitment_progress" default="true" value="Show Recruitment Progress" title="Show the recruitment progress bar">
-		  Show Recruitment Progress
-		</label>
-	</div>
   </div>
 </div>
 

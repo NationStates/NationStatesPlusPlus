@@ -213,20 +213,6 @@
 			$(banner).append("<div id='ns_setting'><a href='//www.nationstates.net/page=blank?ns_settings=true' style='" + bannerStyle + " right: 78px;'>NS++ Settings</a></div>");
 			if (window.location.href.indexOf('forum.nationstates.net/') == -1 ) {
 				$(banner).append("<div id='puppet_setting' style='display:none;'><a href='javascript:void(0)' style='" + bannerStyle + " right: 188px;'>Puppets</a></div>");
-				
-				var formURL = "https://docs.google.com/forms/d/15kYQ5XDxUPH664BV6PbJaiGI-555j43BWEXMlcKbTzc/viewform";
-				if (getSettings().getValue("spring_survey") != null) {
-					localStorage.setItem("spring_survey", "true");
-				}
-				if (localStorage.getItem("spring_survey") != null) {
-					getSettings(true).setValue("spring_survey", true);
-					formURL = "https://docs.google.com/forms/d/15kYQ5XDxUPH664BV6PbJaiGI-555j43BWEXMlcKbTzc/viewanalytics";
-				}
-				$(banner).append("<div><a target='_blank' id='spring_survey' href='" + formURL + "' style='" + bannerStyle + " right: 258px;'>NS++ Spring Survey</a></div>");
-				$("#spring_survey").on("click", function(event) {
-					localStorage.setItem("spring_survey", "true");
-					getSettings(true).setValue("spring_survey", true);
-				});
 			}
 		}
 	}
