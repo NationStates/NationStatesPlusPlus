@@ -437,6 +437,9 @@ function setupRegionPage() {
 
 	//Setup infinite scroll
 	$(window).scroll(handleInfiniteScroll);
+	if (getSettings().isEnabled("infinite_scroll")) {
+		$(window).scroll(showFooterLink);
+	}
 
 	if (rmbSearchEnabled) {
 		var wideboxArea = $(".widebox:contains('Switch to Forum View')");
@@ -737,10 +740,10 @@ function doRMBSearch() {
 			lastSearchSuccessful = true;
 			$(searchResults).append("<div id='end-of-search-results' class='rmbolder'>End of Search Results</div>");
 		} else if (searchOffset > 0) {
-			$(searchResults).append("<div class='rmbolder'>End of Search Results</div>");
+			$(searchResults).append("<div id='end-search-results' class='rmbolder'>End of Search Results</div>");
 			lastSearchSuccessful = true;
 		} else {
-			$(searchResults).append("<div class='rmbolder'>No Search Results</div>");
+			$(searchResults).append("<div id='end-search-results' class='rmbolder'>No Search Results</div>");
 			lastSearchSuccessful = false;
 		}
 	});
@@ -790,8 +793,12 @@ function isAtBottomOfPage() {
 
 function showFooterLink() {
 	$("#foot #toplink").remove();
-	if ($(document).scrollTop() > ($("#rmb_header").offset().top - 41)) {
-		var bottom = -Math.max(0, $("#rmb_header").offset().top - $(document).scrollTop())
+	//If footer becomes default positioning it adds 41 more pixels to document size, have to account for that here
+	var bottomHeight = (41 * ($("#foot").css("position") == "fixed" ? 1 : 2));
+	if ((atEarliestMessage || $("#end-search-results").length == 1) && $(document).scrollTop() + $(window).height() > $(document).height() - bottomHeight) {
+		$("#foot").css("position", "inherit");
+	} else if ($(document).scrollTop() > ($("#rmb_header").offset().top - 41)) {
+		var bottom = -Math.max(0, $("#rmb_header").offset().top - $(document).scrollTop());
 		$("#foot").css("position", "fixed").css("margin-left", "194px").css("width", $(window).width() - 194 + "px").css("width", "calc(100% - 194px)").css("bottom", bottom + "px");
 	}
 }
@@ -801,7 +808,6 @@ var atEarliestMessage = false;
 var _rmboffset = 10;
 var lastRMBScroll = (new Date()).getTime();
 function handleInfiniteScroll() {
-	showFooterLink();
 	if (atEarliestMessage) {
 		return;
 	}
