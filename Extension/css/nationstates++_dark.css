@@ -62,3 +62,8 @@ h1, h1 a, h2, h3, h4, h5, h6 {
 #preview  {
 	color: black !important;
 }
+
+#alert_msg_box h1, #alert_msg_box  h2, #alert_msg_box h3, #alert_msg_box  h4, #alert_msg_box  h5, #alert_msg_box  h6{
+	color: black !important;
+	text-shadow: 2px 2px 1px #FFFFFF;
+}

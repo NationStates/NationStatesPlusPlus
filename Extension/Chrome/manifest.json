@@ -4,7 +4,7 @@
   "short_name": "NS++",
   "minimum_chrome_version": "22",
   "description": "Improves the NationStates.net experience",
-  "version": "2.4.3.5",
+  "version": "2.4.4",
   "content_scripts": [ {
 	  "run_at": "document_end",
       "js": [ "jquery-2.0.3.min.js", "js/nationstates++_common.js", "background.js"],
@@ -19,7 +19,7 @@
 				"js/nationstates.js", "js/region.js", "js/nation.js", "js/newspapers.js", "js/recruitment.js",
 				"js/happenings.js", "js/census_slider.js", "js/embassy_flags.js", "js/telegrams.js",
 				"js/issues.js", "js/help.js", "js/irc.js", "js/dossier.js", "js/world.js", "js/banhammer.js",
-				"js/administration.js", "js/settings.js", "js/history.js", "js/puppet_command.js", "js/wa.js"],
+				"js/administration.js", "js/settings.js", "js/history.js", "js/puppet_command.js", "js/wa.js", "js/alerts.js"],
 	  "css": ["css/nouislider.fox.css", "css/bootstrap-button.css", "css/two_column.css", "css/bootstrap-fileupload.min.css", "css/nprogress.css", "css/nationstates++.css"],
       "matches": [ "https://www.nationstates.net/*", "https://nationstates.net/*", "http://www.nationstates.net/*"],
 	  "all_frames": true

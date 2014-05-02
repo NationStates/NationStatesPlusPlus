@@ -442,7 +442,7 @@ function setupRegionPage() {
 	}
 
 	if (rmbSearchEnabled) {
-		var wideboxArea = $(".widebox:contains('Switch to Forum View')");
+		var wideboxArea = $(".widebox:contains('Forum View')");
 		//Add rmb menu area
 		$("<div id='rmb-menu' style='text-align: center;'><button class='button RoundedButton rmb-message'>Leave a message</button> <button class='button RoundedButton search-rmb'>Search messages</button></div").insertBefore(wideboxArea);
 

@@ -758,3 +758,15 @@ fieldset.preview {
 .forward-to-recips span {
 	display: inline-block;
 }
+
+#alert_msg_box {
+	position: absolute;
+	top: 200px;
+	left: 300px;
+	border: 2px solid black;
+	background-color: rgb(238, 238, 238);
+	padding: 2px 8px;
+	font-size: 14px;
+	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	color: black;
+}

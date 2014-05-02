@@ -86,6 +86,16 @@
 		return this.replace(new RegExp(RegExp.escape(search),'g'), replace);
 	};
 
+	String.prototype.width = function(font) {
+		var f = font || '12px arial',
+		o = $('<div>' + this + '</div>')
+			.css({'position': 'absolute', 'float': 'left', 'white-space': 'nowrap', 'visibility': 'hidden', 'font': f})
+			.appendTo($('body')),
+		w = o.width();
+		o.remove();
+		return w;
+	};
+
 	(function ($) {
 		$.fn.get_selection = function () {
 			var e = this.get(0);
@@ -201,7 +211,7 @@
 
 
 	if ($("#ns_setting").length == 0) {
-		var bannerStyle = "position:absolute; top:0px; margin:6px 60px 0px 0px; z-index:98; font-weight:bold; color: white !important; font-weight: bold; font-size: 8pt; padding: 2px 8px 2px 8px; background: black; 	background-color: rgba(0,0,0,0.2); 	border-radius: 8px;";
+		var bannerStyle = "position:absolute; top:0px; margin:6px 0px 0px 0px; z-index:98; color: white !important; font-weight: bold; font-size: 8pt; padding: 2px 8px 2px 8px; background: black; background-color: rgba(0,0,0,0.2); 	border-radius: 8px;";
 		if (isDarkTheme()) {
 			bannerStyle += "background: #2A2A2A; border: 1px solid #383838;"
 		}
@@ -210,9 +220,9 @@
 			$("#banner").hide();
 		} else {
 			var banner = $("#banner, #nsbanner");
-			$(banner).append("<div id='ns_setting'><a href='//www.nationstates.net/page=blank?ns_settings=true' style='" + bannerStyle + " right: 78px;'>NS++ Settings</a></div>");
+			$(banner).append("<div id='ns_setting'><a href='//www.nationstates.net/page=blank?ns_settings=true' style='" + bannerStyle + " right: 138px;'>NS++ Settings</a></div>");
 			if (window.location.href.indexOf('forum.nationstates.net/') == -1 ) {
-				$(banner).append("<div id='puppet_setting' style='display:none;'><a href='javascript:void(0)' style='" + bannerStyle + " right: 188px;'>Puppets</a></div>");
+				$(banner).append("<div id='puppet_setting' style='display:none;'><a href='javascript:void(0)' style='" + bannerStyle + " right: 248px;'>Puppets</a></div>");
 			}
 		}
 	}
@@ -850,11 +860,16 @@ function parseBBCodes(text) {
 	text = updateTextLinks("region", text);
 	text = text.replaceAll("\n", "</br>");
 	
+	var regex = new RegExp("\\[h([0-6])\\]", "gi");
+	text = text.replace(regex, "<h$1 style='text-align:center'>");
+	regex = new RegExp("\\[/h([0-6])\\]", "gi");
+	text = text.replace(regex, "</h$1>");
+	
 	//Strip align tags
-	var regex = new RegExp("\\[align=.{0,}\\]", "gi");
-	text.replace(regex, " ");
+	regex = new RegExp("\\[align=.{0,}\\]", "gi");
+	text = text.replace(regex, " ");
 	regex = new RegExp("\\[/align\\]", "gi");
-	text.replace(regex, " ");
+	text = text.replace(regex, " ");
 
 	return text;
 }
