@@ -54,3 +54,6 @@
 /Extension/Safari/nationstates++.safariextension/*.safariextz
 
 /Extension/Firefox/addon/*.xpi
+/Extension/Firefox/xpi.bat
+/Extension/Firefox/copy.bat
+/Extension/Chrome.zip

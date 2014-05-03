@@ -167,6 +167,45 @@ public class RegionController extends NationStatesController {
 		return ok(Json.toJson(regionData)).as("application/json");
 	}
 
+	public static JsonNode getEmbassies(Connection conn, String region) throws SQLException {
+		List<Map<String, String>> embassies = new ArrayList<Map<String, String>>();
+		PreparedStatement statement = conn.prepareStatement("SELECT embassies FROM assembly.region WHERE name = ?");
+		statement.setString(1, Utils.sanitizeName(region));
+		ResultSet result = statement.executeQuery();
+		if (result.next()) {
+			String list = result.getString(1);
+			if (!result.wasNull() && list != null && !list.isEmpty()) {
+				String[] split = list.split(":");
+				for (int i = 0; i < split.length; i++) {
+					Map<String, String> regionData = new HashMap<String, String>();
+					regionData.put("name", split[i]);
+					regionData.put("flag", Utils.getRegionFlag(split[i], conn));
+					embassies.add(regionData);
+				}
+			}
+		}
+		DbUtils.closeQuietly(result);
+		DbUtils.closeQuietly(statement);
+		return Json.toJson(embassies);
+	}
+
+	public Result getEmbassies(String region) throws SQLException {
+		JsonNode data;
+		Connection conn = null;
+		try {
+			conn = getConnection();
+			data = getEmbassies(conn, region);
+		} finally {
+			DbUtils.closeQuietly(conn);
+		}
+
+		Result r = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(data.hashCode()), "3600");
+		if (r != null) {
+			return r;
+		}
+		return ok(data).as("application/json");
+	}
+
 	public Result getNations(String regions, boolean xml) throws SQLException, ExecutionException {
 		Map<String, Object> regionData = new LinkedHashMap<String, Object>();
 		Connection conn = null;

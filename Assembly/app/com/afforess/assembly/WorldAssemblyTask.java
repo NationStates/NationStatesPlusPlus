@@ -9,6 +9,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 
 import org.apache.commons.dbutils.DbUtils;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 
 import play.Logger;
 import play.libs.Akka;
@@ -62,15 +63,17 @@ public class WorldAssemblyTask implements Runnable {
 	}
 
 	private void insertWAResolution(WAResolution res, Connection conn) throws SQLException {
-		PreparedStatement insert = conn.prepareStatement("INSERT INTO assembly.wa_resolutions (category, created, wa_resolutions.desc, name, proposer, council) VALUES (?, ?, ?, ?, ?, ?)");
-		insert.setString(1, res.category);
-		insert.setLong(2, res.created * 1000L);
-		insert.setString(3, res.description);
-		insert.setString(4, res.name);
-		insert.setString(5, res.proposedBy);
-		insert.setInt(6, council);
-		insert.executeUpdate();
-		DbUtils.closeQuietly(insert);
+		if (res.category != null) {
+			PreparedStatement insert = conn.prepareStatement("INSERT INTO assembly.wa_resolutions (category, created, wa_resolutions.desc, name, proposer, council) VALUES (?, ?, ?, ?, ?, ?)");
+			insert.setString(1, res.category);
+			insert.setLong(2, res.created * 1000L);
+			insert.setString(3, res.description);
+			insert.setString(4, res.name);
+			insert.setString(5, res.proposedBy);
+			insert.setInt(6, council);
+			insert.executeUpdate();
+			DbUtils.closeQuietly(insert);
+		}
 	}
 
 	private void runSafe() throws Exception {
@@ -124,6 +127,9 @@ public class WorldAssemblyTask implements Runnable {
 	private void updateVotes() throws SQLException {
 		WAData data = api.getWAInfo(WA_COUNCILS[council], WAData.Shards.RESOLUTION);
 		WAResolution res = data.resolution;
+		if (data.resolution.category == null) {
+			return;
+		}
 		Connection conn = null;
 		try {
 			conn = database.getPool().getConnection();

@@ -13,6 +13,7 @@ import org.joda.time.Duration;
 
 import play.Logger;
 
+import com.afforess.assembly.model.WebsocketManager;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -24,6 +25,7 @@ public class DatabaseAccess {
 	private final LoadingCache<String, Integer> nationIdCache;
 	private final LoadingCache<Integer, String> reverseIdCache;
 	private final LoadingCache<Integer, String> nationSettings;
+	private final WebsocketManager websocketManager = new WebsocketManager();
 	private final int cacheSize;
 
 	public DatabaseAccess(final ComboPooledDataSource pool, int cacheSize) {
@@ -152,6 +154,10 @@ public class DatabaseAccess {
 
 	public ComboPooledDataSource getPool() {
 		return pool;
+	}
+
+	public WebsocketManager getWebsocketManager() {
+		return websocketManager;
 	}
 
 	public boolean isValidAuthToken(int id, String authToken) {

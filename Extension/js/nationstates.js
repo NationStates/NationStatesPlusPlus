@@ -86,22 +86,29 @@
 				var proposals = userData.getValue("wa_proposals", {last_viewed: 0});
 				if (proposals[$(this).text()] == null) {
 					proposals[$(this).text()] = Date.now();
+					userData.setValue("wa_proposals", proposals);
+					userData.save();
 				}
-				userData.setValue("wa_proposals", proposals);
-				userData.pushUpdate();
 				totalProposals++;
 			});
 			if (totalProposals > 0) {
 				var count = 0;
 				var userData = getUserData();
 				var proposals = userData.getValue("wa_proposals", {last_viewed: 0});
+				var updated = {};
+				updated.last_viewed = proposals.last_viewed;
 				for (proposal in proposals) {
 					if (proposal != "last_viewed") {
-						if (proposals[proposal] > proposals.last_viewed) {
-							count += 1;
+						if (proposals[proposal] > (Date.now - 7 * 24 * 60 * 60 * 1000)) {
+							updated[proposal] = proposals[proposal];
+							if (proposals[proposal] > proposals.last_viewed) {
+								count++;
+							}
 						}
 					}
 				}
+				userData.setValue("wa_proposals", updated);
+				userData.pushUpdate();
 				if (count > 0) {
 					$("#wa_proposals").html("WA PROPOSALS (" + count + ")");
 				} else {

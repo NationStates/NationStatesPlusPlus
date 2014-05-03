@@ -245,7 +245,7 @@ public class Utils {
 					return null;
 				}
 				reason = "INVALID AUTH TOKEN";
-				if (auth != null && (!rateLimit || recentAuthRequest.getIfPresent(nation) == null)) {
+				if ((auth != null && !auth.contains(" ")) && (!rateLimit || recentAuthRequest.getIfPresent(nation) == null)) {
 					recentAuthRequest.put(nation, true);
 					boolean verify = false;
 					try {

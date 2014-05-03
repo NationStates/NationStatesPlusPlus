@@ -14,10 +14,12 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.dbutils.DbUtils;
 import org.apache.commons.lang.builder.ToStringBuilder;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+
 import org.joda.time.Duration;
 import org.spout.cereal.config.yaml.YamlConfiguration;
 
@@ -30,6 +32,9 @@ import play.mvc.Http.Response;
 import play.mvc.Result;
 import play.mvc.Results;
 
+import com.afforess.assembly.model.DataRequest;
+import com.afforess.assembly.model.PageType;
+import com.afforess.assembly.model.RequestType;
 import com.afforess.assembly.util.DatabaseAccess;
 import com.afforess.assembly.util.Utils;
 import com.limewoodMedia.nsapi.NationStates;
@@ -85,7 +90,12 @@ public class RMBController extends NationStatesController {
 			update.setInt(1, nationId);
 			update.executeUpdate();
 			DbUtils.closeQuietly(update);
-			
+
+			JsonNode ratings = calculatePostRatings(conn, rmbPost);
+			Map<String, Object> data = new HashMap<String, Object>();
+			data.put("rmb_post_id", rmbPost);
+			getDatabase().getWebsocketManager().onUpdate(PageType.REGION, RequestType.RMB_RATINGS, new DataRequest(RequestType.RMB_RATINGS, data), ratings);
+
 			rmbRatingCache.invalidate(rmbPost);
 		} finally {
 			DbUtils.closeQuietly(conn);
@@ -128,11 +138,16 @@ public class RMBController extends NationStatesController {
 			Promise<JsonNode> promise = Promise.wrap(akka.dispatch.Futures.future((new Callable<JsonNode>() {
 				@Override
 				public JsonNode call() throws Exception {
-					JsonNode ratings = calculatePostRatings(rmbPost);
-					rmbRatingCache.put(rmbPost, ratings);
-					return ratings;
+					Connection conn = null;
+					try {
+						conn = getConnection();
+						JsonNode ratings = calculatePostRatings(conn, rmbPost);
+						rmbRatingCache.put(rmbPost, ratings);
+						return ratings;
+					} finally {
+						DbUtils.closeQuietly(conn);
+					}
 				}
-				
 			}), Akka.system().dispatcher()));
 	
 			Promise<Result> result = promise.flatMap(getAsyncResult(request(), response(), rmbCache == -1 ? "10" : "86400"));
@@ -159,25 +174,20 @@ public class RMBController extends NationStatesController {
 		*/
 	}
 
-	private JsonNode calculatePostRatings(int rmbPost) throws SQLException {
-		Connection conn = null;
+	public static JsonNode calculatePostRatings(Connection conn, int rmbPost) throws SQLException {
 		List<Map<String, String>> list = new ArrayList<Map<String, String>>();
-		try {
-			conn = getConnection();
-			PreparedStatement select = conn.prepareStatement("SELECT nation_name, rating_type FROM assembly.rmb_ratings WHERE rmb_post = ?");
-			select.setInt(1, rmbPost);
-			ResultSet result = select.executeQuery();
-			while(result.next()) {
-				Map<String, String> ratings = new HashMap<String, String>(2);
-				ratings.put("nation", result.getString(1));
-				ratings.put("type", String.valueOf(result.getInt(2)));
-				list.add(ratings);
-			}
-			DbUtils.closeQuietly(result);
-			DbUtils.closeQuietly(select);
-		} finally {
-			DbUtils.closeQuietly(conn);
+		PreparedStatement select = conn.prepareStatement("SELECT nation_name, rating_type FROM assembly.rmb_ratings WHERE rmb_post = ?");
+		select.setInt(1, rmbPost);
+		ResultSet result = select.executeQuery();
+		while(result.next()) {
+			Map<String, String> ratings = new HashMap<String, String>(2);
+			ratings.put("nation", result.getString(1));
+			ratings.put("type", String.valueOf(result.getInt(2)));
+			ratings.put("rmb_post", String.valueOf(rmbPost));
+			list.add(ratings);
 		}
+		DbUtils.closeQuietly(result);
+		DbUtils.closeQuietly(select);
 		return Json.toJson(list);
 	}
 

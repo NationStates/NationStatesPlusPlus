@@ -60,6 +60,7 @@ POST    /region/map/                  @controllers.RegionController.setRegionalM
 GET     /region/title/                @controllers.RegionController.getRegionalTitles(region: String ?= "")
 POST    /region/title/                @controllers.RegionController.setRegionalTitle(region: String ?= "", disband: Boolean ?= false)
 GET     /region/summary/              @controllers.RegionController.getRegionSummary(region: String ?= "")
+GET     /region/embassies/            @controllers.RegionController.getEmbassies(region: String ?= "")
 
 GET     /recruitment/                 @controllers.RecruitmentController.getRecruitmentNations()
 GET     /recruitment/puppet/          @controllers.RecruitmentController.markPuppetNation(nation: String ?= "")
@@ -85,3 +86,4 @@ POST   /xenforo/register/             @controllers.XenforoController.createXenfo
 POST   /nswiki/login/                 @controllers.NSWikiController.verifyNationLogin()
 
 GET    /ws/                           @controllers.WebSocketController.index()
+GET    /ws/region/                    @controllers.WebSocketController.region(nation: String ?= "", region: String ?= "")

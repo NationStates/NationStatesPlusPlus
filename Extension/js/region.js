@@ -24,131 +24,16 @@ function setupRegionPage() {
 		$(".rmbolder").remove();
 	}
 	addUpdateTime();
-	
+
 	var rmbSearchEnabled = getSettings().isEnabled("search_rmb") && $("em:contains('There are no lodged messages at present.')").length == 0;
-	
-	var founder = $("strong:contains('Founder'):first");
-	
-	//Add link to region controls
-	var rControls = $("a[href='page=region_control/region=" + getVisibleRegion() + "']");
-	if (rControls.length > 0) {
-		$("<a href='page=region_admin/region=" + getVisibleRegion() + "'>Administration</a><span> &#8226; </span>").insertBefore(rControls);
-		rControls.html("Regional Controls");
-		
-		var userIsFounder = (founder.length > 0 && (typeof founder.next().attr("href") != "undefined") && founder.next().attr("href").substring(7) == getUserNation());
-		$("<span> &#8226; </span><a name='rc' href='page=blank/?banhammer=" + getVisibleRegion() + (userIsFounder ? "&free=true" : "") + "'>Banhammer</a>").insertAfter(rControls);
-	} else {
-		rControls = $("a[href='page=region_admin/region=" + getVisibleRegion() + "']");
-		$("<span> &#8226; </span><a name='rc' href='page=region_control/region=" + getVisibleRegion() + "'>Regional Controls</a>").insertAfter(rControls);
-	}
-	rControls.parent().append("<span id='recruit-admin' style='display:none'> &#8226; <a href='page=blank?recruitment=" + getVisibleRegion() + "'>Recruitment</a></span>");
-	
-	//Add FA icons
-	$("strong:contains('WA Delegate'):first").html("<i class='fa fa-users'></i> <span id='wa_delegate_title'>WA Delegate</span>");
-	if (founder.length > 0) {
-		$("strong:contains('Founder'):first").html("<i class='fa fa-star'></i> <span id='founder_title'>Founder</span>");
-	} else {
-		founder = $("strong:contains('WA Delegate'):first");
-	}
-	$.get("https://nationstatesplusplus.net/api/region/title/?region=" + getVisibleRegion(), function(data) {
-		if (data.delegate_title != null) {
-			$("#wa_delegate_title").html($("<div></div>").html(data.delegate_title).text());
-		}
-		if (data.founder_title != null) {
-			$("#founder_title").html($("<div></div>").html(data.founder_title).text());
-		}
-	});
-	$.get("https://nationstatesplusplus.net/api/newspaper/region/?region=" + getVisibleRegion(), function(json) {
-		$("<p><strong><img style='height: 13px;' src='https://nationstatesplusplus.net/nationstates/static/" + (isDarkTheme() ? "dark_" : "") + "newspaper_icon.png'> Newspaper: </strong><a id='rnewspaper_link'><a></p>").insertAfter(founder.parent());
-		console.log(json);
-		$("#rnewspaper_link").html(parseBBCodes(json.title)).attr("href", "/page=blank?lookup_newspaper=" + json.newspaper_id);
-		$("strong:contains('WA Delegate'):first").parent().css("min-height", "0px");
-	});
-	
+
+	addRegionalControls();
+	addFontAwesomeIcons();
+
 	var changeRegion = $("a[href='page=change_region']");
 	if (changeRegion.length > 0) {
 		changeRegion.addClass("button");
 	}
-	
-	var regionalPower = $("strong:contains('Regional Power:')");
-	if (regionalPower.length > 0) {
-		regionalPower.html("<i class='fa fa-bolt'></i> " + regionalPower.html().substring(9));
-		var parent = regionalPower.parent();
-		parent.addClass("regional_power");
-		parent.css("right", Math.max($("img.rflag:first").width() - parent.width() + 8, 20) + "px");
-		if ($("strong:contains('Founder'):first").length == 0) {
-			$("strong:contains('WA Delegate'):first").parent().css("min-height", "50px");
-		}
-	}
-	
-	var embassies = $("strong:contains('Embassies:')");
-	if (embassies.length > 0) {
-		embassies.html("<i class='fa fa-globe'></i> " + embassies.html());
-	}
-	
-	var tags = $("strong:contains('Tags:')");
-	if (tags.length > 0) {
-		tags.html("<i class='fa fa-cloud'></i> " + tags.html());
-	}
-	
-	var population = $("p:contains('most in the world'):first");
-	if (population.length == 0) {
-		population = tags.parents("p").next();
-	}
-	if (population.length > 0) {
-		population.html("<strong><i class='fa fa-bar-chart-o'></i> Population: </strong>" + population.html());
-		
-		//Regional Maps
-		$("<p id='region_map' style='display:none; height: 10px;'><img src='https://nationstatesplusplus.net/nationstates/static/" + (isDarkTheme() ? "dark_" : "") + "map3.png' style='width: 16px;'><span style='position: relative; top: -5px;'><strong> Map: </strong><span id='regional_map_link'></span></span></p>").insertAfter(population);
-		
-		//NSWiki
-		$("<strong><i class='fa fa-pencil-square-o'></i> NSWiki: </strong><a href='http://nswiki.org/region/" + $("h1 a:first").text() + "'>" + $("h1 a:first").text() + "</a>").insertAfter($("#region_map"));
-		
-		//Fetch region map
-		$.get("https://nationstatesplusplus.net/api/region/map/?region=" + getVisibleRegion(), function(data) {
-			if (data.regional_map != null) {
-				$("#regional_map_link").html("<a href='" + data.regional_map + "' target='_blank'>Regional Map of " + getVisibleRegion().replaceAll("_", " ").toTitleCase() + "</a>");
-				$("#regional_map_link").attr("preview", data.regional_map_preview);
-				
-				//Create floating div
-				$(document.body).append("<div id='regional_map_preview' style='display:none;'></div>");
-				$("#regional_map_preview").html("<a href='" + $("#regional_map_link").attr("preview") + "' target='_blank'><img src='" + $("#regional_map_link").attr("preview").replace("http://", "//") + "' style='max-width:500px; max-height:600px; margin-bottom: -3px;'></a>");
-				$("#region_map").show();
-				
-				if (getSettings().isEnabled("show_regional_map_preview")) {
-					$("#regional_map_link").on("mouseenter", function(event) {
-						if ($("#regional_map_preview:visible").length == 0) {
-							$("#regional_map_preview").show();
-							$("#regional_map_preview").css("position", "absolute").css("left", "200px").css("top", $("#regional_map_link").offset().top + $("#regional_map_link").height());
-							if (isDarkTheme()) {
-								$("#regional_map_preview").css("border", "2px solid white");
-							} else {
-								$("#regional_map_preview").css("border", "2px solid grey");
-							}
-							$("#regional_map_preview").on("mouseenter", function(event) {
-								$("#regional_map_preview").show();
-							});
-							$("#regional_map_preview").on("mouseleave", function(event) {
-								$("#regional_map_preview").hide();
-							});
-						}
-					});
-					$("#regional_map_link").on("mouseleave", function(event) {
-						$("#regional_map_preview").hide();
-					});
-				}
-			}
-		});
-	}
-	
-	$("p:contains('Construction of embassies with')").each(function() {
-		$(this).html("<i style='margin-right:4px;' class='fa fa-cog'></i>" + $(this).html());
-	});
-	$("p:contains('is being withdrawn. Closure expected in')").each(function() {
-		$(this).html("<i style='margin-right:4px;' class='fa fa-exclamation-triangle'></i>" + $(this).html());
-	});
-
-	rControls.parent().html("<i style='margin-right:4px;' class='fa fa-wrench'></i>" + rControls.parent().html());
 
 	if (isAntiquityTheme()) {
 		var html = "<tr>" + $("tbody:last").children(":first").html() + "</tr>";
@@ -164,27 +49,44 @@ function setupRegionPage() {
 		$("tbody:last").html(html);
 	} else {
 		if (getSettings().isEnabled("show_all_suppressed_posts")) {
-			$(window).on("rmb/update", function(event, post) {
-				post.find(".hide").show();
+			$(window).on("rmb/update", function(event) {
+				$("#rmb-post-" + event.postId).find(".hide").show();
 			});
 		}
-		
-		$(window).on("rmb/update", function(event, post) {
-			post.find(".rmbauthor2").find("p:contains('Afforess')").each(function() {
-				if ($(this).html() == "Afforess") {
-					$(this).html("<a href='nation=shadow_afforess' class='nlink'><span>The Free Republic of Afforess</span></a>");
-					$(this).next().prepend("<img src='https://nationstatesplusplus.net/api/flag/nation/?nation=the_office_of_afforess' class='smallflag' title='The Free Republic of Afforess'>");
+
+		$(window).on("websocket/rmb_ratings", function(event) {
+			var data = event.json;
+			console.log(data);
+			var likes = 0;
+			var dislikes = 0;
+			var rating = -1;
+			var postId;
+			for (var i = 0; i < data.length; i++) {
+				if (data[i].type == 0) dislikes += 1;
+				else if (data[i].type == 1) likes += 1;
+				if (data[i].nation.toLowerCase().replaceAll(" ", "_") == getUserNation()) {
+					rating = data[i].type;
 				}
-			});
+				postId = data[i].rmb_post;
+			}
+			var post = $("#rmb-post-" + postId);
+			post.find(".post-ratings").find("span[name='rating-container']").remove();
+			post.find(".post-ratings").prepend("<span name='rating-container'></span>");
+			if (rating > -1) {
+				post.find(".post-rating-list").find("li").hide();
+				post.find(".undo-rating").show();
+			}
+			if (dislikes > 0) {
+				post.find("span[name='rating-container']").prepend("<img src='https://nationstatesplusplus.net/nationstates/static/dislike2.png' alt='Dislike'><span amt='" + dislikes + "' " + (rating == 0 ? "rated='1'" : "") + " class='post-rating-desc'>Dislike x " + dislikes + "</span>");
+			}
+			if (likes > 0) {
+				post.find("span[name='rating-container']").prepend("<img src='https://nationstatesplusplus.net/nationstates/static/like.png' alt='Like'><span amt='" + likes + "' " + (rating == 1 ? "rated='1'" : "") + " class='post-rating-desc'>Like x " + likes + "</span>");
+			}
 		});
 
-		$(document.body).append("<div id='rmb_cache' cache='-1'></div>");
-		$.get("https://nationstatesplusplus.net/api/rmb/cache/?region=" + getVisibleRegion(), function(data) {
-			$("#rmb_cache").attr("cache", data.rmb_cache);
-		});
-
-		$(window).on("rmb/update", function(event, post) {
-			var id = post.attr("id").split("-")[post.attr("id").split("-").length - 1];
+		$(window).on("rmb/update", function(event) {
+			var id = event.postId;
+			var post = $("#rmb-post-" + id);
 			post.find(".rmbmsg2").append("<div postid='" + id + "' class='post-ratings'><ul class='post-rating-list' style='opacity: 0;'><li class='undo-rating' style='display:none;'><a href='javascript:void(0)'>Undo Rating</a></li><li name='like'><a href='javascript:void(0)'><img style='margin-right: 3px;' src='https://nationstatesplusplus.net/nationstates/static/like.png' alt='Like'></a></li><li name='dislike'><a href='javascript:void(0)'><img style='margin-right: 3px;' src='https://nationstatesplusplus.net/nationstates/static/dislike2.png' alt='Dislike'></a></li></ul></div>");
 			setTimeout(function(post) {
 				var authorHeight = post.find(".rmbauthor2").height() + 17;
@@ -193,36 +95,15 @@ function setupRegionPage() {
 					post.find(".post-ratings").attr("style", "margin-top: " + (authorHeight - msgHeight) + "px;");
 				}
 			}, 500, post);
-			var calculateRatings = function(post, id) {
-				$.get("https://nationstatesplusplus.net/api/rmb/rate/get/?rmbPost=" + id + "&rmbCache=" + $("#rmb_cache").attr("cache"), function(data) {
-					var likes = 0;
-					var dislikes = 0;
-					var rating = -1;
-					for (var i = 0; i < data.length; i++) {
-						if (data[i].type == 0) dislikes += 1;
-						else if (data[i].type == 1) likes += 1;
-						if (data[i].nation.toLowerCase().replaceAll(" ", "_") == getUserNation()) {
-							rating = data[i].type;
-						}
-					}
-					post.find(".post-ratings").find("span[name='rating-container']").remove();
-					post.find(".post-ratings").prepend("<span name='rating-container'></span>");
-					if (rating > -1) {
-						post.find(".post-rating-list").find("li").hide();
-						post.find(".undo-rating").show();
-					}
-					if (dislikes > 0) {
-						post.find("span[name='rating-container']").prepend("<img src='https://nationstatesplusplus.net/nationstates/static/dislike2.png' alt='Dislike'><span amt='" + dislikes + "' " + (rating == 0 ? "rated='1'" : "") + " class='post-rating-desc'>Dislike x " + dislikes + "</span>");
-					}
-					if (likes > 0) {
-						post.find("span[name='rating-container']").prepend("<img src='https://nationstatesplusplus.net/nationstates/static/like.png' alt='Like'><span amt='" + likes + "' " + (rating == 1 ? "rated='1'" : "") + " class='post-rating-desc'>Like x " + likes + "</span>");
-					}
-				});
-			};
-			calculateRatings(post, id);
+
 			if (getUserRegion() != getVisibleRegion()) {
 				return;
 			}
+
+			var event = jQuery.Event("websocket/request");
+			event.json = { name: "rmb_ratings", data : { "rmb_post_id": id } };
+			$(window).trigger(event);
+
 			post.on("mouseenter", function(e){
 				$(e.currentTarget).find(".post-rating-list").stop().animate({opacity:"1.0"},200);
 			});
@@ -235,7 +116,7 @@ function setupRegionPage() {
 				var post = $("#rmb-post-" + id);
 				doAuthorizedPostRequest("https://nationstatesplusplus.net/api/rmb/rate/set/?rmbPost=" + id + "&rating=1", "", function(data, textStatus, jqXHR) {
 					$("#rmb_cache").attr("cache", parseInt($("#rmb_cache").attr("cache")) + 1);
-					calculateRatings(post, id);
+					//calculateRatings(post, id);
 				});
 			});
 			post.find("li[name='dislike']").find("a").on("click", function (e) {
@@ -244,7 +125,7 @@ function setupRegionPage() {
 				var post = $("#rmb-post-" + id);
 				doAuthorizedPostRequest("https://nationstatesplusplus.net/api/rmb/rate/set/?rmbPost=" + id + "&rating=0", "", function(data, textStatus, jqXHR) {
 					$("#rmb_cache").attr("cache", parseInt($("#rmb_cache").attr("cache")) + 1);
-					calculateRatings(post, id);
+					//calculateRatings(post, id);
 				});
 			});
 			post.find(".undo-rating").find("a").on("click", function(event) {
@@ -330,7 +211,9 @@ function setupRegionPage() {
 
 		//Trigger post event for existing posts
 		for (var i = 0; i < postIds.length; i++) {
-			setTimeout(function(postId) {$(window).trigger("rmb/update", [ $("#rmb-post-" + postId) ]); }, 500, postIds[i]);
+			var event = jQuery.Event("rmb/update");
+			event.postId = postIds[i];
+			$(window).trigger(event);
 		}
 	}
 
@@ -512,8 +395,134 @@ function setupRegionPage() {
 	}
 }
 
+function addFontAwesomeIcons() {
+	var founder = $("strong:contains('Founder'):first");
+	$("strong:contains('WA Delegate'):first").html("<i class='fa fa-users'></i> <span id='wa_delegate_title'>WA Delegate</span>");
+	if (founder.length > 0) {
+		$("strong:contains('Founder'):first").html("<i class='fa fa-star'></i> <span id='founder_title'>Founder</span>");
+	} else {
+		founder = $("strong:contains('WA Delegate'):first");
+	}
+	$(window).on("websocket/region_titles", function(event) {
+		var data = event.json;
+		if (data.delegate_title != null) {
+			$("#wa_delegate_title").html($("<div></div>").html(data.delegate_title).text());
+		}
+		if (data.founder_title != null) {
+			$("#founder_title").html($("<div></div>").html(data.founder_title).text());
+		}
+	});
+	$(window).on("websocket/region_newspaper", function(event) {
+		var json = event.json;
+		if ($("#newspaper_icon").length == 0)
+			$("<div id='newspaper_icon'><p><strong><img style='height: 13px;' src='https://nationstatesplusplus.net/nationstates/static/" + (isDarkTheme() ? "dark_" : "") + "newspaper_icon.png'> Newspaper: </strong><a id='rnewspaper_link'><a></p></div>").insertAfter(founder.parent());
+		$("#rnewspaper_link").html(parseBBCodes(event.json.title)).attr("href", "/page=blank?lookup_newspaper=" + event.json.newspaper_id);
+		$("strong:contains('WA Delegate'):first").parent().css("min-height", "0px");
+	});
+
+	var regionalPower = $("strong:contains('Regional Power:')");
+	if (regionalPower.length > 0) {
+		regionalPower.html("<i class='fa fa-bolt'></i> " + regionalPower.html().substring(9));
+		var parent = regionalPower.parent();
+		parent.addClass("regional_power");
+		parent.css("right", Math.max($("img.rflag:first").width() - parent.width() + 8, 20) + "px");
+		if ($("strong:contains('Founder'):first").length == 0) {
+			$("strong:contains('WA Delegate'):first").parent().css("min-height", "50px");
+		}
+	}
+
+	var embassies = $("strong:contains('Embassies:')");
+	if (embassies.length > 0) {
+		embassies.html("<i class='fa fa-globe'></i> " + embassies.html());
+	}
+
+	var tags = $("strong:contains('Tags:')");
+	if (tags.length > 0) {
+		tags.html("<i class='fa fa-cloud'></i> " + tags.html());
+	}
+
+	var population = $("p:contains('most in the world'):first");
+	if (population.length == 0) {
+		population = tags.parents("p").next();
+	}
+	if (population.length > 0) {
+		population.prepend("<strong><i class='fa fa-bar-chart-o'></i> Population: </strong>");
+		
+		//Regional Maps
+		$("<p id='region_map' style='display:none; height: 10px;'><img src='https://nationstatesplusplus.net/nationstates/static/" + (isDarkTheme() ? "dark_" : "") + "map3.png' style='width: 16px;'><span style='position: relative; top: -5px;'><strong> Map: </strong><span id='regional_map_link'></span></span></p>").insertAfter(population);
+		
+		//NSWiki
+		$("<strong><i class='fa fa-pencil-square-o'></i> NSWiki: </strong><a href='http://nswiki.org/region/" + $("h1 a:first").text() + "'>" + $("h1 a:first").text() + "</a>").insertAfter($("#region_map"));
+		
+		//Fetch region map
+		$(window).on("websocket/region_map", function(event) {
+			var data = event.json;
+			if (data.regional_map != null) {
+				$("#regional_map_link").html("<a href='" + data.regional_map + "' target='_blank'>Regional Map of " + getVisibleRegion().replaceAll("_", " ").toTitleCase() + "</a>");
+				var mapPreview = data.regional_map_preview.replace("http://", "//");
+				$("#regional_map_link").attr("preview", mapPreview);
+	
+				//Create floating div
+				if ($("#regional_map_preview").length == 0)
+					$("body").append("<div id='regional_map_preview' style='display:none;'></div>");
+				$("#regional_map_preview").html("<a href='" + mapPreview + "' target='_blank'><img src='" + mapPreview + "' style='max-width:500px; max-height:600px; margin-bottom: -3px;'></a>");
+				$("#region_map").show();
+
+				if (getSettings().isEnabled("show_regional_map_preview")) {
+					$("#regional_map_link").on("mouseenter", function(event) {
+						if ($("#regional_map_preview:visible").length == 0) {
+							$("#regional_map_preview").show();
+							$("#regional_map_preview").css("position", "absolute").css("left", "200px").css("top", $("#regional_map_link").offset().top + $("#regional_map_link").height());
+							if (isDarkTheme()) {
+								$("#regional_map_preview").css("border", "2px solid white");
+							} else {
+								$("#regional_map_preview").css("border", "2px solid grey");
+							}
+							$("#regional_map_preview").on("mouseenter", function(event) {
+								$("#regional_map_preview").show();
+							});
+							$("#regional_map_preview").on("mouseleave", function(event) {
+								$("#regional_map_preview").hide();
+							});
+						}
+					});
+					$("#regional_map_link").on("mouseleave", function(event) {
+						$("#regional_map_preview").hide();
+					});
+				}
+			}
+		});
+	}
+
+	$("p:contains('Construction of embassies with')").each(function() {
+		$(this).prepend("<i style='margin-right:4px;' class='fa fa-cog'></i>");
+	});
+	$("p:contains('is being withdrawn. Closure expected in')").each(function() {
+		$(this).prepend("<i style='margin-right:4px;' class='fa fa-exclamation-triangle'></i>");
+	});
+}
+
+function addRegionalControls() {
+	var rControls = $("a[href='page=region_control/region=" + getVisibleRegion() + "']");
+	if (rControls.length > 0) {
+		$("<a href='page=region_admin/region=" + getVisibleRegion() + "'>Administration</a><span> &#8226; </span>").insertBefore(rControls);
+		rControls.html("Regional Controls");
+		
+		var founder = $("strong:contains('Founder'):first");
+		var userIsFounder = (founder.length > 0 && (typeof founder.next().attr("href") != "undefined") && founder.next().attr("href").substring(7) == getUserNation());
+		$("<span> &#8226; </span><a name='rc' href='page=blank/?banhammer=" + getVisibleRegion() + (userIsFounder ? "&free=true" : "") + "'>Banhammer</a>").insertAfter(rControls);
+	} else {
+		rControls = $("a[href='page=region_admin/region=" + getVisibleRegion() + "']");
+		$("<span> &#8226; </span><a name='rc' href='page=region_control/region=" + getVisibleRegion() + "'>Regional Controls</a>").insertAfter(rControls);
+	}
+	rControls.parent().append("<span id='recruit-admin' style='display:none'> &#8226; <a href='page=blank?recruitment=" + getVisibleRegion() + "'>Recruitment</a></span>");
+
+	rControls.parent().prepend("<i style='margin-right:4px;' class='fa fa-wrench'></i>");
+}
+
 function addUpdateTime() {
-	$.get("https://nationstatesplusplus.net/api/region/updatetime/?region=" + getVisibleRegion() + "&v=1", function(data) {
+	$(window).on("websocket/region_updates", function(event) {
+		var data = event.json;
 		var text;
 		var update;
 		var hours = (Math.floor(Date.now() / (24 * 60 * 60 * 1000)) * 24 * 60 * 60 * 1000);
@@ -524,8 +533,9 @@ function addUpdateTime() {
 		}
 		if (update.mean != 0) {
 			var nextUpdate = hours + update.mean;
-			text = "<span class='updatetime'>Next Update: " +  (new Date(nextUpdate)).customFormat("#hh#:#mm#:#ss# #AMPM#") + " [&plusmn; " + Math.floor(update.std * 2 / 1000) + " s]</span>"
-			$("h1:first").html($("h1:first").html() + text);
+			if ($("h1:first .updatetime").length == 0)
+				$("h1:first").append("<span class='updatetime'></span>");
+			$("h1:first .updatetime").html("Next Update: " + (new Date(nextUpdate)).customFormat("#hh#:#mm#:#ss# #AMPM#") + " [&plusmn; " + Math.floor(update.std * 2 / 1000) + " s]");
 		}
 	});
 }
@@ -843,7 +853,9 @@ function handleInfiniteScroll() {
 				});
 				$(html).insertAfter('.rmbrow:last').hide().show('slow');
 				for (var i = 0; i < newPosts.length; i++) {
-					$(window).trigger("rmb/update", [ $("#rmb-post-" + newPosts[i]) ]);
+					var event = jQuery.Event("rmb/update");
+					event.postId = newPosts[i];
+					$(window).trigger(event);
 				}
 			} else if (!atEarliestMessage) {
 				atEarliestMessage = true;
@@ -907,7 +919,9 @@ function updateRMB() {
 					$(html).insertAfter('.rmbrow:last').hide().show('slow');
 				}
 				for (var i = 0; i < newPosts.length; i++) {
-					$(window).trigger("rmb/update", [ $("#rmb-post-" + newPosts[i]) ]);
+					var event = jQuery.Event("rmb/update");
+					event.postId = newPosts[i];
+					$(window).trigger(event);
 				}
 			}
 		}

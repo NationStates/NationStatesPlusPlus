@@ -3,16 +3,12 @@ package com.afforess.assembly.model;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-@JsonInclude(JsonInclude.Include.NON_NULL)
 public class NationSettings {
-	@JsonProperty("settings")
 	private Map<String, Object> settings = new HashMap<String, Object>();
 
-	@JsonProperty("last_update")
 	private long lastUpdate = 0L;
 
 	public NationSettings() {
@@ -37,9 +33,13 @@ public class NationSettings {
 	public static NationSettings parse(String settings) {
 		ObjectMapper mapper = new ObjectMapper();
 		try {
-			return mapper.readValue(settings, NationSettings.class);
+			Map<String, Object> data = mapper.readValue(settings, new TypeReference<HashMap<String,Object>>() {});
+			NationSettings parsed = new NationSettings();
+			parsed.settings = data;
+			return parsed;
 		} catch (Exception e) {
 			throw new RuntimeException("Unable to parse nation settings", e);
 		}
 	}
+
 }
