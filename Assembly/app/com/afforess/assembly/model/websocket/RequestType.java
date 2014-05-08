@@ -1,9 +1,10 @@
-package com.afforess.assembly.model;
+package com.afforess.assembly.model.websocket;
 
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 import play.libs.Json;
 
@@ -21,8 +22,11 @@ public enum RequestType {
 	REGION_UPDATES("region_updates"),
 	REGION_NEWSPAPER("region_newspaper"),
 	REGION_EMBASSIES("region_embassies"),
-	RMB_RATINGS("rmb_ratings")
-	
+	RMB_RATINGS("rmb_ratings"),
+	GAMEPLAY_NEWS_SIDEBAR("gameplay_news_sidebar"),
+	ROLEPLAY_NEWS_SIDEBAR("roleplay_news_sidebar"),
+	REGIONAL_NEWS_SIDEBAR("regional_news_sidebar"),
+	PENDING_NEWS_SUBMISSIONS("pending_news_submissions"),
 	;
 
 	private static final Map<String, RequestType> types = new HashMap<String, RequestType>();
@@ -36,20 +40,27 @@ public enum RequestType {
 		return name;
 	}
 
-	public boolean shouldSendData(NationSettings settings) {
+	public boolean shouldSendData(NationContext context) {
 		switch(this) {
 			case REGION_EMBASSIES:
-				return settings.getValue("embassy_flags", true, Boolean.class);
+				return context.getSettings().getValue("embassy_flags", true, Boolean.class);
+			case GAMEPLAY_NEWS_SIDEBAR:
+				return context.getSettings().getValue("show_gameplay_news", true, Boolean.class);
+			case ROLEPLAY_NEWS_SIDEBAR:
+				return context.getSettings().getValue("show_roleplay_news", true, Boolean.class);
+			case REGIONAL_NEWS_SIDEBAR:
+				return context.getSettings().getValue("show_regional_news", true, Boolean.class);
 			default:
 				return true;
 		}
 	}
 
-	public JsonNode executeRequest(Connection conn, DataRequest request, String nation, int nationId, NationStatesPage page) throws SQLException {
-		return wrapJson(executeRequestImpl(conn, request, nation, nationId, page));
+	public JsonNode executeRequest(Connection conn, DataRequest request, NationContext context) throws SQLException, ExecutionException {
+		return wrapJson(executeRequestImpl(conn, request, context));
 	}
 
-	private JsonNode executeRequestImpl(Connection conn, DataRequest request, String nation, int nationId, NationStatesPage page) throws SQLException {
+	private JsonNode executeRequestImpl(Connection conn, DataRequest request, NationContext context) throws SQLException, ExecutionException {
+		final NationStatesPage page = context.getActivePage();
 		switch(this) {
 			case REGION_TITLE:
 				if (page instanceof RegionPage) {
@@ -57,7 +68,7 @@ public enum RequestType {
 				}
 			case REGION_EMBASSIES:
 				if (page instanceof RegionPage) {
-					return RegionController.getEmbassies(conn, ((RegionPage)page).getRegion());
+					return RegionController.getEmbassies(conn, ((RegionPage)page).getRegion(), 25);
 				}
 			case REGION_MAP:
 				if (page instanceof RegionPage) {
@@ -79,6 +90,12 @@ public enum RequestType {
 					}
 				}
 				return generateError("invalid post id", request);
+			case GAMEPLAY_NEWS_SIDEBAR:
+				return NewspaperController.getLatestUpdate(conn, NewspaperController.GAMEPLAY_NEWS);
+			case ROLEPLAY_NEWS_SIDEBAR:
+				return NewspaperController.getLatestUpdate(conn, NewspaperController.ROLEPLAY_NEWS);
+			case REGIONAL_NEWS_SIDEBAR:
+				return NewspaperController.getLatestUpdate(conn, context.getAccess().getNationLocation().get(context.getNationId()));
 			default:
 				throw new IllegalStateException("Unimplemented RequestType: " + name());
 		}

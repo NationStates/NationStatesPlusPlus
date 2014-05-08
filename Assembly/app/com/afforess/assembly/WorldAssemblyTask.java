@@ -9,7 +9,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 
 import org.apache.commons.dbutils.DbUtils;
-import org.apache.commons.lang3.builder.ToStringBuilder;
 
 import play.Logger;
 import play.libs.Akka;

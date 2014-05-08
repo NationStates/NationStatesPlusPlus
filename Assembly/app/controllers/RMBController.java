@@ -32,9 +32,9 @@ import play.mvc.Http.Response;
 import play.mvc.Result;
 import play.mvc.Results;
 
-import com.afforess.assembly.model.DataRequest;
-import com.afforess.assembly.model.PageType;
-import com.afforess.assembly.model.RequestType;
+import com.afforess.assembly.model.websocket.DataRequest;
+import com.afforess.assembly.model.websocket.PageType;
+import com.afforess.assembly.model.websocket.RequestType;
 import com.afforess.assembly.util.DatabaseAccess;
 import com.afforess.assembly.util.Utils;
 import com.limewoodMedia.nsapi.NationStates;

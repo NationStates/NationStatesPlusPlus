@@ -13,7 +13,7 @@ import org.joda.time.Duration;
 
 import play.Logger;
 
-import com.afforess.assembly.model.WebsocketManager;
+import com.afforess.assembly.model.websocket.WebsocketManager;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -25,10 +25,11 @@ public class DatabaseAccess {
 	private final LoadingCache<String, Integer> nationIdCache;
 	private final LoadingCache<Integer, String> reverseIdCache;
 	private final LoadingCache<Integer, String> nationSettings;
+	private final LoadingCache<Integer, String> nationLocationCache;
 	private final WebsocketManager websocketManager = new WebsocketManager();
 	private final int cacheSize;
 
-	public DatabaseAccess(final ComboPooledDataSource pool, int cacheSize) {
+	public DatabaseAccess(final ComboPooledDataSource pool, int cacheSize, boolean backgroundTasks) {
 		this.cacheSize = cacheSize;
 		this.pool = pool;
 		Logger.info("Creating Database Cache. Max Size: " + cacheSize);
@@ -104,8 +105,15 @@ public class DatabaseAccess {
 			}
 		});
 
+		// XXX 
+		//DANGER WILL ROBINSON
+		//THESE LAST TWO CACHES DO NOT WORK WITH MULTIPLE APPLICATION INSTANCES
+		//THE EARLIER CACHES NEVER HAVE VALUES CHANCE, JUST NEW VALUES ADDED (IDS ALWAYS STAY FIXED ONCE SET)
+		//IN THESE LATER TWO CACHES, THE VALUES CAN CHANGE. IF THE VALUE IS CACHED IN MULTIPLE INSTANCES AT ONCE,
+		//AND UPDATED IN ONE, NONE OF THE OTHER INSTANCES WILL SEE THE UPDATE!!!
+		//I NEED TO ADD AN "PUSH UPDATE" MECHANISM TO MAKE OTHER INSTANCES AWARE OF THE CACHE CHANGE
 		this.nationSettings = CacheBuilder.newBuilder()
-			.maximumSize(cacheSize)
+			.maximumSize(backgroundTasks ? cacheSize : 0)
 			.expireAfterAccess(10, TimeUnit.MINUTES)
 			.expireAfterWrite(1, TimeUnit.HOURS)
 			.build(new CacheLoader<Integer, String>() {
@@ -134,6 +142,34 @@ public class DatabaseAccess {
 				return "";
 			}
 		});
+
+		this.nationLocationCache = CacheBuilder.newBuilder()
+				.maximumSize(backgroundTasks ? cacheSize : 0)
+				.expireAfterAccess(10, TimeUnit.MINUTES)
+				.expireAfterWrite(1, TimeUnit.HOURS)
+				.build(new CacheLoader<Integer, String>() {
+				public String load(Integer key) throws SQLException {
+					Connection conn = null;
+					PreparedStatement select = null;
+					ResultSet set = null;
+					try {
+						conn = pool.getConnection();
+						select = conn.prepareStatement("SELECT region.name FROM assembly.region INNER JOIN assembly.nation ON nation.region = region.id WHERE nation.id = ?");
+						select.setInt(1, key);
+						set = select.executeQuery();
+						if (set.next()) {
+							return set.getString(1);
+						}
+					} catch (SQLException e) {
+						Logger.error("Unable to look up nation's region", e);
+					} finally {
+						DbUtils.closeQuietly(set);
+						DbUtils.closeQuietly(select);
+						DbUtils.closeQuietly(conn);
+					}
+					return null;
+				}
+			});
 	}
 
 	public final int getMaxCacheSize() {
@@ -150,6 +186,10 @@ public class DatabaseAccess {
 
 	public LoadingCache<Integer, String> getNationSettingsCache() {
 		return nationSettings;
+	}
+
+	public LoadingCache<Integer, String> getNationLocation() {
+		return nationLocationCache;
 	}
 
 	public ComboPooledDataSource getPool() {

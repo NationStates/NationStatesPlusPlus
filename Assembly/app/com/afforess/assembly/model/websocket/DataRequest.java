@@ -1,4 +1,4 @@
-package com.afforess.assembly.model;
+package com.afforess.assembly.model.websocket;
 
 import java.util.HashMap;
 import java.util.Map;

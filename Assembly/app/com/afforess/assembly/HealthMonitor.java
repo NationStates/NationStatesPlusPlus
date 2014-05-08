@@ -26,12 +26,14 @@ public class HealthMonitor extends Thread {
 	 * The number of times endorsement monitoring runs can be missed before the application is 'unresponsive'.
 	 */
 	private final int endorsementThreshold;
+	private final boolean backgroundTasks;
 	private final AtomicLong lastHappeningHeartbeat = new AtomicLong(System.currentTimeMillis() + HAPPENINGS_TIME);
 	private final AtomicLong lastEndorsementHeartbeat = new AtomicLong(System.currentTimeMillis() + ENDORSEMENT_TIME);
 	private final DatabaseAccess access;
-	public HealthMonitor(ConfigurationNode config, DatabaseAccess access) {
+	public HealthMonitor(ConfigurationNode config, DatabaseAccess access, boolean backgroundTasks) {
 		super("Health Monitor Thread");
 		this.access = access;
+		this.backgroundTasks = backgroundTasks;
 		restartCommand = config.getChild("restart-command").getString();
 		happeningsThreshold = config.getChild("happenings-threshold").getInt();
 		endorsementThreshold = config.getChild("endorsement-threshold").getInt();
@@ -49,9 +51,17 @@ public class HealthMonitor extends Thread {
 		access.getNationIdCache().invalidateAll();
 		access.getRegionIdCache().invalidateAll();
 		access.getReverseIdCache().invalidateAll();
+		access.getNationSettingsCache().invalidateAll();
+		access.getNationLocation().invalidateAll();
+		cleanUpCaches();
+	}
+
+	private void cleanUpCaches() {
 		access.getNationIdCache().cleanUp();
 		access.getRegionIdCache().cleanUp();
 		access.getReverseIdCache().cleanUp();
+		access.getNationSettingsCache().cleanUp();
+		access.getNationLocation().cleanUp();
 	}
 
 	@Override
@@ -60,26 +70,29 @@ public class HealthMonitor extends Thread {
 			final long time = System.currentTimeMillis();
 			boolean unresponsive = false;
 
-			long lastHappening = time - lastHappeningHeartbeat.get();
-			Logger.debug("[HEALTH CHECK] Time since happenings run: " + lastHappening);
-			if (lastHappening / HAPPENINGS_TIME > happeningsThreshold) {
-				Logger.warn("Happening Monitoring Runs have exceeded 100% of the missing time threshold.");
-				Logger.error("APPLICATION UNRESPONSIVE. LAST HEARTBEAT: " + lastHappeningHeartbeat.get());
-				unresponsive = true;
-			} else if (lastHappening / HAPPENINGS_TIME > (happeningsThreshold / 2 + 1)) {
-				Logger.warn("Happening Monitoring Runs have exceeded 51% of the missing time threshold.");
+			//If background tasks are not enabled for this instance, these will never run
+			if (backgroundTasks) {
+				long lastHappening = time - lastHappeningHeartbeat.get();
+				Logger.debug("[HEALTH CHECK] Time since happenings run: " + lastHappening);
+				if (lastHappening / HAPPENINGS_TIME > happeningsThreshold) {
+					Logger.warn("Happening Monitoring Runs have exceeded 100% of the missing time threshold.");
+					Logger.error("APPLICATION UNRESPONSIVE. LAST HEARTBEAT: " + lastHappeningHeartbeat.get());
+					unresponsive = true;
+				} else if (lastHappening / HAPPENINGS_TIME > (happeningsThreshold / 2 + 1)) {
+					Logger.warn("Happening Monitoring Runs have exceeded 51% of the missing time threshold.");
+				}
+				
+				long lastEndorun = time - lastEndorsementHeartbeat.get();
+				Logger.debug("[HEALTH CHECK] Time since endorsement run: " + lastEndorun);
+				if (lastEndorun / ENDORSEMENT_TIME > endorsementThreshold) {
+					Logger.warn("Endorsement Monitoring runs have exceeded 100% of the missing time threshold.");
+					Logger.error("APPLICATION UNRESPONSIVE. LAST HEARTBEAT: " + lastEndorsementHeartbeat.get());
+					unresponsive = true;
+				} else if (lastEndorun / ENDORSEMENT_TIME > (endorsementThreshold / 2 + 1)) {
+					Logger.warn("Endorsement Monitoring Runs have exceeded 51% of the missing time threshold.");
+				}
 			}
-			
-			long lastEndorun = time - lastEndorsementHeartbeat.get();
-			Logger.debug("[HEALTH CHECK] Time since endorsement run: " + lastEndorun);
-			if (lastEndorun / ENDORSEMENT_TIME > endorsementThreshold) {
-				Logger.warn("Endorsement Monitoring runs have exceeded 100% of the missing time threshold.");
-				Logger.error("APPLICATION UNRESPONSIVE. LAST HEARTBEAT: " + lastEndorsementHeartbeat.get());
-				unresponsive = true;
-			} else if (lastEndorun / ENDORSEMENT_TIME > (endorsementThreshold / 2 + 1)) {
-				Logger.warn("Endorsement Monitoring Runs have exceeded 51% of the missing time threshold.");
-			}
-			
+
 			ConnectionTestThread connTest = new ConnectionTestThread();
 			boolean sqlAlive = false;
 			connTest.start();
@@ -87,9 +100,9 @@ public class HealthMonitor extends Thread {
 				connTest.join(60 * 1000L);
 				sqlAlive = connTest.success;
 			} catch (InterruptedException e1) {
-				Logger.error("Mysql Connection Test thread not responding");
+				Logger.error("SQL Connection Test thread not responding");
 			}
-			
+
 			if (unresponsive || !sqlAlive) {
 				Logger.error("Attempting Application Restart.");
 				try { Play.stop(); } catch (Throwable t) { Logger.error("Error stopping play!", t); }
@@ -106,9 +119,7 @@ public class HealthMonitor extends Thread {
 					Logger.error("Unable to restart application!", t);
 				}
 			} else {
-				access.getNationIdCache().cleanUp();
-				access.getRegionIdCache().cleanUp();
-				access.getReverseIdCache().cleanUp();
+				cleanUpCaches();
 			}
 			try {
 				Thread.sleep(30000);

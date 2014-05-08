@@ -45,16 +45,15 @@ public class Global extends GlobalSettings {
 	private NationStates api;
 	private DatabaseAccess access;
 	private YamlConfiguration config;
-	private boolean logRequests = false;
 	private final ConcurrentHashMap<Class<?>, Controller> controllers = new ConcurrentHashMap<Class<?>, Controller>();
 
 	@Override
 	public void onStart(Application app) {
 		config = Start.loadConfig();
 		ConfigurationNode settings = config.getChild("settings");
-		logRequests = settings.getChild("log-requests").getBoolean(logRequests);
 		pool = Start.loadDatabase(settings);
 		if (pool == null) {
+			Logger.error("Unable to connect to database");
 			return;
 		}
 
@@ -67,25 +66,21 @@ public class Global extends GlobalSettings {
 		} finally {
 			DbUtils.closeQuietly(conn);
 		}
-		
+
+		final boolean backgroundTasks = settings.getChild("background-tasks").getBoolean(true);
+		Logger.info("Application started with background tasks " + (backgroundTasks ? "ENABLED" : "DISABLED"));
+
 		api = new NationStates();
 		api.setRateLimit(49);
 		api.setUserAgent(settings.getChild("User-Agent").getString());
 		api.setRelaxed(true);
-		this.access = new DatabaseAccess(pool, settings.getChild("cache-size").getInt(1000));
-		
-		//AWS creds
-		BasicAWSCredentials awsCredentials = null;
-		ConfigurationNode aws = config.getChild("aws-credentials");
-		if (aws.getChild("access-key").getString() != null && aws.getChild("secret-key").getString() != null) {
-			awsCredentials = new BasicAWSCredentials(aws.getChild("access-key").getString(), aws.getChild("secret-key").getString());
-		}
+		this.access = new DatabaseAccess(pool, settings.getChild("cache-size").getInt(1000), backgroundTasks);
 
 		//Setup health monitoring
 		HealthMonitor health = null;
 		if (config.getChild("health").getChild("monitor").getBoolean()) {
 			Logger.info("Application Health Monitoring - ENABLED");
-			health = new HealthMonitor(config.getChild("health"), access);
+			health = new HealthMonitor(config.getChild("health"), access, backgroundTasks);
 			health.start();
 		} else {
 			Logger.info("Application Health Monitoring - DISABLED");
@@ -93,23 +88,32 @@ public class Global extends GlobalSettings {
 
 		this.admin = new AdminController(access, config, health);
 
-		//Setup daily dumps
-		File dumpsDir = new File(settings.getChild("dailydumps").getString());
-		DailyDumps dumps = new DailyDumps(access, dumpsDir, settings.getChild("User-Agent").getString(), awsCredentials);
-		Thread dailyDumps = new Thread(dumps);
-		dailyDumps.setDaemon(true);
-		dailyDumps.start();
+		//Setup background tasks
+		if (backgroundTasks) {
+			//AWS creds
+			BasicAWSCredentials awsCredentials = null;
+			ConfigurationNode aws = config.getChild("aws-credentials");
+			if (aws.getChild("access-key").getString() != null && aws.getChild("secret-key").getString() != null) {
+				awsCredentials = new BasicAWSCredentials(aws.getChild("access-key").getString(), aws.getChild("secret-key").getString());
+			}
 
-		Config c = ConfigFactory.load();
-		final MessageDispatcher nsTasks = Akka.system().dispatchers().from(c.getObject("play.akka.actor.ns-tasks").toConfig());
-		HappeningsTask task = new HappeningsTask(access, api, health);
-		Akka.system().scheduler().schedule(Duration.create(5, TimeUnit.SECONDS), Duration.create(3, TimeUnit.SECONDS), task, nsTasks); //3-10 api calls
-		Akka.system().scheduler().schedule(Duration.create(60, TimeUnit.SECONDS), Duration.create(31, TimeUnit.SECONDS), new NationUpdateTask(api, access, 12, 12, health, task), nsTasks);
-		Akka.system().scheduler().schedule(Duration.create(120, TimeUnit.SECONDS), Duration.create(31, TimeUnit.SECONDS), new UpdateOrderTask(api, access), nsTasks); // 2 api calls
-		Akka.system().scheduler().schedule(Duration.create(120, TimeUnit.SECONDS), Duration.create(31, TimeUnit.SECONDS), new FlagUpdateTask(api, access), nsTasks); // 4 api calls
-		Akka.system().scheduler().schedule(Duration.create(120, TimeUnit.SECONDS), Duration.create(60, TimeUnit.SECONDS), new NSWikiTask(access, config), nsTasks); // 0 api calls
-		Akka.system().scheduler().scheduleOnce(Duration.create(120, TimeUnit.SECONDS), new WorldAssemblyTask(access, api, 0), nsTasks);
-		Akka.system().scheduler().scheduleOnce(Duration.create(160, TimeUnit.SECONDS), new WorldAssemblyTask(access, api, 1), nsTasks);
+			File dumpsDir = new File(settings.getChild("dailydumps").getString());
+			DailyDumps dumps = new DailyDumps(access, dumpsDir, settings.getChild("User-Agent").getString(), awsCredentials);
+			Thread dailyDumps = new Thread(dumps);
+			dailyDumps.setDaemon(true);
+			dailyDumps.start();
+
+			Config c = ConfigFactory.load();
+			final MessageDispatcher nsTasks = Akka.system().dispatchers().from(c.getObject("play.akka.actor.ns-tasks").toConfig());
+			HappeningsTask task = new HappeningsTask(access, api, health);
+			Akka.system().scheduler().schedule(Duration.create(5, TimeUnit.SECONDS), Duration.create(3, TimeUnit.SECONDS), task, nsTasks); //3-10 api calls
+			Akka.system().scheduler().schedule(Duration.create(60, TimeUnit.SECONDS), Duration.create(31, TimeUnit.SECONDS), new NationUpdateTask(api, access, 12, 12, health, task), nsTasks);
+			Akka.system().scheduler().schedule(Duration.create(120, TimeUnit.SECONDS), Duration.create(31, TimeUnit.SECONDS), new UpdateOrderTask(api, access), nsTasks); // 2 api calls
+			Akka.system().scheduler().schedule(Duration.create(120, TimeUnit.SECONDS), Duration.create(31, TimeUnit.SECONDS), new FlagUpdateTask(api, access), nsTasks); // 4 api calls
+			Akka.system().scheduler().schedule(Duration.create(120, TimeUnit.SECONDS), Duration.create(60, TimeUnit.SECONDS), new NSWikiTask(access, config), nsTasks); // 0 api calls
+			Akka.system().scheduler().scheduleOnce(Duration.create(120, TimeUnit.SECONDS), new WorldAssemblyTask(access, api, 0), nsTasks);
+			Akka.system().scheduler().scheduleOnce(Duration.create(160, TimeUnit.SECONDS), new WorldAssemblyTask(access, api, 1), nsTasks);
+		}
 	}
 
 	@Override

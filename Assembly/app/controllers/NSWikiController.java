@@ -22,7 +22,6 @@ import net.sourceforge.jwbf.mediawiki.bots.MediaWikiBot;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.dbutils.DbUtils;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.spout.cereal.config.ConfigurationNode;
 import org.spout.cereal.config.yaml.YamlConfiguration;
 

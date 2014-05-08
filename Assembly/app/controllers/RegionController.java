@@ -167,7 +167,10 @@ public class RegionController extends NationStatesController {
 		return ok(Json.toJson(regionData)).as("application/json");
 	}
 
-	public static JsonNode getEmbassies(Connection conn, String region) throws SQLException {
+	public static JsonNode getEmbassies(Connection conn, String region, int limit) throws SQLException {
+		if (limit <= 0) {
+			limit = Integer.MAX_VALUE;
+		}
 		List<Map<String, String>> embassies = new ArrayList<Map<String, String>>();
 		PreparedStatement statement = conn.prepareStatement("SELECT embassies FROM assembly.region WHERE name = ?");
 		statement.setString(1, Utils.sanitizeName(region));
@@ -176,7 +179,7 @@ public class RegionController extends NationStatesController {
 			String list = result.getString(1);
 			if (!result.wasNull() && list != null && !list.isEmpty()) {
 				String[] split = list.split(":");
-				for (int i = 0; i < split.length; i++) {
+				for (int i = 0; i < Math.min(limit, split.length); i++) {
 					Map<String, String> regionData = new HashMap<String, String>();
 					regionData.put("name", split[i]);
 					regionData.put("flag", Utils.getRegionFlag(split[i], conn));
@@ -194,7 +197,7 @@ public class RegionController extends NationStatesController {
 		Connection conn = null;
 		try {
 			conn = getConnection();
-			data = getEmbassies(conn, region);
+			data = getEmbassies(conn, region, -1);
 		} finally {
 			DbUtils.closeQuietly(conn);
 		}

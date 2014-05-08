@@ -353,6 +353,12 @@ public class RecruitmentController extends NationStatesController {
 				existingOfficers.add(set.getInt(1));
 			}
 			
+			if (existingOfficers.size() >= 5 && add != null) {
+				if (remove == null || remove.split(",").length < add.split(",").length) {
+					return Results.badRequest("Can not set more than 5 recruitment officers");
+				}
+			}
+			
 			DbUtils.closeQuietly(set);
 			DbUtils.closeQuietly(select);
 			

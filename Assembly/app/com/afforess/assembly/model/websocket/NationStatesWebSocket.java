@@ -1,4 +1,4 @@
-package com.afforess.assembly.model;
+package com.afforess.assembly.model.websocket;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -62,6 +62,10 @@ public final class NationStatesWebSocket extends WebSocket<JsonNode>{
 		}
 	}
 
+	private NationContext getContext() {
+		return new NationContext(nation, nationId, settings, activePage, access);
+	}
+
 	@Override
 	public void onReady(WebSocket.In<JsonNode> in, WebSocket.Out<JsonNode> out) {
 		try {
@@ -69,18 +73,19 @@ public final class NationStatesWebSocket extends WebSocket<JsonNode>{
 			writeInitialData(out);
 			in.onMessage(new NationStatesCallback(out));
 			access.getWebsocketManager().register(this, in);
-		} catch (SQLException e) {
-			Logger.error("SQLException", e);
+		} catch (SQLException | ExecutionException e) {
+			Logger.error("Exception while setting up websocket", e);
 		}
 	}
 
-	private void writeInitialData(WebSocket.Out<JsonNode> out) throws SQLException {
+	private void writeInitialData(WebSocket.Out<JsonNode> out) throws SQLException, ExecutionException {
 		Connection conn = null;
 		try {
 			conn = access.getPool().getConnection();
 			for (RequestType type : getPageType().getInitialRequests()) {
-				if (type.shouldSendData(settings)) {
-					out.write(type.executeRequest(conn, null, nation, nationId, activePage));
+				final NationContext context = getContext();
+				if (type.shouldSendData(context)) {
+					out.write(type.executeRequest(conn, null, context));
 				}
 			}
 		} finally {
@@ -102,8 +107,9 @@ public final class NationStatesWebSocket extends WebSocket<JsonNode>{
 				Connection conn = null;
 				try {
 					conn = access.getPool().getConnection();
-					if (type.shouldSendData(settings)) {
-						out.write(type.executeRequest(conn, request, nation, nationId, activePage));
+					final NationContext context = getContext();
+					if (type.shouldSendData(context)) {
+						out.write(type.executeRequest(conn, request, context));
 						activePage.onRequest(type, request);
 					}
 				} catch (Exception e) {

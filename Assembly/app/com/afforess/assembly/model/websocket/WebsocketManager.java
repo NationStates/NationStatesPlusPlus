@@ -1,4 +1,4 @@
-package com.afforess.assembly.model;
+package com.afforess.assembly.model.websocket;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -55,11 +55,20 @@ public class WebsocketManager {
 	 */
 
 	public void onUpdate(PageType page, RequestType type, DataRequest request, JsonNode node) {
+		//Update all pages
+		if (page == PageType.DEFAULT) {
+			for (PageType t : PageType.values()) {
+				if (t != PageType.DEFAULT)
+					onUpdate(t, type, request, node);
+			}
+		}
 		Set<NationStatesWebSocket> set = pages.get(page);
 		synchronized(set) {
-			for (NationStatesWebSocket socket : set) {
-				if (socket.getPage().isValidUpdate(type, request)) {
-					socket.write(type, node);
+			if (!set.isEmpty()) {
+				for (NationStatesWebSocket socket : set) {
+					if (socket.getPage().isValidUpdate(type, request)) {
+						socket.write(type, node);
+					}
 				}
 			}
 		}

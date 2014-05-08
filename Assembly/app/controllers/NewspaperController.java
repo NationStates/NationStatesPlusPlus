@@ -8,6 +8,7 @@ import java.sql.SQLException;
 import java.sql.Savepoint;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -28,6 +29,9 @@ import play.mvc.Result;
 import play.mvc.Results;
 
 import com.afforess.assembly.model.Nation;
+import com.afforess.assembly.model.websocket.DataRequest;
+import com.afforess.assembly.model.websocket.PageType;
+import com.afforess.assembly.model.websocket.RequestType;
 import com.afforess.assembly.util.DatabaseAccess;
 import com.afforess.assembly.util.Utils;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -41,6 +45,8 @@ public class NewspaperController extends NationStatesController {
 	private final JsonNode NO_NEWSPAPER = Json.toJson("{ }");
 	private final Cache<Integer, JsonNode> newspaperUpdates;
 	private final Cache<Integer, JsonNode> newspaperArticles;
+	public static final int GAMEPLAY_NEWS = 0;
+	public static final int ROLEPLAY_NEWS = 1;
 
 	public NewspaperController(DatabaseAccess access, YamlConfiguration config, NationStates api) {
 		super(access, config, api);
@@ -237,8 +243,14 @@ public class NewspaperController extends NationStatesController {
 		JsonNode lastUpdate = newspaperUpdates.getIfPresent(id);
 
 		if (lastUpdate == null) {
-			lastUpdate = getLatestUpdate(id);
-			newspaperUpdates.put(id, lastUpdate);
+			Connection conn = null;
+			try {
+				conn = getConnection();
+				lastUpdate = getLatestUpdate(conn, id);
+				newspaperUpdates.put(id, lastUpdate);
+			} finally {
+				DbUtils.closeQuietly(conn);
+			}
 		}
 
 		Result r = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(lastUpdate.hashCode()), "7200");
@@ -248,13 +260,11 @@ public class NewspaperController extends NationStatesController {
 		return ok(lastUpdate).as("application/json");
 	}
 
-	private JsonNode getLatestUpdate(int id) throws SQLException {
+	public static JsonNode getLatestUpdate(Connection conn, int id) throws SQLException {
 		Map<String, Object> newspaper = new HashMap<String, Object>();
-		Connection conn = null;
 		PreparedStatement articles = null;
 		ResultSet result = null;
 		try {
-			conn = getConnection();
 			articles = conn.prepareStatement("SELECT max(articles.timestamp) FROM assembly.articles WHERE newspaper_id = ? AND visible = 1");
 			articles.setInt(1, id);
 			result = articles.executeQuery();
@@ -264,10 +274,74 @@ public class NewspaperController extends NationStatesController {
 		} finally {
 			DbUtils.closeQuietly(result);
 			DbUtils.closeQuietly(articles);
-			DbUtils.closeQuietly(conn);
 		}
 		newspaper.put("newspaper_id", id);
 		return Json.toJson(newspaper);
+	}
+
+	public static JsonNode getLatestUpdate(Connection conn, String region) throws SQLException {
+		Map<String, Object> newspaper = new HashMap<String, Object>();
+		PreparedStatement articles = null;
+		ResultSet result = null;
+		try {
+			articles = conn.prepareStatement("SELECT max(articles.timestamp), newspapers.newspaper FROM assembly.articles INNER JOIN assembly.newspapers ON newspapers.newspaper = articles.newspaper_id WHERE newspapers.region = ? AND newspapers.disbanded = 0 AND articles.visible = 1");
+			articles.setString(1, region);
+			result = articles.executeQuery();
+			if (result.next()) {
+				newspaper.put("timestamp", result.getLong(1));
+				newspaper.put("newspaper_id", result.getInt(2));
+			}
+		} finally {
+			DbUtils.closeQuietly(result);
+			DbUtils.closeQuietly(articles);
+		}
+		return Json.toJson(newspaper);
+	}
+
+	public static JsonNode getPendingSubmissions(Connection conn, int newspaper) throws SQLException {
+		Map<String, Object> submissions = new HashMap<String, Object>();
+		PreparedStatement articles = null;
+		ResultSet result = null;
+		try {
+			articles = conn.prepareStatement("SELECT count(articles.article_id) FROM assembly.articles WHERE newspaper_id = ? AND visible = ?");
+			articles.setInt(1, newspaper);
+			articles.setInt(2, Visibility.SUBMITTED.getType());
+			result = articles.executeQuery();
+			if (result.next() && result.getInt(1) > 0) {
+				submissions.put("submissions", result.getInt(1));
+			}
+		} finally {
+			DbUtils.closeQuietly(result);
+			DbUtils.closeQuietly(articles);
+		}
+
+		if (!submissions.isEmpty()) {
+			return Json.toJson(submissions);
+		}
+		return null;
+	}
+
+	public static JsonNode getPendingSubmissions(Connection conn, String region) throws SQLException {
+		Map<String, Object> submissions = new HashMap<String, Object>();
+		PreparedStatement articles = null;
+		ResultSet result = null;
+		try {
+			articles = conn.prepareStatement("SELECT max(articles.article_id) FROM assembly.articles INNER JOIN assembly.newspapers ON newspapers.newspaper = articles.newspaper_id WHERE newspapers.region = ? AND newspapers.disbanded = 0 AND articles.visible = ?");
+			articles.setString(1, region);
+			articles.setInt(2, Visibility.SUBMITTED.getType());
+			result = articles.executeQuery();
+			if (result.next() && result.getInt(1) > 0) {
+				submissions.put("submissions", result.getInt(1));
+			}
+		} finally {
+			DbUtils.closeQuietly(result);
+			DbUtils.closeQuietly(articles);
+		}
+		
+		if (!submissions.isEmpty()) {
+			return Json.toJson(submissions);
+		}
+		return null;
 	}
 
 	public Result getNewspaperDetails(int id) throws SQLException {
@@ -783,6 +857,16 @@ public class NewspaperController extends NationStatesController {
 			}
 			newspaperUpdates.invalidate(newspaper);
 			newspaperArticles.invalidate(newspaper);
+			
+			//Send update to clients
+			if (Integer.parseInt(visible) == Visibility.VISIBLE.getType()) {
+				RequestType rType = RequestType.REGIONAL_NEWS_SIDEBAR;
+				if (newspaper == GAMEPLAY_NEWS) rType = RequestType.GAMEPLAY_NEWS_SIDEBAR;
+				else if (newspaper == ROLEPLAY_NEWS) rType = RequestType.ROLEPLAY_NEWS_SIDEBAR;
+				getDatabase().getWebsocketManager().onUpdate(PageType.DEFAULT, rType, new DataRequest(rType, Collections.<String, Object> emptyMap()), getLatestUpdate(conn, newspaper));
+			} else if (Integer.parseInt(visible) == Visibility.SUBMITTED.getType()) {
+				
+			}
 		} finally {
 			DbUtils.closeQuietly(conn);
 		}

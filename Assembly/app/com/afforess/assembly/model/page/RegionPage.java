@@ -5,9 +5,9 @@ import java.util.Set;
 
 import play.Logger;
 
-import com.afforess.assembly.model.DataRequest;
-import com.afforess.assembly.model.PageType;
-import com.afforess.assembly.model.RequestType;
+import com.afforess.assembly.model.websocket.DataRequest;
+import com.afforess.assembly.model.websocket.PageType;
+import com.afforess.assembly.model.websocket.RequestType;
 
 public class RegionPage extends NationStatesPage {
 	private final Set<Integer> rmbPosts = new HashSet<Integer>();
