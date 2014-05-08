@@ -3,7 +3,7 @@
 	if (getVisiblePage() == "region") {
 		ws = new WebSocket("wss://nationstatesplusplus.net/api/ws/region/?nation=" + getUserNation() + "&region=" + getVisibleRegion());
 	} else {
-		return;
+		ws = new WebSocket("wss://nationstatesplusplus.net/api/ws/?nation=" + getUserNation());
 	}
 	var time = Date.now();
 	ws.onmessage = function(event) {

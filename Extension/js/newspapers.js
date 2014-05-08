@@ -5,9 +5,9 @@ var newspaperAdminHTML = '<form class="form-horizontal"><fieldset><div class="co
 		return;
 	}
 	var menu = $(".menu");
-	$("<li id='regional_newspaper' style='display:none;'><a id='rnews' style='display: inline;' href='//www.nationstates.net/page=blank/?regional_news=" + getUserRegion() + "'>REGIONAL NEWS</a></li>").insertAfter($("#wa_props").length > 0 ? $("#wa_props") : menu.find("a[href='page=un']").parent());
-	$("<li id='gameplay_newspaper'><a id='gnews' style='display: inline;' href='//www.nationstates.net/page=blank/?gameplay_news'>GAMEPLAY NEWS</a></li>").insertAfter($("#regional_newspaper"));
-	$("<li id='roleplay_newspaper'><a id='rpnews' style='display: inline;' href='//www.nationstates.net/page=blank/?roleplay_news'>ROLEPLAY NEWS</a></li>").insertAfter($("#gameplay_newspaper"));
+	$("<li id='regional_newspaper' style='display:none;'><a id='rnews' style='display: inline;' href='//www.nationstates.net/page=blank/?regional_news=" + getUserRegion() + "'>REGIONAL NEWS<span name='nag'></span></a></li>").insertAfter($("#wa_props").length > 0 ? $("#wa_props") : menu.find("a[href='page=un']").parent());
+	$("<li id='gameplay_newspaper'><a id='gnews' style='display: inline;' href='//www.nationstates.net/page=blank/?gameplay_news'>GAMEPLAY NEWS<span name='nag'></span></a></li>").insertAfter($("#regional_newspaper"));
+	$("<li id='roleplay_newspaper'><a id='rpnews' style='display: inline;' href='//www.nationstates.net/page=blank/?roleplay_news'>ROLEPLAY NEWS<span name='nag'></span></a></li>").insertAfter($("#gameplay_newspaper"));
 	var settings = getSettings();
 	if (!settings.isEnabled("show_gameplay_news")) {
 		$("#gameplay_newspaper").hide();
@@ -84,8 +84,32 @@ var newspaperAdminHTML = '<form class="form-horizontal"><fieldset><div class="co
 			$("#inner-content").html(html);
 		});
 	}
-
+	$(window).on("websocket/gameplay_news_sidebar", function(event) {
+		var lastRead = getSettings().getValue("newspapers", {})[event.json.newspaper_id];
+		var html = "";
+		if (lastRead == null || event.json.timestamp > parseInt(lastRead)) {
+			html = " (*)";
+		}
+		$("#gnews span[name='nag']").html(html);
+	});
 	
+	$(window).on("websocket/roleplay_news_sidebar", function(event) {
+		var lastRead = getSettings().getValue("newspapers", {})[event.json.newspaper_id];
+		var html = "";
+		if (lastRead == null || event.json.timestamp > parseInt(lastRead)) {
+			html = " (*)";
+		}
+		$("#rpnews span[name='nag']").html(html);
+	});
+	
+	$(window).on("websocket/regional_news_sidebar", function(event) {
+		var lastRead = getSettings().getValue("newspapers", {})[event.json.newspaper_id];
+		var html = "";
+		if (lastRead == null || event.json.timestamp > parseInt(lastRead)) {
+			html = " (*)";
+		}
+		$("#rnews span[name='nag']").html(html);
+	});
 	function updateNewspaperNags() {
 		var settings = getSettings();
 		var checkUpdates = function(id, selector) {
@@ -129,11 +153,7 @@ var newspaperAdminHTML = '<form class="form-horizontal"><fieldset><div class="co
 			}
 		}
 	}
-	if (getUserNation() != "") {
-		updateNewspaperNags();
-		$(window).on("page/update", updateNewspaperNags);
-	}
-	
+
 	var visibleTypes = ["Draft", "Published", "Archived", "User Submitted, Pending Review"];
 	function viewNewspaperArticles(newspaper) {
 		window.document.title = "NationStates | Newspaper"
