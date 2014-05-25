@@ -2,6 +2,7 @@ package com.afforess.assembly.model.websocket;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 import org.apache.commons.dbutils.DbUtils;
@@ -62,7 +63,7 @@ public final class NationStatesWebSocket extends WebSocket<JsonNode>{
 		}
 	}
 
-	private NationContext getContext() {
+	public NationContext getContext() {
 		return new NationContext(nation, nationId, settings, activePage, access);
 	}
 
@@ -84,13 +85,34 @@ public final class NationStatesWebSocket extends WebSocket<JsonNode>{
 			conn = access.getPool().getConnection();
 			for (RequestType type : getPageType().getInitialRequests()) {
 				final NationContext context = getContext();
-				if (type.shouldSendData(context)) {
-					out.write(type.executeRequest(conn, null, context));
-				}
+				writeRequest(out, type, context, null, conn);
 			}
 		} finally {
 			DbUtils.closeQuietly(conn);
 		}
+	}
+
+	/**
+	 * Writes out the request to the given websocket, given a db connection, context and (optional) data request. Returns true if any data was written.
+	 * 
+	 * @param out
+	 * @param type
+	 * @param context
+	 * @param request
+	 * @param conn
+	 * @return true if any data was written.
+	 * @throws SQLException
+	 * @throws ExecutionException
+	 */
+	private static boolean writeRequest(WebSocket.Out<JsonNode> out, RequestType type, NationContext context, DataRequest request, Connection conn) throws SQLException, ExecutionException {
+		if (type.shouldSendData(conn, context)) {
+			List<JsonNode> nodes = type.executeRequest(conn, request, context);
+			for (int i = 0; i < nodes.size(); i++) {
+				out.write(nodes.get(i));
+			}
+			return true;
+		}
+		return false;
 	}
 
 	private class NationStatesCallback implements Callback<JsonNode> {
@@ -108,10 +130,8 @@ public final class NationStatesWebSocket extends WebSocket<JsonNode>{
 				try {
 					conn = access.getPool().getConnection();
 					final NationContext context = getContext();
-					if (type.shouldSendData(context)) {
-						out.write(type.executeRequest(conn, request, context));
-						activePage.onRequest(type, request);
-					}
+					writeRequest(out, type, context, request, conn);
+					activePage.onRequest(type, request);
 				} catch (Exception e) {
 					Logger.error("Exception while sending websocket data", e);
 				} finally {

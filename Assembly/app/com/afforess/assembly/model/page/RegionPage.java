@@ -35,6 +35,8 @@ public class RegionPage extends NationStatesPage {
 			if (rmbPost != null) {
 				return rmbPosts.contains(rmbPost);
 			}
+		} else if (type == RequestType.RMB_POST) {
+			return regionId == request.getValue("region", null, Integer.class);
 		}
 		return super.isValidUpdate(type, request);
 	}

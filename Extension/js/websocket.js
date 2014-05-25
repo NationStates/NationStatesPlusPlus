@@ -13,7 +13,6 @@
 			if (r != null) {
 				var event = jQuery.Event("websocket/" + k);
 				event.json = r;
-				console.log(event);
 				$(window).trigger(event);
 			}
 		}

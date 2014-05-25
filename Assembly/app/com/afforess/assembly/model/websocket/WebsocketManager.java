@@ -54,7 +54,7 @@ public class WebsocketManager {
 	}
 	 */
 
-	public void onUpdate(PageType page, RequestType type, DataRequest request, JsonNode node) {
+	public void onUpdate(PageType page, RequestType type, DataRequest request, JsonNode node, RequestFilter ...filters) {
 		//Update all pages
 		if (page == PageType.DEFAULT) {
 			for (PageType t : PageType.values()) {
@@ -66,12 +66,27 @@ public class WebsocketManager {
 		synchronized(set) {
 			if (!set.isEmpty()) {
 				for (NationStatesWebSocket socket : set) {
-					if (socket.getPage().isValidUpdate(type, request)) {
-						socket.write(type, node);
+					if (isValidFilter(socket.getContext(), filters)) {
+						if (socket.getPage().isValidUpdate(type, request)) {
+							socket.write(type, node);
+						}
 					}
 				}
 			}
 		}
+	}
+
+	private static boolean isValidFilter(NationContext context, RequestFilter ...filters) {
+		if (filters != null) {
+			for (int i = 0; i < filters.length; i++) {
+				if (filters[i] != null) {
+					if (!filters[i].isValidForRequest(context)) {
+						return false;
+					}
+				}
+			}
+		}
+		return true;
 	}
 
 	private class UnregisterCallback implements Callback0 {

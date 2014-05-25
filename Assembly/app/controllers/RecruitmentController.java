@@ -20,6 +20,7 @@ import org.apache.commons.dbutils.DbUtils;
 import org.joda.time.Duration;
 import org.spout.cereal.config.yaml.YamlConfiguration;
 
+import play.Logger;
 import play.libs.Json;
 import play.mvc.Result;
 import play.mvc.Results;
@@ -580,23 +581,28 @@ public class RecruitmentController extends NationStatesController {
 			final int allocation = set.getInt("allocation");
 			final boolean gcrsOnly = set.getInt("gcrs_only") == 1;
 			if (rand.nextInt(100) < allocation || set.isLast()) {
-				String target = type.findRecruitmentNation(conn, region, gcrsOnly, set.getString("filters"));
+				final String target = type.findRecruitmentNation(conn, region, gcrsOnly, set.getString("filters"));
 				if (target != null) {
-					PreparedStatement insert = conn.prepareStatement("INSERT INTO assembly.recruitment_results (region, nation, timestamp, campaign, recruiter) VALUES (?, ?, ?, ?, ?)");
-					insert.setInt(1, region);
-					insert.setInt(2, getDatabase().getNationIdCache().get(target));
-					insert.setLong(3, System.currentTimeMillis());
-					insert.setInt(4, campaign);
-					insert.setInt(5, getDatabase().getNationIdCache().get(nation));
-					insert.executeUpdate();
-					DbUtils.closeQuietly(insert);
-					
-					Map<String, Object> data = new HashMap<String, Object>();
-					data.put("client_key", clientKey);
-					data.put("tgid", tgid);
-					data.put("secret_key", secretKey);
-					data.put("nation", target);
-					return data;
+					final int nationId = getDatabase().getNationIdCache().get(target);
+					if (nationId != -1) {
+						PreparedStatement insert = conn.prepareStatement("INSERT INTO assembly.recruitment_results (region, nation, timestamp, campaign, recruiter) VALUES (?, ?, ?, ?, ?)");
+						insert.setInt(1, region);
+						insert.setInt(2, nationId);
+						insert.setLong(3, System.currentTimeMillis());
+						insert.setInt(4, campaign);
+						insert.setInt(5, getDatabase().getNationIdCache().get(nation));
+						insert.executeUpdate();
+						DbUtils.closeQuietly(insert);
+						
+						Map<String, Object> data = new HashMap<String, Object>();
+						data.put("client_key", clientKey);
+						data.put("tgid", tgid);
+						data.put("secret_key", secretKey);
+						data.put("nation", target);
+						return data;
+					} else {
+						Logger.warn("Recruitment Target [" + target + "] has no nation id");;
+					}
 				}
 			}
 		}

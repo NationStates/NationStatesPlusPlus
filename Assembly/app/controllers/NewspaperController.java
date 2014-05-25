@@ -30,7 +30,9 @@ import play.mvc.Results;
 
 import com.afforess.assembly.model.Nation;
 import com.afforess.assembly.model.websocket.DataRequest;
+import com.afforess.assembly.model.websocket.NationContext;
 import com.afforess.assembly.model.websocket.PageType;
+import com.afforess.assembly.model.websocket.RequestFilter;
 import com.afforess.assembly.model.websocket.RequestType;
 import com.afforess.assembly.util.DatabaseAccess;
 import com.afforess.assembly.util.Utils;
@@ -307,8 +309,9 @@ public class NewspaperController extends NationStatesController {
 			articles.setInt(1, newspaper);
 			articles.setInt(2, Visibility.SUBMITTED.getType());
 			result = articles.executeQuery();
-			if (result.next() && result.getInt(1) > 0) {
+			if (result.next()) {
 				submissions.put("submissions", result.getInt(1));
+				submissions.put("newspaper", newspaper);
 			}
 		} finally {
 			DbUtils.closeQuietly(result);
@@ -473,6 +476,22 @@ public class NewspaperController extends NationStatesController {
 			Utils.handleDefaultGetHeaders(request(), response(), "0");
 			return badRequest();
 		}
+	}
+
+	public static Set<Integer> getEditorshipsOfNation(int nationId, Connection conn) throws SQLException {
+		if (nationId != -1) {
+			HashSet<Integer> newspapers = new HashSet<Integer>();
+			PreparedStatement select = conn.prepareStatement("SELECT newspaper FROM assembly.newspaper_editors WHERE nation_id = ?");
+			select.setInt(1, nationId);
+			ResultSet set = select.executeQuery();
+			while(set.next()) {
+				newspapers.add(set.getInt(1));
+			}
+			DbUtils.closeQuietly(set);
+			DbUtils.closeQuietly(select);
+			return newspapers;
+		}
+		return Collections.emptySet();
 	}
 
 	public Result changeEditors(int newspaper) throws SQLException, ExecutionException {
@@ -758,24 +777,21 @@ public class NewspaperController extends NationStatesController {
 		try {
 			conn = getConnection();
 			
-			boolean validEditor = false;
-			if (!isEditorInChief(newspaper, nation, conn)) {
-				PreparedStatement editors = conn.prepareStatement("SELECT nation_id FROM assembly.newspaper_editors WHERE newspaper = ?");
-				editors.setInt(1, newspaper);
-				ResultSet set = editors.executeQuery();
-				final int nationId = getDatabase().getNationIdCache().get(Utils.sanitizeName(nation));
-				
-				while (set.next()) {
-					if (set.getInt(1) == nationId) {
-						validEditor = true;
-						break;
-					}
-				}
-				DbUtils.closeQuietly(set);
-				DbUtils.closeQuietly(editors);
-			} else {
-				validEditor = true;
+			final Set<Integer> editorIds = new HashSet<Integer>();
+			boolean validEditor = isEditorInChief(newspaper, nation, conn);
+
+			PreparedStatement editors = conn.prepareStatement("SELECT nation_id FROM assembly.newspaper_editors WHERE newspaper = ?");
+			editors.setInt(1, newspaper);
+			ResultSet set = editors.executeQuery();
+			final int nationId = getDatabase().getNationIdCache().get(Utils.sanitizeName(nation));
+			while (set.next()) {
+				editorIds.add(set.getInt(1));
 			}
+
+			DbUtils.closeQuietly(set);
+			DbUtils.closeQuietly(editors);
+			
+			validEditor |= editorIds.contains(nationId);
 
 			int submitterId = getDatabase().getNationIdCache().get(Utils.sanitizeName(nation));
 			if (!validEditor || submitterId == -1) {
@@ -784,7 +800,7 @@ public class NewspaperController extends NationStatesController {
 					return Results.unauthorized();
 				} else {
 					PreparedStatement submissions = null;
-					ResultSet set = null;
+					set = null;
 					try {
 						submissions = conn.prepareStatement("SELECT article_id FROM assembly.articles WHERE visible = ? AND newspaper_id = ? AND submitter = ?");
 						submissions.setInt(1, Visibility.SUBMITTED.getType());
@@ -864,9 +880,14 @@ public class NewspaperController extends NationStatesController {
 				if (newspaper == GAMEPLAY_NEWS) rType = RequestType.GAMEPLAY_NEWS_SIDEBAR;
 				else if (newspaper == ROLEPLAY_NEWS) rType = RequestType.ROLEPLAY_NEWS_SIDEBAR;
 				getDatabase().getWebsocketManager().onUpdate(PageType.DEFAULT, rType, new DataRequest(rType, Collections.<String, Object> emptyMap()), getLatestUpdate(conn, newspaper));
-			} else if (Integer.parseInt(visible) == Visibility.SUBMITTED.getType()) {
-				
 			}
+			//Send update to editors
+			getDatabase().getWebsocketManager().onUpdate(PageType.DEFAULT, RequestType.PENDING_NEWS_SUBMISSIONS, DataRequest.getBlankRequest(RequestType.PENDING_NEWS_SUBMISSIONS), getPendingSubmissions(conn, newspaper), new RequestFilter() {
+				@Override
+				public boolean isValidForRequest(NationContext context) {
+					return editorIds.contains(context.getNationId());
+				}
+			});
 		} finally {
 			DbUtils.closeQuietly(conn);
 		}

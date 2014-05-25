@@ -1,5 +1,6 @@
 package com.afforess.assembly.model.websocket;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -59,4 +60,7 @@ public class DataRequest {
 		}
 	}
 
+	public static DataRequest getBlankRequest(RequestType type) {
+		return new DataRequest(type, Collections.<String, Object> emptyMap());
+	}
 }

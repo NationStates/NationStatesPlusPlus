@@ -99,6 +99,8 @@ var newspaperAdminHTML = '<form class="form-horizontal"><fieldset><div class="co
 		if (lastRead == null || event.json.timestamp > parseInt(lastRead)) {
 			html = " (*)";
 		}
+		console.log(lastRead);
+		console.log(event.json.timestamp);
 		$("#rpnews span[name='nag']").html(html);
 	});
 	
@@ -110,49 +112,18 @@ var newspaperAdminHTML = '<form class="form-horizontal"><fieldset><div class="co
 		}
 		$("#rnews span[name='nag']").html(html);
 	});
-	function updateNewspaperNags() {
-		var settings = getSettings();
-		var checkUpdates = function(id, selector) {
-			$.get("https://nationstatesplusplus.net/api/newspaper/latest/?id=" + id, function(json) {
-				var lastRead = getSettings().getValue("newspapers", {})[id];
-				var menu = $("#" + selector);
-				if (lastRead == null || json.timestamp > parseInt(lastRead)) {
-					if (menu.find("span[name='nag']").length == 0) {
-						menu.append("<span name='nag'> (*)</span>");
-					}
-				} else {
-					menu.find("span[name='nag']").remove();
-				}
-			});
-			//This just prevents GP and RP news editors from seeing pending articles...sick of their sloppy approvals
-			//Newspapers id 0 and 1 are GP and RP news. id > 1 means all custom regional newspapers
-			if (getUserNation() == "shadow_afforess" || id > 1) {
-				$.get("https://nationstatesplusplus.net/api/newspaper/editor/?newspaper=" + id + "&nation=" + getUserNation(), function(data) {
-					$.get("https://nationstatesplusplus.net/api/newspaper/lookup/?id=" + id + "&hideBody=true&visible=3", function(json) {
-						var menu = $("#" + selector);
-						if (json.articles.length > 0) {
-							if (menu.find("span[name='pending-nag']").length == 0) {
-								menu.append("<span style='color:red;' name='pending-nag'> (" + json.articles.length + ")</span>");
-							}
-						} else {
-							menu.find("span[name='pending-nag']").remove();
-						}
-					});
-				});
-			}
+	$(window).on("websocket/pending_news_submissions", function(event) {
+		var menu;
+		console.log(event);
+		if (event.json.newspaper == 0) menu = $("#gpnews");
+		else if (event.json.newspaper == 1) menu = $("#rpnews");
+		else menu = $("#rnews");
+
+		menu.find("span[name='pending-nag']").remove();
+		if (event.json.submissions > 0) {
+			menu.append("<span style='color:red;' name='pending-nag'> (" + event.json.submissions + ")</span>");
 		}
-		if (settings.isEnabled("show_gameplay_news")) {
-			checkUpdates(0, "gnews");
-		}
-		if (settings.isEnabled("show_roleplay_news")) {
-			checkUpdates(1, "rpnews");
-		}
-		if (settings.isEnabled("show_regional_news")) {
-			if ($("#regional_newspaper").attr("news-id") != null) {
-				checkUpdates($("#regional_newspaper").attr("news-id"), "rnews");
-			}
-		}
-	}
+	});
 
 	var visibleTypes = ["Draft", "Published", "Archived", "User Submitted, Pending Review"];
 	function viewNewspaperArticles(newspaper) {
