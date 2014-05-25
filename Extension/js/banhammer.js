@@ -74,9 +74,9 @@
 				var ejectOrBan = function(event, nation, param) {
 					event.preventDefault();
 					$("button").attr("disabled", true);
-					$.get("//www.nationstates.net/nation=" + nation, function(data) {
+					$.get("//www.nationstates.net/nation=" + nation + "?nspp=1", function(data) {
 						var chk = $(data).find("input[name='chk']").val();
-						$.post("//www.nationstates.net/nation=" + nation, "page=display_other_nation&nation=" + nation + "&chk=" + chk + "&" + param, function(data) {
+						$.post("//www.nationstates.net/nation=" + nation + "?nspp=1", "page=display_other_nation&nation=" + nation + "&chk=" + chk + "&" + param, function(data) {
 							if ($(data).find("p.info")) {
 								$("div[name='" + nation + "']").slideToggle(400);
 								 $("button").removeAttr("disabled");
@@ -125,7 +125,7 @@
 		listNations();
 	}
 	function getSPDR(nation, callback) {
-		$.get("/page=compare/nations=" + nation + "?censusid=65", function(data) {
+		$.get("/page=compare/nations=" + nation + "?censusid=65&nspp=1", function(data) {
 			var start = data.indexOf("backgroundColor:'rgba(255, 255, 255, 0.1)");
 			var search = 'y: ';
 			var index = data.indexOf(search, start) + search.length;

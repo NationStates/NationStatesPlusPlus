@@ -1,7 +1,7 @@
 (function() {
 	var checkPageHappenings = function() {
 		if (getVisiblePage() == "un" || getVisiblePage() == "nation" || getVisiblePage() == "region") {
-			$.get(window.location.href, function(page) {
+			$.get(window.location.href + "?nspp=1", function(page) {
 
 				var happeningSelector;
 				if (getVisiblePage() == "un") {

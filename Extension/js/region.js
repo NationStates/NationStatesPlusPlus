@@ -190,7 +190,7 @@ function setupRegionPage() {
 			}
 			$(this).attr("disabled", true);
 			var password = $("#region_password_input").val();
-			$.post("//www.nationstates.net/page=change_region", "localid=" + $("input[name='localid']").val() + "&region_name=" + $("input[name='region_name']").val()
+			$.post("//www.nationstates.net/page=change_region?nspp=1", "localid=" + $("input[name='localid']").val() + "&region_name=" + $("input[name='region_name']").val()
 																	+ "&move_region=1" + (password.length > 0 ? "&password=" + encodeURIComponent(password) : ""), function(data) {
 				if (data.toLowerCase().contains("you have not entered the correct password")) {
 					$("#invalid-pass").html("Your password is incorrect!").show();
@@ -252,7 +252,7 @@ function setupRegionPage() {
 			processingRMB = true;
 			$('.rmbolder .notloading').hide();
 			$('.rmbolder .loading').show();
-			request = $.get('/page=ajax/a=rmb/region=' + getVisibleRegion() + '/offset=' + _rmboffset, function(data) {
+			request = $.get('/page=ajax/a=rmb/region=' + getVisibleRegion() + '/offset=' + _rmboffset + "?nspp=1", function(data) {
 				_rmboffset += 10;
 				if (data.length > 1) {
 					var html = "";
@@ -631,7 +631,7 @@ function doRMBPost(event) {
 				alert($(data).find("p[class='error']").text());
 				if (!getSettings().isEnabled("search_rmb")) setTimeout(function() { $("#rmb-post-form").animate({ height: 'toggle' }, 1200); }, 1200);
 			} else {
-				$.get('/region=' + getVisibleRegion(), function(data) {
+				$.get('/region=' + getVisibleRegion() + "?nspp=1", function(data) {
 					$("#rmb").html($(data).find("#rmb").html());
 					$('textarea[name="message"]').val("");
 					$('textarea[name="message"]').height(120);
@@ -728,7 +728,7 @@ function doRMBSearch() {
 		author = $("#rmb-search-input-author").val().replaceAll(" ", "_");
 	}
 	var page = '/page=ajax/a=rmbsearch/rmbsearch-text=' + encodeURIComponent(input) + (region == "*" ? "" : '/rmbsearch-region=' + region) + (author == "*" ? "" : '/rmbsearch-author=' + author) + '/rmbsearch-offset=' + searchOffset;
-	$.get(page, function(data) {
+	$.get(page + "?nspp=1", function(data) {
 		if (cancelled) {
 			return;
 		}
@@ -838,7 +838,7 @@ function handleInfiniteScroll() {
 		processingRMB = true;
 		lastRMBScroll = Date.now();
 		//Infinite RMB post scroll
-		var request = $.get('/page=ajax/a=rmb/region=' + getVisibleRegion() + '/offset=' + _rmboffset, function(data) {
+		var request = $.get('/page=ajax/a=rmb/region=' + getVisibleRegion() + '/offset=' + _rmboffset + "?nspp=1", function(data) {
 			if (data.length > 1) {
 				//Format HTML
 				var html = "";
@@ -894,7 +894,7 @@ function checkForRMBUpdates(delay){
 
 function updateRMB() {
 	//update RMB
-	$.get('/page=ajax/a=rmb/region=' + getVisibleRegion() + '/offset=0', function(data) {
+	$.get('/page=ajax/a=rmb/region=' + getVisibleRegion() + '/offset=0' + "?nspp=1", function(data) {
 		if (data.length > 1 && !isSearchResultsVisible()) {
 			var html = "";
 			var newPosts = [];

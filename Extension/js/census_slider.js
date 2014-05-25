@@ -162,7 +162,7 @@
 			} else {
 				pageUrl = '/page=display_region/region=' + getVisibleRegion() + '?start=' + (page * 10 - 10);
 			}
-			$.get(pageUrl, function(data) {
+			$.get(pageUrl + "&nspp=1", function(data) {
 				shinyPages[page] = data;
 				doShinyPageUpdate(data);
 			});

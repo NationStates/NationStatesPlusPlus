@@ -241,7 +241,7 @@
 	}
 
 	function displaySoftPowerScore() {
-		$.get("/page=compare/nations=" + getVisibleNation() + "?censusid=65", function(data) {
+		$.get("/page=compare/nations=" + getVisibleNation() + "?censusid=65&nspp=1", function(data) {
 			var start = data.indexOf("backgroundColor:'rgba(255, 255, 255, 0.1)");
 			var search = 'y: ';
 			var index = data.indexOf(search, start) + search.length;

@@ -533,7 +533,7 @@ function getPuppetCache(name) {
 			return cache;
 		}
 	}
-	$.get("/nation=" + name, function(data) {
+	$.get("/nation=" + name + "?nspp=1", function(data) {
 		if (typeof $(data).find(".rlink:first").attr('href') != "undefined") {
 			var region = $(data).find(".rlink:first").attr('href').substring(7);
 			$("#puppet-region-" + name).html("(<a style='color: white;' href='/region=" + region + "'>" + region.split("_").join(" ").toTitleCase() + "</a>)");
@@ -552,7 +552,7 @@ function getPuppetCache(name) {
 
 function switchToPuppet(name) {
 	localStorage.removeItem("puppet-" + name + "-region");
-	$.post("//www.nationstates.net/", "logging_in=1&nation=" + encodeURIComponent(name) + "&password=" + encodeURIComponent(localStorage.getItem("puppet-" + name)) + (getSettings().isEnabled("autologin-puppets", false) ?"&autologin=yes" : ""), function(data) {
+	$.post("//www.nationstates.net/?nspp=1", "logging_in=1&nation=" + encodeURIComponent(name) + "&password=" + encodeURIComponent(localStorage.getItem("puppet-" + name)) + (getSettings().isEnabled("autologin-puppets", false) ?"&autologin=yes" : ""), function(data) {
 		if (data.contains("Would you like to restore it?")) {
 			$("#content").html($(data).find("#content").html());
 		} else {

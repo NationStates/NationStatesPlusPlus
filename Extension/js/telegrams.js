@@ -37,11 +37,11 @@
 			var tgid = $(this).attr("tgid");
 			var tgto = $(this).parents(".tg").find("input.forward-input").val();
 			var fwto = $(this).parents(".tg").find("div[name='forward']");
-			$.get("//www.nationstates.net/page=tg/tgid=" + tgid + "/raw=1/template-overall=none", function(html) {
+			$.get("//www.nationstates.net/page=tg/tgid=" + tgid + "/raw=1/template-overall=none?nspp=1", function(html) {
 				var tg = $(html).find(".tgcontent pre").text();				
 				var recipients = $(html).find(".tg_headers").text().replaceAll("→", "&#8594;");
 				var chk = $("#tgcompose form input[name='chk']").val();
-				$.post("//www.nationstates.net/page=telegrams", "chk=" + chk + "&tgto=" + tgto + "&message=" + encodeURIComponent("[i][b]Telegram Forwarded By:[/b] [nation=short]" + getUserNation() + "[/nation]\n[b]Telegram Recipients:[/b] " + recipients + "\n [/i]-------------------------------------------\n\n" + tg) + "&send=1", function(html) {
+				$.post("//www.nationstates.net/page=telegrams?nspp=1", "chk=" + chk + "&tgto=" + tgto + "&message=" + encodeURIComponent("[i][b]Telegram Forwarded By:[/b] [nation=short]" + getUserNation() + "[/nation]\n[b]Telegram Recipients:[/b] " + recipients + "\n [/i]-------------------------------------------\n\n" + tg) + "&send=1", function(html) {
 					if ($(html).find("p.error").length > 0) {
 						window.alert($(html).find("p.error").text());
 					} else {
@@ -58,7 +58,7 @@
 			var recips = $(this).parents(".tg").find("div.forward-to-recips");
 			var forward = $(this).parents(".tg").find("button[name='forward-tg']");
 			recips.hide('fast').html('<p><img src="/images/loading1.gif"></div>').show('slow');
-			$.get('/page=ajax3/a=addrecip/toline=' + $(this).val(), function(data) {
+			$.get('/page=ajax3/a=addrecip/toline=' + $(this).val() + "?nspp=1", function(data) {
 				recips.html(data);
 				$("<br>").insertBefore(recips.find(".tginfo:first"));
 				recips.show('slow');
@@ -147,7 +147,7 @@
 
 	function searchNextPage(keywords) {
 		if (!cancelSearch) {
-			$.get("/page=telegrams/folder=" + getTelegramFolder() + "?start=" + (page * 20 - 20), function(contents) {
+			$.get("/page=telegrams/folder=" + getTelegramFolder() + "?start=" + (page * 20 - 20) + "&nspp=1", function(contents) {
 				if ($(contents).find("#tglist").find(".emptytglist").length == 0) {
 					searchTelegramContents(keywords, contents);
 					page += 1;

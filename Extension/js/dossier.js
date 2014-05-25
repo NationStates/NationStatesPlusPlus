@@ -28,7 +28,7 @@
 				$(this).html("Are You Sure?");
 				return;
 			}
-			$.post("page=dossier", (isRegional ? "clear_rdossier=REMOVE+ALL" : "clear_dossier=REMOVE+ALL"), function(html) {
+			$.post("page=dossier" + "&nspp=1", (isRegional ? "clear_rdossier=REMOVE+ALL" : "clear_dossier=REMOVE+ALL"), function(html) {
 				var dossier = $((isRegional ? "#region_dossier" : "#nation_dossier"));
 				dossier.find(".dossier_element").remove();
 				dossier.find(".info").remove();
@@ -124,11 +124,11 @@
 		$('body').on('click', ".remove-dossier", function(event) {
 			if ($(event.target).attr("nation") != null) {
 				var target = $(event.target).attr("nation");
-				$.post("page=dossier", "nation=" + target + "&action=remove", function() { });
+				$.post("page=dossier" + "?nspp=1", "nation=" + target + "&action=remove", function() { });
 				$("#nation_dossier").find("#" + target).animate({ height: 'toggle', 'min-height': 'toggle' }, 800);
 			} else if ($(event.target).attr("region") != null) {
 				var target = $(event.target).attr("region");
-				$.post("page=dossier", "remove_region_" + target + "=on&remove_from_region_dossier=Remove+Marked+Regions", function() { });
+				$.post("page=dossier" + "?nspp=1", "remove_region_" + target + "=on&remove_from_region_dossier=Remove+Marked+Regions", function() { });
 				$("#region_dossier").find("#" + target).animate({ height: 'toggle', 'min-height': 'toggle' }, 800);
 			}
 		});
@@ -229,7 +229,7 @@
 			if ((region ? $("#region_dossier") : $("#nation_dossier")).find(".last_dossier_element").length > 0) {
 				return;
 			}
-			$.get("page=dossier?start=" + (currentNationPage * 15) + "&rstart=" + (currentRegionPage * 15), function(html) {
+			$.get("page=dossier?start=" + (currentNationPage * 15) + "&rstart=" + (currentRegionPage * 15) + "&nspp=1", function(html) {
 				var dossier = region ? $("#region_dossier") : $("#nation_dossier");
 				var result;
 				if (region) {
@@ -237,9 +237,7 @@
 				} else {
 					result = parseNationDossier(html);
 				}
-				console.log(result);
 				dossier.append(result.html);
-
 				if (animate) {
 					for (var i = 0; i < result.animate.length; i++) {
 						if (animate) {
@@ -247,7 +245,7 @@
 						}
 					}
 				}
-				window.onresize();
+				$(window).resize();
 			});
 		}
 
@@ -269,7 +267,7 @@
 		loadDossierPage(false, false);
 		currentNationPage += 1;
 		loadDossierPage(false, false);
-		setTimeout(function() { window.onresize(); }, 500);
+		setTimeout(function() { $(window).resize(); }, 500);
 
 		$(window).scroll(function () {
 			if ($(window).scrollTop() + 400 > ($(document).height() - $(window).height())) {

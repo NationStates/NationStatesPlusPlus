@@ -36,7 +36,7 @@
 	}
 
 	if ($(".menu").find("a[href='page=dilemmas']").html().match(/[0-9]+/) != null && getUserData().getValue("dismiss_all", false)) {
-		$.post("//www.nationstates.net/page=dilemmas", "dismiss_all=1", function() { });
+		$.post("//www.nationstates.net/page=dilemmas?nspp=1", "dismiss_all=1", function() { });
 		updatePanelAlerts();
 	}
 
@@ -79,7 +79,7 @@
 	}
 
 	function updateProposals(start) {
-		$.get("//www.nationstates.net/page=UN_proposal/council=0?start=" + start, function(data) {
+		$.get("//www.nationstates.net/page=UN_proposal/council=0?start=" + start + "&nspp=1", function(data) {
 			var totalProposals = 0;
 			$(data).find("table.shiny").find("td[colspan='3']:contains('ID: ')").find("a").each(function() {
 				var userData = getUserData();
@@ -130,7 +130,7 @@
 		}
 		if (getSettings().isEnabled("show_wa_proposals") && (delegateCache == null || delegateCache.wa_delegate)) {
 			if (delegateCache == null) {
-				$.get("//www.nationstates.net/nation=" + getUserNation(), function(data) {
+				$.get("//www.nationstates.net/nation=" + getUserNation() + "&nspp=1", function(data) {
 					if ($(data).find(".wa_status:contains('WA Delegate')").length > 0) {
 						getUserData(true).setValue("wa_delegate", {wa_delegate: true, timestamp: Date.now()});
 					} else {
@@ -151,7 +151,7 @@
 	function updateSecurityCodes() {
 		var chk = $("input[name='chk']");
 		if (chk.length != 0) {
-			$.get("/page=tgsettings", function(html) {
+			$.get("/page=tgsettings?nspp=1", function(html) {
 				if ($(html).find(".STANDOUT:first").attr("href").substring(7) == getUserNation()) {
 					chk.val($(html).find("input[name='chk']").val());
 				} else {
@@ -161,7 +161,7 @@
 		}
 		var localid = $("input[name='localid']");
 		if (localid.length != 0) {
-			$.get("/page=settings", function(html) {
+			$.get("/page=settings?nspp=1", function(html) {
 				if ($(html).find(".STANDOUT:first").attr("href").substring(7) == getUserNation()) {
 					localid.val($(html).find("input[name='localid']").val());
 				} else {
@@ -201,7 +201,7 @@
 
 	function updatePanelAlerts() {
 		if (getUserNation() != "") {
-			$.get('/page=panel/template-overall=none', function(html) {
+			$.get("/page=panel/template-overall=none?&nspp=1", function(html) {
 				//Verify we haven't switched nations/logged out
 				if ($(html).find(".STANDOUT:first").attr("href").substring(7) == getUserNation()) {
 					var page = $(html);
@@ -214,7 +214,7 @@
 				}
 			});
 			if (window.chrome && getSettings().isEnabled("show_unread_forum_posts", false)) {
-				$.get("//forum.nationstates.net/search.php?search_id=egosearch", function(data) {
+				$.get("//forum.nationstates.net/search.php?search_id=egosearch?nspp=1", function(data) {
 					var count = 0;
 					var userData = getUserData();
 					var ignoredTopics = userData.getValue("ignored_topics", {});
