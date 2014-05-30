@@ -31,6 +31,7 @@ public enum RequestType {
 	REGIONAL_NEWS_SIDEBAR("regional_news_sidebar"),
 	PENDING_NEWS_SUBMISSIONS("pending_news_submissions"),
 	RMB_POST("rmb_post"),
+	REGION_POPULATION("region_record_population"),
 	;
 
 	private static final Map<String, RequestType> types = new HashMap<String, RequestType>();
@@ -101,6 +102,10 @@ public enum RequestType {
 					}
 				}
 				return generateError("invalid post id", request);
+			case REGION_POPULATION:
+				if (page instanceof RegionPage) {
+					return toList(RegionController.getRecordPopulation(conn, ((RegionPage)page).getRegion()));
+				}
 			case GAMEPLAY_NEWS_SIDEBAR:
 				return toList(NewspaperController.getLatestUpdate(conn, NewspaperController.GAMEPLAY_NEWS));
 			case ROLEPLAY_NEWS_SIDEBAR:

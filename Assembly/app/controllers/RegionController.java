@@ -137,6 +137,16 @@ public class RegionController extends NationStatesController {
 		return Json.toJson(data);
 	}
 
+	public static JsonNode getRecordPopulation(Connection conn, String region) throws SQLException {
+		PreparedStatement population = conn.prepareStatement("SELECT max(population) FROM assembly.region_populations WHERE region = ?");
+		population.setString(1, Utils.sanitizeName(region));
+		ResultSet result = population.executeQuery();
+		if (result.next()) {
+			return Json.toJson("{\"population\":" + result.getInt(1) + ", \"region\":\"" + region + "\"}");
+		}
+		return Json.toJson("{\"population\": \"-1\", \"region\":\"" + region + "\"}");
+	}
+
 	public Result getRegionSummary(String region) throws SQLException, ExecutionException {
 		List<Map<String, Object>> regionData = new ArrayList<Map<String, Object>>();
 		Connection conn = null;
