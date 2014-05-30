@@ -296,4 +296,23 @@ public class DatabaseAccess {
 			}
 		}
 	}
+
+	public void markRegionDead(String region, Connection conn) throws SQLException, ExecutionException {
+		int regionId = getRegionIdCache().get(region);
+		if (regionId > -1 && region != null) {
+			
+			PreparedStatement disbandNewspapers = conn.prepareStatement("UPDATE assembly.newspapers SET disbanded = 1 WHERE disbanded = 0 AND region = ?");
+			disbandNewspapers.setString(1, Utils.sanitizeName(region));
+			disbandNewspapers.executeUpdate();
+			
+			PreparedStatement disbandRecruitmentCampaigns = conn.prepareStatement("UPDATE assembly.recruit_campaign SET retired = ? WHERE retired IS NOT NULL AND region = ?");
+			disbandRecruitmentCampaigns.setLong(1, System.currentTimeMillis());
+			disbandRecruitmentCampaigns.setInt(2, regionId);
+			disbandRecruitmentCampaigns.executeUpdate();
+			
+			PreparedStatement markDead = conn.prepareStatement("UPDATE assembly.region SET alive = 0, update_order = -1, embassies = NULL WHERE name = ?");
+			markDead.setString(1, Utils.sanitizeName(region));
+			markDead.executeUpdate();
+		}
+	}
 }

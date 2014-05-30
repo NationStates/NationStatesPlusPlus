@@ -91,12 +91,9 @@ public class DumpUpdateTask implements Runnable {
 			allRegions.removeAll(set);
 			Logger.info("Marking " + allRegions.size() + " regions as dead");
 			
-			PreparedStatement markDead = assembly.prepareStatement("UPDATE assembly.region SET alive = 0, update_order = -1, embassies = NULL WHERE name = ?");
 			for (String region : allRegions) {
-				markDead.setString(1, region);
-				markDead.addBatch();
+				access.markRegionDead(region, assembly);
 			}
-			markDead.executeBatch();
 			conn.prepareStatement("DROP TABLE regions").execute();
 			conn.prepareStatement("SHUTDOWN COMPACT").execute();
 		} catch (Exception e) {
