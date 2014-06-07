@@ -23,6 +23,7 @@ public final class NationStatesWebSocket extends WebSocket<JsonNode>{
 	private int nationId;
 	private NationSettings settings;
 	private WebSocket.Out<JsonNode> out = null;
+	private boolean authenticated = false;
 	public NationStatesWebSocket(DatabaseAccess access, NationStatesPage page, String nation) {
 		this.access = access;
 		this.activePage = page;
@@ -67,12 +68,16 @@ public final class NationStatesWebSocket extends WebSocket<JsonNode>{
 		return new NationContext(nation, nationId, settings, activePage, access);
 	}
 
+	public boolean isAuthenticated() {
+		return authenticated;
+	}
+
 	@Override
 	public void onReady(WebSocket.In<JsonNode> in, WebSocket.Out<JsonNode> out) {
 		try {
 			this.out = out;
 			writeInitialData(out);
-			in.onMessage(new NationStatesCallback(out));
+			in.onMessage(new NationStatesCallback(this));
 			access.getWebsocketManager().register(this, in);
 		} catch (SQLException | ExecutionException e) {
 			Logger.error("Exception while setting up websocket", e);
@@ -85,7 +90,7 @@ public final class NationStatesWebSocket extends WebSocket<JsonNode>{
 			conn = access.getPool().getConnection();
 			for (RequestType type : getPageType().getInitialRequests()) {
 				final NationContext context = getContext();
-				writeRequest(out, type, context, null, conn);
+				writeRequest(type, context, null, conn);
 			}
 		} finally {
 			DbUtils.closeQuietly(conn);
@@ -104,21 +109,28 @@ public final class NationStatesWebSocket extends WebSocket<JsonNode>{
 	 * @throws SQLException
 	 * @throws ExecutionException
 	 */
-	private static boolean writeRequest(WebSocket.Out<JsonNode> out, RequestType type, NationContext context, DataRequest request, Connection conn) throws SQLException, ExecutionException {
+	private boolean writeRequest(RequestType type, NationContext context, DataRequest request, Connection conn) throws SQLException, ExecutionException {
 		if (type.shouldSendData(conn, context)) {
-			List<JsonNode> nodes = type.executeRequest(conn, request, context);
-			for (int i = 0; i < nodes.size(); i++) {
-				out.write(nodes.get(i));
+			if (authenticated || !type.requiresAuthentication()) {
+				List<JsonNode> nodes = type.executeRequest(conn, request, context);
+				//TODO remove this horrible hack with real logic
+				if (!authenticated && type == RequestType.AUTHENTICATE_RSS && nodes.size() == 1) {
+					authenticated = nodes.get(0).toString().contains("success");
+					Logger.info("Authenticated websocket from " + nation);
+				}
+				for (int i = 0; i < nodes.size(); i++) {
+					out.write(nodes.get(i));
+				}
+				return true;
 			}
-			return true;
 		}
 		return false;
 	}
 
-	private class NationStatesCallback implements Callback<JsonNode> {
-		private final WebSocket.Out<JsonNode> out;
-		NationStatesCallback(WebSocket.Out<JsonNode> out) {
-			this.out = out;
+	private static class NationStatesCallback implements Callback<JsonNode> {
+		private final NationStatesWebSocket parent;
+		NationStatesCallback(NationStatesWebSocket parent) {
+			this.parent = parent;
 		}
 
 		@Override
@@ -128,10 +140,10 @@ public final class NationStatesWebSocket extends WebSocket<JsonNode>{
 			if (type != null) {
 				Connection conn = null;
 				try {
-					conn = access.getPool().getConnection();
-					final NationContext context = getContext();
-					writeRequest(out, type, context, request, conn);
-					activePage.onRequest(type, request);
+					conn = parent.access.getPool().getConnection();
+					final NationContext context = parent.getContext();
+					parent.writeRequest(type, context, request, conn);
+					parent.activePage.onRequest(type, request);
 				} catch (Exception e) {
 					Logger.error("Exception while sending websocket data", e);
 				} finally {

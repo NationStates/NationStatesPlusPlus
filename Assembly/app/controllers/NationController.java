@@ -175,7 +175,7 @@ public class NationController extends NationStatesController {
 				data.put("code", set.getString(1));
 				data.put("expires", set.getLong(2));
 			} else {
-				data.put("code", getDatabase().generateAuthToken(nationId, true));
+				data.put("code", getDatabase().generateAuthToken(nationId, true, null));
 				data.put("expires", System.currentTimeMillis() + Duration.standardDays(1).getMillis());
 			}
 			DbUtils.closeQuietly(set);

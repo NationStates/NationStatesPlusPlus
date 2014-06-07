@@ -5,6 +5,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Types;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
@@ -226,10 +227,10 @@ public class DatabaseAccess {
 	}
 
 	public String generateAuthToken(int id) {
-		return generateAuthToken(id, false);
+		return generateAuthToken(id, false, null);
 	}
 
-	public String generateAuthToken(int id, boolean force) {
+	public String generateAuthToken(int id, boolean force, String rssHash) {
 		Connection conn = null;
 		try {
 			conn = pool.getConnection();
@@ -242,22 +243,38 @@ public class DatabaseAccess {
 					return result.getString(1);
 				}
 			}
-			
+
 			SecureRandom random = new SecureRandom();
 			String auth = Sha.hash256(id + "-" + System.nanoTime() + "-" + random.nextInt(Integer.MAX_VALUE));
 
-			//Clear old codes
-			PreparedStatement statement = conn.prepareStatement("DELETE FROM assembly.nation_auth WHERE nation_id = ?");
-			statement.setInt(1, id);
-			statement.executeUpdate();
-			DbUtils.closeQuietly(statement);
-
-			statement = conn.prepareStatement("INSERT INTO assembly.nation_auth (nation_id, auth, time) VALUES (?, ?, ?)");
-			statement.setInt(1, id);
-			statement.setString(2, auth);
-			statement.setLong(3, System.currentTimeMillis() + Duration.standardDays(1).getMillis());
-			statement.executeUpdate();
-			DbUtils.closeQuietly(statement);
+			PreparedStatement select = conn.prepareStatement("SELECT nation_id from assembly.nation_auth WHERE nation_id = ?");
+			select.setInt(1, id);
+			ResultSet result = select.executeQuery();
+			if (result.next()) {
+				PreparedStatement update = conn.prepareStatement("UPDATE assembly.nation_auth SET auth = ?, time = ?" + (rssHash != null ? " , rss_hash = ?" : "") + " WHERE nation_id = ?");
+				update.setString(1, auth);
+				update.setLong(2, System.currentTimeMillis() + Duration.standardDays(1).getMillis());
+				if (rssHash != null) {
+					update.setString(3, rssHash);
+					update.setInt(4, id);
+				} else {
+					update.setInt(3, id);
+				}
+				update.executeUpdate();
+				DbUtils.closeQuietly(update);
+			} else {
+				PreparedStatement insert = conn.prepareStatement("INSERT INTO assembly.nation_auth (nation_id, auth, time, rss_hash) VALUES (?, ?, ?, ?)");
+				insert.setInt(1, id);
+				insert.setString(2, auth);
+				insert.setLong(3, System.currentTimeMillis() + Duration.standardDays(1).getMillis());
+				if (rssHash != null) {
+					insert.setString(4, rssHash);
+				} else {
+					insert.setNull(4, Types.CHAR);
+				}
+				insert.executeUpdate();
+				DbUtils.closeQuietly(insert);
+			}
 			return auth;
 		} catch (SQLException e) {
 			throw new RuntimeException(e);

@@ -138,13 +138,20 @@ public class RegionController extends NationStatesController {
 	}
 
 	public static JsonNode getRecordPopulation(Connection conn, String region) throws SQLException {
-		PreparedStatement population = conn.prepareStatement("SELECT max(population) FROM assembly.region_populations WHERE region = ?");
+		PreparedStatement population = conn.prepareStatement("SELECT population, timestamp FROM assembly.region_populations WHERE region = ? ORDER BY population DESC LIMIT 0, 1;");
 		population.setString(1, Utils.sanitizeName(region));
 		ResultSet result = population.executeQuery();
+		HashMap<String, Object> data = new HashMap<String, Object>();
 		if (result.next()) {
-			return Json.toJson("{\"population\":" + result.getInt(1) + ", \"region\":\"" + region + "\"}");
+			data.put("population", result.getInt(1));
+			data.put("region", region);
+			data.put("timestamp", result.getLong(2));
+		} else {
+			data.put("population", -1);
+			data.put("region", region);
+			data.put("timestamp", 0);
 		}
-		return Json.toJson("{\"population\": \"-1\", \"region\":\"" + region + "\"}");
+		return Json.toJson(data);
 	}
 
 	public Result getRegionSummary(String region) throws SQLException, ExecutionException {

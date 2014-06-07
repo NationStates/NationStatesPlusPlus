@@ -3,6 +3,7 @@ package com.afforess.assembly.model.websocket;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -11,6 +12,7 @@ import java.util.concurrent.ExecutionException;
 
 import play.libs.Json;
 
+import com.afforess.assembly.auth.Authentication;
 import com.afforess.assembly.model.page.NationStatesPage;
 import com.afforess.assembly.model.page.RegionPage;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -32,17 +34,28 @@ public enum RequestType {
 	PENDING_NEWS_SUBMISSIONS("pending_news_submissions"),
 	RMB_POST("rmb_post"),
 	REGION_POPULATION("region_record_population"),
+	AUTHENTICATE_RSS("authenticate_rss"),
+	RATE_RMB_POST("rate_rmb_post", true),
 	;
 
 	private static final Map<String, RequestType> types = new HashMap<String, RequestType>();
 	private final String name;
-
+	private final boolean requiresAuth;
 	RequestType(String name) {
+		this(name, false);
+	}
+
+	RequestType(String name, boolean requiresAuth) {
 		this.name = name;
+		this.requiresAuth = requiresAuth;
 	}
 
 	public String getType() {
 		return name;
+	}
+
+	public boolean requiresAuthentication() {
+		return requiresAuth;
 	}
 
 	public boolean shouldSendData(Connection conn, NationContext context) throws SQLException {
@@ -122,6 +135,39 @@ public enum RequestType {
 					}
 				}
 				return nodes;
+			case AUTHENTICATE_RSS:
+				if (request != null) {
+					String rssKey = request.getValue("rss-key", null, String.class);
+					if (rssKey != null) {
+						int rssAuth;
+						try {
+							rssAuth = Integer.parseInt(rssKey);
+						} catch (NumberFormatException e) {
+							return generateError("invalid rss key, must be numeric", request);
+						}
+						Authentication auth = new Authentication(context.getNation(), context.getNationId(), rssAuth, context.getAccess());
+						if (auth.isValid()) {
+							return toSimpleResult("success");
+						} else {
+							return toSimpleResult(auth.getFailureReason());
+						}
+					}
+				}
+				return generateError("Missing authentication code", request);
+			case RATE_RMB_POST:
+				if (request != null) {
+					Integer postId = request.getValue("rmb_post_id", null, Integer.class);
+					Integer rating = request.getValue("rating", null, Integer.class);
+					if (postId != null && rating != null) {
+						JsonNode ratings = RMBController.rateRMBPost(conn, context.getNation(), context.getNationId(), postId, rating);
+						Map<String, Object> data = new HashMap<String, Object>();
+						data.put("rmb_post_id", postId);
+						context.getAccess().getWebsocketManager().onUpdate(PageType.REGION, RequestType.RMB_RATINGS, new DataRequest(RequestType.RMB_RATINGS, data), ratings);
+						
+						return Collections.emptyList();
+					}
+				}
+				return generateError("Missing rmb post id", request);
 			default:
 				throw new IllegalStateException("Unimplemented RequestType: " + name());
 		}
@@ -133,8 +179,14 @@ public enum RequestType {
 		return r;
 	}
 
+	private List<JsonNode> toSimpleResult(String msg){
+		HashMap<String, String> result = new HashMap<String, String>(1);
+		result.put("result", msg);
+		return toList(Json.toJson(result));
+	}
+
 	private static List<JsonNode> generateError(String errorMsg, DataRequest request) {
-		return toList(Json.toJson("{\"error\":\"" + errorMsg + "\",\"request\":\"" + request.getName() + "\""));
+		return toList(Json.toJson("{\"error\":\"" + errorMsg + "\",\"request\":\"" + request.getName() + "\"}"));
 	}
 
 	public JsonNode wrapJson(JsonNode node) {

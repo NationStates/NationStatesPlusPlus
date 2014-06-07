@@ -63,35 +63,7 @@ public class RMBController extends NationStatesController {
 		Connection conn = null;
 		try {
 			conn =  getConnection();
-			if (rating < 0) {
-				PreparedStatement delete = conn.prepareStatement("DELETE FROM assembly.rmb_ratings WHERE nation = ? AND rmb_post = ?");
-				delete.setInt(1, nationId);
-				delete.setInt(2, rmbPost);
-				delete.executeUpdate();
-				DbUtils.closeQuietly(delete);
-			} else {
-				PreparedStatement update = conn.prepareStatement("UPDATE assembly.rmb_ratings SET rating_type = ? WHERE nation = ? AND rmb_post = ?");
-				update.setInt(1, rating);
-				update.setInt(2, nationId);
-				update.setInt(3, rmbPost);
-				if (update.executeUpdate() == 0) {
-					PreparedStatement insert = conn.prepareStatement("INSERT INTO assembly.rmb_ratings (nation, nation_name, rating_type, rmb_post) VALUES (?, ?, ?, ?)");
-					insert.setInt(1, nationId);
-					insert.setString(2, nation);
-					insert.setInt(3, rating);
-					insert.setInt(4, rmbPost);
-					insert.executeUpdate();
-					DbUtils.closeQuietly(insert);
-				}
-				DbUtils.closeQuietly(update);
-			}
-
-			PreparedStatement update = conn.prepareStatement("UPDATE assembly.region SET rmb_cache = rmb_cache + 1 WHERE id = (SELECT region FROM assembly.nation WHERE nation.id = ?)");
-			update.setInt(1, nationId);
-			update.executeUpdate();
-			DbUtils.closeQuietly(update);
-
-			JsonNode ratings = calculatePostRatings(conn, rmbPost);
+			JsonNode ratings = rateRMBPost(conn, nation, nationId, rmbPost, rating);
 			Map<String, Object> data = new HashMap<String, Object>();
 			data.put("rmb_post_id", rmbPost);
 			getDatabase().getWebsocketManager().onUpdate(PageType.REGION, RequestType.RMB_RATINGS, new DataRequest(RequestType.RMB_RATINGS, data), ratings);
@@ -102,6 +74,38 @@ public class RMBController extends NationStatesController {
 		}
 		Utils.handleDefaultPostHeaders(request(), response());
 		return Results.ok();
+	}
+
+	public static JsonNode rateRMBPost(Connection conn, String nation, int nationId, int rmbPost, int rating) throws SQLException {
+		if (rating < 0) {
+			PreparedStatement delete = conn.prepareStatement("DELETE FROM assembly.rmb_ratings WHERE nation = ? AND rmb_post = ?");
+			delete.setInt(1, nationId);
+			delete.setInt(2, rmbPost);
+			delete.executeUpdate();
+			DbUtils.closeQuietly(delete);
+		} else {
+			PreparedStatement update = conn.prepareStatement("UPDATE assembly.rmb_ratings SET rating_type = ? WHERE nation = ? AND rmb_post = ?");
+			update.setInt(1, rating);
+			update.setInt(2, nationId);
+			update.setInt(3, rmbPost);
+			if (update.executeUpdate() == 0) {
+				PreparedStatement insert = conn.prepareStatement("INSERT INTO assembly.rmb_ratings (nation, nation_name, rating_type, rmb_post) VALUES (?, ?, ?, ?)");
+				insert.setInt(1, nationId);
+				insert.setString(2, nation);
+				insert.setInt(3, rating);
+				insert.setInt(4, rmbPost);
+				insert.executeUpdate();
+				DbUtils.closeQuietly(insert);
+			}
+			DbUtils.closeQuietly(update);
+		}
+
+		PreparedStatement update = conn.prepareStatement("UPDATE assembly.region SET rmb_cache = rmb_cache + 1 WHERE id = (SELECT region FROM assembly.nation WHERE nation.id = ?)");
+		update.setInt(1, nationId);
+		update.executeUpdate();
+		DbUtils.closeQuietly(update);
+
+		return calculatePostRatings(conn, rmbPost);
 	}
 
 	private static Function<JsonNode, Promise<Result>> getAsyncResult(final Request request, final Response response, final String cacheLen) {
