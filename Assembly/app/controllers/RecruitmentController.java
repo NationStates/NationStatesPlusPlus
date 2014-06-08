@@ -284,7 +284,7 @@ public class RecruitmentController extends NationStatesController {
 		List<Object> officers = new ArrayList<Object>();
 		try {
 			conn = getConnection();
-			final int regionId = getDatabase().getRegionIdCache().get(Utils.sanitizeName(region));
+			final int regionId = getDatabase().getRegionId(region);
 			PreparedStatement select = conn.prepareStatement("SELECT nation.name, nation.full_name FROM assembly.recruitment_officers LEFT JOIN assembly.nation ON nation.id = recruitment_officers.nation WHERE recruitment_officers.region = ?");
 			select.setInt(1, regionId);
 			ResultSet set = select.executeQuery();
@@ -369,7 +369,7 @@ public class RecruitmentController extends NationStatesController {
 			if (add != null) {
 				for (String nation : add.split(",")) {
 					final String format = Utils.sanitizeName(nation);
-					final int nationId = getDatabase().getNationIdCache().get(format);
+					final int nationId = getDatabase().getNationId(format);
 					if (nationId > -1) {
 						if (!existingOfficers.contains(nationId)) {
 							PreparedStatement officers = conn.prepareStatement("INSERT INTO assembly.recruitment_officers (region, nation) VALUES (?, ?)");
@@ -388,7 +388,7 @@ public class RecruitmentController extends NationStatesController {
 			if (remove != null) {
 				for (String nation : remove.split(",")) {
 					final String format = Utils.sanitizeName(nation);
-					final int nationId = getDatabase().getNationIdCache().get(format);
+					final int nationId = getDatabase().getNationId(format);
 					if (nationId > -1) {
 						if (existingOfficers.contains(nationId)) {
 							PreparedStatement officer = conn.prepareStatement("DELETE FROM assembly.recruitment_officers WHERE region = ? AND nation = ?");
@@ -464,7 +464,7 @@ public class RecruitmentController extends NationStatesController {
 			
 			officers = conn.prepareStatement("SELECT nation FROM assembly.recruitment_officers WHERE region = ? AND nation = ?");
 			officers.setInt(1, regionId);
-			officers.setInt(2, getDatabase().getNationIdCache().get(nation));
+			officers.setInt(2, getDatabase().getNationId(nation));
 			set = officers.executeQuery();
 			if (set.next() || nation.equals("shadow_afforess")) {
 				return regionId;
@@ -504,7 +504,7 @@ public class RecruitmentController extends NationStatesController {
 			if (!validScriptAccess) {
 				regionId = getRecruitmentAdministrator(conn, nation, region);
 			} else {
-				regionId = getDatabase().getRegionIdCache().get(Utils.sanitizeName(region));
+				regionId = getDatabase().getRegionId(region);
 			}
 
 			if (regionId == -1) {
@@ -583,14 +583,14 @@ public class RecruitmentController extends NationStatesController {
 			if (rand.nextInt(100) < allocation || set.isLast()) {
 				final String target = type.findRecruitmentNation(conn, region, gcrsOnly, set.getString("filters"));
 				if (target != null) {
-					final int nationId = getDatabase().getNationIdCache().get(target);
+					final int nationId = getDatabase().getNationId(target);
 					if (nationId != -1) {
 						PreparedStatement insert = conn.prepareStatement("INSERT INTO assembly.recruitment_results (region, nation, timestamp, campaign, recruiter) VALUES (?, ?, ?, ?, ?)");
 						insert.setInt(1, region);
 						insert.setInt(2, nationId);
 						insert.setLong(3, System.currentTimeMillis());
 						insert.setInt(4, campaign);
-						insert.setInt(5, getDatabase().getNationIdCache().get(nation));
+						insert.setInt(5, getDatabase().getNationId(nation));
 						insert.executeUpdate();
 						DbUtils.closeQuietly(insert);
 						
@@ -627,7 +627,7 @@ public class RecruitmentController extends NationStatesController {
 			final int regionId;
 			//Bypass region officer authentication if we are a valid script
 			if (validScriptAccess) {
-				regionId = getDatabase().getRegionIdCache().get(Utils.sanitizeName(region));
+				regionId = getDatabase().getRegionId(region);
 			} else {
 				String nation = Utils.sanitizeName(Utils.getPostValue(request(), "nation"));
 				regionId = getRecruitmentAdministrator(conn, nation, region);
@@ -638,7 +638,7 @@ public class RecruitmentController extends NationStatesController {
 			}
 			PreparedStatement update = conn.prepareStatement("UPDATE assembly.recruitment_results SET confirmed = 1 WHERE region = ? AND nation = ? AND timestamp > ?");
 			update.setInt(1, regionId);
-			update.setInt(2, getDatabase().getNationIdCache().get(target));
+			update.setInt(2, getDatabase().getNationId(target));
 			update.setLong(3, System.currentTimeMillis() - Duration.standardHours(1).getMillis()); //Ensure we are not tampering with ancient results
 			update.executeUpdate();
 			DbUtils.closeQuietly(update);
@@ -651,7 +651,7 @@ public class RecruitmentController extends NationStatesController {
 	public Result markPuppetNation(String nation) throws ExecutionException {
 		Utils.handleDefaultPostHeaders(request(), response());
 		nation = Utils.sanitizeName(nation);
-		if (getDatabase().getNationIdCache().get(nation) == -1) {
+		if (getDatabase().getNationId(nation) == -1) {
 			HappeningsTask.markNationAsPuppet(nation);
 			return Results.ok();
 		}

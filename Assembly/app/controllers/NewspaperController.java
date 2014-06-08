@@ -30,9 +30,7 @@ import play.mvc.Results;
 
 import com.afforess.assembly.model.Nation;
 import com.afforess.assembly.model.websocket.DataRequest;
-import com.afforess.assembly.model.websocket.NationContext;
 import com.afforess.assembly.model.websocket.PageType;
-import com.afforess.assembly.model.websocket.RequestFilter;
 import com.afforess.assembly.model.websocket.RequestType;
 import com.afforess.assembly.util.DatabaseAccess;
 import com.afforess.assembly.util.Utils;
@@ -119,7 +117,7 @@ public class NewspaperController extends NationStatesController {
 			
 			PreparedStatement editors = conn.prepareStatement("INSERT INTO assembly.newspaper_editors (newspaper, nation_id) VALUES (?, ?)");
 			editors.setInt(1, newspaperId);
-			editors.setInt(2, getDatabase().getNationIdCache().get(nation));
+			editors.setInt(2, getDatabase().getNationId(nation));
 			editors.executeUpdate();
 			DbUtils.closeQuietly(editors);
 			
@@ -529,7 +527,7 @@ public class NewspaperController extends NationStatesController {
 			if (add != null) {
 				for (String nation : add.split(",")) {
 					final String format = Utils.sanitizeName(nation);
-					final int nationId = getDatabase().getNationIdCache().get(format);
+					final int nationId = getDatabase().getNationId(format);
 					if (nationId > -1) {
 						if (!existingEditors.contains(nationId)) {
 							PreparedStatement editors = conn.prepareStatement("INSERT INTO assembly.newspaper_editors (newspaper, nation_id) VALUES (?, ?)");
@@ -555,7 +553,7 @@ public class NewspaperController extends NationStatesController {
 						Utils.handleDefaultPostHeaders(request(), response());
 						return Results.ok(Json.toJson(errors)).as("application/json");
 					}
-					final int nationId = getDatabase().getNationIdCache().get(format);
+					final int nationId = getDatabase().getNationId(format);
 					if (nationId > -1) {
 						if (existingEditors.contains(nationId)) {
 							PreparedStatement editors = conn.prepareStatement("DELETE FROM assembly.newspaper_editors WHERE newspaper = ? AND nation_id = ?");
@@ -616,7 +614,7 @@ public class NewspaperController extends NationStatesController {
 				editors = conn.prepareStatement("SELECT nation_id FROM assembly.newspaper_editors WHERE newspaper = ?");
 				editors.setInt(1, newspaper);
 				set = editors.executeQuery();
-				final int nationId = getDatabase().getNationIdCache().get(Utils.sanitizeName(nation));
+				final int nationId = getDatabase().getNationId(nation);
 				boolean validEditor = false;
 				while (set.next()) {
 					if (set.getInt(1) == nationId) {
@@ -783,7 +781,7 @@ public class NewspaperController extends NationStatesController {
 			PreparedStatement editors = conn.prepareStatement("SELECT nation_id FROM assembly.newspaper_editors WHERE newspaper = ?");
 			editors.setInt(1, newspaper);
 			ResultSet set = editors.executeQuery();
-			final int nationId = getDatabase().getNationIdCache().get(Utils.sanitizeName(nation));
+			final int nationId = getDatabase().getNationId(nation);
 			while (set.next()) {
 				editorIds.add(set.getInt(1));
 			}
@@ -793,7 +791,7 @@ public class NewspaperController extends NationStatesController {
 			
 			validEditor |= editorIds.contains(nationId);
 
-			int submitterId = getDatabase().getNationIdCache().get(Utils.sanitizeName(nation));
+			int submitterId = getDatabase().getNationId(nation);
 			if (!validEditor || submitterId == -1) {
 				if (Integer.parseInt(visible) != Visibility.SUBMITTED.getType()) {
 					Utils.handleDefaultPostHeaders(request(), response());
@@ -882,12 +880,7 @@ public class NewspaperController extends NationStatesController {
 				getDatabase().getWebsocketManager().onUpdate(PageType.DEFAULT, rType, new DataRequest(rType, Collections.<String, Object> emptyMap()), getLatestUpdate(conn, newspaper));
 			}
 			//Send update to editors
-			getDatabase().getWebsocketManager().onUpdate(PageType.DEFAULT, RequestType.PENDING_NEWS_SUBMISSIONS, DataRequest.getBlankRequest(RequestType.PENDING_NEWS_SUBMISSIONS), getPendingSubmissions(conn, newspaper), new RequestFilter() {
-				@Override
-				public boolean isValidForRequest(NationContext context) {
-					return editorIds.contains(context.getNationId());
-				}
-			});
+			getDatabase().getWebsocketManager().onUpdate(PageType.DEFAULT, RequestType.PENDING_NEWS_SUBMISSIONS, DataRequest.getBlankRequest(RequestType.PENDING_NEWS_SUBMISSIONS), getPendingSubmissions(conn, newspaper), editorIds);
 		} finally {
 			DbUtils.closeQuietly(conn);
 		}

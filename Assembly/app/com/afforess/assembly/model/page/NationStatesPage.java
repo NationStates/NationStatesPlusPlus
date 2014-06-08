@@ -19,7 +19,7 @@ public abstract class NationStatesPage {
 			if (t == type)
 				return true;
 		}
-		return false;
+		return type == RequestType.KEEP_ALIVE;
 	}
 
 	public abstract void onRequest(RequestType type, DataRequest request);

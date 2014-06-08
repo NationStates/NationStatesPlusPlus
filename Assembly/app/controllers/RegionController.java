@@ -45,7 +45,7 @@ public class RegionController extends NationStatesController {
 
 	public Result getUpdateTime(String region, int std) throws SQLException, ExecutionException {
 		Connection conn = null;
-		int regionId = this.getDatabase().getRegionIdCache().get(Utils.sanitizeName(region));
+		int regionId = this.getDatabase().getRegionId(region);
 		if (regionId == -1) {
 			return Results.badRequest();
 		}
@@ -160,7 +160,7 @@ public class RegionController extends NationStatesController {
 		try {
 			conn = getConnection();
 			PreparedStatement statement = conn.prepareStatement("SELECT name, title, flag, influence, wa_member FROM assembly.nation WHERE alive = 1 AND region = ? ORDER BY update_order ASC");
-			statement.setInt(1, getDatabase().getRegionIdCache().get(Utils.sanitizeName(region)));
+			statement.setInt(1, getDatabase().getRegionId(region));
 			ResultSet result = statement.executeQuery();
 			while(result.next()) {
 				Map<String, Object> nation = new HashMap<String, Object>();
@@ -234,7 +234,7 @@ public class RegionController extends NationStatesController {
 			String[] split = regions.split(",");
 			for (int i = 0; i < split.length; i++) {
 				List<String> nations = new ArrayList<String>();
-				int regionId = getDatabase().getRegionIdCache().get(Utils.sanitizeName(split[i]));
+				int regionId = getDatabase().getRegionId(split[i]);
 				if (regionId != -1) {
 					PreparedStatement statement = conn.prepareStatement("SELECT name FROM assembly.nation WHERE alive = 1 AND region = ? ORDER BY update_order ASC");
 					statement.setInt(1, regionId);

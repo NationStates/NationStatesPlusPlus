@@ -36,7 +36,7 @@ public class WorldAssemblyController extends DatabaseController {
 		try {
 			conn = getConnection();
 			PreparedStatement statement = conn.prepareStatement("SELECT title, influence, influence_desc, count(e.endorsed) AS endorsements from assembly.nation AS n LEFT OUTER JOIN assembly.endorsements AS e ON n.id = e.endorsed WHERE alive = 1 AND wa_member = 1 AND region = ? GROUP BY title;");
-			statement.setInt(1, getDatabase().getRegionIdCache().get(Utils.sanitizeName(region)));
+			statement.setInt(1, getDatabase().getRegionId(region));
 			ResultSet result = statement.executeQuery();
 			while(result.next()) {
 				String nation = result.getString(1);
@@ -65,7 +65,7 @@ public class WorldAssemblyController extends DatabaseController {
 		try {
 			conn = getConnection();
 			PreparedStatement statement = conn.prepareStatement("SELECT n.title " + (fullData ? ", n.name, n.id, n.full_name, n.flag " : "") + "FROM assembly.nation AS n LEFT OUTER JOIN assembly.endorsements AS e ON n.id = e.endorsed WHERE e.endorser = ?");
-			statement.setInt(1, getDatabase().getNationIdCache().get(Utils.sanitizeName(name)));
+			statement.setInt(1, getDatabase().getNationId(name));
 			ResultSet result = statement.executeQuery();
 			while(result.next()) {
 				String title = result.getString(1);
@@ -88,7 +88,7 @@ public class WorldAssemblyController extends DatabaseController {
 		List<Object> nations = new ArrayList<Object>();
 		Connection conn = null; 
 		try {
-			int nationId = getDatabase().getNationIdCache().get(Utils.sanitizeName(name));
+			int nationId = getDatabase().getNationId(name);
 			HashSet<Integer> endorsements = new HashSet<Integer>();
 			conn = getConnection();
 			PreparedStatement statement = conn.prepareStatement("SELECT endorsed FROM assembly.endorsements WHERE endorser = ?");
@@ -125,7 +125,7 @@ public class WorldAssemblyController extends DatabaseController {
 		List<Object> nations = new ArrayList<Object>();
 		Connection conn = null; 
 		try {
-			int nationId = getDatabase().getNationIdCache().get(Utils.sanitizeName(name));
+			int nationId = getDatabase().getNationId(name);
 			HashSet<Integer> endorsements = new HashSet<Integer>();
 			conn = getConnection();
 			PreparedStatement statement = conn.prepareStatement("SELECT endorser FROM assembly.endorsements WHERE endorsed = ?");

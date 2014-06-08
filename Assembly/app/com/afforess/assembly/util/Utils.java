@@ -239,7 +239,7 @@ public class Utils {
 		String auth = Utils.getPostValue(request, "auth");
 		String reason = "UNKNOWN NATION ID";
 		try {
-			final int nationId = nation != null ? access.getNationIdCache().get(sanitizeName(nation)) : -1;
+			final int nationId = nation != null ? access.getNationId(nation) : -1;
 			if (nation != null && nationId != -1) {
 				if (authToken != null && access.isValidAuthToken(nationId, authToken)) {
 					return null;
@@ -329,7 +329,7 @@ public class Utils {
 			updateNation.setLong(6, data.lastLogin);
 			updateNation.setLong(7, System.currentTimeMillis());
 			updateNation.setByte(8, (byte)(data.worldAssemblyStatus != WAStatus.NON_MEMBER ? 1 : 0));
-			updateNation.setInt(9, access.getRegionIdCache().get(Utils.sanitizeName(data.region)));
+			updateNation.setInt(9, access.getRegionId(data.region));
 			updateNation.setInt(10, id);
 			updateNation.executeUpdate();
 			DbUtils.closeQuietly(updateNation);
@@ -416,7 +416,7 @@ public class Utils {
 			PreparedStatement endorsements = conn.prepareStatement("INSERT INTO assembly.endorsements (endorser, endorsed) VALUES (?, ?)");
 			for (String endorsed : data.endorsements) {
 				if (endorsed.trim().length() > 0) {
-					endorsements.setInt(1, access.getNationIdCache().get(endorsed));
+					endorsements.setInt(1, access.getNationId(endorsed));
 					endorsements.setInt(2, nationId);
 					endorsements.addBatch();
 				}
@@ -447,4 +447,5 @@ public class Utils {
 			conn.setAutoCommit(true);
 		}
 	}
+
 }

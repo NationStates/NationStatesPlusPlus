@@ -28,7 +28,7 @@ public class NationController extends NationStatesController {
 
 	public Result retrieveSettings(String name) throws SQLException, ExecutionException {
 		Utils.handleDefaultPostHeaders(request(), response());
-		final int nationId = getDatabase().getNationIdCache().get(Utils.sanitizeName(name));
+		final int nationId = getDatabase().getNationId(name);
 		if (nationId == -1) {
 			return Results.badRequest();
 		}
@@ -48,7 +48,7 @@ public class NationController extends NationStatesController {
 	}
 
 	private Result getLastUpdate(String column, String name) throws SQLException, ExecutionException {
-		final int nationId = getDatabase().getNationIdCache().get(Utils.sanitizeName(name));
+		final int nationId = getDatabase().getNationId(name);
 		if (nationId == -1) {
 			Utils.handleDefaultPostHeaders(request(), response());
 			return Results.badRequest();
@@ -86,7 +86,7 @@ public class NationController extends NationStatesController {
 		Utils.handleDefaultPostHeaders(request(), response());
 		final String nation = Utils.getPostValue(request(), "nation");
 		final String settings = Utils.getPostValue(request(), "settings");
-		final int nationId = getDatabase().getNationIdCache().get(Utils.sanitizeName(nation));
+		final int nationId = getDatabase().getNationId(nation);
 		if (nationId == -1 || settings == null) {
 			return Results.badRequest();
 		}
@@ -129,7 +129,7 @@ public class NationController extends NationStatesController {
 		}
 		Utils.handleDefaultPostHeaders(request(), response());
 		final String nation = Utils.getPostValue(request(), "nation");
-		final int nationId = getDatabase().getNationIdCache().get(Utils.sanitizeName(nation));
+		final int nationId = getDatabase().getNationId(nation);
 		if (nationId == -1) {
 			return Results.badRequest();
 		}
@@ -162,7 +162,7 @@ public class NationController extends NationStatesController {
 		}
 		HashMap<String, Object> data = new HashMap<String, Object>();
 		
-		final int nationId = getDatabase().getNationIdCache().get(Utils.sanitizeName(Utils.getPostValue(request(), "nation")));
+		final int nationId = getDatabase().getNationId(Utils.getPostValue(request(), "nation"));
 		Connection conn = null;
 		try {
 			conn = getConnection();
@@ -195,7 +195,7 @@ public class NationController extends NationStatesController {
 		Utils.handleDefaultPostHeaders(request(), response());
 		final String nation = Utils.getPostValue(request(), "nation");
 		final String data = Utils.getPostValue(request(), "data");
-		final int nationId = getDatabase().getNationIdCache().get(Utils.sanitizeName(nation));
+		final int nationId = getDatabase().getNationId(nation);
 		if (nationId == -1 || data == null) {
 			return Results.badRequest();
 		}

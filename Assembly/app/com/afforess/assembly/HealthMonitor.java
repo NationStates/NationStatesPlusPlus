@@ -104,20 +104,7 @@ public class HealthMonitor extends Thread {
 			}
 
 			if (unresponsive || !sqlAlive) {
-				Logger.error("Attempting Application Restart.");
-				try { Play.stop(); } catch (Throwable t) { Logger.error("Error stopping play!", t); }
-				try {
-					(new File("RUNNING_PID")).delete();
-					ProcessBuilder builder = new ProcessBuilder();
-					builder.command(restartCommand.split(","));
-					builder.redirectOutput(Redirect.INHERIT);
-					builder.redirectError(Redirect.INHERIT);
-					builder.redirectInput(Redirect.INHERIT);
-					builder.start();
-					System.exit(0);
-				} catch (Throwable t) {
-					Logger.error("Unable to restart application!", t);
-				}
+				doRestart();
 			} else {
 				cleanUpCaches();
 			}
@@ -127,6 +114,23 @@ public class HealthMonitor extends Thread {
 				Logger.warn("Health Monitoring Interrupted", e);
 				return;
 			}
+		}
+	}
+
+	public void doRestart() {
+		Logger.error("Attempting Application Restart.");
+		try { Play.stop(); } catch (Throwable t) { Logger.error("Error stopping play!", t); }
+		try {
+			(new File("RUNNING_PID")).delete();
+			ProcessBuilder builder = new ProcessBuilder();
+			builder.command(restartCommand.split(","));
+			builder.redirectOutput(Redirect.INHERIT);
+			builder.redirectError(Redirect.INHERIT);
+			builder.redirectInput(Redirect.INHERIT);
+			builder.start();
+			System.exit(0);
+		} catch (Throwable t) {
+			Logger.error("Unable to restart application!", t);
 		}
 	}
 

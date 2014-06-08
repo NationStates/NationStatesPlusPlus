@@ -175,7 +175,7 @@ public class HappeningsTask implements Runnable {
 				if (match.find()) {
 					String title = text.substring(match.start() + 2, match.end() - 2);
 					nation = Utils.sanitizeName(title);
-					nationId = access.getNationIdCache().get(nation);
+					nationId = access.getNationId(nation);
 					if (nationId == -1) {
 						PreparedStatement insert = conn.prepareStatement("INSERT INTO assembly.nation (name, title, full_name, region, first_seen, wa_member) VALUES (?, ?, ?, ?, ?, 2)", Statement.RETURN_GENERATED_KEYS);
 						insert.setString(1, nation);
@@ -201,7 +201,7 @@ public class HappeningsTask implements Runnable {
 					if (match.find()) {
 						String title = text.substring(match.start() + 2, match.end() - 2);
 						String otherNation = Utils.sanitizeName(title);
-						addEndorsement(conn, access.getNationIdCache().get(otherNation), nationId);
+						addEndorsement(conn, access.getNationId(otherNation), nationId);
 
 						//Add *was endorsed by* to db
 						happeningInsert.setInt(1, access.getNationIdCache().get(otherNation));
@@ -262,7 +262,7 @@ public class HappeningsTask implements Runnable {
 					//Update region
 					Matcher regions = Utils.REGION_PATTERN.matcher(text);
 					if(regions.find()) {
-						final int regionId = access.getRegionIdCache().get(text.substring(regions.start() + 2, regions.end() - 2));
+						final int regionId = access.getRegionId(text.substring(regions.start() + 2, regions.end() - 2));
 						if (regionId > -1) {					
 							PreparedStatement update = conn.prepareStatement("UPDATE assembly.nation SET region = ?, wa_member = 2, puppet = ? WHERE id = ?");
 							update.setInt(1, regionId);
@@ -312,7 +312,7 @@ public class HappeningsTask implements Runnable {
 	public static void abolishRegionFlag(Connection conn, DatabaseAccess access, String happening) throws SQLException, ExecutionException {
 		Matcher regions = Utils.REGION_PATTERN.matcher(happening);
 		if (regions.find()) {
-			int region = access.getRegionIdCache().get(happening.substring(regions.start() + 2, regions.end() - 2));
+			int region = access.getRegionId(happening.substring(regions.start() + 2, regions.end() - 2));
 			if (region > -1) {
 				PreparedStatement updateFlag = conn.prepareStatement("UPDATE assembly.region SET flag = ? WHERE id = ?");
 				updateFlag.setString(1, "");
@@ -329,7 +329,7 @@ public class HappeningsTask implements Runnable {
 		List<Integer> regionIds = new ArrayList<Integer>(2);
 		Matcher regions = Utils.REGION_PATTERN.matcher(happening);
 		while(regions.find()) {
-			regionIds.add(access.getRegionIdCache().get(happening.substring(regions.start() + 2, regions.end() - 2)));
+			regionIds.add(access.getRegionId(happening.substring(regions.start() + 2, regions.end() - 2)));
 		}
 		if (regionIds.size() == 0 && nationId > -1) {
 			PreparedStatement select = conn.prepareStatement("SELECT region FROM assembly.nation WHERE id = ?");

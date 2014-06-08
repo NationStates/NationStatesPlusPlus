@@ -95,4 +95,12 @@ public class AdminController extends DatabaseController {
 		health.invalidateCaches();
 		return ok("All cache's invalidated");
 	}
+
+	public Result doRestart(String code) throws SQLException, ExecutionException, InterruptedException {
+		if (!code.equals(adminCode)) {
+			return Results.badRequest();
+		}
+		health.doRestart();
+		return ok("Restarting!");
+	}
 }

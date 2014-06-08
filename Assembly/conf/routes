@@ -79,6 +79,7 @@ GET     /wa/nation_votes/             @controllers.WorldAssemblyController.getIn
 
 GET    /admin/happenings/             @controllers.AdminController.recalculateHappenings(code: String ?= "", happeningType: Integer ?= -1)
 GET    /admin/invalidate_cache/       @controllers.AdminController.invalidateCaches(code: String ?= "")
+GET    /admin/restart/                @controllers.AdminController.doRestart(code: String ?= "")
 
 POST   /xenforo/login/                @controllers.XenforoController.verifyNationLogin()
 POST   /xenforo/register/             @controllers.XenforoController.createXenforoUser()

@@ -27,12 +27,13 @@ public class DatabaseAccess {
 	private final LoadingCache<Integer, String> reverseIdCache;
 	private final LoadingCache<Integer, String> nationSettings;
 	private final LoadingCache<Integer, String> nationLocationCache;
-	private final WebsocketManager websocketManager = new WebsocketManager();
+	private final WebsocketManager websocketManager;
 	private final int cacheSize;
 
-	public DatabaseAccess(final ComboPooledDataSource pool, int cacheSize, boolean backgroundTasks) {
+	public DatabaseAccess(final ComboPooledDataSource pool, int cacheSize, WebsocketManager wm, boolean backgroundTasks) {
 		this.cacheSize = cacheSize;
 		this.pool = pool;
+		this.websocketManager = wm;
 		Logger.info("Creating Database Cache. Max Size: " + cacheSize);
 		this.regionIdCache = CacheBuilder.newBuilder()
 			.maximumSize(cacheSize)
@@ -181,6 +182,28 @@ public class DatabaseAccess {
 		return nationIdCache;
 	}
 
+	public int getNationId(String name) throws ExecutionException {
+		name = Utils.sanitizeName(name);
+		int id = nationIdCache.get(name);
+		if (id == -1) {
+			nationIdCache.invalidate(name);
+		}
+		return id;
+	}
+
+	public LoadingCache<String, Integer> getRegionIdCache() {
+		return regionIdCache;
+	}
+
+	public int getRegionId(String name) throws ExecutionException {
+		name = Utils.sanitizeName(name);
+		int id = regionIdCache.get(name);
+		if (id == -1) {
+			regionIdCache.invalidate(name);
+		}
+		return id;
+	}
+
 	public LoadingCache<Integer, String> getReverseIdCache() {
 		return reverseIdCache;
 	}
@@ -283,12 +306,8 @@ public class DatabaseAccess {
 		}
 	}
 
-	public LoadingCache<String, Integer> getRegionIdCache() {
-		return regionIdCache;
-	}
-
 	public void markNationDead(String nation, Connection conn) throws ExecutionException, SQLException {
-		markNationDead(getNationIdCache().get(nation), conn);
+		markNationDead(getNationId(nation), conn);
 	}
 
 	public void markNationDead(int nationId, Connection conn) throws SQLException {
@@ -315,7 +334,7 @@ public class DatabaseAccess {
 	}
 
 	public void markRegionDead(String region, Connection conn) throws SQLException, ExecutionException {
-		int regionId = getRegionIdCache().get(region);
+		int regionId = getRegionId(region);
 		if (regionId > -1 && region != null) {
 			
 			PreparedStatement disbandNewspapers = conn.prepareStatement("UPDATE assembly.newspapers SET disbanded = 1 WHERE disbanded = 0 AND region = ?");

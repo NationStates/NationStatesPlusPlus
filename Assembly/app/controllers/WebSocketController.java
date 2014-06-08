@@ -28,6 +28,6 @@ public class WebSocketController extends DatabaseController {
 		if (nation.isEmpty() || region.isEmpty()) return null;
 		region = Utils.sanitizeName(region);
 		nation = Utils.sanitizeName(nation);
-		return new NationStatesWebSocket(this.getDatabase(), new RegionPage(region, getDatabase().getRegionIdCache().get(region)), nation);
+		return new NationStatesWebSocket(this.getDatabase(), new RegionPage(region, getDatabase().getRegionId(region)), nation);
 	}
 }

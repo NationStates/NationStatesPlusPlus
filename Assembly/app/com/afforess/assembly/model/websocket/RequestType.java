@@ -22,6 +22,7 @@ import controllers.RMBController;
 import controllers.RegionController;
 
 public enum RequestType {
+	KEEP_ALIVE("keep_alive"),
 	REGION_TITLE("region_titles"),
 	REGION_MAP("region_map"),
 	REGION_UPDATES("region_updates"),
@@ -84,9 +85,12 @@ public enum RequestType {
 		return nodes;
 	}
 
+	private static final List<JsonNode> KEEP_ALIVE_RESPONSE = toSimpleResult("alive");
 	private List<JsonNode> executeRequestImpl(Connection conn, DataRequest request, NationContext context) throws SQLException, ExecutionException {
 		final NationStatesPage page = context.getActivePage();
 		switch(this) {
+			case KEEP_ALIVE:
+				return KEEP_ALIVE_RESPONSE;
 			case REGION_TITLE:
 				if (page instanceof RegionPage) {
 					return toList(RegionController.getRegionalTitles(conn, ((RegionPage)page).getRegion()));
@@ -111,7 +115,7 @@ public enum RequestType {
 				if (request != null) {
 					Integer postId = request.getValue("rmb_post_id", null, Integer.class);
 					if (postId != null) {
-						return toList(RMBController.calculatePostRatings(conn, postId));
+						return toList(RMBController.calculateTotalPostRatings(conn, postId));
 					}
 				}
 				return generateError("invalid post id", request);
@@ -179,7 +183,7 @@ public enum RequestType {
 		return r;
 	}
 
-	private List<JsonNode> toSimpleResult(String msg){
+	private static List<JsonNode> toSimpleResult(String msg){
 		HashMap<String, String> result = new HashMap<String, String>(1);
 		result.put("result", msg);
 		return toList(Json.toJson(result));

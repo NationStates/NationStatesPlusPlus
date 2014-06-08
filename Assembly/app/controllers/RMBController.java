@@ -56,7 +56,7 @@ public class RMBController extends NationStatesController {
 			return Results.badRequest();
 		}
 		final String nation = Utils.sanitizeName(Utils.getPostValue(request(), "nation"));
-		final int nationId = getDatabase().getNationIdCache().get(nation);
+		final int nationId = getDatabase().getNationId(nation);
 		if (nationId == -1) {
 			return Results.badRequest();
 		}
@@ -105,7 +105,7 @@ public class RMBController extends NationStatesController {
 		update.executeUpdate();
 		DbUtils.closeQuietly(update);
 
-		return calculatePostRatings(conn, rmbPost);
+		return calculateTotalPostRatings(conn, rmbPost);
 	}
 
 	private static Function<JsonNode, Promise<Result>> getAsyncResult(final Request request, final Response response, final String cacheLen) {
@@ -178,6 +178,7 @@ public class RMBController extends NationStatesController {
 		*/
 	}
 
+	@Deprecated
 	public static JsonNode calculatePostRatings(Connection conn, int rmbPost) throws SQLException {
 		List<Map<String, String>> list = new ArrayList<Map<String, String>>();
 		PreparedStatement select = conn.prepareStatement("SELECT nation_name, rating_type FROM assembly.rmb_ratings WHERE rmb_post = ?");
@@ -193,6 +194,26 @@ public class RMBController extends NationStatesController {
 		DbUtils.closeQuietly(result);
 		DbUtils.closeQuietly(select);
 		return Json.toJson(list);
+	}
+
+	public static JsonNode calculateTotalPostRatings(Connection conn, int rmbPost) throws SQLException {
+		List<Map<String, String>> list = new ArrayList<Map<String, String>>();
+		PreparedStatement select = conn.prepareStatement("SELECT nation_name, rating_type FROM assembly.rmb_ratings WHERE rmb_post = ?");
+		select.setInt(1, rmbPost);
+		ResultSet result = select.executeQuery();
+		while(result.next()) {
+			Map<String, String> ratings = new HashMap<String, String>(2);
+			ratings.put("nation", result.getString(1));
+			ratings.put("type", String.valueOf(result.getInt(2)));
+			list.add(ratings);
+		}
+		DbUtils.closeQuietly(result);
+		DbUtils.closeQuietly(select);
+		
+		Map<String, Object> postRatings = new HashMap<String, Object>();
+		postRatings.put("rmb_post", rmbPost);
+		postRatings.put("ratings", list);
+		return Json.toJson(postRatings);
 	}
 
 	public Result getRMBCache(String region) throws SQLException, ExecutionException {
@@ -328,7 +349,7 @@ public class RMBController extends NationStatesController {
 			return invalid;
 		}
 		String nation = Utils.getPostValue(request(), "nation");
-		final int nationId = getDatabase().getNationIdCache().get(Utils.sanitizeName(nation));
+		final int nationId = getDatabase().getNationId(nation);
 		Connection conn = getConnection();
 		if (getRMBCommentNation(conn, commentId) == nationId) {
 			Utils.handleDefaultGetHeaders(request(), response(), null, "0");
@@ -372,7 +393,7 @@ public class RMBController extends NationStatesController {
 			return invalid;
 		}
 		String nation = Utils.getPostValue(request(), "nation");
-		final int nationId = getDatabase().getNationIdCache().get(Utils.sanitizeName(nation));
+		final int nationId = getDatabase().getNationId(nation);
 		Connection conn = getConnection();
 		if (getRMBCommentNation(conn, commentId) == nationId) {
 			Utils.handleDefaultGetHeaders(request(), response(), null, "0");
@@ -421,7 +442,7 @@ public class RMBController extends NationStatesController {
 			return Results.badRequest();
 		}
 		final String nation = Utils.getPostValue(request(), "nation");
-		final int nationId = getDatabase().getNationIdCache().get(Utils.sanitizeName(nation));
+		final int nationId = getDatabase().getNationId(nation);
 		Connection conn = getConnection();
 		try {
 			PreparedStatement select = conn.prepareStatement("SELECT timestamp FROM assembly.rmb_comments WHERE rmb_message_id = ? AND nation_id = ? AND timestamp > ?");

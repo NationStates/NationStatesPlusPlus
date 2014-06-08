@@ -9,7 +9,6 @@ import org.apache.commons.dbutils.DbUtils;
 
 import com.afforess.assembly.model.page.NationStatesPage;
 import com.afforess.assembly.util.DatabaseAccess;
-import com.afforess.assembly.util.Utils;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import play.Logger;
@@ -29,7 +28,7 @@ public final class NationStatesWebSocket extends WebSocket<JsonNode>{
 		this.activePage = page;
 		this.nation = nation;
 		try {
-			this.nationId = access.getNationIdCache().get(Utils.sanitizeName(this.nation));
+			this.nationId = access.getNationId(this.nation);
 			if (nationId > -1) {
 				settings = NationSettings.parse(access.getNationSettingsCache().get(nationId));
 			} else {

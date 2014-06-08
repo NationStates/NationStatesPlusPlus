@@ -1,4 +1,5 @@
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -11,6 +12,7 @@ import org.spout.cereal.config.yaml.YamlConfiguration;
 
 import akka.dispatch.MessageDispatcher;
 
+import com.afforess.assembly.AMQPThread;
 import com.afforess.assembly.DailyDumps;
 import com.afforess.assembly.NSWikiTask;
 import com.afforess.assembly.NationUpdateTask;
@@ -20,12 +22,17 @@ import com.afforess.assembly.HealthMonitor;
 import com.afforess.assembly.Start;
 import com.afforess.assembly.UpdateOrderTask;
 import com.afforess.assembly.WorldAssemblyTask;
+import com.afforess.assembly.model.AMQPQueue;
+import com.afforess.assembly.model.EmptyAMQPQueue;
 import com.afforess.assembly.model.HappeningType;
+import com.afforess.assembly.model.websocket.WebsocketManager;
 import com.afforess.assembly.util.DatabaseAccess;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.google.common.collect.ObjectArrays;
 import com.limewoodMedia.nsapi.NationStates;
 import com.mchange.v2.c3p0.ComboPooledDataSource;
+import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.ConnectionFactory;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 
@@ -51,11 +58,16 @@ public class Global extends GlobalSettings {
 	public void onStart(Application app) {
 		config = Start.loadConfig();
 		ConfigurationNode settings = config.getChild("settings");
+
+		Logger.info("Beginning NationStates++ Application Server Startup [Server: " + settings.getChild("server-name").getString() + "]");
+
 		pool = Start.loadDatabase(settings);
 		if (pool == null) {
 			Logger.error("Unable to connect to database");
 			return;
 		}
+
+		Logger.info("NationStates++ Database Connection Pool Initialized.");
 
 		Connection conn = null;
 		try {
@@ -67,23 +79,62 @@ public class Global extends GlobalSettings {
 			DbUtils.closeQuietly(conn);
 		}
 
+		Logger.info("NationStates++ Happening Types Initialized.");
+
 		final boolean backgroundTasks = settings.getChild("background-tasks").getBoolean(true);
-		Logger.info("Application started with background tasks " + (backgroundTasks ? "ENABLED" : "DISABLED"));
+		Logger.info("NationStates++ Background Tasks: [ " + (backgroundTasks ? "ENABLED ]" : "DISABLED ]"));
 
 		api = new NationStates();
 		api.setRateLimit(49);
 		api.setUserAgent(settings.getChild("User-Agent").getString());
 		api.setRelaxed(true);
-		this.access = new DatabaseAccess(pool, settings.getChild("cache-size").getInt(1000), backgroundTasks);
+		
+		Logger.info("NationStates++ API Initialized.");
+	
+		WebsocketManager manager;
+		AMQPQueue queue;
+		ConfigurationNode rabbitmq = config.getChild("rabbit-mq");
+		if (rabbitmq != null) {
+			ConnectionFactory factory = new ConnectionFactory();
+			factory.setUsername(rabbitmq.getChild("user").getString());
+			factory.setPassword(rabbitmq.getChild("password").getString());
+			factory.setHost(rabbitmq.getChild("host").getString());
+			factory.setPort(rabbitmq.getChild("port").getInt());
+			try {
+				com.rabbitmq.client.Connection amqpConn = factory.newConnection();
+				queue = new AMQPThread(amqpConn.createChannel(), settings.getChild("server-name").getString());
+				((AMQPThread)queue).start();
+				
+				manager =  new WebsocketManager(queue, settings.getChild("server-name").getString());
+				Channel channel = amqpConn.createChannel();
+				
+				String serverName = settings.getChild("server-name").getString();
+				channel.queueDeclare(serverName, false, false, false, null);
+				channel.queueBind(serverName, "nspp", serverName);
+				Logger.info("Created Rabbitmq Queue");
+				channel.basicConsume(serverName, true, manager);
+
+				Logger.info("NationStates++ RabbitMQ Connection Initialized.");
+			} catch (IOException e) {
+				Logger.error("Error initializing rabbitmq", e);
+				return;
+			}
+		} else {
+			Logger.warn("No rabbitmq configuration set. Rabbitmq will not be used.");
+			queue = new EmptyAMQPQueue();
+			manager = new WebsocketManager(queue, settings.getChild("server-name").getString());
+		}
+
+		this.access = new DatabaseAccess(pool, settings.getChild("cache-size").getInt(1000), manager, backgroundTasks);
 
 		//Setup health monitoring
 		HealthMonitor health = null;
 		if (config.getChild("health").getChild("monitor").getBoolean()) {
-			Logger.info("Application Health Monitoring - ENABLED");
+			Logger.info("NationStates++ Health Monitoring: [ ENABLED ]");
 			health = new HealthMonitor(config.getChild("health"), access, backgroundTasks);
 			health.start();
 		} else {
-			Logger.info("Application Health Monitoring - DISABLED");
+			Logger.info("NationStates++ Health Monitoring [ DISABLED ]");
 		}
 
 		this.admin = new AdminController(access, config, health);
@@ -113,6 +164,7 @@ public class Global extends GlobalSettings {
 			Akka.system().scheduler().schedule(Duration.create(120, TimeUnit.SECONDS), Duration.create(60, TimeUnit.SECONDS), new NSWikiTask(access, config), nsTasks); // 0 api calls
 			Akka.system().scheduler().scheduleOnce(Duration.create(120, TimeUnit.SECONDS), new WorldAssemblyTask(access, api, 0), nsTasks);
 			Akka.system().scheduler().scheduleOnce(Duration.create(160, TimeUnit.SECONDS), new WorldAssemblyTask(access, api, 1), nsTasks);
+			Logger.info("NationStates++ Background Tasks Initialized.");
 		}
 	}
 
