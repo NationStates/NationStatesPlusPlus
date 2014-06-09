@@ -68,10 +68,17 @@
 			for (var nation in data) {
 				categoryTitles.push(nation);   
 			}
-			var sortNames = function(a, b) {
-				return data[b].endorsements - data[a].endorsements;
-			};
-			categoryTitles.sort(sortNames);
+			if (showInfluence) {
+				var sortNames = function(a, b) {
+					return data[b].influence - data[a].influence;
+				};
+				categoryTitles.sort(sortNames);
+			} else {
+				var sortNames = function(a, b) {
+					return data[b].endorsements - data[a].endorsements;
+				};
+				categoryTitles.sort(sortNames);
+			}
 			for (var i = 0; i < categoryTitles.length; i++) {
 				var nation = data[categoryTitles[i]];
 				endorsements.push(nation.endorsements);

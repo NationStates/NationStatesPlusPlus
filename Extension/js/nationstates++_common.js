@@ -799,18 +799,12 @@ function getPageDetail() {
 	return "";
 }
 
-var _isPageActive;
-window.onfocus = function () { 
-	_isPageActive = true; 
-	_lastPageActivity = Date.now()
-}; 
-
-window.onblur = function () { 
-	_isPageActive = false; 
-};
-
 function isPageActive() {
-	return _isPageActive;
+	var hidden = false;
+	if (document.mozHidden) hidden = true;
+	if (document.webkitHidden) hidden = true;
+	if (document.hidden) hidden = true;
+	return !hidden;
 }
 
 var _lastPageActivity;
@@ -818,13 +812,10 @@ function getLastActivity() {
 	if (!_lastPageActivity) {
 		$("#main").mousemove(function (c) {
 			_lastPageActivity = Date.now();
-			console.log("Mouse Move");
 		}).mousedown(function (c) {
 			_lastPageActivity = Date.now();
-			console.log("Mouse Down");
 		}).mouseup(function (c) {
 			_lastPageActivity = Date.now();
-			console.log("Mouse Up");
 		});
 		_lastPageActivity = Date.now()
 	}
@@ -1154,4 +1145,40 @@ function timestampToTimeAgo(timestamp) {
 	}
 	time = time.substring(0, time.length - 1);
 	return time;
+}
+
+function getRSSPrivateKey(recalculate, callback) {
+	if (!recalculate) {
+		var cached = localStorage.getItem("rss-priv-key-" + getUserNation());
+		if (cached != null) {
+			callback(cached);
+			return;
+		}
+	}
+
+	var grabKey = function(data) {
+		var rss = $(data).find("form[action='page=subscribe'] ul li:first a").attr("href");
+		var key = rss.split("=")[rss.split("=").length - 1];
+		if (key != null) {
+			localStorage.setItem("rss-priv-key-" + getUserNation(), key);
+		}
+		return key;
+	}
+
+	$.get("//www.nationstates.net/page=subscribe?nspp=1", function(html) {
+		if ($(html).find("input[name='generate_feed']").length > 0) {
+			console.log("no rss feed, generating");
+			$.post("//www.nationstates.net/page=subscribe/page=subscribe?nspp=1", "generate_feed=Generate+News+Feed", function(data) {
+				if ($(data).find("p.info").length > 0) {
+					localStorage.removeItem(getUserNation() + "-auth-token-v2");
+					callback(grabKey(data));
+				} else {
+					console.log("Error turning on rss feed");
+					console.log(data);
+				}
+			});
+		} else {
+			callback(grabKey(html));
+		}
+	});
 }

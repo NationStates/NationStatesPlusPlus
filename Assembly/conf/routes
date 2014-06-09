@@ -88,3 +88,4 @@ POST   /nswiki/login/                 @controllers.NSWikiController.verifyNation
 
 GET    /ws/                           @controllers.WebSocketController.index(nation: String ?= "")
 GET    /ws/region/                    @controllers.WebSocketController.region(nation: String ?= "", region: String ?= "")
+GET    /ws/nation/                    @controllers.WebSocketController.nation(nation: String ?= "", visibleNation: String ?= "")

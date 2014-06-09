@@ -15,14 +15,12 @@ import com.afforess.assembly.model.page.AMQPMessage;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Charsets;
 import com.rabbitmq.client.AMQP.BasicProperties;
 import com.rabbitmq.client.Consumer;
 import com.rabbitmq.client.Envelope;
 import com.rabbitmq.client.ShutdownSignalException;
 
 public class WebsocketManager implements Consumer {
-	private final ConcurrentHashMap<Integer, Set<NationStatesWebSocket>> websockets = new ConcurrentHashMap<Integer, Set<NationStatesWebSocket>>();
 	private final ConcurrentHashMap<PageType, Set<NationStatesWebSocket>> pages = new ConcurrentHashMap<PageType, Set<NationStatesWebSocket>>();
 	private final AMQPQueue queue;
 	private final ObjectMapper mapper = new ObjectMapper();
@@ -36,23 +34,20 @@ public class WebsocketManager implements Consumer {
 	}
 
 	protected void register(NationStatesWebSocket socket, WebSocket.In<JsonNode> in) {
-		if (socket.getNationId() > -1) {
-			Set<NationStatesWebSocket> sockets = websockets.get(socket.getNationId());
-			if (sockets == null) {
-				sockets = new HashSet<NationStatesWebSocket>();
-				Set<NationStatesWebSocket> set = websockets.putIfAbsent(socket.getNationId(), sockets);
-				if (set != null)
-					sockets = set;
-			}
+		Set<NationStatesWebSocket> set = pages.get(socket.getPageType());
+		synchronized(set) {
+			set.add(socket);
+			in.onClose(new UnregisterCallback(socket));
+		}
+		
+		int total = 0;
+		for (PageType page : PageType.values()) {
+			Set<NationStatesWebSocket> sockets = pages.get(page);
 			synchronized(sockets) {
-				sockets.add(socket);
-				in.onClose(new UnregisterCallback(socket.getNationId(), socket));
-			}
-			Set<NationStatesWebSocket> set = pages.get(socket.getPageType());
-			synchronized(set) {
-				set.add(socket);
+				total += sockets.size();
 			}
 		}
+		Logger.info("Currently " + total + " registered websockets");
 	}
 
 	/*
@@ -104,19 +99,13 @@ public class WebsocketManager implements Consumer {
 	}
 
 	private class UnregisterCallback implements Callback0 {
-		private final int nationId;
 		private final NationStatesWebSocket socket;
-		UnregisterCallback(int nationId, NationStatesWebSocket socket) {
-			this.nationId = nationId;
+		UnregisterCallback(NationStatesWebSocket socket) {
 			this.socket = socket;
 		}
 
 		@Override
 		public void invoke() throws Throwable {
-			Set<NationStatesWebSocket> sockets = websockets.get(nationId);
-			synchronized(sockets) {
-				sockets.remove(socket);
-			}
 			Set<NationStatesWebSocket> set = pages.get(socket.getPageType());
 			synchronized(set) {
 				set.remove(socket);
@@ -139,12 +128,9 @@ public class WebsocketManager implements Consumer {
 	@Override
 	public void handleDelivery(String consumerTag, Envelope envelope, BasicProperties properties, byte[] body) throws IOException {
 		AMQPMessage message = mapper.readValue(body, new TypeReference<AMQPMessage>() {});
-		Logger.info("Received rabbitmq message: " + new String(body, Charsets.UTF_8));
 		if (!serverName.equals(message.getServerName())) {
 			WebsocketMessage contents = mapper.readValue(message.getMessage().toString(), new TypeReference<WebsocketMessage>() { });
 			onUpdate(contents.getPage(), contents.getType(), contents.getRequest(), contents.getNode(), contents.getNations(), false);
-		} else {
-			Logger.warn("Received rabbitmq message from ourselves: " + new String(body, Charsets.UTF_8));
 		}
 	}
 

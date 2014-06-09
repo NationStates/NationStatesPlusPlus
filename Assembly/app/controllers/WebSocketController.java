@@ -5,6 +5,7 @@ import java.util.concurrent.ExecutionException;
 import org.spout.cereal.config.yaml.YamlConfiguration;
 
 import com.afforess.assembly.model.page.DefaultPage;
+import com.afforess.assembly.model.page.NationPage;
 import com.afforess.assembly.model.page.RegionPage;
 import com.afforess.assembly.model.websocket.NationStatesWebSocket;
 import com.afforess.assembly.util.DatabaseAccess;
@@ -29,5 +30,12 @@ public class WebSocketController extends DatabaseController {
 		region = Utils.sanitizeName(region);
 		nation = Utils.sanitizeName(nation);
 		return new NationStatesWebSocket(this.getDatabase(), new RegionPage(region, getDatabase().getRegionId(region)), nation);
+	}
+
+	public WebSocket<JsonNode> nation(String nation, String visibleNation) throws ExecutionException {
+		if (nation.isEmpty() || visibleNation.isEmpty()) return null;
+		visibleNation = Utils.sanitizeName(visibleNation);
+		nation = Utils.sanitizeName(nation);
+		return new NationStatesWebSocket(this.getDatabase(), new NationPage(visibleNation, getDatabase().getNationId(visibleNation)), nation);
 	}
 }

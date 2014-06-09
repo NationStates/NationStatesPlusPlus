@@ -3,8 +3,6 @@ package com.afforess.assembly.model.page;
 import java.util.HashSet;
 import java.util.Set;
 
-import play.Logger;
-
 import com.afforess.assembly.model.websocket.DataRequest;
 import com.afforess.assembly.model.websocket.PageType;
 import com.afforess.assembly.model.websocket.RequestType;
@@ -31,11 +29,10 @@ public class RegionPage extends NationStatesPage {
 	public boolean isValidUpdate(RequestType type, DataRequest request) {
 		if (type == RequestType.RMB_RATINGS) {
 			Integer rmbPost = request.getValue("rmb_post_id", null, Integer.class);
-			Logger.info("RMB update check: " + rmbPosts + " postId: " + rmbPost);
 			if (rmbPost != null) {
 				return rmbPosts.contains(rmbPost);
 			}
-		} else if (type == RequestType.RMB_POST) {
+		} else if (type == RequestType.RMB_MESSAGE || type == RequestType.REGION_HAPPENINGS) {
 			return regionId == request.getValue("region", null, Integer.class);
 		}
 		return super.isValidUpdate(type, request);

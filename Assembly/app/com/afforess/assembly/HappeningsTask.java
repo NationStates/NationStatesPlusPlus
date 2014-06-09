@@ -6,6 +6,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -18,8 +19,12 @@ import org.apache.http.conn.HttpHostConnectException;
 import org.joda.time.Duration;
 
 import play.Logger;
+import play.libs.Json;
 
 import com.afforess.assembly.model.HappeningType;
+import com.afforess.assembly.model.websocket.DataRequest;
+import com.afforess.assembly.model.websocket.PageType;
+import com.afforess.assembly.model.websocket.RequestType;
 import com.afforess.assembly.util.DatabaseAccess;
 import com.afforess.assembly.util.Utils;
 import com.google.common.cache.Cache;
@@ -193,6 +198,8 @@ public class HappeningsTask implements Runnable {
 						DbUtils.closeQuietly(insert);
 					}
 				}
+				
+				
 
 				final int happeningType = HappeningType.match(text);
 				final HappeningType type = HappeningType.getType(happeningType);
@@ -204,11 +211,15 @@ public class HappeningsTask implements Runnable {
 						addEndorsement(conn, access.getNationId(otherNation), nationId);
 
 						//Add *was endorsed by* to db
-						happeningInsert.setInt(1, access.getNationIdCache().get(otherNation));
+						happeningInsert.setInt(1, access.getNationId(otherNation));
 						happeningInsert.setString(2, "@@" + otherNation + "@@ was endorsed by @@" + nation + "@@.");
 						happeningInsert.setLong(3, timestamp);
 						happeningInsert.setInt(4, happeningType);
 						happeningInsert.executeUpdate();
+						
+						HashMap<String, Object> dataRequest = new HashMap<String, Object>();
+						dataRequest.put("nation", access.getNationId(otherNation));
+						access.getWebsocketManager().onUpdate(PageType.NATION, RequestType.NATION_HAPPENINGS, new DataRequest(RequestType.NATION_HAPPENINGS, dataRequest), Json.toJson("{ }"));
 					}
 				} else if (happeningType == HappeningType.getType("WITHDREW_ENDORSEMENT").getId()) {
 					if (match.find()) {
@@ -235,7 +246,18 @@ public class HappeningsTask implements Runnable {
 				} else if (updateCache.getIfPresent(nationId) == null && happeningType == HappeningType.getType("NEW_LEGISLATION").getId()) {
 					setRegionUpdateTime(conn, nationId, timestamp);
 					updateCache.put(nationId, true);
-				} else if (nationId > -1 && (happeningType == HappeningType.getType("REFOUNDED").getId() || happeningType == HappeningType.getType("FOUNDED").getId())) {
+				} else if (happeningType == HappeningType.getType("RMB").getId()) {
+					Matcher regions = Utils.REGION_PATTERN.matcher(text);
+					if (regions.find()) {
+						final int regionId = access.getRegionId(text.substring(regions.start() + 2, regions.end() - 2));
+						if (regionId > -1) {
+							HashMap<String, Object> dataRequest = new HashMap<String, Object>();
+							dataRequest.put("region", regionId);
+							access.getWebsocketManager().onUpdate(PageType.REGION, RequestType.RMB_MESSAGE, new DataRequest(RequestType.RMB_MESSAGE, dataRequest), Json.toJson("{ }"));
+						}
+					}
+				}
+				else if (nationId > -1 && (happeningType == HappeningType.getType("REFOUNDED").getId() || happeningType == HappeningType.getType("FOUNDED").getId())) {
 					if (happeningType == HappeningType.getType("REFOUNDED").getId()) {
 						//Ensure nation is dead
 						access.markNationDead(nationId, conn);
@@ -261,7 +283,7 @@ public class HappeningsTask implements Runnable {
 
 					//Update region
 					Matcher regions = Utils.REGION_PATTERN.matcher(text);
-					if(regions.find()) {
+					if (regions.find()) {
 						final int regionId = access.getRegionId(text.substring(regions.start() + 2, regions.end() - 2));
 						if (regionId > -1) {					
 							PreparedStatement update = conn.prepareStatement("UPDATE assembly.nation SET region = ?, wa_member = 2, puppet = ? WHERE id = ?");
@@ -298,6 +320,10 @@ public class HappeningsTask implements Runnable {
 					updateRegionHappenings(conn, access, nationId, happeningId, text, type);
 				}
 				DbUtils.closeQuietly(keys);
+				
+				HashMap<String, Object> dataRequest = new HashMap<String, Object>();
+				dataRequest.put("nation", nationId);
+				access.getWebsocketManager().onUpdate(PageType.NATION, RequestType.NATION_HAPPENINGS, new DataRequest(RequestType.NATION_HAPPENINGS, dataRequest), Json.toJson("{ }"));
 			}
 		} catch (SQLException e) {
 			Logger.error("Unable to update happenings", e);
@@ -347,12 +373,20 @@ public class HappeningsTask implements Runnable {
 			insert.setInt(2, regionIds.get(0));
 			insert.setString(3, region1Happening);
 			insert.executeUpdate();
+			
+			HashMap<String, Object> dataRequest = new HashMap<String, Object>();
+			dataRequest.put("region", regionIds.get(0));
+			access.getWebsocketManager().onUpdate(PageType.REGION, RequestType.REGION_HAPPENINGS, new DataRequest(RequestType.REGION_HAPPENINGS, dataRequest), Json.toJson("{ }"));
 		}
 		if (region2Happening != null && regionIds.size() > 1) {
 			insert.setInt(1, happeningId);
 			insert.setInt(2, regionIds.get(1));
 			insert.setString(3, region2Happening);
 			insert.executeUpdate();
+			
+			HashMap<String, Object> dataRequest = new HashMap<String, Object>();
+			dataRequest.put("region", regionIds.get(1));
+			access.getWebsocketManager().onUpdate(PageType.REGION, RequestType.REGION_HAPPENINGS, new DataRequest(RequestType.REGION_HAPPENINGS, dataRequest), Json.toJson("{ }"));
 		}
 		DbUtils.closeQuietly(insert);
 	}

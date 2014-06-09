@@ -84,38 +84,25 @@ var newspaperAdminHTML = '<form class="form-horizontal"><fieldset><div class="co
 			$("#inner-content").html(html);
 		});
 	}
-	$(window).on("websocket/gameplay_news_sidebar", function(event) {
-		var lastRead = getSettings().getValue("newspapers", {})[event.json.newspaper_id];
-		var html = "";
-		if (lastRead == null || event.json.timestamp > parseInt(lastRead)) {
-			html = " (*)";
+
+	var createEventHandler = function(selector) {
+		var handler = function(event) {
+			var lastRead = getSettings().getValue("newspapers", {})[event.json.newspaper_id];
+			var html = "";
+			if (lastRead == null || event.json.timestamp > parseInt(lastRead)) {
+				html = " (*)";
+			}
+			$(selector).html(html);
 		}
-		$("#gnews span[name='nag']").html(html);
-	});
-	
-	$(window).on("websocket/roleplay_news_sidebar", function(event) {
-		var lastRead = getSettings().getValue("newspapers", {})[event.json.newspaper_id];
-		var html = "";
-		if (lastRead == null || event.json.timestamp > parseInt(lastRead)) {
-			html = " (*)";
-		}
-		console.log(lastRead);
-		console.log(event.json.timestamp);
-		$("#rpnews span[name='nag']").html(html);
-	});
-	
-	$(window).on("websocket/regional_news_sidebar", function(event) {
-		var lastRead = getSettings().getValue("newspapers", {})[event.json.newspaper_id];
-		var html = "";
-		if (lastRead == null || event.json.timestamp > parseInt(lastRead)) {
-			html = " (*)";
-		}
-		$("#rnews span[name='nag']").html(html);
-	});
+		return handler;
+	}
+	$(window).on("websocket/gameplay_news_sidebar", createEventHandler("#gnews span[name='nag']"));
+	$(window).on("websocket/roleplay_news_sidebar", createEventHandler("#rpnews span[name='nag']"));
+	$(window).on("websocket/regional_news_sidebar", createEventHandler("#rnews span[name='nag']"));
+
 	$(window).on("websocket/pending_news_submissions", function(event) {
 		var menu;
-		console.log(event);
-		if (event.json.newspaper == 0) menu = $("#gpnews");
+		if (event.json.newspaper == 0) menu = $("#gnews");
 		else if (event.json.newspaper == 1) menu = $("#rpnews");
 		else menu = $("#rnews");
 

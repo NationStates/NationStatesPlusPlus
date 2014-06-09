@@ -109,6 +109,7 @@ public class Global extends GlobalSettings {
 				Channel channel = amqpConn.createChannel();
 				
 				String serverName = settings.getChild("server-name").getString();
+				channel.queueDelete(serverName);
 				channel.queueDeclare(serverName, false, false, false, null);
 				channel.queueBind(serverName, "nspp", serverName);
 				Logger.info("Created Rabbitmq Queue");

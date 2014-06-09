@@ -62,10 +62,14 @@
 	}
 
 	function loadNSPPSupporterIcon() {
-		if ($(".trophy:first").length > 0) {
-			$(".trophy:first").parent().prepend("<img id='nspp_trophy' src='https://nationstatesplusplus.net/nationstates/static/nspp.png?v' class='trophy' title='A Proud NationStates++ User!'>");
-			$("#nspp_trophy").hide();
+		var trophyContainer = null;
+		if ($(".trophy").length == 0) {
+			trophyContainer = $("<p></p>").insertBefore($(".newsbox"));
+		} else {
+			trophyContainer = $(".trophy:first").parent()
 		}
+		trophyContainer.prepend("<img id='nspp_trophy' src='https://nationstatesplusplus.net/nationstates/static/nspp.png?v' class='trophy' title='A Proud NationStates++ User!'>");
+		$("#nspp_trophy").hide();
 		$.get("https://nationstatesplusplus.net/api/nation/latest_update/?name=" + getVisibleNation(), function(data, textStatus, xhr) {
 			if (xhr.status != 204 && data.timestamp > (Date.now() - 30 * 24 * 60 * 60 * 1000)) {
 				if (data.timestamp > (Date.now() - 15 * 60 * 1000)) {
@@ -212,7 +216,6 @@
 		});
 		var stat = getDetailStats();
 		if (stat == "") stat = "power";
-		console.log(stat);
 		loadWAStats(stat);
 	}
 

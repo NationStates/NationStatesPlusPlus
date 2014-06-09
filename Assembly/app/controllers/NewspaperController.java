@@ -43,8 +43,6 @@ public class NewspaperController extends NationStatesController {
 	private final String imgurClientKey;
 	private final Cache<String, JsonNode> newspaperIds;
 	private final JsonNode NO_NEWSPAPER = Json.toJson("{ }");
-	private final Cache<Integer, JsonNode> newspaperUpdates;
-	private final Cache<Integer, JsonNode> newspaperArticles;
 	public static final int GAMEPLAY_NEWS = 0;
 	public static final int ROLEPLAY_NEWS = 1;
 
@@ -53,8 +51,6 @@ public class NewspaperController extends NationStatesController {
 		ConfigurationNode imgurAuth = getConfig().getChild("imgur");
 		imgurClientKey = imgurAuth.getChild("client-key").getString(null);
 		newspaperIds = CacheBuilder.newBuilder().maximumSize(access.getMaxCacheSize()).expireAfterWrite(1, TimeUnit.HOURS).build();
-		newspaperUpdates = CacheBuilder.newBuilder().maximumSize(access.getMaxCacheSize()).expireAfterWrite(1, TimeUnit.HOURS).build();
-		newspaperArticles = CacheBuilder.newBuilder().maximumSize(access.getMaxCacheSize()).expireAfterWrite(1, TimeUnit.HOURS).build();
 	}
 
 	public Result foundNewspaper(String region) throws SQLException, ExecutionException {
@@ -240,17 +236,13 @@ public class NewspaperController extends NationStatesController {
 	}
 
 	public Result findLatestUpdate(int id) throws SQLException {
-		JsonNode lastUpdate = newspaperUpdates.getIfPresent(id);
-
-		if (lastUpdate == null) {
-			Connection conn = null;
-			try {
-				conn = getConnection();
-				lastUpdate = getLatestUpdate(conn, id);
-				newspaperUpdates.put(id, lastUpdate);
-			} finally {
-				DbUtils.closeQuietly(conn);
-			}
+		JsonNode lastUpdate;
+		Connection conn = null;
+		try {
+			conn = getConnection();
+			lastUpdate = getLatestUpdate(conn, id);
+		} finally {
+			DbUtils.closeQuietly(conn);
 		}
 
 		Result r = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(lastUpdate.hashCode()), "7200");
@@ -451,18 +443,7 @@ public class NewspaperController extends NationStatesController {
 	}
 
 	public Result getNewspaper(int id, int visible, boolean hideBody, int lookupArticleId) throws SQLException {
-		JsonNode newspaper = null;
-		//Standard newspaper lookup
-		boolean canUseCache = visible == 1 && !hideBody && lookupArticleId == -1;
-		if (canUseCache) {
-			newspaper = newspaperArticles.getIfPresent(id);
-		}
-		if (newspaper == null) {
-			newspaper = getNewspaperImpl(id, visible, hideBody, lookupArticleId);
-			if (canUseCache && newspaper != null) {
-				newspaperArticles.put(id, newspaper);
-			}
-		}
+		JsonNode newspaper = getNewspaperImpl(id, visible, hideBody, lookupArticleId);
 
 		if (newspaper != null) {
 			Result r = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(newspaper.hashCode()), "0");
@@ -869,9 +850,7 @@ public class NewspaperController extends NationStatesController {
 				updateOrder.executeUpdate();
 				DbUtils.closeQuietly(updateOrder);
 			}
-			newspaperUpdates.invalidate(newspaper);
-			newspaperArticles.invalidate(newspaper);
-			
+
 			//Send update to clients
 			if (Integer.parseInt(visible) == Visibility.VISIBLE.getType()) {
 				RequestType rType = RequestType.REGIONAL_NEWS_SIDEBAR;

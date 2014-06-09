@@ -1,47 +1,42 @@
 (function() {
-	var checkPageHappenings = function() {
-		if (getVisiblePage() == "un" || getVisiblePage() == "nation" || getVisiblePage() == "region") {
-			$.get(window.location.href + "?nspp=1", function(page) {
-
-				var happeningSelector;
-				if (getVisiblePage() == "un") {
-					happeningSelector = $(page).find("h3:contains('Recent Events')").next();
-				} else if (getVisiblePage() == "nation") {
-					happeningSelector = $(page).find(".newsbox").find("ul");
-				} else {
-					happeningSelector = $(page).find("h3:contains('Regional Happenings')").next();
+	function addHappenings(existingHappenings, newHappenings) {
+		var added = 0;
+		$(newHappenings.children().get().reverse()).each(function() {
+			var split = $(this).text().split(":");
+			var found = false;
+			$(existingHappenings.children()).each(function() {
+				if ($(this).text().contains(split[1])) {
+					var text = $(this).html().substring($(this).html().indexOf(":") + 1);
+					$(this).html(split[0] + ":" + text);
+					found = true;
+					return false;
 				}
-
-				$(happeningSelector.children().get().reverse()).each(function() {
-					var html = $(this).html();
-					var split = $(this).text().split(":");
-					var found = false;
-
-					var happenings;
-					if (getVisiblePage() == "un") {
-						happenings = $("h3:contains('Recent Events')").next();
-					} else if (getVisiblePage() == "nation") {
-						happenings = $(".newsbox").find("ul")
-					} else {
-						happenings = $("h3:contains('Regional Happenings')").next();
-					}
-
-					$(happenings.children()).each(function() {
-						if ($(this).text().contains(split[1])) {
-							var text = $(this).html().substring($(this).html().indexOf(":") + 1);
-							$(this).html(split[0] + ":" + text);
-							found = true;
-							return false;
-						}
-					});
-					if (!found) {
-						happenings.prepend("<li>" + html + "</li>");
-					}
-				});
 			});
-		}
+			if (!found) {
+				existingHappenings.prepend("<li>" + $(this).html() + "</li>");
+				added += 1;
+			}
+		});
+		return added;
 	}
-	$(window).on("page/update", checkPageHappenings);
+	
+	$(window).on("websocket/region_happenings", function(event) {
+		$.get(window.location.href + "?nspp=1", function(page) {
+			var happenings = $(page).find("h3:contains('Regional Happenings')").next();
+			var current = $("h3:contains('Regional Happenings')").next();
+			var added = addHappenings(current, happenings);
+			happeningsIndex += added;
+		});
+	});
+	
+	$(window).on("websocket/nation_happenings", function(event) {
+		$.get(window.location.href + "?nspp=1", function(page) {
+			var happenings = $(page).find(".newsbox").find("ul");
+			var current = $(".newsbox").find("ul");
+			var added = addHappenings(current, happenings);
+			happeningsIndex += added;
+		});
+	});
 	
 	var happeningsIndex = 10;
 	var endHappenings = false;

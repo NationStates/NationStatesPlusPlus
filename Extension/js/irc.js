@@ -10,7 +10,6 @@
 
 					var toggleIRC = function() {
 						var irc = $("a.irc-link");
-						console.log("IRC: " + irc.html());
 						if (irc.html() == "(Hide)") {
 							irc.html("(Show)");
 							$("#irc-frame").hide();

@@ -36,7 +36,6 @@ public class AMQPThread extends Thread implements AMQPQueue {
 
 	private void process(JsonNode node) {
 		try {
-			Logger.info("Publishing: " + wrapNode(node).toString());
 			channel.basicPublish("nspp", "", null, wrapNode(node).toString().getBytes(Charsets.UTF_8));
 		} catch (IOException e) {
 			Logger.error("Error publishing rabbitmq message", e);

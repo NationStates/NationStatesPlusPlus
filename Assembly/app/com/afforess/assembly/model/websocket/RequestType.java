@@ -33,10 +33,12 @@ public enum RequestType {
 	ROLEPLAY_NEWS_SIDEBAR("roleplay_news_sidebar"),
 	REGIONAL_NEWS_SIDEBAR("regional_news_sidebar"),
 	PENDING_NEWS_SUBMISSIONS("pending_news_submissions"),
-	RMB_POST("rmb_post"),
 	REGION_POPULATION("region_record_population"),
 	AUTHENTICATE_RSS("authenticate_rss"),
 	RATE_RMB_POST("rate_rmb_post", true),
+	RMB_MESSAGE("rmb_message"),
+	REGION_HAPPENINGS("region_happenings"),
+	NATION_HAPPENINGS("nation_happenings"),
 	;
 
 	private static final Map<String, RequestType> types = new HashMap<String, RequestType>();
@@ -172,6 +174,9 @@ public enum RequestType {
 					}
 				}
 				return generateError("Missing rmb post id", request);
+			case RMB_MESSAGE:
+			case REGION_HAPPENINGS:
+				return generateError(name() + " can not be requested from the client. (Server-Side Event Only)", request);
 			default:
 				throw new IllegalStateException("Unimplemented RequestType: " + name());
 		}

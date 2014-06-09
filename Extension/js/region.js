@@ -17,7 +17,10 @@
 
 function setupRegionPage() {
 	if (getSettings().isEnabled("auto_update")) {
-		checkForRMBUpdates(10000);
+		$(window).on("websocket/rmb_message", function(event) {
+			console.log("received rmb update event");
+			updateRMB();
+		});
 	}
 
 	if (getSettings().isEnabled("infinite_scroll")) {
@@ -54,20 +57,18 @@ function setupRegionPage() {
 			});
 		}
 
-		$(window).on("websocket/rmb_ratings", function(event) {
+		var updateRatings = function(event) {
 			var data = event.json;
-			console.log(data);
 			var likes = 0;
 			var dislikes = 0;
 			var rating = -1;
-			var postId;
-			for (var i = 0; i < data.length; i++) {
-				if (data[i].type == 0) dislikes += 1;
-				else if (data[i].type == 1) likes += 1;
-				if (data[i].nation.toLowerCase().replaceAll(" ", "_") == getUserNation()) {
-					rating = data[i].type;
+			var postId = data.rmb_post;
+			for (var i = 0; i < data.ratings.length; i++) {
+				if (data.ratings[i].type == 0) dislikes += 1;
+				else if (data.ratings[i].type == 1) likes += 1;
+				if (data.ratings[i].nation.toLowerCase().replaceAll(" ", "_") == getUserNation()) {
+					rating = data.ratings[i].type;
 				}
-				postId = data[i].rmb_post;
 			}
 			var post = $("#rmb-post-" + postId);
 			post.find(".post-ratings").find("span[name='rating-container']").remove();
@@ -75,6 +76,9 @@ function setupRegionPage() {
 			if (rating > -1) {
 				post.find(".post-rating-list").find("li").hide();
 				post.find(".undo-rating").show();
+			} else {
+				post.find(".post-rating-list").find("li").show();
+				post.find(".undo-rating").hide();
 			}
 			if (dislikes > 0) {
 				post.find("span[name='rating-container']").prepend("<img src='https://nationstatesplusplus.net/nationstates/static/dislike2.png' alt='Dislike'><span amt='" + dislikes + "' " + (rating == 0 ? "rated='1'" : "") + " class='post-rating-desc'>Dislike x " + dislikes + "</span>");
@@ -82,7 +86,8 @@ function setupRegionPage() {
 			if (likes > 0) {
 				post.find("span[name='rating-container']").prepend("<img src='https://nationstatesplusplus.net/nationstates/static/like.png' alt='Like'><span amt='" + likes + "' " + (rating == 1 ? "rated='1'" : "") + " class='post-rating-desc'>Like x " + likes + "</span>");
 			}
-		});
+		};
+		$(window).on("websocket/rmb_ratings", updateRatings);
 
 		$(window).on("rmb/update", function(event) {
 			var id = event.postId;
@@ -114,19 +119,34 @@ function setupRegionPage() {
 				e.preventDefault();
 				var id = $(this).parents(".post-ratings:first").attr("postid");
 				var post = $("#rmb-post-" + id);
+				
+				var event = jQuery.Event("websocket/request");
+				event.json = { name: "rate_rmb_post", data : { "rmb_post_id": id, "rating" : 1 } };
+				event.requiresAuth = true;
+				$(window).trigger(event);
+				
+				/*
 				doAuthorizedPostRequest("https://nationstatesplusplus.net/api/rmb/rate/set/?rmbPost=" + id + "&rating=1", "", function(data, textStatus, jqXHR) {
 					$("#rmb_cache").attr("cache", parseInt($("#rmb_cache").attr("cache")) + 1);
 					//calculateRatings(post, id);
 				});
+				*/
 			});
 			post.find("li[name='dislike']").find("a").on("click", function (e) {
 				e.preventDefault();
 				var id = $(this).parents(".post-ratings:first").attr("postid");
 				var post = $("#rmb-post-" + id);
+				
+				var event = jQuery.Event("websocket/request");
+				event.json = { name: "rate_rmb_post", data : { "rmb_post_id": id, "rating" : 0 } };
+				event.requiresAuth = true;
+				$(window).trigger(event);
+				/*
 				doAuthorizedPostRequest("https://nationstatesplusplus.net/api/rmb/rate/set/?rmbPost=" + id + "&rating=0", "", function(data, textStatus, jqXHR) {
 					$("#rmb_cache").attr("cache", parseInt($("#rmb_cache").attr("cache")) + 1);
 					//calculateRatings(post, id);
 				});
+				*/
 			});
 			post.find(".undo-rating").find("a").on("click", function(event) {
 				event.preventDefault();
@@ -142,7 +162,11 @@ function setupRegionPage() {
 				}
 				post.find(".post-rating-list").find("li").show();
 				post.find(".undo-rating").hide();
-				doAuthorizedPostRequest("https://nationstatesplusplus.net/api/rmb/rate/set/?rmbPost=" + id + "&rating=-1", "");
+				//doAuthorizedPostRequest("https://nationstatesplusplus.net/api/rmb/rate/set/?rmbPost=" + id + "&rating=-1", "");
+				var event = jQuery.Event("websocket/request");
+				event.json = { name: "rate_rmb_post", data : { "rmb_post_id": id, "rating" : -1 } };
+				event.requiresAuth = true;
+				$(window).trigger(event);
 			});
 		});
 
@@ -447,7 +471,13 @@ function addFontAwesomeIcons() {
 	}
 	if (population.length > 0) {
 		population.prepend("<strong><i class='fa fa-bar-chart-o'></i> Population: </strong>");
-		
+		population.append("<span style='margin-left: 10px; font-size: 85%;' id='record_pop'></span>");
+		$(window).on("websocket/region_record_population", function(event) {
+			if (parseInt(event.json.population) > 0){
+				$("#record_pop").html("<i> (A record of " + event.json.population + " nations occurred on " + (new Date(event.json.timestamp)).customFormat("#MMM# #D#, #YYYY#") + ") </i>");
+			}
+		});
+
 		//Regional Maps
 		$("<p id='region_map' style='display:none; height: 10px;'><img src='https://nationstatesplusplus.net/nationstates/static/" + (isDarkTheme() ? "dark_" : "") + "map3.png' style='width: 16px;'><span style='position: relative; top: -5px;'><strong> Map: </strong><span id='regional_map_link'></span></span></p>").insertAfter(population);
 		
@@ -870,26 +900,6 @@ function handleInfiniteScroll() {
 			processingRMB = false;
 		});
 	}
-}
-
-var lastRMBUpdate = (new Date()).getTime();
-function checkForRMBUpdates(delay){
-	setTimeout(function() {
-		if (!isSearchResultsVisible()) {
-			//Should we get an update?
-			var updateDelay = 10000; //10 sec
-			if (!isPageActive()) {
-				updateDelay = 300000; //5 min
-			} else if (getLastActivity() + 60000 < Date.now()) {
-				updateDelay = 150000; //2.5 min
-			}
-			if (Date.now() > (lastRMBUpdate + updateDelay)) {
-				lastRMBUpdate = (new Date()).getTime();
-				updateRMB();
-			}
-		}
-		checkForRMBUpdates(10000);
-	}, delay);
 }
 
 function updateRMB() {
