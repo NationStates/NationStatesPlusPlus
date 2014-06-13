@@ -39,15 +39,15 @@ public class NationController extends NationStatesController {
 		return Results.noContent();
 	}
 
-	public Result getLastSettingsUpdate(String name) throws SQLException, ExecutionException {
+	public Result getLastSettingsUpdate(String name) throws SQLException {
 		return getLastUpdate("last_settings_update", name);
 	}
 
-	public Result getLastDataUpdate(String name) throws SQLException, ExecutionException {
+	public Result getLastDataUpdate(String name) throws SQLException {
 		return getLastUpdate("last_data_update", name);
 	}
 
-	private Result getLastUpdate(String column, String name) throws SQLException, ExecutionException {
+	private Result getLastUpdate(String column, String name) throws SQLException {
 		final int nationId = getDatabase().getNationId(name);
 		if (nationId == -1) {
 			Utils.handleDefaultPostHeaders(request(), response());
@@ -78,7 +78,7 @@ public class NationController extends NationStatesController {
 		return Results.noContent();
 	}
 
-	public Result updateSettings() throws SQLException, ExecutionException {
+	public Result updateSettings() throws SQLException {
 		Result result = Utils.validateRequest(request(), response(), getAPI(), getDatabase());
 		if (result != null) {
 			return result;
@@ -122,7 +122,7 @@ public class NationController extends NationStatesController {
 		}
 	}
 
-	public Result retrieveData() throws SQLException, ExecutionException {
+	public Result retrieveData() throws SQLException {
 		Result result = Utils.validateRequest(request(), response(), getAPI(), getDatabase());
 		if (result != null) {
 			return result;
@@ -155,7 +155,7 @@ public class NationController extends NationStatesController {
 		return Results.noContent();
 	}
 
-	public Result getAuthCode() throws ExecutionException, SQLException {
+	public Result getAuthCode() throws SQLException {
 		Result result = Utils.validateRequest(request(), response(), getAPI(), getDatabase());
 		if (result != null) {
 			return result;
@@ -187,7 +187,7 @@ public class NationController extends NationStatesController {
 		return Results.ok(Json.toJson(data)).as("application/json");
 	}
 
-	public Result updateData() throws SQLException, ExecutionException {
+	public Result updateData() throws SQLException {
 		Result result = Utils.validateRequest(request(), response(), getAPI(), getDatabase());
 		if (result != null) {
 			return result;

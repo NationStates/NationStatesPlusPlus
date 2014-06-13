@@ -14,7 +14,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
 
 import org.apache.commons.dbutils.DbUtils;
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
@@ -43,7 +42,7 @@ public class RegionController extends NationStatesController {
 		imgurClientKey = imgurAuth.getChild("client-key").getString(null);
 	}
 
-	public Result getUpdateTime(String region, int std) throws SQLException, ExecutionException {
+	public Result getUpdateTime(String region, int std) throws SQLException {
 		Connection conn = null;
 		int regionId = this.getDatabase().getRegionId(region);
 		if (regionId == -1) {
@@ -154,7 +153,7 @@ public class RegionController extends NationStatesController {
 		return Json.toJson(data);
 	}
 
-	public Result getRegionSummary(String region) throws SQLException, ExecutionException {
+	public Result getRegionSummary(String region) throws SQLException {
 		List<Map<String, Object>> regionData = new ArrayList<Map<String, Object>>();
 		Connection conn = null;
 		try {
@@ -226,7 +225,7 @@ public class RegionController extends NationStatesController {
 		return ok(data).as("application/json");
 	}
 
-	public Result getNations(String regions, boolean xml) throws SQLException, ExecutionException {
+	public Result getNations(String regions, boolean xml) throws SQLException {
 		Map<String, Object> regionData = new LinkedHashMap<String, Object>();
 		Connection conn = null;
 		try {
@@ -280,7 +279,7 @@ public class RegionController extends NationStatesController {
 		}
 	}
 
-	public Result getPopulationTrends(String region) throws SQLException, ExecutionException {
+	public Result getPopulationTrends(String region) throws SQLException {
 		Map<String, Object> data = new HashMap<String, Object>(4);
 		Connection conn = null; 
 		try {
@@ -323,7 +322,7 @@ public class RegionController extends NationStatesController {
 		}
 	}
 
-	public Result setRegionalMap(String region, boolean disband) throws SQLException, ExecutionException {
+	public Result setRegionalMap(String region, boolean disband) throws SQLException {
 		Result ret = Utils.validateRequest(request(), response(), getAPI(), getDatabase());
 		if (ret != null) {
 			return ret;
@@ -412,7 +411,7 @@ public class RegionController extends NationStatesController {
 		return Json.toJson(links);
 	}
 
-	public Result getRegionalMap(String region) throws SQLException, ExecutionException {
+	public Result getRegionalMap(String region) throws SQLException {
 		Connection conn = null;
 		try {
 			conn = getConnection();
@@ -427,7 +426,7 @@ public class RegionController extends NationStatesController {
 		}
 	}
 
-	public Result setRegionalTitle(String region, boolean disband) throws SQLException, ExecutionException {
+	public Result setRegionalTitle(String region, boolean disband) throws SQLException {
 		Result ret = Utils.validateRequest(request(), response(), getAPI(), getDatabase());
 		if (ret != null) {
 			return ret;

@@ -50,21 +50,6 @@ public class WebsocketManager implements Consumer {
 		Logger.info("Currently " + total + " registered websockets");
 	}
 
-	/*
-	public void write(int nationId, PageType page, JsonNode node) {
-		Set<NationStatesWebSocket> sockets = websockets.get(nationId);
-		if (sockets != null) {
-			synchronized(sockets) {
-				for (NationStatesWebSocket socket : sockets) {
-					if (socket.getPageType() == page) {
-						socket.write(node);
-					}
-				}
-			}
-		}
-	}
-	 */
-
 	public void onUpdate(PageType page, RequestType type, DataRequest request, JsonNode node) {
 		onUpdate(page, type, request, node, null);
 	}

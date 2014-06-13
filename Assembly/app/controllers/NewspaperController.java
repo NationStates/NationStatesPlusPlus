@@ -14,7 +14,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -53,7 +52,7 @@ public class NewspaperController extends NationStatesController {
 		newspaperIds = CacheBuilder.newBuilder().maximumSize(access.getMaxCacheSize()).expireAfterWrite(1, TimeUnit.HOURS).build();
 	}
 
-	public Result foundNewspaper(String region) throws SQLException, ExecutionException {
+	public Result foundNewspaper(String region) throws SQLException {
 		Result ret = Utils.validateRequest(request(), response(), getAPI(), getDatabase());
 		if (ret != null) {
 			return ret;
@@ -473,7 +472,7 @@ public class NewspaperController extends NationStatesController {
 		return Collections.emptySet();
 	}
 
-	public Result changeEditors(int newspaper) throws SQLException, ExecutionException {
+	public Result changeEditors(int newspaper) throws SQLException {
 		Result result = canEditImpl(newspaper, true, Utils.getPostValue(request(), "nation"));
 		if (result != null) {
 			return result;
@@ -579,7 +578,7 @@ public class NewspaperController extends NationStatesController {
 		}
 	}
 
-	private Result canEditImpl(int newspaper, boolean checkAuth, String nation) throws SQLException, ExecutionException {
+	private Result canEditImpl(int newspaper, boolean checkAuth, String nation) throws SQLException {
 		if (checkAuth) {
 			Result result = Utils.validateRequest(request(), response(), getAPI(), getDatabase());
 			if (result != null) {
@@ -617,7 +616,7 @@ public class NewspaperController extends NationStatesController {
 		return null;
 	}
 
-	public Result canEdit(int newspaper) throws SQLException, ExecutionException {
+	public Result canEdit(int newspaper) throws SQLException {
 		Result result = canEditImpl(newspaper, true, Utils.getPostValue(request(), "nation"));
 		if (result != null) {
 			return result;
@@ -626,7 +625,7 @@ public class NewspaperController extends NationStatesController {
 		return Results.ok();
 	}
 
-	public Result isEditor(int newspaper, String nation) throws SQLException, ExecutionException {
+	public Result isEditor(int newspaper, String nation) throws SQLException {
 		Result result = canEditImpl(newspaper, false, nation);
 		if (result != null) {
 			return result;
@@ -737,7 +736,7 @@ public class NewspaperController extends NationStatesController {
 		return ok(Json.toJson(list)).as("application/json");
 	}
 
-	public Result submitArticle(int newspaper, int articleId) throws SQLException, ExecutionException {
+	public Result submitArticle(int newspaper, int articleId) throws SQLException {
 		Result result = Utils.validateRequest(request(), response(), getAPI(), getDatabase());
 		if (result != null) {
 			return result;

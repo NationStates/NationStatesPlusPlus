@@ -10,7 +10,6 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
 
 import org.apache.commons.dbutils.DbUtils;
 import org.joda.time.Duration;
@@ -30,7 +29,7 @@ public class WorldAssemblyController extends DatabaseController {
 		super(access, config);
 	}
 
-	public Result getWAMembers(String region) throws SQLException, ExecutionException {
+	public Result getWAMembers(String region) throws SQLException {
 		Map<String, Map<String, Object>> json = new HashMap<String, Map<String, Object>>();
 		Connection conn = null; 
 		try {
@@ -59,7 +58,7 @@ public class WorldAssemblyController extends DatabaseController {
 		return ok(Json.toJson(json)).as("application/json");
 	}
 
-	public Result getEndorsements(String name, boolean fullData) throws SQLException, ExecutionException {
+	public Result getEndorsements(String name, boolean fullData) throws SQLException {
 		List<Object> nations = new ArrayList<Object>();
 		Connection conn = null; 
 		try {
@@ -84,7 +83,7 @@ public class WorldAssemblyController extends DatabaseController {
 		return ok(Json.toJson(nations)).as("application/json");
 	}
 
-	public Result getMissingEndorsements(String name, boolean fullData) throws SQLException, ExecutionException {
+	public Result getMissingEndorsements(String name, boolean fullData) throws SQLException {
 		List<Object> nations = new ArrayList<Object>();
 		Connection conn = null; 
 		try {
@@ -121,7 +120,7 @@ public class WorldAssemblyController extends DatabaseController {
 		return ok(Json.toJson(nations)).as("application/json");
 	}
 
-	public Result getUnreturnedEndorsements(String name, boolean fullData) throws SQLException, ExecutionException {
+	public Result getUnreturnedEndorsements(String name, boolean fullData) throws SQLException {
 		List<Object> nations = new ArrayList<Object>();
 		Connection conn = null; 
 		try {

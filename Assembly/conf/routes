@@ -86,6 +86,6 @@ POST   /xenforo/register/             @controllers.XenforoController.createXenfo
 
 POST   /nswiki/login/                 @controllers.NSWikiController.verifyNationLogin()
 
-GET    /ws/                           @controllers.WebSocketController.index(nation: String ?= "")
-GET    /ws/region/                    @controllers.WebSocketController.region(nation: String ?= "", region: String ?= "")
-GET    /ws/nation/                    @controllers.WebSocketController.nation(nation: String ?= "", visibleNation: String ?= "")
+GET    /ws/                           @controllers.WebSocketController.index(nation: String ?= "", userRegion: String ?= "", reconnect: Boolean ?= false)
+GET    /ws/region/                    @controllers.WebSocketController.region(nation: String ?= "", userRegion: String ?= "", region: String ?= "", reconnect: Boolean ?= false)
+GET    /ws/nation/                    @controllers.WebSocketController.nation(nation: String ?= "", userRegion: String ?= "", visibleNation: String ?= "", reconnect: Boolean ?= false)

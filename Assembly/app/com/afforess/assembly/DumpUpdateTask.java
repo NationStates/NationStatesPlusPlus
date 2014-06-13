@@ -11,8 +11,6 @@ import java.sql.Types;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
-
 import org.apache.commons.dbutils.DbUtils;
 
 import play.Logger;
@@ -245,11 +243,7 @@ public class DumpUpdateTask implements Runnable {
 			allNations.removeAll(set);
 			Logger.info("Marking " + allNations.size() + " nations as dead");
 			for (String nation : allNations) {
-				try {
-					access.markNationDead(nation, assembly);
-				} catch (ExecutionException e) {
-					Logger.warn("Unknown nation: " + nation, e);
-				}
+				access.markNationDead(nation, assembly);
 			}
 			conn.prepareStatement("DROP TABLE nations").execute();
 			conn.prepareStatement("SHUTDOWN COMPACT").execute();

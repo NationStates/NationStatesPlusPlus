@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 import controllers.NewspaperController;
 import controllers.RMBController;
+import controllers.RecruitmentController;
 import controllers.RegionController;
 
 public enum RequestType {
@@ -39,6 +40,9 @@ public enum RequestType {
 	RMB_MESSAGE("rmb_message"),
 	REGION_HAPPENINGS("region_happenings"),
 	NATION_HAPPENINGS("nation_happenings"),
+	CHECK_RECRUITMENT_OFFICERS("recruitment_officers"),
+	CHECK_RECRUITMENT_PROGRESS("recruitment_progress", true),
+	CONFIRM_RECRUITMENT("confirm_recruitment", true),
 	;
 
 	private static final Map<String, RequestType> types = new HashMap<String, RequestType>();
@@ -73,12 +77,17 @@ public enum RequestType {
 				return context.getSettings().getValue("show_regional_news", true, Boolean.class);
 			case PENDING_NEWS_SUBMISSIONS:
 				return !NewspaperController.getEditorshipsOfNation(context.getNationId(), conn).isEmpty();
+			case CHECK_RECRUITMENT_OFFICERS:
+			case CHECK_RECRUITMENT_PROGRESS:
+			case CONFIRM_RECRUITMENT:
+				return RecruitmentController.getRecruitmentOfficerIds(conn, context.getAccess(), context.getUserRegionId()).contains(context.getNationId()) &&
+						RecruitmentController.doesRegionHaveActiveRecruitmentCampaigns(conn, context.getUserRegionId());
 			default:
 				return true;
 		}
 	}
 
-	public List<JsonNode> executeRequest(Connection conn, DataRequest request, NationContext context) throws SQLException, ExecutionException {
+	public List<JsonNode> executeRequest(Connection conn, DataRequest request, NationContext context) throws SQLException {
 		List<JsonNode> nodes = executeRequestImpl(conn, request, context);
 		final int size = nodes.size();
 		for (int i = 0; i < size; i++) {
@@ -88,7 +97,7 @@ public enum RequestType {
 	}
 
 	private static final List<JsonNode> KEEP_ALIVE_RESPONSE = toSimpleResult("alive");
-	private List<JsonNode> executeRequestImpl(Connection conn, DataRequest request, NationContext context) throws SQLException, ExecutionException {
+	private List<JsonNode> executeRequestImpl(Connection conn, DataRequest request, NationContext context) throws SQLException {
 		final NationStatesPage page = context.getActivePage();
 		switch(this) {
 			case KEEP_ALIVE:
@@ -130,7 +139,7 @@ public enum RequestType {
 			case ROLEPLAY_NEWS_SIDEBAR:
 				return toList(NewspaperController.getLatestUpdate(conn, NewspaperController.ROLEPLAY_NEWS));
 			case REGIONAL_NEWS_SIDEBAR:
-				return toList(NewspaperController.getLatestUpdate(conn, context.getAccess().getNationLocation().get(context.getNationId())));
+				return toList(NewspaperController.getLatestUpdate(conn, context.getUserRegion()));
 			case PENDING_NEWS_SUBMISSIONS:
 				Set<Integer> newspapers = NewspaperController.getEditorshipsOfNation(context.getNationId(), conn);
 				List<JsonNode> nodes = new ArrayList<JsonNode>(newspapers.size());
@@ -177,6 +186,47 @@ public enum RequestType {
 			case RMB_MESSAGE:
 			case REGION_HAPPENINGS:
 				return generateError(name() + " can not be requested from the client. (Server-Side Event Only)", request);
+			case CHECK_RECRUITMENT_OFFICERS:
+				{
+					boolean valid = RecruitmentController.getRecruitmentOfficerIds(conn, context.getAccess(), context.getUserRegionId()).contains(context.getNationId()) &&
+									RecruitmentController.doesRegionHaveActiveRecruitmentCampaigns(conn, context.getUserRegionId());
+					if (!valid) {
+						throw new IllegalStateException("Should not have executed request, see shouldSendData(...)");
+					}
+					return toSimpleResult("true");
+				}
+			case CHECK_RECRUITMENT_PROGRESS:
+				{
+					boolean valid = RecruitmentController.getRecruitmentOfficerIds(conn, context.getAccess(), context.getUserRegionId()).contains(context.getNationId()) &&
+									RecruitmentController.doesRegionHaveActiveRecruitmentCampaigns(conn, context.getUserRegionId());
+					if (!valid) {
+						throw new IllegalStateException("Should not have executed request, see shouldSendData(...)");
+					}
+					try {
+						Map<String, Object> progress = new HashMap<String, Object>();
+						progress.put("recruitment", RecruitmentController.calculateRecruitmentTarget(context.getAccess(), conn, context.getUserRegionId(), context.getNation()));
+						progress.put("show_recruitment_progress", context.getSettings().getValue("show_recruitment_progress", true, Boolean.class));
+						return toList(Json.toJson(progress));
+					} catch (ExecutionException e) {
+						throw new RuntimeException(e);
+					}
+				}
+			case CONFIRM_RECRUITMENT:
+			{
+				boolean valid = RecruitmentController.getRecruitmentOfficerIds(conn, context.getAccess(), context.getUserRegionId()).contains(context.getNationId()) &&
+								RecruitmentController.doesRegionHaveActiveRecruitmentCampaigns(conn, context.getUserRegionId());
+				if (!valid) {
+					throw new IllegalStateException("Should not have executed request, see shouldSendData(...)");
+				}
+				if (request != null) {
+					String target = request.getValue("target", null, String.class);
+					if (target != null) {
+						RecruitmentController.confirmRecruitment(context.getAccess(), conn, context.getUserRegionId(), target);
+						return toSimpleResult("true");
+					}
+				}
+				return generateError("Missing target data", request);
+			}
 			default:
 				throw new IllegalStateException("Unimplemented RequestType: " + name());
 		}

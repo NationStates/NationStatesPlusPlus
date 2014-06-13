@@ -20,15 +20,21 @@ public final class NationStatesWebSocket extends WebSocket<JsonNode>{
 	private NationStatesPage activePage;
 	private String nation;
 	private int nationId;
+	private String userRegion;
+	private int userRegionId;
 	private NationSettings settings;
 	private WebSocket.Out<JsonNode> out = null;
 	private boolean authenticated = false;
-	public NationStatesWebSocket(DatabaseAccess access, NationStatesPage page, String nation) {
+	private final boolean reconnect;
+	public NationStatesWebSocket(DatabaseAccess access, NationStatesPage page, String nation, String userRegion, boolean reconnect) {
 		this.access = access;
 		this.activePage = page;
 		this.nation = nation;
+		this.userRegion = userRegion;
+		this.nationId = access.getNationId(this.nation);
+		this.userRegionId = access.getRegionId(this.userRegion);
+		this.reconnect = reconnect;
 		try {
-			this.nationId = access.getNationId(this.nation);
 			if (nationId > -1) {
 				settings = NationSettings.parse(access.getNationSettingsCache().get(nationId));
 			} else {
@@ -45,6 +51,14 @@ public final class NationStatesWebSocket extends WebSocket<JsonNode>{
 
 	public String getNation() {
 		return nation;
+	}
+
+	public int getUserRegionId() {
+		return userRegionId;
+	}
+
+	public String getUserRegion() {
+		return userRegion;
 	}
 
 	public PageType getPageType() {
@@ -64,7 +78,7 @@ public final class NationStatesWebSocket extends WebSocket<JsonNode>{
 	}
 
 	public NationContext getContext() {
-		return new NationContext(nation, nationId, settings, activePage, access);
+		return new NationContext(nation, nationId, userRegion, userRegionId, settings, activePage, access);
 	}
 
 	public boolean isAuthenticated() {
@@ -75,15 +89,18 @@ public final class NationStatesWebSocket extends WebSocket<JsonNode>{
 	public void onReady(WebSocket.In<JsonNode> in, WebSocket.Out<JsonNode> out) {
 		try {
 			this.out = out;
-			writeInitialData(out);
+			//Only write out initial data for new connections, not reconnections
+			if (!reconnect) {
+				writeInitialData(out);
+			}
 			in.onMessage(new NationStatesCallback(this));
 			access.getWebsocketManager().register(this, in);
-		} catch (SQLException | ExecutionException e) {
+		} catch (SQLException e) {
 			Logger.error("Exception while setting up websocket", e);
 		}
 	}
 
-	private void writeInitialData(WebSocket.Out<JsonNode> out) throws SQLException, ExecutionException {
+	private void writeInitialData(WebSocket.Out<JsonNode> out) throws SQLException {
 		Connection conn = null;
 		try {
 			conn = access.getPool().getConnection();
@@ -108,7 +125,7 @@ public final class NationStatesWebSocket extends WebSocket<JsonNode>{
 	 * @throws SQLException
 	 * @throws ExecutionException
 	 */
-	private boolean writeRequest(RequestType type, NationContext context, DataRequest request, Connection conn) throws SQLException, ExecutionException {
+	private boolean writeRequest(RequestType type, NationContext context, DataRequest request, Connection conn) throws SQLException {
 		if (type.shouldSendData(conn, context)) {
 			if (authenticated || !type.requiresAuthentication()) {
 				List<JsonNode> nodes = type.executeRequest(conn, request, context);

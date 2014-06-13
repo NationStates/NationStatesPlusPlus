@@ -4,13 +4,10 @@ import java.lang.reflect.Constructor;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
-
 import org.apache.commons.dbutils.DbUtils;
+import org.joda.time.Duration;
 import org.spout.cereal.config.ConfigurationNode;
 import org.spout.cereal.config.yaml.YamlConfiguration;
-
-import akka.dispatch.MessageDispatcher;
 
 import com.afforess.assembly.AMQPThread;
 import com.afforess.assembly.DailyDumps;
@@ -19,6 +16,7 @@ import com.afforess.assembly.NationUpdateTask;
 import com.afforess.assembly.FlagUpdateTask;
 import com.afforess.assembly.HappeningsTask;
 import com.afforess.assembly.HealthMonitor;
+import com.afforess.assembly.RepeatingTaskThread;
 import com.afforess.assembly.Start;
 import com.afforess.assembly.UpdateOrderTask;
 import com.afforess.assembly.WorldAssemblyTask;
@@ -33,18 +31,13 @@ import com.limewoodMedia.nsapi.NationStates;
 import com.mchange.v2.c3p0.ComboPooledDataSource;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.ConnectionFactory;
-import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
-
 import controllers.AdminController;
 import controllers.DatabaseController;
 import controllers.NationStatesController;
 import play.*;
 import play.api.mvc.EssentialFilter;
 import play.filters.gzip.GzipFilter;
-import play.libs.Akka;
 import play.mvc.Controller;
-import scala.concurrent.duration.Duration;
 
 public class Global extends GlobalSettings {
 	private ComboPooledDataSource pool;
@@ -155,18 +148,21 @@ public class Global extends GlobalSettings {
 			dailyDumps.setDaemon(true);
 			dailyDumps.start();
 
-			Config c = ConfigFactory.load();
-			final MessageDispatcher nsTasks = Akka.system().dispatchers().from(c.getObject("play.akka.actor.ns-tasks").toConfig());
 			HappeningsTask task = new HappeningsTask(access, api, health);
-			Akka.system().scheduler().schedule(Duration.create(5, TimeUnit.SECONDS), Duration.create(3, TimeUnit.SECONDS), task, nsTasks); //3-10 api calls
-			Akka.system().scheduler().schedule(Duration.create(60, TimeUnit.SECONDS), Duration.create(31, TimeUnit.SECONDS), new NationUpdateTask(api, access, 12, 12, health, task), nsTasks);
-			Akka.system().scheduler().schedule(Duration.create(120, TimeUnit.SECONDS), Duration.create(31, TimeUnit.SECONDS), new UpdateOrderTask(api, access), nsTasks); // 2 api calls
-			Akka.system().scheduler().schedule(Duration.create(120, TimeUnit.SECONDS), Duration.create(31, TimeUnit.SECONDS), new FlagUpdateTask(api, access), nsTasks); // 4 api calls
-			Akka.system().scheduler().schedule(Duration.create(120, TimeUnit.SECONDS), Duration.create(60, TimeUnit.SECONDS), new NSWikiTask(access, config), nsTasks); // 0 api calls
-			Akka.system().scheduler().scheduleOnce(Duration.create(120, TimeUnit.SECONDS), new WorldAssemblyTask(access, api, 0), nsTasks);
-			Akka.system().scheduler().scheduleOnce(Duration.create(160, TimeUnit.SECONDS), new WorldAssemblyTask(access, api, 1), nsTasks);
+			schedule(Duration.standardSeconds(5), Duration.standardSeconds(3), task); //3-10 api calls
+			schedule(Duration.standardSeconds(60), Duration.standardSeconds(31), new NationUpdateTask(api, access, 12, 12, health, task));
+			schedule(Duration.standardSeconds(120), Duration.standardSeconds(31), new UpdateOrderTask(api, access)); // 2 api calls
+			schedule(Duration.standardSeconds(120), Duration.standardSeconds(31), new FlagUpdateTask(api, access)); // 4 api calls
+			schedule(Duration.standardSeconds(120), Duration.standardSeconds(60), new NSWikiTask(access, config)); // 0 api calls
+			schedule(Duration.standardSeconds(120), null, new WorldAssemblyTask(access, api, 0)); //3-10 api calls
+			schedule(Duration.standardSeconds(120), null, new WorldAssemblyTask(access, api, 1)); //3-10 api calls
 			Logger.info("NationStates++ Background Tasks Initialized.");
 		}
+	}
+
+	private static void schedule(Duration initial, Duration repeating, Runnable task) {
+		RepeatingTaskThread thread = new RepeatingTaskThread(initial, repeating, task);
+		thread.start();
 	}
 
 	@Override

@@ -52,7 +52,6 @@ public class HealthMonitor extends Thread {
 		access.getRegionIdCache().invalidateAll();
 		access.getReverseIdCache().invalidateAll();
 		access.getNationSettingsCache().invalidateAll();
-		access.getNationLocation().invalidateAll();
 		cleanUpCaches();
 	}
 
@@ -61,7 +60,6 @@ public class HealthMonitor extends Thread {
 		access.getRegionIdCache().cleanUp();
 		access.getReverseIdCache().cleanUp();
 		access.getNationSettingsCache().cleanUp();
-		access.getNationLocation().cleanUp();
 	}
 
 	@Override

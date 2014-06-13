@@ -47,7 +47,7 @@ public class RMBController extends NationStatesController {
 		rmbRatingCache = CacheBuilder.newBuilder().maximumSize(access.getMaxCacheSize()).expireAfterAccess(5, TimeUnit.MINUTES).expireAfterWrite(1, TimeUnit.HOURS).build();
 	}
 
-	public Result ratePost(int rmbPost, int rating) throws SQLException, ExecutionException {
+	public Result ratePost(int rmbPost, int rating) throws SQLException {
 		Result ret = Utils.validateRequest(request(), response(), getAPI(), getDatabase());
 		if (ret != null) {
 			return ret;
@@ -136,7 +136,7 @@ public class RMBController extends NationStatesController {
 		}), Akka.system().dispatcher()));
 	}
 
-	public Promise<Result> getPostRatings(final int rmbPost, final int rmbCache) throws SQLException, ExecutionException {
+	public Promise<Result> getPostRatings(final int rmbPost, final int rmbCache) throws SQLException {
 		JsonNode ratings = rmbRatingCache.getIfPresent(rmbPost);
 		if (ratings == null) {
 			Promise<JsonNode> promise = Promise.wrap(akka.dispatch.Futures.future((new Callable<JsonNode>() {
@@ -216,7 +216,7 @@ public class RMBController extends NationStatesController {
 		return Json.toJson(postRatings);
 	}
 
-	public Result getRMBCache(String region) throws SQLException, ExecutionException {
+	public Result getRMBCache(String region) throws SQLException {
 		Connection conn = getConnection();
 		Map<String, Integer> cache = new HashMap<String, Integer>(2);
 		try {
@@ -343,7 +343,7 @@ public class RMBController extends NationStatesController {
 		}
 	}
 
-	public Result flagComment(int commentId, boolean flag) throws SQLException, ExecutionException {
+	public Result flagComment(int commentId, boolean flag) throws SQLException {
 		Result invalid = Utils.validateRequest(request(), response(), getAPI(), getDatabase());
 		if (invalid != null) {
 			return invalid;
@@ -387,7 +387,7 @@ public class RMBController extends NationStatesController {
 		return Results.ok();
 	}
 
-	public Result likeComment(int commentId, boolean like) throws SQLException, ExecutionException {
+	public Result likeComment(int commentId, boolean like) throws SQLException {
 		Result invalid = Utils.validateRequest(request(), response(), getAPI(), getDatabase());
 		if (invalid != null) {
 			return invalid;
@@ -431,7 +431,7 @@ public class RMBController extends NationStatesController {
 		return Results.ok();
 	}
 
-	public Result addComment(int rmbPost) throws SQLException, ExecutionException {
+	public Result addComment(int rmbPost) throws SQLException {
 		Result invalid = Utils.validateRequest(request(), response(), getAPI(), getDatabase());
 		if (invalid != null) {
 			return invalid;

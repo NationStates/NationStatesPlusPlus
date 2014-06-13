@@ -5,6 +5,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Savepoint;
+import java.sql.Statement;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -13,7 +14,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 
 import org.apache.commons.dbutils.DbUtils;
@@ -30,10 +30,11 @@ import com.afforess.assembly.model.HappeningType;
 import com.afforess.assembly.model.RecruitmentType;
 import com.afforess.assembly.util.DatabaseAccess;
 import com.afforess.assembly.util.Utils;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.limewoodMedia.nsapi.NationStates;
+import com.mysql.jdbc.exceptions.jdbc4.MySQLTransactionRollbackException;
 
 public class RecruitmentController extends NationStatesController {
-	private final Random rand = new Random();
 	public RecruitmentController(DatabaseAccess access, YamlConfiguration config, NationStates api) {
 		super(access, config, api);
 	}
@@ -61,7 +62,7 @@ public class RecruitmentController extends NationStatesController {
 		return false;
 	}
 
-	public Result getRecruitmentCampaigns(String region, boolean includeStats) throws SQLException, ExecutionException {
+	public Result getRecruitmentCampaigns(String region, boolean includeStats) throws SQLException {
 		Result ret = Utils.validateRequest(request(), response(), getAPI(), getDatabase());
 		if (ret != null) {
 			return ret;
@@ -137,7 +138,7 @@ public class RecruitmentController extends NationStatesController {
 		return ok(Json.toJson(campaigns)).as("application/json");
 	}
 
-	public Result hideRecruitmentCampaign(String region, int id) throws SQLException, ExecutionException {
+	public Result hideRecruitmentCampaign(String region, int id) throws SQLException {
 		Result ret = Utils.validateRequest(request(), response(), getAPI(), getDatabase());
 		if (ret != null) {
 			return ret;
@@ -164,7 +165,7 @@ public class RecruitmentController extends NationStatesController {
 		return Results.ok();
 	}
 
-	public Result retireRecruitmentCampaign(String region, int id) throws SQLException, ExecutionException {
+	public Result retireRecruitmentCampaign(String region, int id) throws SQLException {
 		Result ret = Utils.validateRequest(request(), response(), getAPI(), getDatabase());
 		if (ret != null) {
 			return ret;
@@ -192,7 +193,7 @@ public class RecruitmentController extends NationStatesController {
 		return Results.ok();
 	}
 
-	public Result createRecruitmentCampaign(String region) throws SQLException, ExecutionException {
+	public Result createRecruitmentCampaign(String region) throws SQLException {
 		Result ret = Utils.validateRequest(request(), response(), getAPI(), getDatabase());
 		if (ret != null) {
 			return ret;
@@ -279,7 +280,7 @@ public class RecruitmentController extends NationStatesController {
 		return getRecruitmentCampaigns(region, true);
 	}
 
-	public Result getRecruitmentOfficers(String region, boolean includeAdmins) throws SQLException, ExecutionException {
+	public Result getRecruitmentOfficers(String region, boolean includeAdmins) throws SQLException {
 		Connection conn = null;
 		List<Object> officers = new ArrayList<Object>();
 		try {
@@ -325,7 +326,42 @@ public class RecruitmentController extends NationStatesController {
 		return ok(Json.toJson(officers)).as("application/json");
 	}
 
-	public Result changeOfficers(String region) throws SQLException, ExecutionException {
+	public static Set<Integer> getRecruitmentOfficerIds(Connection conn, DatabaseAccess access, int regionId) throws SQLException {
+		HashSet<Integer> officers = new HashSet<Integer>();
+		PreparedStatement select = conn.prepareStatement("SELECT nation FROM assembly.recruitment_officers WHERE region = ?");
+		select.setInt(1, regionId);
+		ResultSet set = select.executeQuery();
+		while(set.next()) {
+			officers.add(set.getInt(1));
+		}
+		DbUtils.closeQuietly(set);
+		DbUtils.closeQuietly(select);
+		
+		select = conn.prepareStatement("SELECT delegate, founder FROM assembly.region WHERE id = ?");
+		select.setInt(1, regionId);
+		set = select.executeQuery();
+		if(set.next()) {
+			if (set.getString(1) != "0") {
+				officers.add(access.getNationId(set.getString(1)));
+			}
+			if (set.getString(2) != "0") {
+				officers.add(access.getNationId(set.getString(2)));
+			}
+		}
+		return officers;
+	}
+
+	public static boolean doesRegionHaveActiveRecruitmentCampaigns(Connection conn, int regionId) throws SQLException {
+		PreparedStatement select = conn.prepareStatement("SELECT count(id) FROM assembly.recruit_campaign WHERE region = ? AND retired IS NULL");
+		select.setInt(1, regionId);
+		ResultSet result = select.executeQuery();
+		if (result.next() && result.getInt(1) > 0) {
+			return true;
+		}
+		return false;
+	}
+
+	public Result changeOfficers(String region) throws SQLException {
 		Result ret = Utils.validateRequest(request(), response(), getAPI(), getDatabase());
 		if (ret != null) {
 			return ret;
@@ -446,7 +482,7 @@ public class RecruitmentController extends NationStatesController {
 		return Results.ok(Json.toJson(nations)).as("application/json");
 	}
 
-	private int getRecruitmentAdministrator(Connection conn, String nation, String region) throws SQLException, ExecutionException {
+	private int getRecruitmentAdministrator(Connection conn, String nation, String region) throws SQLException {
 		PreparedStatement select = null, officers = null;
 		ResultSet set = null;
 		try {
@@ -477,7 +513,6 @@ public class RecruitmentController extends NationStatesController {
 		}
 	}
 
-	private final ConcurrentHashMap<Integer, Boolean> regionLock = new ConcurrentHashMap<Integer, Boolean>();
 	public Result findRecruitmentTarget(String region, String accessKey, boolean userAgentFix) throws SQLException, ExecutionException {
 		Utils.handleDefaultPostHeaders(request(), response());
 		if (!userAgentFix) {
@@ -511,39 +546,40 @@ public class RecruitmentController extends NationStatesController {
 				return Results.unauthorized();
 			}
 
-			//Another nation is already recruiting right now, abort
-			if (regionLock.putIfAbsent(regionId, true) == null) {
-				try {
-					if (canRecruit(conn, regionId)) {
-						Map<String, Object> data = getRecruitmentTarget(conn, regionId, nation);
-						if (data != null) {
-							return ok(Json.toJson(data)).as("application/json");
-						}
-					}
-				} finally {
-					regionLock.remove(regionId);
-				}
-			}
-			
-			Map<String, Object> wait = new HashMap<String, Object>();
-			PreparedStatement lastRecruitment = conn.prepareStatement("SELECT nation, timestamp, recruiter FROM assembly.recruitment_results WHERE region = ? ORDER BY timestamp DESC LIMIT 0, 1");
-			lastRecruitment.setInt(1, regionId);
-			ResultSet set = lastRecruitment.executeQuery();
-			if (set.next()) {
-				wait.put("nation", getDatabase().getReverseIdCache().get(set.getInt("nation")));
-				wait.put("timestamp", set.getLong("timestamp"));
-				wait.put("recruiter", getDatabase().getReverseIdCache().get(set.getInt("recruiter")));
-			}
-			DbUtils.closeQuietly(set);
-			DbUtils.closeQuietly(lastRecruitment);
-			wait.put("wait", "30");
-			return ok(Json.toJson(wait)).as("application/json");
+			return ok(Json.toJson(calculateRecruitmentTarget(getDatabase(), conn, regionId, nation))).as("application/json");
 		} finally {
 			DbUtils.closeQuietly(conn);
 		}
 	}
 
-	private boolean canRecruit(Connection conn, int region) throws SQLException {
+	public static JsonNode calculateRecruitmentTarget(DatabaseAccess access, Connection conn, int regionId, String nation) throws SQLException, ExecutionException {
+		//If another nation is already recruiting right now, abort
+		if (canRecruit(conn, regionId)) {
+			Map<String, Object> data = getRecruitmentTarget(access, conn, regionId, nation);
+			if (data != null) {
+				return Json.toJson(data);
+			}
+		}
+		
+		Map<String, Object> wait = new HashMap<String, Object>();
+		PreparedStatement lastRecruitment = conn.prepareStatement("SELECT nation, timestamp, recruiter FROM assembly.recruitment_results WHERE region = ? ORDER BY timestamp DESC LIMIT 0, 1");
+		lastRecruitment.setInt(1, regionId);
+		ResultSet set = lastRecruitment.executeQuery();
+		long timestamp = System.currentTimeMillis();
+		if (set.next()) {
+			wait.put("nation", access.getReverseIdCache().get(set.getInt("nation")));
+			wait.put("timestamp", set.getLong("timestamp"));
+			wait.put("recruiter", access.getReverseIdCache().get(set.getInt("recruiter")));
+			timestamp = set.getLong("timestamp");
+		}
+		DbUtils.closeQuietly(set);
+		DbUtils.closeQuietly(lastRecruitment);
+		wait.put("wait", Math.max(((Duration.standardMinutes(3).getMillis() + SAFETY_FACTOR + timestamp) - System.currentTimeMillis()) / 1000 + 1, 10));
+		return Json.toJson(wait);
+	}
+
+	private static final long SAFETY_FACTOR = Duration.standardSeconds(10).getMillis();
+	private static boolean canRecruit(Connection conn, int region) throws SQLException {
 		PreparedStatement lastRecruitment = null;
 		ResultSet recruitment = null;
 		try {
@@ -553,9 +589,9 @@ public class RecruitmentController extends NationStatesController {
 			if (recruitment.next()) {
 				long timestamp = recruitment.getLong(1);
 				int confirmed = recruitment.getInt(2);
-				if (confirmed == 1 && timestamp + Duration.standardMinutes(3).getMillis() < System.currentTimeMillis()) {
+				if (confirmed == 1 && timestamp + SAFETY_FACTOR + Duration.standardMinutes(3).getMillis() < System.currentTimeMillis()) {
 					return true;
-				} else if (confirmed == 0 && timestamp + Duration.standardMinutes(4).getMillis() < System.currentTimeMillis()) {
+				} else if (confirmed == 0 && timestamp + SAFETY_FACTOR + Duration.standardMinutes(4).getMillis() < System.currentTimeMillis()) {
 					return true;
 				}
 			} else {
@@ -568,7 +604,8 @@ public class RecruitmentController extends NationStatesController {
 		}
 	}
 
-	private Map<String, Object> getRecruitmentTarget(Connection conn, int region, String nation) throws SQLException, ExecutionException {
+	private static Map<String, Object> getRecruitmentTarget(DatabaseAccess access, Connection conn, int region, String nation) throws SQLException {
+		final Random rand = new Random();
 		PreparedStatement select = conn.prepareStatement("SELECT id, type, client_key, tgid, secret_key, allocation, gcrs_only, filters FROM assembly.recruit_campaign WHERE region = ? AND visible = 1 AND retired IS NULL ORDER BY RAND()");
 		select.setInt(1, region);
 		ResultSet set = select.executeQuery();
@@ -583,17 +620,44 @@ public class RecruitmentController extends NationStatesController {
 			if (rand.nextInt(100) < allocation || set.isLast()) {
 				final String target = type.findRecruitmentNation(conn, region, gcrsOnly, set.getString("filters"));
 				if (target != null) {
-					final int nationId = getDatabase().getNationId(target);
+					final int nationId = access.getNationId(target);
 					if (nationId != -1) {
-						PreparedStatement insert = conn.prepareStatement("INSERT INTO assembly.recruitment_results (region, nation, timestamp, campaign, recruiter) VALUES (?, ?, ?, ?, ?)");
+						PreparedStatement insert = conn.prepareStatement("INSERT INTO assembly.recruitment_results (region, nation, timestamp, campaign, recruiter, confirmed) VALUES (?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);
 						insert.setInt(1, region);
 						insert.setInt(2, nationId);
 						insert.setLong(3, System.currentTimeMillis());
 						insert.setInt(4, campaign);
-						insert.setInt(5, getDatabase().getNationId(nation));
+						insert.setInt(5, access.getNationId(nation));
+						insert.setInt(6, -1);
 						insert.executeUpdate();
+						ResultSet keys = insert.getGeneratedKeys();
+						int insertId = -1;
+						keys.next();
+						insertId = keys.getInt(1);
+
+						DbUtils.closeQuietly(keys);
 						DbUtils.closeQuietly(insert);
 						
+						//Lame as this seems, MySQL recommends "retrying" in client side applications if a deadlock is thrown
+						boolean success = false;
+						MySQLTransactionRollbackException deadlock = null;
+						for (int tries = 0; tries < 3; tries++) {
+							try {
+								Map<String, Object> wait = tryUpdateRecruitmentResults(conn, insertId, region, nation);
+								if (wait != null) {
+									return wait;
+								}
+								success = true;
+								break;
+							} catch (MySQLTransactionRollbackException ex) {
+								deadlock = ex;
+							}
+						}
+						if (!success) {
+							Logger.error("Unable to execute recruitment results confirmation, failed all 3 tries!", deadlock);
+							return null;
+						}
+
 						Map<String, Object> data = new HashMap<String, Object>();
 						data.put("client_key", clientKey);
 						data.put("tgid", tgid);
@@ -611,7 +675,24 @@ public class RecruitmentController extends NationStatesController {
 		return null;
 	}
 
-	public Result confirmRecruitmentSent(String region, String target, String accessKey) throws SQLException, ExecutionException {
+	private static Map<String, Object> tryUpdateRecruitmentResults(Connection conn, int insertId, int region, String nation) throws SQLException {
+		PreparedStatement confirm = conn.prepareStatement("UPDATE assembly.recruitment_results SET confirmed = 0 WHERE id = ? AND (SELECT count FROM assembly.new_recruitments WHERE region = ?) = 1");
+		confirm.setInt(1, insertId);
+		confirm.setInt(2, region);
+		if (confirm.executeUpdate() == 0) {
+			PreparedStatement delete = conn.prepareStatement("DELETE FROM assembly.recruitment_results WHERE id = ? OR (confirmed = -1 AND timestamp < ?)");
+			delete.setInt(1, insertId);
+			delete.setLong(2, System.currentTimeMillis() - Duration.standardMinutes(5).getMillis());
+			delete.executeUpdate();
+			Logger.info("Prevented double recruitment for region [" + region + "], by [" + nation + "].");
+			Map<String, Object> wait = new HashMap<String, Object>();
+			wait.put("wait", (Duration.standardMinutes(3).getMillis() + SAFETY_FACTOR) / 1000L);
+			return wait;
+		}
+		return null;
+	}
+
+	public Result confirmRecruitmentSent(String region, String target, String accessKey) throws SQLException {
 		final boolean validScriptAccess = isValidAccessKey(region, accessKey);
 		//Bypass standard nation authentication if we are a valid script
 		if (!validScriptAccess) {
@@ -636,19 +717,23 @@ public class RecruitmentController extends NationStatesController {
 				Utils.handleDefaultPostHeaders(request(), response());
 				return Results.unauthorized();
 			}
-			PreparedStatement update = conn.prepareStatement("UPDATE assembly.recruitment_results SET confirmed = 1 WHERE region = ? AND nation = ? AND timestamp > ?");
-			update.setInt(1, regionId);
-			update.setInt(2, getDatabase().getNationId(target));
-			update.setLong(3, System.currentTimeMillis() - Duration.standardHours(1).getMillis()); //Ensure we are not tampering with ancient results
-			update.executeUpdate();
-			DbUtils.closeQuietly(update);
+			confirmRecruitment(getDatabase(), conn, regionId, target);
 		} finally {
 			DbUtils.closeQuietly(conn);
 		}
 		return Results.ok();
 	}
 
-	public Result markPuppetNation(String nation) throws ExecutionException {
+	public static void confirmRecruitment(DatabaseAccess access, Connection conn, int regionId, String target) throws SQLException {
+		PreparedStatement update = conn.prepareStatement("UPDATE assembly.recruitment_results SET confirmed = 1 WHERE region = ? AND nation = ? AND timestamp > ?");
+		update.setInt(1, regionId);
+		update.setInt(2, access.getNationId(target));
+		update.setLong(3, System.currentTimeMillis() - Duration.standardHours(1).getMillis()); //Ensure we are not tampering with ancient results
+		update.executeUpdate();
+		DbUtils.closeQuietly(update);
+	}
+
+	public Result markPuppetNation(String nation) {
 		Utils.handleDefaultPostHeaders(request(), response());
 		nation = Utils.sanitizeName(nation);
 		if (getDatabase().getNationId(nation) == -1) {

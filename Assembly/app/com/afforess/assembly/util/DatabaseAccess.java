@@ -26,7 +26,6 @@ public class DatabaseAccess {
 	private final LoadingCache<String, Integer> nationIdCache;
 	private final LoadingCache<Integer, String> reverseIdCache;
 	private final LoadingCache<Integer, String> nationSettings;
-	private final LoadingCache<Integer, String> nationLocationCache;
 	private final WebsocketManager websocketManager;
 	private final int cacheSize;
 
@@ -144,34 +143,6 @@ public class DatabaseAccess {
 				return "";
 			}
 		});
-
-		this.nationLocationCache = CacheBuilder.newBuilder()
-				.maximumSize(backgroundTasks ? cacheSize : 0)
-				.expireAfterAccess(10, TimeUnit.MINUTES)
-				.expireAfterWrite(1, TimeUnit.HOURS)
-				.build(new CacheLoader<Integer, String>() {
-				public String load(Integer key) throws SQLException {
-					Connection conn = null;
-					PreparedStatement select = null;
-					ResultSet set = null;
-					try {
-						conn = pool.getConnection();
-						select = conn.prepareStatement("SELECT region.name FROM assembly.region INNER JOIN assembly.nation ON nation.region = region.id WHERE nation.id = ?");
-						select.setInt(1, key);
-						set = select.executeQuery();
-						if (set.next()) {
-							return set.getString(1);
-						}
-					} catch (SQLException e) {
-						Logger.error("Unable to look up nation's region", e);
-					} finally {
-						DbUtils.closeQuietly(set);
-						DbUtils.closeQuietly(select);
-						DbUtils.closeQuietly(conn);
-					}
-					return null;
-				}
-			});
 	}
 
 	public final int getMaxCacheSize() {
@@ -182,26 +153,34 @@ public class DatabaseAccess {
 		return nationIdCache;
 	}
 
-	public int getNationId(String name) throws ExecutionException {
+	public int getNationId(String name) {
 		name = Utils.sanitizeName(name);
-		int id = nationIdCache.get(name);
-		if (id == -1) {
-			nationIdCache.invalidate(name);
+		try {
+			int id = nationIdCache.get(name);
+			if (id == -1) {
+				nationIdCache.invalidate(name);
+			}
+			return id;
+		} catch (ExecutionException e) {
+			throw new RuntimeException(e);
 		}
-		return id;
 	}
 
 	public LoadingCache<String, Integer> getRegionIdCache() {
 		return regionIdCache;
 	}
 
-	public int getRegionId(String name) throws ExecutionException {
+	public int getRegionId(String name)  {
 		name = Utils.sanitizeName(name);
-		int id = regionIdCache.get(name);
-		if (id == -1) {
-			regionIdCache.invalidate(name);
+		try {
+			int id = regionIdCache.get(name);
+			if (id == -1) {
+				regionIdCache.invalidate(name);
+			}
+			return id;
+		} catch (ExecutionException e) {
+			throw new RuntimeException(e);
 		}
-		return id;
 	}
 
 	public LoadingCache<Integer, String> getReverseIdCache() {
@@ -210,10 +189,6 @@ public class DatabaseAccess {
 
 	public LoadingCache<Integer, String> getNationSettingsCache() {
 		return nationSettings;
-	}
-
-	public LoadingCache<Integer, String> getNationLocation() {
-		return nationLocationCache;
 	}
 
 	public ComboPooledDataSource getPool() {
@@ -306,7 +281,7 @@ public class DatabaseAccess {
 		}
 	}
 
-	public void markNationDead(String nation, Connection conn) throws ExecutionException, SQLException {
+	public void markNationDead(String nation, Connection conn) throws SQLException {
 		markNationDead(getNationId(nation), conn);
 	}
 
@@ -333,7 +308,7 @@ public class DatabaseAccess {
 		}
 	}
 
-	public void markRegionDead(String region, Connection conn) throws SQLException, ExecutionException {
+	public void markRegionDead(String region, Connection conn) throws SQLException {
 		int regionId = getRegionId(region);
 		if (regionId > -1 && region != null) {
 			

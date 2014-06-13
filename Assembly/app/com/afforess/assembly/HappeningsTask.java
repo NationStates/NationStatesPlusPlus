@@ -8,7 +8,6 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
@@ -225,13 +224,13 @@ public class HappeningsTask implements Runnable {
 					if (match.find()) {
 						String title = text.substring(match.start() + 2, match.end() - 2);
 						String otherNation = Utils.sanitizeName(title);
-						removeEndorsement(conn, access.getNationIdCache().get(otherNation), nationId);
+						removeEndorsement(conn, access.getNationId(otherNation), nationId);
 					}
 				} else if (happeningType == HappeningType.getType("LOST_ENDORSEMENT").getId()) {
 					if (match.find()) {
 						String title = text.substring(match.start() + 2, match.end() - 2);
 						String otherNation = Utils.sanitizeName(title);
-						removeEndorsement(conn, nationId, access.getNationIdCache().get(otherNation));
+						removeEndorsement(conn, nationId, access.getNationId(otherNation));
 					}
 				} else if (happeningType == HappeningType.getType("RESIGNED_FROM_WORLD_ASSEMBLY").getId()) {
 					resignFromWorldAssembly(conn, nationId, false);
@@ -327,15 +326,13 @@ public class HappeningsTask implements Runnable {
 			}
 		} catch (SQLException e) {
 			Logger.error("Unable to update happenings", e);
-		}  catch (ExecutionException e) {
-			Logger.error("Unable to update happenings", e);
 		} finally {
 			DbUtils.closeQuietly(happeningInsert);
 			DbUtils.closeQuietly(conn);
 		}
 	}
 
-	public static void abolishRegionFlag(Connection conn, DatabaseAccess access, String happening) throws SQLException, ExecutionException {
+	public static void abolishRegionFlag(Connection conn, DatabaseAccess access, String happening) throws SQLException {
 		Matcher regions = Utils.REGION_PATTERN.matcher(happening);
 		if (regions.find()) {
 			int region = access.getRegionId(happening.substring(regions.start() + 2, regions.end() - 2));
@@ -349,7 +346,7 @@ public class HappeningsTask implements Runnable {
 		}
 	}
 
-	public static void updateRegionHappenings(Connection conn, DatabaseAccess access, int nationId, int happeningId, String happening, HappeningType type) throws SQLException, ExecutionException {
+	public static void updateRegionHappenings(Connection conn, DatabaseAccess access, int nationId, int happeningId, String happening, HappeningType type) throws SQLException {
 		String region1Happening = type.transformToRegion1Happening(happening);
 		String region2Happening = type.transformToRegion2Happening(happening);
 		List<Integer> regionIds = new ArrayList<Integer>(2);

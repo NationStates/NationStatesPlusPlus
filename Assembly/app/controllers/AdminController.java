@@ -6,7 +6,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
 
 import org.apache.commons.dbutils.DbUtils;
 import org.spout.cereal.config.yaml.YamlConfiguration;
@@ -30,7 +29,7 @@ public class AdminController extends DatabaseController {
 		adminCode = config.getChild("admin").getChild("code").getString();
 	}
 
-	public Result recalculateHappenings(String code, int happeningType) throws SQLException, ExecutionException, InterruptedException {
+	public Result recalculateHappenings(String code, int happeningType) throws SQLException, InterruptedException {
 		if (!code.equals(adminCode)) {
 			return Results.badRequest();
 		}
@@ -88,7 +87,7 @@ public class AdminController extends DatabaseController {
 		return ok(Json.toJson(map)).as("application/json");
 	}
 
-	public Result invalidateCaches(String code) throws SQLException, ExecutionException, InterruptedException {
+	public Result invalidateCaches(String code) throws SQLException, InterruptedException {
 		if (!code.equals(adminCode)) {
 			return Results.badRequest();
 		}
@@ -96,7 +95,7 @@ public class AdminController extends DatabaseController {
 		return ok("All cache's invalidated");
 	}
 
-	public Result doRestart(String code) throws SQLException, ExecutionException, InterruptedException {
+	public Result doRestart(String code) throws SQLException, InterruptedException {
 		if (!code.equals(adminCode)) {
 			return Results.badRequest();
 		}

@@ -5,14 +5,12 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashSet;
-import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 
 import org.apache.commons.dbutils.DbUtils;
+import org.joda.time.Duration;
 
 import play.Logger;
-import play.libs.Akka;
-import scala.concurrent.duration.Duration;
 
 import com.afforess.assembly.util.DatabaseAccess;
 import com.limewoodMedia.nsapi.NationStates;
@@ -82,10 +80,12 @@ public class WorldAssemblyTask implements Runnable {
 			firstRun = false;
 			
 			Logger.info("First WA run update complete, next update in " + nextUpdate + " seconds");
-			Akka.system().scheduler().scheduleOnce(Duration.create(nextUpdate, TimeUnit.SECONDS), this, Akka.system().dispatcher());
+			RepeatingTaskThread thread = new RepeatingTaskThread(Duration.standardSeconds(nextUpdate), null, this);
+			thread.start();
 		} else {
 			Logger.info("Executing WA Update for council: " + council);
-			Akka.system().scheduler().scheduleOnce(Duration.create(1, TimeUnit.HOURS), this, Akka.system().dispatcher());
+			RepeatingTaskThread thread = new RepeatingTaskThread(Duration.standardHours(1), null, this);
+			thread.start();
 			updateVotes();
 		}
 	}

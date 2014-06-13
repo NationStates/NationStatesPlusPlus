@@ -11,7 +11,6 @@ import java.sql.SQLException;
 import java.sql.Savepoint;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -238,37 +237,32 @@ public class Utils {
 		String nation = Utils.getPostValue(request, "nation");
 		String auth = Utils.getPostValue(request, "auth");
 		String reason = "UNKNOWN NATION ID";
-		try {
-			final int nationId = nation != null ? access.getNationId(nation) : -1;
-			if (nation != null && nationId != -1) {
-				if (authToken != null && access.isValidAuthToken(nationId, authToken)) {
-					return null;
+		final int nationId = nation != null ? access.getNationId(nation) : -1;
+		if (nation != null && nationId != -1) {
+			if (authToken != null && access.isValidAuthToken(nationId, authToken)) {
+				return null;
+			}
+			reason = "INVALID AUTH TOKEN";
+			if ((auth != null && !auth.contains(" ")) && (!rateLimit || recentAuthRequest.getIfPresent(nation) == null)) {
+				recentAuthRequest.put(nation, true);
+				boolean verify = false;
+				try {
+					verify = api.verifyNation(nation, auth);
+				} catch (RateLimitReachedException e) {
+					Logger.warn("Auth API Rate limited!");
+				} catch (Exception e) {
+					Logger.error("Unknown exception processing NS Authentication", e);
 				}
-				reason = "INVALID AUTH TOKEN";
-				if ((auth != null && !auth.contains(" ")) && (!rateLimit || recentAuthRequest.getIfPresent(nation) == null)) {
-					recentAuthRequest.put(nation, true);
-					boolean verify = false;
-					try {
-						verify = api.verifyNation(nation, auth);
-					} catch (RateLimitReachedException e) {
-						Logger.warn("Auth API Rate limited!");
-					} catch (Exception e) {
-						Logger.error("Unknown exception processing NS Authentication", e);
-					}
-					if (verify) {
-						response.setHeader("Access-Control-Expose-Headers", "X-Auth-Token");
-						response.setHeader("X-Auth-Token", access.generateAuthToken(nationId));
-						Logger.info("Authenticated [" + nation + "] with NS Auth API");
-						return null;
-					} else {
-						reason = "INVALID NS AUTH CODE";
-						Logger.info("Failed to Authenticate [" + nation + "] with NS Auth API | Code: [" + auth + "]");
-					}
+				if (verify) {
+					response.setHeader("Access-Control-Expose-Headers", "X-Auth-Token");
+					response.setHeader("X-Auth-Token", access.generateAuthToken(nationId));
+					Logger.info("Authenticated [" + nation + "] with NS Auth API");
+					return null;
+				} else {
+					reason = "INVALID NS AUTH CODE";
+					Logger.info("Failed to Authenticate [" + nation + "] with NS Auth API | Code: [" + auth + "]");
 				}
 			}
-		} catch (ExecutionException e) {
-			Logger.error("Unable to validate request", e);
-			reason = "UNKNOWN REASON";
 		}
 		Utils.handleDefaultPostHeaders(request, response);
 		return Results.unauthorized(reason);

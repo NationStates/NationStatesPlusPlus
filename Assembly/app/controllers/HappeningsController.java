@@ -5,7 +5,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.concurrent.ExecutionException;
 
 import org.apache.commons.dbutils.DbUtils;
 import org.apache.commons.io.IOUtils;
@@ -38,7 +37,7 @@ public class HappeningsController extends DatabaseController {
 		return Results.status(BAD_REQUEST);
 	}
 
-	public Result regionHappenings(String region, int start) throws SQLException, ExecutionException {
+	public Result regionHappenings(String region, int start) throws SQLException {
 		start = Math.max(0, start);
 		int regionId = getDatabase().getRegionId(region);
 		if (regionId == -1) {
@@ -112,7 +111,7 @@ public class HappeningsController extends DatabaseController {
 		return ok(Json.toJson(happenings)).as("application/json");
 	}
 
-	public Result nationHappenings(String nation, int start) throws SQLException, ExecutionException {
+	public Result nationHappenings(String nation, int start) throws SQLException {
 		start = Math.max(0, start);
 		ArrayList<HappeningData> happenings = new ArrayList<HappeningData>();
 		if (nation != null && nation.length() > 0) {
