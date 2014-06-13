@@ -7,6 +7,7 @@
 	var openTries = 0;
 	var lastMessageReceived = 0;
 	var keepAliveAttempts = 0;
+	var reconnect = false;
 
 	var onWebsocketMessage = function(event) {
 		lastMessageReceived = Date.now();
@@ -87,6 +88,7 @@
 			}
 		}
 		console.log("Websocket opened");
+		reconnect = true;
 	};
 
 	var onWebsocketClose = function(event) {
@@ -98,11 +100,11 @@
 	function openWebsocket() {
 		openTries += 1;
 		if (getVisiblePage() == "region") {
-			ws = new WebSocket("wss://nationstatesplusplus.net/api/ws/region/?nation=" + getUserNation() + "&region=" + getVisibleRegion());
+			ws = new WebSocket("wss://nationstatesplusplus.net/api/ws/region/?nation=" + getUserNation() + "&userRegion=" + getUserRegion() + "&region=" + getVisibleRegion() + "&reconnect=" + reconnect);
 		} else if (getVisiblePage() == "nation") {
-			ws = new WebSocket("wss://nationstatesplusplus.net/api/ws/nation/?nation=" + getUserNation() + "&visibleNation=" + getVisibleNation());
+			ws = new WebSocket("wss://nationstatesplusplus.net/api/ws/nation/?nation=" + getUserNation() + "&userRegion=" + getUserRegion() + "&visibleNation=" + getVisibleNation() + "&reconnect=" + reconnect);
 		} else {
-			ws = new WebSocket("wss://nationstatesplusplus.net/api/ws/?nation=" + getUserNation());
+			ws = new WebSocket("wss://nationstatesplusplus.net/api/ws/?nation=" + getUserNation() + "&userRegion=" + getUserRegion() + "&reconnect=" + reconnect);
 		}
 		ws.onmessage = onWebsocketMessage;
 		ws.onopen = onWebsocketOpen;
@@ -110,7 +112,10 @@
 		keepAliveAttempts = 0;
 		lastMessageReceived = Date.now();
 	}
-	openWebsocket();
+	//Open websocket
+	if (getUserRegion() != "" && getUserNation() != "") {
+		openWebsocket();
+	}
 
 	function sendRequest(request) {
 		if (!request.requiresAuth || isAuthenticated) {

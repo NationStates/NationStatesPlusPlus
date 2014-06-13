@@ -63,9 +63,19 @@ function setupRegionPage() {
 			var dislikes = 0;
 			var rating = -1;
 			var postId = data.rmb_post;
+			var dislikeTooltip = "";
+			var likeTooltip = "";
 			for (var i = 0; i < data.ratings.length; i++) {
-				if (data.ratings[i].type == 0) dislikes += 1;
-				else if (data.ratings[i].type == 1) likes += 1;
+				if (data.ratings[i].type == 0) {
+					if (dislikes != 0) dislikeTooltip += ", ";
+					dislikeTooltip += data.ratings[i].nation.replaceAll("_", " ").toTitleCase();
+					dislikes += 1;
+				}
+				else if (data.ratings[i].type == 1) {
+					if (likes != 0) likeTooltip += ", ";
+					likeTooltip += data.ratings[i].nation.replaceAll("_", " ").toTitleCase();
+					likes += 1;
+				}
 				if (data.ratings[i].nation.toLowerCase().replaceAll(" ", "_") == getUserNation()) {
 					rating = data.ratings[i].type;
 				}
@@ -81,10 +91,10 @@ function setupRegionPage() {
 				post.find(".undo-rating").hide();
 			}
 			if (dislikes > 0) {
-				post.find("span[name='rating-container']").prepend("<img src='https://nationstatesplusplus.net/nationstates/static/dislike2.png' alt='Dislike'><span amt='" + dislikes + "' " + (rating == 0 ? "rated='1'" : "") + " class='post-rating-desc'>Dislike x " + dislikes + "</span>");
+				post.find("span[name='rating-container']").prepend("<img src='https://nationstatesplusplus.net/nationstates/static/dislike2.png' alt='Dislike' title='" + dislikeTooltip + "'><span amt='" + dislikes + "' " + (rating == 0 ? "rated='1'" : "") + " class='post-rating-desc'>Dislike x " + dislikes + "</span>");
 			}
 			if (likes > 0) {
-				post.find("span[name='rating-container']").prepend("<img src='https://nationstatesplusplus.net/nationstates/static/like.png' alt='Like'><span amt='" + likes + "' " + (rating == 1 ? "rated='1'" : "") + " class='post-rating-desc'>Like x " + likes + "</span>");
+				post.find("span[name='rating-container']").prepend("<img src='https://nationstatesplusplus.net/nationstates/static/like.png' alt='Like' title='" + likeTooltip + "'><span amt='" + likes + "' " + (rating == 1 ? "rated='1'" : "") + " class='post-rating-desc'>Like x " + likes + "</span>");
 			}
 		};
 		$(window).on("websocket/rmb_ratings", updateRatings);

@@ -201,7 +201,7 @@
 
 	function updatePanelAlerts() {
 		if (getUserNation() != "") {
-			$.get("/page=panel/template-overall=none?&nspp=1", function(html) {
+			$.get("/page=panel/template-overall=none?nspp=1", function(html) {
 				//Verify we haven't switched nations/logged out
 				if ($(html).find(".STANDOUT:first").attr("href").substring(7) == getUserNation()) {
 					var page = $(html);
@@ -214,7 +214,7 @@
 				}
 			});
 			if (window.chrome && getSettings().isEnabled("show_unread_forum_posts", false)) {
-				$.get("//forum.nationstates.net/search.php?search_id=egosearch?nspp=1", function(data) {
+				$.get("//forum.nationstates.net/search.php?search_id=egosearch&nspp=1", function(data) {
 					var count = 0;
 					var userData = getUserData();
 					var ignoredTopics = userData.getValue("ignored_topics", {});
