@@ -174,8 +174,12 @@
 				var recruiter = event.json.progress[i];
 				
 				if (colors[recruiter.recruiter] == null) {
-					colors[recruiter.recruiter] = colorChoices[colorIndex];
-					colorIndex += 1;
+					if (colorIndex < colorChoices.length) {
+						colors[recruiter.recruiter] = colorChoices[colorIndex];
+						colorIndex += 1;
+					} else {
+						colors[recruiter.recruiter] = "black";
+					}
 				}
 				var color = colors[recruiter.recruiter];
 				
