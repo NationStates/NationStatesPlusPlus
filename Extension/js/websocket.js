@@ -103,6 +103,8 @@
 			ws = new WebSocket("wss://nationstatesplusplus.net/api/ws/region/?nation=" + getUserNation() + "&userRegion=" + getUserRegion() + "&region=" + getVisibleRegion() + "&reconnect=" + reconnect);
 		} else if (getVisiblePage() == "nation") {
 			ws = new WebSocket("wss://nationstatesplusplus.net/api/ws/nation/?nation=" + getUserNation() + "&userRegion=" + getUserRegion() + "&visibleNation=" + getVisibleNation() + "&reconnect=" + reconnect);
+		} else if (getVisiblePage() == "blank" && typeof $.QueryString["recruitment"] != "undefined") {
+			ws = new WebSocket("wss://nationstatesplusplus.net/api/ws/recruitmentAdmin/?nation=" + getUserNation() + "&userRegion=" + getUserRegion() + "&adminRegion=" + $.QueryString["recruitment"] + "&reconnect=" + reconnect);
 		} else {
 			ws = new WebSocket("wss://nationstatesplusplus.net/api/ws/?nation=" + getUserNation() + "&userRegion=" + getUserRegion() + "&reconnect=" + reconnect);
 		}
