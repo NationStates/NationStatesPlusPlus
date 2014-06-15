@@ -4,13 +4,13 @@ import org.spout.cereal.config.yaml.YamlConfiguration;
 
 import com.afforess.assembly.model.page.DefaultPage;
 import com.afforess.assembly.model.page.NationPage;
+import com.afforess.assembly.model.page.RecruitmentAdministrationPage;
 import com.afforess.assembly.model.page.RegionPage;
 import com.afforess.assembly.model.websocket.NationStatesWebSocket;
 import com.afforess.assembly.util.DatabaseAccess;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import play.mvc.WebSocket;
-
 import static com.afforess.assembly.util.Utils.sanitizeName;
 
 public class WebSocketController extends DatabaseController {
@@ -33,5 +33,10 @@ public class WebSocketController extends DatabaseController {
 		if (nation.isEmpty() || userRegion.isEmpty() || visibleNation.isEmpty()) return null;
 		visibleNation = sanitizeName(visibleNation);
 		return new NationStatesWebSocket(this.getDatabase(), new NationPage(visibleNation, getDatabase().getNationId(visibleNation)), sanitizeName(nation), sanitizeName(userRegion), reconnect);
+	}
+
+	public WebSocket<JsonNode> recruitmentAdmin(String nation, String userRegion, String adminRegion, boolean reconnect) {
+		if (nation.isEmpty() || userRegion.isEmpty() || adminRegion.isEmpty()) return null;
+		return new NationStatesWebSocket(this.getDatabase(), new RecruitmentAdministrationPage(adminRegion, getDatabase().getRegionId(adminRegion)), sanitizeName(nation), sanitizeName(userRegion), reconnect);
 	}
 }

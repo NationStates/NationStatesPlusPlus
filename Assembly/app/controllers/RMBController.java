@@ -10,16 +10,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-
 import org.apache.commons.dbutils.DbUtils;
 import org.apache.commons.lang.builder.ToStringBuilder;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
-
 import org.joda.time.Duration;
 import org.spout.cereal.config.yaml.YamlConfiguration;
 
@@ -40,11 +35,8 @@ import com.afforess.assembly.util.Utils;
 import com.limewoodMedia.nsapi.NationStates;
 
 public class RMBController extends NationStatesController {
-	private final Cache<Integer, JsonNode> rmbRatingCache;
-
 	public RMBController(DatabaseAccess access, YamlConfiguration config, NationStates api) {
 		super(access, config, api);
-		rmbRatingCache = CacheBuilder.newBuilder().maximumSize(access.getMaxCacheSize()).expireAfterAccess(5, TimeUnit.MINUTES).expireAfterWrite(1, TimeUnit.HOURS).build();
 	}
 
 	public Result ratePost(int rmbPost, int rating) throws SQLException {
@@ -60,23 +52,17 @@ public class RMBController extends NationStatesController {
 		if (nationId == -1) {
 			return Results.badRequest();
 		}
-		Connection conn = null;
-		try {
-			conn =  getConnection();
-			JsonNode ratings = rateRMBPost(conn, nation, nationId, rmbPost, rating);
+		try (Connection conn = getConnection()) {
+			JsonNode ratings = rateRMBPost(getDatabase(), conn, nation, nationId, rmbPost, rating);
 			Map<String, Object> data = new HashMap<String, Object>();
 			data.put("rmb_post_id", rmbPost);
 			getDatabase().getWebsocketManager().onUpdate(PageType.REGION, RequestType.RMB_RATINGS, new DataRequest(RequestType.RMB_RATINGS, data), ratings);
-
-			rmbRatingCache.invalidate(rmbPost);
-		} finally {
-			DbUtils.closeQuietly(conn);
-		}
+		} 
 		Utils.handleDefaultPostHeaders(request(), response());
 		return Results.ok();
 	}
 
-	public static JsonNode rateRMBPost(Connection conn, String nation, int nationId, int rmbPost, int rating) throws SQLException {
+	public static JsonNode rateRMBPost(DatabaseAccess access, Connection conn, String nation, int nationId, int rmbPost, int rating) throws SQLException {
 		if (rating < 0) {
 			PreparedStatement delete = conn.prepareStatement("DELETE FROM assembly.rmb_ratings WHERE nation = ? AND rmb_post = ?");
 			delete.setInt(1, nationId);
@@ -105,7 +91,7 @@ public class RMBController extends NationStatesController {
 		update.executeUpdate();
 		DbUtils.closeQuietly(update);
 
-		return calculateTotalPostRatings(conn, rmbPost);
+		return calculateTotalPostRatings(access, conn, rmbPost);
 	}
 
 	private static Function<JsonNode, Promise<Result>> getAsyncResult(final Request request, final Response response, final String cacheLen) {
@@ -127,55 +113,22 @@ public class RMBController extends NationStatesController {
 		};
 	}
 
-	private static Promise<Result> resultToPromise(final Result r) {
-		return Promise.wrap(akka.dispatch.Futures.future((new Callable<Result>() {
+	public Promise<Result> getPostRatings(final int rmbPost, final int rmbCache) throws SQLException {
+		Promise<JsonNode> promise = Promise.wrap(akka.dispatch.Futures.future((new Callable<JsonNode>() {
 			@Override
-			public Result call() throws Exception {
-				return r;
+			public JsonNode call() throws Exception {
+				Connection conn = null;
+				try {
+					conn = getConnection();
+					JsonNode ratings = calculatePostRatings(conn, rmbPost);
+					return ratings;
+				} finally {
+					DbUtils.closeQuietly(conn);
+				}
 			}
 		}), Akka.system().dispatcher()));
-	}
-
-	public Promise<Result> getPostRatings(final int rmbPost, final int rmbCache) throws SQLException {
-		JsonNode ratings = rmbRatingCache.getIfPresent(rmbPost);
-		if (ratings == null) {
-			Promise<JsonNode> promise = Promise.wrap(akka.dispatch.Futures.future((new Callable<JsonNode>() {
-				@Override
-				public JsonNode call() throws Exception {
-					Connection conn = null;
-					try {
-						conn = getConnection();
-						JsonNode ratings = calculatePostRatings(conn, rmbPost);
-						rmbRatingCache.put(rmbPost, ratings);
-						return ratings;
-					} finally {
-						DbUtils.closeQuietly(conn);
-					}
-				}
-			}), Akka.system().dispatcher()));
-	
-			Promise<Result> result = promise.flatMap(getAsyncResult(request(), response(), rmbCache == -1 ? "10" : "86400"));
-			
-			return result;
-		} else {
-			Result result = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(ratings.hashCode()), (rmbCache == -1 ? "10" : "86400"));
-			if (result != null) {
-				return resultToPromise(result);
-			}
-			return resultToPromise(Results.ok(ratings).as("application/json"));
-		}
-		/*
-		if (ratings == null) {
-			ratings = calculatePostRatings(rmbPost);
-			rmbRatingCache.put(rmbPost, ratings);
-		}
-
-		Result result = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(ratings.hashCode()), (rmbCache == -1 ? "10" : "86400"));
-		if (result != null) {
-			return result;
-		}
-		return Results.ok(ratings).as("application/json");
-		*/
+		Promise<Result> result = promise.flatMap(getAsyncResult(request(), response(), rmbCache == -1 ? "10" : "86400"));
+		return result;
 	}
 
 	@Deprecated
@@ -196,14 +149,14 @@ public class RMBController extends NationStatesController {
 		return Json.toJson(list);
 	}
 
-	public static JsonNode calculateTotalPostRatings(Connection conn, int rmbPost) throws SQLException {
+	public static JsonNode calculateTotalPostRatings(DatabaseAccess access, Connection conn, int rmbPost) throws SQLException {
 		List<Map<String, String>> list = new ArrayList<Map<String, String>>();
 		PreparedStatement select = conn.prepareStatement("SELECT nation_name, rating_type FROM assembly.rmb_ratings WHERE rmb_post = ?");
 		select.setInt(1, rmbPost);
 		ResultSet result = select.executeQuery();
 		while(result.next()) {
 			Map<String, String> ratings = new HashMap<String, String>(2);
-			ratings.put("nation", result.getString(1));
+			ratings.put("nation", access.getNationTitle(result.getString(1)));
 			ratings.put("type", String.valueOf(result.getInt(2)));
 			list.add(ratings);
 		}

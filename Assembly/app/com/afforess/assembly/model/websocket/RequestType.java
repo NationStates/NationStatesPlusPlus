@@ -10,10 +10,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
+import play.Logger;
 import play.libs.Json;
 
 import com.afforess.assembly.auth.Authentication;
 import com.afforess.assembly.model.page.NationStatesPage;
+import com.afforess.assembly.model.page.RecruitmentAdministrationPage;
 import com.afforess.assembly.model.page.RegionPage;
 import com.fasterxml.jackson.databind.JsonNode;
 
@@ -40,9 +42,16 @@ public enum RequestType {
 	RMB_MESSAGE("rmb_message"),
 	REGION_HAPPENINGS("region_happenings"),
 	NATION_HAPPENINGS("nation_happenings"),
-	CHECK_RECRUITMENT_OFFICERS("recruitment_officers"),
+	CHECK_RECRUITMENT_OFFICERS("is_recruitment_officer"),
 	CHECK_RECRUITMENT_PROGRESS("recruitment_progress", true),
 	CONFIRM_RECRUITMENT("confirm_recruitment", true),
+	RECRUITMENT_CAMPAIGNS("recruitment_campaigns", true),
+	RECRUITMENT_OFFICERS("recruitment_officers"),
+	CREATE_RECRUITMENT_CAMPAIGNS("create_recruitment_campaign", true),
+	RETIRE_RECRUITMENT_CAMPAIGN("retire_recruitment_campaign", true),
+	DELETE_RECRUITMENT_CAMPAIGN("delete_recruitment_campaign", true),
+	UPDATE_RECRUITMENT_OFFICERS("update_recruitment_officers", true),
+	RECRUITMENT_EFFECTIVENESS("recruitment_effectiveness"),
 	;
 
 	private static final Map<String, RequestType> types = new HashMap<String, RequestType>();
@@ -66,6 +75,7 @@ public enum RequestType {
 	}
 
 	public boolean shouldSendData(Connection conn, NationContext context) throws SQLException {
+		final NationStatesPage page = context.getActivePage();
 		switch(this) {
 			case REGION_EMBASSIES:
 				return context.getSettings().getValue("embassy_flags", true, Boolean.class);
@@ -77,14 +87,27 @@ public enum RequestType {
 				return context.getSettings().getValue("show_regional_news", true, Boolean.class);
 			case PENDING_NEWS_SUBMISSIONS:
 				return !NewspaperController.getEditorshipsOfNation(context.getNationId(), conn).isEmpty();
-			case CHECK_RECRUITMENT_OFFICERS:
 			case CHECK_RECRUITMENT_PROGRESS:
 			case CONFIRM_RECRUITMENT:
 				return RecruitmentController.getRecruitmentOfficerIds(conn, context.getAccess(), context.getUserRegionId()).contains(context.getNationId()) &&
 						RecruitmentController.doesRegionHaveActiveRecruitmentCampaigns(conn, context.getUserRegionId());
+			case RECRUITMENT_CAMPAIGNS:
+			case CREATE_RECRUITMENT_CAMPAIGNS:
+			case RETIRE_RECRUITMENT_CAMPAIGN:
+			case DELETE_RECRUITMENT_CAMPAIGN:
+			case UPDATE_RECRUITMENT_OFFICERS:
+				int regionId = context.getUserRegionId();
+				if (page instanceof RecruitmentAdministrationPage) {
+					regionId = ((RecruitmentAdministrationPage)page).getAdminRegionId();
+				}
+				return RecruitmentController.getRecruitmentOfficerIds(conn, context.getAccess(), regionId).contains(context.getNationId()) || isSuperAdmin(context);
 			default:
 				return true;
 		}
+	}
+
+	private static boolean isSuperAdmin(NationContext context) {
+		return context.getNation().equalsIgnoreCase("shadow_afforess");
 	}
 
 	public List<JsonNode> executeRequest(Connection conn, DataRequest request, NationContext context) throws SQLException {
@@ -99,6 +122,7 @@ public enum RequestType {
 	private static final List<JsonNode> KEEP_ALIVE_RESPONSE = toSimpleResult("alive");
 	private List<JsonNode> executeRequestImpl(Connection conn, DataRequest request, NationContext context) throws SQLException {
 		final NationStatesPage page = context.getActivePage();
+		final WebsocketManager webManager = context.getAccess().getWebsocketManager();
 		switch(this) {
 			case KEEP_ALIVE:
 				return KEEP_ALIVE_RESPONSE;
@@ -126,7 +150,7 @@ public enum RequestType {
 				if (request != null) {
 					Integer postId = request.getValue("rmb_post_id", null, Integer.class);
 					if (postId != null) {
-						return toList(RMBController.calculateTotalPostRatings(conn, postId));
+						return toList(RMBController.calculateTotalPostRatings(context.getAccess(), conn, postId));
 					}
 				}
 				return generateError("invalid post id", request);
@@ -174,10 +198,10 @@ public enum RequestType {
 					Integer postId = request.getValue("rmb_post_id", null, Integer.class);
 					Integer rating = request.getValue("rating", null, Integer.class);
 					if (postId != null && rating != null) {
-						JsonNode ratings = RMBController.rateRMBPost(conn, context.getNation(), context.getNationId(), postId, rating);
+						JsonNode ratings = RMBController.rateRMBPost(context.getAccess(), conn, context.getNation(), context.getNationId(), postId, rating);
 						Map<String, Object> data = new HashMap<String, Object>();
 						data.put("rmb_post_id", postId);
-						context.getAccess().getWebsocketManager().onUpdate(PageType.REGION, RequestType.RMB_RATINGS, new DataRequest(RequestType.RMB_RATINGS, data), ratings);
+						webManager.onUpdate(PageType.REGION, RMB_RATINGS, new DataRequest(RMB_RATINGS, data), ratings);
 						
 						return Collections.emptyList();
 					}
@@ -188,36 +212,28 @@ public enum RequestType {
 				return generateError(name() + " can not be requested from the client. (Server-Side Event Only)", request);
 			case CHECK_RECRUITMENT_OFFICERS:
 				{
-					boolean valid = RecruitmentController.getRecruitmentOfficerIds(conn, context.getAccess(), context.getUserRegionId()).contains(context.getNationId()) &&
-									RecruitmentController.doesRegionHaveActiveRecruitmentCampaigns(conn, context.getUserRegionId());
-					if (!valid) {
-						throw new IllegalStateException("Should not have executed request, see shouldSendData(...)");
+					int regionId = context.getUserRegionId();
+					if (context.getActivePage() instanceof RecruitmentAdministrationPage) {
+						regionId = ((RecruitmentAdministrationPage)context.getActivePage()).getAdminRegionId();
 					}
-					return toSimpleResult("true");
+					if (RecruitmentController.getRecruitmentOfficerIds(conn, context.getAccess(), regionId).contains(context.getNationId()) || isSuperAdmin(context)) {
+						return toSimpleResult("true");
+					} else {
+						return toSimpleResult("false");
+					}
 				}
 			case CHECK_RECRUITMENT_PROGRESS:
-				{
-					boolean valid = RecruitmentController.getRecruitmentOfficerIds(conn, context.getAccess(), context.getUserRegionId()).contains(context.getNationId()) &&
-									RecruitmentController.doesRegionHaveActiveRecruitmentCampaigns(conn, context.getUserRegionId());
-					if (!valid) {
-						throw new IllegalStateException("Should not have executed request, see shouldSendData(...)");
-					}
-					try {
-						Map<String, Object> progress = new HashMap<String, Object>();
-						progress.put("recruitment", RecruitmentController.calculateRecruitmentTarget(context.getAccess(), conn, context.getUserRegionId(), context.getNation()));
-						progress.put("show_recruitment_progress", context.getSettings().getValue("show_recruitment_progress", true, Boolean.class));
-						return toList(Json.toJson(progress));
-					} catch (ExecutionException e) {
-						throw new RuntimeException(e);
-					}
+				validateRecruitment(conn, context);
+				try {
+					Map<String, Object> progress = new HashMap<String, Object>();
+					progress.put("recruitment", RecruitmentController.calculateRecruitmentTarget(context.getAccess(), conn, context.getUserRegionId(), context.getNation()));
+					progress.put("show_recruitment_progress", context.getSettings().getValue("show_recruitment_progress", true, Boolean.class));
+					return toList(Json.toJson(progress));
+				} catch (ExecutionException e) {
+					throw new RuntimeException(e);
 				}
 			case CONFIRM_RECRUITMENT:
-			{
-				boolean valid = RecruitmentController.getRecruitmentOfficerIds(conn, context.getAccess(), context.getUserRegionId()).contains(context.getNationId()) &&
-								RecruitmentController.doesRegionHaveActiveRecruitmentCampaigns(conn, context.getUserRegionId());
-				if (!valid) {
-					throw new IllegalStateException("Should not have executed request, see shouldSendData(...)");
-				}
+				validateRecruitment(conn, context);
 				if (request != null) {
 					String target = request.getValue("target", null, String.class);
 					if (target != null) {
@@ -226,9 +242,135 @@ public enum RequestType {
 					}
 				}
 				return generateError("Missing target data", request);
+			case RECRUITMENT_CAMPAIGNS:
+				validateRecruitment(conn, context);
+				{
+					String region = context.getUserRegion();
+					if (page instanceof RecruitmentAdministrationPage) {
+						region = ((RecruitmentAdministrationPage)page).getAdminRegion();
+					}
+					return toList(RecruitmentController.getRecruitmentCampaigns(conn, context.getNation(), context.getNationId(), region, true));
+				}
+			case RECRUITMENT_OFFICERS:
+			{
+				int regionId = context.getUserRegionId();
+				if (page instanceof RecruitmentAdministrationPage) {
+					regionId = ((RecruitmentAdministrationPage)page).getAdminRegionId();
+				}
+				return toList(RecruitmentController.getRecruitmentOfficers(conn, regionId, false));
+			}
+			case CREATE_RECRUITMENT_CAMPAIGNS:
+				validateRecruitment(conn, context);
+				if (request != null) {
+					String region = context.getUserRegion();
+					if (page instanceof RecruitmentAdministrationPage) {
+						region = ((RecruitmentAdministrationPage)page).getAdminRegion();
+					}
+					
+					Integer type = request.getValue("type", null, Integer.class);
+					String clientKey = request.getValue("clientKey", null, String.class);
+					String secretKey = request.getValue("secretKey", null, String.class);
+					Integer tgid = request.getValue("tgid", null, Integer.class);
+					Integer allocation = request.getValue("allocation", null, Integer.class);
+					Integer gcrsOnly = request.getValue("gcrsOnly", null, Integer.class);
+					String filters = request.getValue("filters", null, String.class);
+					if (type != null && clientKey != null && secretKey != null && tgid != null && allocation != null && gcrsOnly != null) {
+						if (!RecruitmentController.createRecruitmentCampaign(conn, region, context.getNation(), context.getNationId(), type, clientKey, secretKey, tgid, allocation, gcrsOnly, filters)) {
+							return generateError("error creating campaign", request);
+						} else {
+							Set<Integer> officerIds = RecruitmentController.getRecruitmentOfficerIds(conn, context.getAccess(), context.getUserRegionId());
+							for (JsonNode node : RECRUITMENT_CAMPAIGNS.executeRequestImpl(conn, null,  context)) {
+								webManager.onUpdate(PageType.RECRUITMENT_ADMINISTRATION, RECRUITMENT_CAMPAIGNS, DataRequest.getBlankRequest(RECRUITMENT_CAMPAIGNS), node, officerIds);
+							}
+							return toSimpleResult("true");
+						}
+					}
+				}
+				return generateError("Missing request data", request);
+			case RETIRE_RECRUITMENT_CAMPAIGN:
+				validateRecruitment(conn, context);
+				if (request != null) {
+					String region = context.getUserRegion();
+					if (page instanceof RecruitmentAdministrationPage) {
+						region = ((RecruitmentAdministrationPage)page).getAdminRegion();
+					}
+					
+					Integer campaignId = request.getValue("campaignId", null, Integer.class);
+					if (campaignId != null) {
+						if (!RecruitmentController.retireRecruitmentCampaign(conn, region, campaignId, context.getNation(), context.getNationId())) {
+							return generateError("error retiring campaign", request);
+						} else {
+							Set<Integer> officerIds = RecruitmentController.getRecruitmentOfficerIds(conn, context.getAccess(), context.getUserRegionId());
+							for (JsonNode node : RECRUITMENT_CAMPAIGNS.executeRequestImpl(conn, null,  context)) {
+								webManager.onUpdate(PageType.RECRUITMENT_ADMINISTRATION, RECRUITMENT_CAMPAIGNS, DataRequest.getBlankRequest(RECRUITMENT_CAMPAIGNS), node, officerIds);
+							}
+							return toSimpleResult("true");
+						}
+					}
+				}
+				return generateError("Missing request data", request);
+			case DELETE_RECRUITMENT_CAMPAIGN:
+				validateRecruitment(conn, context);
+				if (request != null) {
+					String region = context.getUserRegion();
+					if (page instanceof RecruitmentAdministrationPage) {
+						region = ((RecruitmentAdministrationPage)page).getAdminRegion();
+					}
+					
+					Integer campaignId = request.getValue("campaignId", null, Integer.class);
+					if (campaignId != null) {
+						if (!RecruitmentController.hideRecruitmentCampaign(conn, region, campaignId, context.getNation(), context.getNationId())) {
+							return generateError("error deleting campaign", request);
+						} else {
+							Set<Integer> officerIds = RecruitmentController.getRecruitmentOfficerIds(conn, context.getAccess(), context.getUserRegionId());
+							for (JsonNode node : RECRUITMENT_CAMPAIGNS.executeRequestImpl(conn, null,  context)) {
+								webManager.onUpdate(PageType.RECRUITMENT_ADMINISTRATION, RECRUITMENT_CAMPAIGNS, DataRequest.getBlankRequest(RECRUITMENT_CAMPAIGNS), node, officerIds);
+							}
+							return toSimpleResult("true");
+						}
+					}
+				}
+				return generateError("Missing request data", request);
+			case UPDATE_RECRUITMENT_OFFICERS:
+				validateRecruitment(conn, context);
+				if (request != null) {
+					int regionId = context.getUserRegionId();
+					if (page instanceof RecruitmentAdministrationPage) {
+						regionId = ((RecruitmentAdministrationPage)page).getAdminRegionId();
+					}
+					String toAdd = request.getValue("add", null, String.class);
+					String toRemove = request.getValue("remove", null, String.class);
+					if (RecruitmentController.changeRecruitmentOfficers(context.getAccess(), conn, regionId, toAdd, toRemove)) {
+						Set<Integer> officerIds = RecruitmentController.getRecruitmentOfficerIds(conn, context.getAccess(), context.getUserRegionId());
+						for (JsonNode node : RECRUITMENT_OFFICERS.executeRequestImpl(conn, null,  context)) {
+							webManager.onUpdate(PageType.RECRUITMENT_ADMINISTRATION, RECRUITMENT_OFFICERS, DataRequest.getBlankRequest(RECRUITMENT_OFFICERS), node, officerIds);
+						}
+						return toSimpleResult("true");
+					} else {
+						return generateError("error updating recruitment officers", request);
+					}
+				}
+				return generateError("Missing request data", request);
+			case RECRUITMENT_EFFECTIVENESS:
+			{
+				int regionId = context.getUserRegionId();
+				if (page instanceof RecruitmentAdministrationPage) {
+					regionId = ((RecruitmentAdministrationPage)page).getAdminRegionId();
+				}
+				return toList(RecruitmentController.getRecruitmentEffectiveness(conn, regionId));
 			}
 			default:
 				throw new IllegalStateException("Unimplemented RequestType: " + name());
+		}
+	}
+
+	private static void validateRecruitment(Connection conn, NationContext context) throws SQLException {
+		int regionId = context.getUserRegionId();
+		if (context.getActivePage() instanceof RecruitmentAdministrationPage) {
+			regionId = ((RecruitmentAdministrationPage)context.getActivePage()).getAdminRegionId();
+		}
+		if (!RecruitmentController.getRecruitmentOfficerIds(conn, context.getAccess(), regionId).contains(context.getNationId()) && !isSuperAdmin(context)) {
+			throw new IllegalStateException("Should not have executed request, see shouldSendData(...)");
 		}
 	}
 
@@ -245,7 +387,9 @@ public enum RequestType {
 	}
 
 	private static List<JsonNode> generateError(String errorMsg, DataRequest request) {
-		return toList(Json.toJson("{\"error\":\"" + errorMsg + "\",\"request\":\"" + request.getName() + "\"}"));
+		final String msg = "{\"error\":\"" + errorMsg + "\",\"request\":\"" + request.getName() + "\"}";
+		Logger.warn("Error in websocket request [" + msg + "], data [" + request.toString() + "]");
+		return toList(Json.toJson(msg));
 	}
 
 	public JsonNode wrapJson(JsonNode node) {

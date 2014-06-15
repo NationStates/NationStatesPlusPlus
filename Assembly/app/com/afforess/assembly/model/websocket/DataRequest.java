@@ -51,6 +51,11 @@ public class DataRequest {
 		return defaultVal;
 	}
 
+	@Override
+	public String toString() {
+		return "DataRequest { name: " + name + ", data: " + data.toString() + " }";
+	}
+
 	public static DataRequest parse(JsonNode n) {
 		ObjectMapper mapper = new ObjectMapper();
 		try {

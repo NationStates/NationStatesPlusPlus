@@ -25,6 +25,8 @@ public class DatabaseAccess {
 	private final LoadingCache<String, Integer> regionIdCache;
 	private final LoadingCache<String, Integer> nationIdCache;
 	private final LoadingCache<Integer, String> reverseIdCache;
+	private final LoadingCache<String, String> nationTitleCache;
+	@Deprecated
 	private final LoadingCache<Integer, String> nationSettings;
 	private final WebsocketManager websocketManager;
 	private final int cacheSize;
@@ -105,16 +107,33 @@ public class DatabaseAccess {
 				throw new RuntimeException("No nation with id [" + key + "] found!");
 			}
 		});
+		
+		this.nationTitleCache = CacheBuilder.newBuilder()
+				.maximumSize(cacheSize)
+				.expireAfterAccess(10, TimeUnit.MINUTES)
+				.expireAfterWrite(1, TimeUnit.HOURS)
+				.build(new CacheLoader<String, String>() {
+				public String load(String key) throws SQLException {
+					Connection conn = null;
+					try {
+						conn = pool.getConnection();
+						PreparedStatement statement = conn.prepareStatement("SELECT title from assembly.nation WHERE name = ?");
+						statement.setString(1, key);
+						ResultSet result = statement.executeQuery();
+						if (result.next()) {
+							return result.getString(1);
+						}
+					} catch (SQLException e) {
+						Logger.error("Unable to look up nation title", e);
+					} finally {
+						DbUtils.closeQuietly(conn);
+					}
+					throw new RuntimeException("No nation with name [" + key + "] found!");
+				}
+			});
 
-		// XXX 
-		//DANGER WILL ROBINSON
-		//THESE LAST TWO CACHES DO NOT WORK WITH MULTIPLE APPLICATION INSTANCES
-		//THE EARLIER CACHES NEVER HAVE VALUES CHANCE, JUST NEW VALUES ADDED (IDS ALWAYS STAY FIXED ONCE SET)
-		//IN THESE LATER TWO CACHES, THE VALUES CAN CHANGE. IF THE VALUE IS CACHED IN MULTIPLE INSTANCES AT ONCE,
-		//AND UPDATED IN ONE, NONE OF THE OTHER INSTANCES WILL SEE THE UPDATE!!!
-		//I NEED TO ADD AN "PUSH UPDATE" MECHANISM TO MAKE OTHER INSTANCES AWARE OF THE CACHE CHANGE
 		this.nationSettings = CacheBuilder.newBuilder()
-			.maximumSize(backgroundTasks ? cacheSize : 0)
+			.maximumSize(0)
 			.expireAfterAccess(10, TimeUnit.MINUTES)
 			.expireAfterWrite(1, TimeUnit.HOURS)
 			.build(new CacheLoader<Integer, String>() {
@@ -185,6 +204,19 @@ public class DatabaseAccess {
 
 	public LoadingCache<Integer, String> getReverseIdCache() {
 		return reverseIdCache;
+	}
+
+	public LoadingCache<String, String> getNationTitleCache() {
+		return nationTitleCache;
+	}
+
+	public String getNationTitle(String name) {
+		name = Utils.sanitizeName(name);
+		try {
+			return nationTitleCache.get(name);
+		} catch (ExecutionException e) {
+			return Utils.formatName(name);
+		}
 	}
 
 	public LoadingCache<Integer, String> getNationSettingsCache() {
