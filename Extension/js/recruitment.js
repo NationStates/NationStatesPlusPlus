@@ -3,7 +3,6 @@
 	var recruitmentTypes = ["New Nations", "Refounded Nations", "Ejected Nations", "Active Gamerites", "Active Userites", "Active Nations", "Capitalist Nations", "Socialist Nations", "Centrist Nations", "Authoritarian Nations", "Libertarian Nations", "Lonely Nations"];
 
 	$(window).on("websocket/is_recruitment_officer", function(data) {
-		console.log(data.json);
 		if (data.json.result == "true") {
 			checkRecruitment();
 			$("#recruit-admin").show();
@@ -22,24 +21,24 @@
 	}
 
 	function quickSetup() {
-		var progress = localStorage.getItem(getUserNation() + "-last-recruitment");
-		if (progress != null && parseInt(progress) + 190000 > Date.now() && getSettings().isEnabled("show_recruitment_progress")) {
-			setupRecruitment();
-			updateRecruitmentStatus(true);
-			for (var i = 1; i <= 50; i += 1)
-				setTimeout(updateRecruitmentStatus, i * 200, false);
+		if (getVisiblePage() != "panel" && getVisiblePage() != "hpanel") {
+			var progress = localStorage.getItem(getUserNation() + "-last-recruitment");
+			if (progress != null && parseInt(progress) + 190000 > Date.now() && getSettings().isEnabled("show_recruitment_progress")) {
+				setupRecruitment();
+				updateRecruitmentStatus(true);
+				for (var i = 1; i <= 50; i += 1)
+					setTimeout(updateRecruitmentStatus, i * 200, false);
+			}
 		}
 	}
 	quickSetup();
 
 	$(window).on("websocket/recruitment_progress", function(event) {
-		console.log(JSON.stringify(event.json));
 		localStorage.setItem(getUserNation() + "-last-recruitment", event.json.recruitment.timestamp);
 		localStorage.setItem(getUserNation() + "-last-recruitment-data", JSON.stringify(event.json.recruitment));
 		localStorage.removeItem(getUserNation() + "-last-recruitment-error");
 
 		if (event.json.recruitment.wait) {
-			console.log(parseInt(event.json.recruitment.wait));
 			setTimeout(checkRecruitment, parseInt(event.json.recruitment.wait) * 1000);
 			for (var i = 1; i <= parseInt(event.json.recruitment.wait) * 5; i += 1) {
 				setTimeout(updateRecruitmentStatus, 200 * i, false);
@@ -76,37 +75,39 @@
 	}
 
 	function updateRecruitmentStatus(updateData) {
-		if (!isPageActive() && !updateData) return;
-		var progress = localStorage.getItem(getUserNation() + "-last-recruitment");
-		if (progress != null && parseInt(progress) + 190000 < Date.now()) {
-			localStorage.removeItem(getUserNation() + "-last-recruitment");
-			localStorage.removeItem(getUserNation() + "-last-recruitment-data");
-			localStorage.removeItem(getUserNation() + "-last-recruitment-error");
-			progress = null;
-			if ($("#rprogress").length > 0) {
-				$("#rprogress-bar").width($("#rprogress").width());
+		if (updateData) {
+			var data = localStorage.getItem(getUserNation() + "-last-recruitment-data")
+			var error = localStorage.getItem(getUserNation() + "-last-recruitment-error")
+			
+			//Update recruitment nation & recruiter
+			if (error != null) {
+				$("#tg-nation").html("Error, " + error);
+			} else if (data != null) {
+				data = JSON.parse(data);
+				if (data.nation) {
+					$("#tg-nation").html("<a style='color:white;' href='/nation=" + data.nation + "'>" + data.nation.replaceAll("_", " ").toTitleCase() + "</a>");
+					if (data.recruiter && data.recruiter != getUserNation()) {
+						$("#rprogress").css("opacity", "0.3");
+						$("#r-sender").html("Sent by " + data.recruiter.replaceAll("_", " ").toTitleCase());
+					}
+				}
 			}
 		}
-		if (progress != null) {
-			if ($("#rprogress").length > 0) {
-				$("#rprogress-bar").width($("#rprogress").width() * ((Date.now() - parseInt(progress)) / 190000));
-			}
-
-			if (updateData) {
-				var data = localStorage.getItem(getUserNation() + "-last-recruitment-data")
-				var error = localStorage.getItem(getUserNation() + "-last-recruitment-error")
-				
-				if (error != null) {
-					$("#tg-nation").html("Error, " + error);
-				} else if (data != null) {
-					data = JSON.parse(data);
-					if (data.nation) {
-						$("#tg-nation").html("<a style='color:white;' href='/nation=" + data.nation + "'>" + data.nation.replaceAll("_", " ").toTitleCase() + "</a>");
-						if (data.recruiter && data.recruiter != getUserNation()) {
-							$("#rprogress").css("opacity", "0.3");
-							$("#r-sender").html("Sent by " + data.recruiter.replaceAll("_", " ").toTitleCase());
-						}
+		if (updateData || isPageActive()) {
+			var progress = localStorage.getItem(getUserNation() + "-last-recruitment");
+			if (progress != null) {
+				//Old recruitment data, delete it
+				if (parseInt(progress) + 190000 < Date.now()) {
+					localStorage.removeItem(getUserNation() + "-last-recruitment");
+					localStorage.removeItem(getUserNation() + "-last-recruitment-data");
+					localStorage.removeItem(getUserNation() + "-last-recruitment-error");
+					progress = null;
+					if ($("#rprogress").length > 0) {
+						$("#rprogress-bar").width($("#rprogress").width());
 					}
+				} else if ($("#rprogress").length > 0) {
+				//Update progress bar
+					$("#rprogress-bar").width($("#rprogress").width() * ((Date.now() - parseInt(progress)) / 190000));
 				}
 			}
 		}
@@ -157,12 +158,20 @@
 		$("<h3 id='last_week'>Last Week</h3>").insertAfter(effectiveness);
 		$("<div style='margin-bottom:4px;'><div style='display:inline; margin-left:10%'>Now</div><div style='display:inline; margin-left:74%'>24 Hours Ago</div></div><div id='day_effectiveness' style='width: 80%; margin-left:10%; margin-right:10%; border: 2px solid black; height: 70px;'></div>").insertAfter(effectiveness);
 		$("<h3 id='last_day'>Last 24 Hours</h3>").insertAfter(effectiveness);
-			
+		
+		var effectivenessJson = null;
+		$(window).on("resize", function() {
+			if (effectivenessJson != null) {
+				var event = jQuery.Event("websocket/recruitment_effectiveness");
+				event.json = effectivenessJson;
+				$(window).trigger(event);
+			}
+		});
 		$(window).on("websocket/recruitment_effectiveness", function(event) {
-			console.log(JSON.stringify(event.json));
+			effectivenessJson = event.json;
 			var day = 24 * 60 * 60 * 1000;
 			var week = 7 * day;
-			var width = $("#month_effectiveness").width() - 4;
+			var width = $("#month_effectiveness").width();
 			var monthHTML = "";
 			var weekHTML = "";
 			var dayHTML = "";
@@ -184,19 +193,19 @@
 				var color = colors[recruiter.recruiter];
 				
 				monthHTML += generateEffectivenessHTML(now, width, recruiter, day * 30, color);
-				if (recruiter.start > now - day) {
+				if (recruiter.end > now - day) {
 					dayHTML += generateEffectivenessHTML(now, width, recruiter, day, color);
 				}
-				if (recruiter.start > now - week) {
+				if (recruiter.end > now - week) {
 					weekHTML += generateEffectivenessHTML(now, width, recruiter, week, color);
 				}
 			}
 			$("#month_effectiveness").html("<div style='position:relative; height:70px;'>" + monthHTML + "</div>");
 			$("#week_effectiveness").html("<div style='position:relative; height:70px;'>" + weekHTML + "</div>");
 			$("#day_effectiveness").html("<div style='position:relative; height:70px;'>" + dayHTML + "</div>");
-			$("#last_month").html($("#last_month").html() + " <span style='margin-left:8px; font-size:12px font-weight:normal;'>(" + ((event.json.total / (475 * 30)) * 100).toFixed(2) + "%)</span>");
-			$("#last_week").html($("#last_week").html() + " <span style='margin-left:8px; font-size:12px font-weight:normal;'>(" + ((event.json.week / (465 * 7)) * 100).toFixed(2) + "%)</span>");
-			$("#last_day").html($("#last_day").html() + " <span style='margin-left:8px; font-size:12px font-weight:normal;'>(" + ((event.json.day / 455) * 100).toFixed(2) + "%)</span>");
+			$("#last_month").html("Last Month <span style='margin-left:8px; font-size:12px; font-weight:normal;'>(" + ((event.json.total / (475 * 30)) * 100).toFixed(2) + "%)</span>");
+			$("#last_week").html("Last Week <span style='margin-left:8px; font-size:12px; font-weight:normal;'>(" + ((event.json.week / (465 * 7)) * 100).toFixed(2) + "%)</span>");
+			$("#last_day").html("Last 24 Hours <span style='margin-left:8px; font-size:12px; font-weight:normal;'>(" + ((event.json.day / 455) * 100).toFixed(2) + "%)</span>");
 			var legend = "";
 			for (var name in colors) {
 				var color = colors[name];
@@ -210,6 +219,7 @@
 			var percentage = length / timeLen;
 			var ourWidth = width * percentage;
 			var left = ((now - recruiter.end) / timeLen) * width;
+			ourWidth = Math.min(ourWidth, width - left);
 			return "<div title='" + recruiter.recruiter + "' style='height: 70px; position:absolute; left: " + left + "px; background:" + color + "; width: " + ourWidth + "px;'></div>";
 		}
 

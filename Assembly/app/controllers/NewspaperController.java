@@ -424,7 +424,7 @@ public class NewspaperController extends NationStatesController {
 				article.put("author", result.getString(4));
 				article.put("newspaper", String.valueOf(id));
 				article.put("visible", String.valueOf(result.getByte(5)));
-				article.put("submitter", Nation.getNationById(conn, result.getInt(6)));
+				article.put("submitter", Nation.getNationById(conn, result.getInt(6), false));
 				if (!hideBody) {
 					article.put("article", result.getString(7));
 				}
@@ -713,7 +713,7 @@ public class NewspaperController extends NationStatesController {
 				article.put("author", set.getString(5));
 				article.put("newspaper", set.getString(6));
 				article.put("article_id", set.getInt(7));
-				article.put("submitter", Nation.getNationById(conn, set.getInt(8)));
+				article.put("submitter", Nation.getNationById(conn, set.getInt(8), false));
 
 				newspaperRegion.setInt(1, set.getInt(1));
 				ResultSet region = newspaperRegion.executeQuery();

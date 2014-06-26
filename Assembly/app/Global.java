@@ -4,6 +4,7 @@ import java.lang.reflect.Constructor;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.concurrent.ConcurrentHashMap;
+
 import org.apache.commons.dbutils.DbUtils;
 import org.joda.time.Duration;
 import org.spout.cereal.config.ConfigurationNode;
@@ -31,6 +32,8 @@ import com.limewoodMedia.nsapi.NationStates;
 import com.mchange.v2.c3p0.ComboPooledDataSource;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.ConnectionFactory;
+import com.rabbitmq.client.ShutdownSignalException;
+
 import controllers.AdminController;
 import controllers.DatabaseController;
 import controllers.NationStatesController;
@@ -57,7 +60,7 @@ public class Global extends GlobalSettings {
 		pool = Start.loadDatabase(settings);
 		if (pool == null) {
 			Logger.error("Unable to connect to database");
-			return;
+			System.exit(1);
 		}
 
 		Logger.info("NationStates++ Database Connection Pool Initialized.");
@@ -68,6 +71,7 @@ public class Global extends GlobalSettings {
 			HappeningType.initialize(conn);
 		} catch (SQLException e) {
 			Logger.error("Unable to initialize happening types", e);
+			System.exit(1);
 		} finally {
 			DbUtils.closeQuietly(conn);
 		}
@@ -104,13 +108,25 @@ public class Global extends GlobalSettings {
 				String serverName = settings.getChild("server-name").getString();
 				channel.queueDelete(serverName);
 				channel.queueDeclare(serverName, false, false, false, null);
-				channel.queueBind(serverName, "nspp", serverName);
+				try {
+					channel.queueBind(serverName, "nspp", serverName);
+				} catch (IOException e) {
+					if (e.getCause() instanceof ShutdownSignalException && ((ShutdownSignalException)e.getCause()).getMessage().contains("no exchange 'nspp' in vhost")) {
+						Logger.warn("No NSPP exchange present, creating one...");
+						channel = amqpConn.createChannel();
+						channel.exchangeDeclare("nspp", "fanout", false);
+						channel.queueBind(serverName, "nspp", serverName);
+					} else {
+						throw e;
+					}
+				}
 				Logger.info("Created Rabbitmq Queue");
 				channel.basicConsume(serverName, true, manager);
 
 				Logger.info("NationStates++ RabbitMQ Connection Initialized.");
 			} catch (IOException e) {
 				Logger.error("Error initializing rabbitmq", e);
+				System.exit(1);
 				return;
 			}
 		} else {

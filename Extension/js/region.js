@@ -564,6 +564,7 @@ function addUpdateTime() {
 			if ($("h1:first .updatetime").length == 0)
 				$("h1:first").append("<span class='updatetime'></span>");
 			$("h1:first .updatetime").html("Next Update: " + (new Date(nextUpdate)).customFormat("#hh#:#mm#:#ss# #AMPM#") + " [&plusmn; " + Math.floor(update.std * 2 / 1000) + " s]");
+			$("h1:first .updatetime").attr("title", "Update Order: " + update.update_order);
 		}
 	});
 }

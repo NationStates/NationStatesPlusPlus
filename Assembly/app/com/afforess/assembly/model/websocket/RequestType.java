@@ -14,6 +14,7 @@ import play.Logger;
 import play.libs.Json;
 
 import com.afforess.assembly.auth.Authentication;
+import com.afforess.assembly.model.Nation;
 import com.afforess.assembly.model.page.NationStatesPage;
 import com.afforess.assembly.model.page.RecruitmentAdministrationPage;
 import com.afforess.assembly.model.page.RegionPage;
@@ -52,6 +53,9 @@ public enum RequestType {
 	DELETE_RECRUITMENT_CAMPAIGN("delete_recruitment_campaign", true),
 	UPDATE_RECRUITMENT_OFFICERS("update_recruitment_officers", true),
 	RECRUITMENT_EFFECTIVENESS("recruitment_effectiveness"),
+	GET_SETTING("get_setting"),
+	SET_SETTING("set_setting", true),
+	NATION_STATUS("nation_status"),
 	;
 
 	private static final Map<String, RequestType> types = new HashMap<String, RequestType>();
@@ -110,13 +114,14 @@ public enum RequestType {
 		return context.getNation().equalsIgnoreCase("shadow_afforess");
 	}
 
-	public List<JsonNode> executeRequest(Connection conn, DataRequest request, NationContext context) throws SQLException {
+	public JsonNode[] executeRequest(Connection conn, DataRequest request, NationContext context) throws SQLException {
 		List<JsonNode> nodes = executeRequestImpl(conn, request, context);
 		final int size = nodes.size();
+		final JsonNode[] wrapped = new JsonNode[size];
 		for (int i = 0; i < size; i++) {
-			nodes.set(i, wrapJson(nodes.get(i)));
+			wrapped[i] = wrapJson(nodes.get(i));
 		}
-		return nodes;
+		return wrapped;
 	}
 
 	private static final List<JsonNode> KEEP_ALIVE_RESPONSE = toSimpleResult("alive");
@@ -144,7 +149,7 @@ public enum RequestType {
 				}
 			case REGION_UPDATES:
 				if (page instanceof RegionPage) {
-					return toList(RegionController.getUpdateTime(conn, ((RegionPage)page).getRegionId(), 2));
+					return toList(RegionController.getUpdateTime(conn, ((RegionPage)page).getRegionId(), 1.5));
 				}
 			case RMB_RATINGS:
 				if (request != null) {
@@ -359,6 +364,30 @@ public enum RequestType {
 				}
 				return toList(RecruitmentController.getRecruitmentEffectiveness(conn, regionId));
 			}
+			case GET_SETTING:
+				if (request != null) {
+					String setting = request.getValue("setting", null, String.class);
+					if (setting != null) {
+						String[] path = setting.split("/");
+						if (path.length == 1) {
+							return toList(Json.toJson(context.getSettings().getValue(path[0], null, Object.class)));
+						}
+						for (int i = 0; i < path.length; i++) {
+						//	context.getSettings().getValue(setting, defaultVal, Map.class);
+						}
+					}
+				}
+				return generateError("Missing request data", request);
+			case NATION_STATUS:
+				if (request != null) {
+					@SuppressWarnings("unchecked")
+					List<String> nations = request.getValue("nations", Collections.EMPTY_LIST, List.class);
+					Map<String, Nation> data = new HashMap<String, Nation>();
+					for (String name : nations) {
+						data.put(name, Nation.getNationByName(conn, name, true));
+					}
+					return toList(Json.toJson(data));
+				}
 			default:
 				throw new IllegalStateException("Unimplemented RequestType: " + name());
 		}
@@ -387,8 +416,8 @@ public enum RequestType {
 	}
 
 	private static List<JsonNode> generateError(String errorMsg, DataRequest request) {
-		final String msg = "{\"error\":\"" + errorMsg + "\",\"request\":\"" + request.getName() + "\"}";
-		Logger.warn("Error in websocket request [" + msg + "], data [" + request.toString() + "]");
+		final String msg = "{\"error\":\"" + errorMsg + "\",\"request\":\"" + (request != null ? request.getName() : "null") + "\"}";
+		Logger.warn("Error in websocket request [" + msg + "], data [" + (request != null ? request.toString() : "null") + "]");
 		return toList(Json.toJson(msg));
 	}
 

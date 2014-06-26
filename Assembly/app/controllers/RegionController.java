@@ -42,7 +42,7 @@ public class RegionController extends NationStatesController {
 		imgurClientKey = imgurAuth.getChild("client-key").getString(null);
 	}
 
-	public Result getUpdateTime(String region, int std) throws SQLException {
+	public Result getUpdateTime(String region, double std) throws SQLException {
 		Connection conn = null;
 		int regionId = this.getDatabase().getRegionId(region);
 		if (regionId == -1) {
@@ -61,44 +61,154 @@ public class RegionController extends NationStatesController {
 		}
 	}
 
+	private static int getUpdateOrder(Connection conn, int regionId) throws SQLException {
+		try (PreparedStatement select = conn.prepareStatement("SELECT update_order FROM assembly.region WHERE id = ?")) {
+			select.setInt(1, regionId);
+			try (ResultSet set = select.executeQuery()) {
+				if (set.next()) {
+					return set.getInt(1);
+				}
+			}
+		}
+		return -1;
+	}
+
 	public static JsonNode getUpdateTime(Connection conn, int regionId, double std) throws SQLException {
-		PreparedStatement updateTime = conn.prepareStatement("SELECT normalized_start, major FROM assembly.region_update_calculations WHERE region = ? AND update_time < 200000 ORDER BY start DESC LIMIT 0, 14");
-		updateTime.setInt(1, regionId);
-		ResultSet times = updateTime.executeQuery();
 		List<Long> majorData = new ArrayList<Long>(30);
 		List<Long> minorData = new ArrayList<Long>(30);
 		SummaryStatistics minor = new SummaryStatistics();
 		SummaryStatistics major = new SummaryStatistics();
-		while(times.next()) {
-			if (times.getInt(2) == 1) {
-				major.addValue(times.getLong(1));
-				majorData.add(times.getLong(1));
-			} else {
-				minor.addValue(times.getLong(1));
-				minorData.add(times.getLong(1));
-			}
-		}
-		DbUtils.closeQuietly(times);
-		DbUtils.closeQuietly(updateTime);
 		
-		if (std > 0) {
-			//Check for major update outliers
-			Set<Long> outliers = new HashSet<Long>();
-			for (Long time : majorData) {
-				if (time.longValue() > (major.getMean() + major.getStandardDeviation() * std)) {
-					outliers.add(time);
-				}
-			}
-			if (outliers.size() > 0) {
-				major.clear();
-				for (Long time : majorData) {
-					if (!outliers.contains(time)) {
-						major.addValue(time);
+		final int updateOrder = getUpdateOrder(conn, regionId);
+
+		try (PreparedStatement updateTime = conn.prepareStatement("SELECT normalized_start, major FROM assembly.region_update_calculations WHERE region = ? AND update_time < 200000 ORDER BY start DESC LIMIT 0, 28")) {
+			updateTime.setInt(1, regionId);
+			try (ResultSet times = updateTime.executeQuery()) {
+				while(times.next()) {
+					if (times.getInt(2) == 1) {
+						major.addValue(times.getLong(1));
+						majorData.add(times.getLong(1));
+					} else {
+						minor.addValue(times.getLong(1));
+						minorData.add(times.getLong(1));
 					}
 				}
 			}
-			
-			outliers.clear();
+		}
+		boolean majorIsGuess = false;
+		boolean minorIsGuess = false;
+
+		//No data for major update, steal some from a nearby (in terms of update order) region we do have data for
+		if (majorData.isEmpty() && updateOrder > -1) {
+			majorIsGuess = true;
+			//Find data for the "closest" region before us
+			try (PreparedStatement select = conn.prepareStatement("SELECT region.id FROM assembly.region INNER JOIN assembly.region_update_calculations ON region.id = region_update_calculations.region WHERE region.alive = 1 AND region_update_calculations.start > ? AND major = 1 AND update_order BETWEEN ? AND ? ORDER BY update_order DESC LIMIT 0, 1")) {
+				select.setLong(1, System.currentTimeMillis() - Duration.standardDays(8).getMillis());
+				select.setInt(2, Math.max(0, updateOrder - 50));
+				select.setInt(3, updateOrder);
+				try (ResultSet set = select.executeQuery()) {
+					if (set.next()) {
+						int id = set.getInt(1);
+						try (PreparedStatement updateTime = conn.prepareStatement("SELECT normalized_end FROM assembly.region_update_calculations WHERE region = ? AND major = 1 AND update_time < 200000 ORDER BY start DESC LIMIT 0, 14")) {
+							updateTime.setInt(1, id);
+							try (ResultSet times = updateTime.executeQuery()) {
+								while(times.next()) {
+									major.addValue(times.getLong(1));
+									majorData.add(times.getLong(1));
+								}
+							}
+						}
+					}
+				}
+			}
+			//Find data for the "closest" region after us
+			try (PreparedStatement select = conn.prepareStatement("SELECT region.id FROM assembly.region INNER JOIN assembly.region_update_calculations ON region.id = region_update_calculations.region WHERE region.alive = 1 AND region_update_calculations.start > ? AND major = 1 AND update_order BETWEEN ? AND ? ORDER BY update_order DESC LIMIT 0, 1")) {
+				select.setLong(1, System.currentTimeMillis() - Duration.standardDays(8).getMillis());
+				select.setInt(2, updateOrder);
+				select.setInt(3, updateOrder + 50);
+				try (ResultSet set = select.executeQuery()) {
+					if (set.next()) {
+						int id = set.getInt(1);
+						try (PreparedStatement updateTime = conn.prepareStatement("SELECT normalized_start FROM assembly.region_update_calculations WHERE region = ? AND major = 1 AND update_time < 200000 ORDER BY start DESC LIMIT 0, 14")) {
+							updateTime.setInt(1, id);
+							try (ResultSet times = updateTime.executeQuery()) {
+								while(times.next()) {
+									major.addValue(times.getLong(1));
+									majorData.add(times.getLong(1));
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+
+		//No data for minor update, steal some from a nearby (in terms of update order) region we do have data for
+		if (minorData.isEmpty() && updateOrder > -1) {
+			minorIsGuess = true;
+			//Find data for the "closest" region before us
+			try (PreparedStatement select = conn.prepareStatement("SELECT region.id FROM assembly.region INNER JOIN assembly.region_update_calculations ON region.id = region_update_calculations.region WHERE region.alive = 1 AND region_update_calculations.start > ? AND major = 0 AND update_order BETWEEN ? AND ? ORDER BY update_order DESC LIMIT 0, 1")) {
+				select.setLong(1, System.currentTimeMillis() - Duration.standardDays(8).getMillis());
+				select.setInt(2, Math.max(0, updateOrder - 50));
+				select.setInt(3, updateOrder);
+				try (ResultSet set = select.executeQuery()) {
+					if (set.next()) {
+						int id = set.getInt(1);
+						try (PreparedStatement updateTime = conn.prepareStatement("SELECT normalized_end FROM assembly.region_update_calculations WHERE region = ? AND major = 1 AND update_time < 200000 ORDER BY start DESC LIMIT 0, 14")) {
+							updateTime.setInt(1, id);
+							try (ResultSet times = updateTime.executeQuery()) {
+								while(times.next()) {
+									minor.addValue(times.getLong(1));
+									minorData.add(times.getLong(1));
+								}
+							}
+						}
+					}
+				}
+			}
+			//Find data for the "closest" region after us
+			try (PreparedStatement select = conn.prepareStatement("SELECT region.id FROM assembly.region INNER JOIN assembly.region_update_calculations ON region.id = region_update_calculations.region WHERE region.alive = 1 AND region_update_calculations.start > ? AND major = 0 AND update_order BETWEEN ? AND ? ORDER BY update_order DESC LIMIT 0, 1")) {
+				select.setLong(1, System.currentTimeMillis() - Duration.standardDays(8).getMillis());
+				select.setInt(2, updateOrder);
+				select.setInt(3, updateOrder + 50);
+				try (ResultSet set = select.executeQuery()) {
+					if (set.next()) {
+						int id = set.getInt(1);
+						try (PreparedStatement updateTime = conn.prepareStatement("SELECT normalized_start FROM assembly.region_update_calculations WHERE region = ? AND major = 1 AND update_time < 200000 ORDER BY start DESC LIMIT 0, 14")) {
+							updateTime.setInt(1, id);
+							try (ResultSet times = updateTime.executeQuery()) {
+								while(times.next()) {
+									minor.addValue(times.getLong(1));
+									minorData.add(times.getLong(1));
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+
+		if (majorData.size() > 0) {
+			if (std > 0) {
+				//Check for major update outliers
+				Set<Long> outliers = new HashSet<Long>();
+				for (Long time : majorData) {
+					if (time.longValue() > (major.getMean() + major.getStandardDeviation() * std)) {
+						outliers.add(time);
+					}
+				}
+				if (outliers.size() > 0) {
+					major.clear();
+					for (Long time : majorData) {
+						if (!outliers.contains(time)) {
+							major.addValue(time);
+						}
+					}
+				}
+			}
+		}
+		if (minorData.size() > 0) {
+			Set<Long> outliers = new HashSet<Long>();
 			//Check for minor update outliers
 			for (Long time : minorData) {
 				if (time.longValue() > (minor.getMean() + minor.getStandardDeviation() * std)) {
@@ -116,22 +226,26 @@ public class RegionController extends NationStatesController {
 		}
 		
 		Map<String, Object> data = new HashMap<String, Object>();
-		Map<String, Long> majorUpdate = new HashMap<String, Long>();
+		Map<String, Object> majorUpdate = new HashMap<String, Object>();
 		majorUpdate.put("mean", Double.valueOf(major.getMean()).longValue());
 		majorUpdate.put("std", Double.valueOf(major.getStandardDeviation()).longValue());
 		majorUpdate.put("max", Double.valueOf(major.getMax()).longValue());
 		majorUpdate.put("min", Double.valueOf(major.getMin()).longValue());
 		majorUpdate.put("geomean", Double.valueOf(major.getGeometricMean()).longValue());
 		majorUpdate.put("variance", Double.valueOf(major.getVariance()).longValue());
+		majorUpdate.put("isGuess", majorIsGuess);
+		majorUpdate.put("update_order", updateOrder);
 		data.put("major", majorUpdate);
 		
-		Map<String, Long> minorUpdate = new HashMap<String, Long>();
+		Map<String, Object> minorUpdate = new HashMap<String, Object>();
 		minorUpdate.put("mean", Double.valueOf(minor.getMean()).longValue());
 		minorUpdate.put("std", Double.valueOf(minor.getStandardDeviation()).longValue());
 		minorUpdate.put("max", Double.valueOf(minor.getMax()).longValue());
 		minorUpdate.put("min", Double.valueOf(minor.getMin()).longValue());
 		minorUpdate.put("geomean", Double.valueOf(minor.getGeometricMean()).longValue());
 		minorUpdate.put("variance", Double.valueOf(minor.getVariance()).longValue());
+		minorUpdate.put("isGuess", minorIsGuess);
+		minorUpdate.put("update_order", updateOrder);
 		data.put("minor", minorUpdate);
 		return Json.toJson(data);
 	}

@@ -53,7 +53,7 @@ GET     /nation/missingendo/          @controllers.WorldAssemblyController.getMi
 
 GET     /region/wa/                   @controllers.WorldAssemblyController.getWAMembers(region: String ?= "")
 GET     /region/population/           @controllers.RegionController.getPopulationTrends(region: String ?= "")
-GET     /region/updatetime/           @controllers.RegionController.getUpdateTime(region: String ?= "", std: Integer ?= 2)
+GET     /region/updatetime/           @controllers.RegionController.getUpdateTime(region: String ?= "", std: Double ?= 1.35)
 GET     /region/nations/              @controllers.RegionController.getNations(region: String ?= "", xml: Boolean ?= false)
 GET     /region/map/                  @controllers.RegionController.getRegionalMap(region: String ?= "")
 POST    /region/map/                  @controllers.RegionController.setRegionalMap(region: String ?= "", disband: Boolean ?= false)

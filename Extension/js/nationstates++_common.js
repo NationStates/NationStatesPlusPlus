@@ -226,6 +226,7 @@
 			}
 		}
 	}
+	migratePuppets();
 	if (getSettings().isEnabled("show_puppet_switcher")) {
 		$("#puppet_setting").show();
 		$("#puppet_setting").on("mouseover", function() { if ($("#puppet_setting_form:visible").length == 0) showPuppets(); });
@@ -482,12 +483,12 @@ function showPuppets() {
 	}
 	$("#puppet_setting_form").css('opacity', '.75').show();
 	var html = "<h3>Puppets</h3><ul>";
-	var puppets = localStorage.getItem("puppets");
-	if (puppets == null) puppets = "";
-	var split = puppets.split(",");
+	
+	var manager = getPuppetManager();
+	var puppets = manager.getActivePuppetList();
+	
 	var numPuppets = 0;
-	for (var i = 0; i < split.length; i++) {
-		var name = split[i];
+	for (var name in puppets) {
 		if (name.length > 0) {
 			var cache = getPuppetCache(name);
 			var region = cache.region;
@@ -510,6 +511,7 @@ function showPuppets() {
 			addPuppet();
 		}
 	});
+
 	$("a.puppet-name").on("mouseenter", function() { 
 		if (getSettings().isEnabled("show-region-on-hover")) {
 			if (!$("#puppet-region-" + $(this).attr("id")).parent().is(":visible")) {
@@ -517,7 +519,13 @@ function showPuppets() {
 			}
 		}
 	});
-	$(".puppet-form-remove").on("click", function() { console.log("remove"); console.log($(this).attr("name")); removePuppet($(this).attr("name")); });
+
+	$(".puppet-form-remove").on("click", function() {
+		var manager = getPuppetManager();
+		manager.removePuppet($(this).attr("name"));
+		showPuppets();
+	});
+
 	$("a.puppet-name").on("click", function(event) {
 		switchToPuppet($(this).attr("id"));
 		event.preventDefault();
@@ -525,7 +533,7 @@ function showPuppets() {
 }
 
 function getPuppetCache(name) {
-	var cache = localStorage.getItem("puppet-" + name + "-cache");
+	/*var cache = localStorage.getItem("puppet-" + name + "-cache");
 	localStorage.removeItem("puppet-" + name + "-region");
 	if (cache != null) {
 		cache = JSON.parse(cache);
@@ -544,6 +552,7 @@ function getPuppetCache(name) {
 			localStorage.setItem("puppet-" + name + "-cache", JSON.stringify(cache));
 		}
 	});
+	*/
 	var cache = new Object();
 	cache.region = "UNKNOWN REGION";
 	cache.wa = false;
@@ -551,8 +560,9 @@ function getPuppetCache(name) {
 }
 
 function switchToPuppet(name) {
-	localStorage.removeItem("puppet-" + name + "-region");
-	$.post("//www.nationstates.net/?nspp=1", "logging_in=1&nation=" + encodeURIComponent(name) + "&password=" + encodeURIComponent(localStorage.getItem("puppet-" + name)) + (getSettings().isEnabled("autologin-puppets", false) ?"&autologin=yes" : ""), function(data) {
+	var manager = getPuppetManager();
+	var pass = manager.getActivePuppetList()[name];
+	$.post("//www.nationstates.net/?nspp=1", "logging_in=1&nation=" + encodeURIComponent(name) + "&password=" + encodeURIComponent(pass) + (getSettings().isEnabled("autologin-puppets", false) ? "&autologin=yes" : ""), function(data) {
 		if (data.contains("Would you like to restore it?")) {
 			$("#content").html($(data).find("#content").html());
 		} else {
@@ -565,24 +575,6 @@ function switchToPuppet(name) {
 	});
 }
 
-function removePuppet(name) {
-	var puppets = localStorage.getItem("puppets");
-	if (puppets == null) puppets = "";
-	var split = puppets.split(",");
-	var newPuppets = "";
-	for (var i = 0; i < split.length; i++) {
-		if (split[i] != name && split[i].length > 0) {
-			if (newPuppets.length > 0) {
-				newPuppets += ",";
-			}
-			newPuppets += split[i];
-		}
-	}
-	localStorage.setItem("puppets", newPuppets);
-	localStorage.removeItem("puppet-" + name);
-	showPuppets();
-}
-
 function addPuppet() {
 	var nationName = $("#puppet_nation");
 	var nationPassword = $("#puppet_password");
@@ -591,29 +583,204 @@ function addPuppet() {
 		return;
 	}
 	var formattedName = nationName.val().toLowerCase().split(" ").join("_");
-	addPuppetNation(formattedName, nationPassword.val());
+
+	var manager = getPuppetManager();
+	manager.addPuppet(formattedName, nationPassword.val());
+
 	showPuppets();
 	$("#puppet_nation").focus();
 }
 
-function addPuppetNation(nation, password) {
-	localStorage.setItem("puppet-" + nation, password);
-	var puppets = localStorage.getItem("puppets");
-	if (puppets == null) puppets = "";
-	var split = puppets.split(",");
-	var found = false;
-	for (var i = 0; i < split.length; i++) {
-		if (split[i] == nation) {
-			found = true;
-			break;
+function migratePuppets() {
+	var puppetNames = localStorage.getItem("puppets");
+	if (puppetNames != null) {
+		var puppets = {};
+		var split = puppetNames.split(",");
+		for (var i = 0; i < split.length; i++) {
+			puppets[split[i]] = localStorage.getItem("puppet-" + split[i]);
+			localStorage.removeItem("puppet-" + split[i]);
+			localStorage.removeItem("puppet-" + split[i] + "-cache");
+		}
+		console.log(JSON.stringify(puppets));
+		localStorage.removeItem("puppets");
+		
+		puppetLists = {};
+		puppetLists.list = [];
+		puppetLists.list.push({ name: "default", puppets: puppets });
+		puppetLists.active = "default";
+		localStorage.setItem("puppetlists", JSON.stringify(puppetLists));
+	}
+}
+
+function getPuppetManager() {
+	var puppetLists = localStorage.getItem("puppetlists");
+	if (puppetLists == null) {
+		puppetLists = {};
+		puppetLists.list = [];
+		puppetLists.list.push({ name: "default", puppets: {} });
+		puppetLists.active = "default";
+		localStorage.setItem("puppetlists", JSON.stringify(puppetLists));
+	} else {
+		puppetLists = JSON.parse(puppetLists);
+	}
+
+	var manager = {};
+	manager._data = puppetLists;
+	manager.getActiveList = function() {
+		return this._data.active;
+	};
+
+	manager.setActiveList = function() {
+		if (arguments.length > 0) {
+			this._data.active = arguments[0];
+			this.save();
+		}
+	};
+
+	manager.findPassword = function() {
+		if (arguments.length > 0) {
+			var name = arguments[0];
+			for (var i = 0; i < this._data.list.length; i += 1) {
+				for (var p in this._data.list[i].puppets) {
+					if (p == name) {
+						return this._data.list[i].puppets[p];
+					}
+				}
+			}
+		}
+		return null;
+	}
+
+	manager.getActivePuppetList = function() {
+		var active = this.getActiveList();
+		for (var i = 0; i < this._data.list.length; i += 1) {
+			if (this._data.list[i].name == active) {
+				return this._data.list[i].puppets;
+			}
+		}
+		return [];
+	};
+
+	manager.addPuppetList = function() {
+		if (arguments.length > 0) {
+			var name = arguments[0];
+			var duplicate = false;
+			for (var i = 0; i < this._data.list.length; i += 1) {
+				var list = this._data.list[i];
+				if (list.name == name) {
+					duplicate = true;
+					break;
+				}
+			}
+			if (!duplicate) {
+				this._data.list.push({name: name, puppets: {} });
+				this.save();
+				return true;
+			}
+		}
+		return false;
+	};
+
+	manager.removePuppetList = function() {
+		if (arguments.length > 0) {
+			var name = arguments[0];
+			var puppetLists = [];
+			for (var i = 0; i < this._data.list.length; i += 1) {
+				var list = this._data.list[i];
+				if (list.name != name) {
+					puppetLists.push(list);
+				}
+			}
+			this._data.list = puppetLists;
+			this.save();
+		}
+	};
+
+	manager.renamePuppetList = function() {
+		if (arguments.length > 1) {
+			var name = arguments[0];
+			var newName = arguments[1];
+			var puppetLists = [];
+			for (var i = 0; i < this._data.list.length; i += 1) {
+				var list = this._data.list[i];
+				if (list.name == name) {
+					list.name = newName;
+				}
+			}
+			this.save();
+		}
+	};
+
+	manager.clearPuppetList = function() {
+		var listName = this.getActiveList();
+		if (arguments.length > 0) {
+			listName = arguments[0];
+		}
+		for (var i = 0; i < this._data.list.length; i += 1) {
+			if (this._data.list[i].name == listName) {
+				this._data.list[i].puppets = {};
+			}
+		}
+		this.save();
+	}
+
+	manager.addPuppet = function() {
+		if (arguments.length > 1) {
+			var nation = arguments[0];
+			var pass = arguments[1];
+			
+			var listName = this.getActiveList();
+			if (arguments.length > 2) {
+				listName = arguments[2];
+			}
+			
+			var autoSave = true;
+			if (arguments.length > 3) {
+				autoSave = arguments[3];
+			}
+			
+			for (var i = 0; i < this._data.list.length; i += 1) {
+				if (this._data.list[i].name == listName) {
+					this._data.list[i].puppets[nation] = pass;
+				}
+			}
+			
+			if (autoSave) {
+				this.save();
+			}
 		}
 	}
-	if (!found) {
-		if (puppets.length != 0) {
-			puppets += ",";
+
+	manager.save = function() {
+		localStorage.setItem("puppetlists", JSON.stringify(this._data));
+	};
+
+	manager.removePuppet = function() {
+		if (arguments.length > 0) {
+			var nation = arguments[0];
+
+			var listName = this.getActiveList();
+			if (arguments.length > 1) {
+				listName = arguments[1];
+			}
+
+			var autoSave = true;
+			if (arguments.length > 3) {
+				autoSave = arguments[3];
+			}
+			
+			for (var i = 0; i < this._data.list.length; i += 1) {
+				if (this._data.list[i].name == listName) {
+					delete this._data.list[i].puppets[nation];
+				}
+			}
+			if (autoSave) {
+				this.save();
+			}
 		}
-		localStorage.setItem("puppets", puppets + nation);
 	}
+
+	return manager;
 }
 
 function getNationStatesAuth(callback) {

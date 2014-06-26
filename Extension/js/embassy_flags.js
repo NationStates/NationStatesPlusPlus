@@ -1,5 +1,7 @@
 $(window).on("websocket/region_embassies", function(event) {
 	var embassies = event.json;
+	if (embassies.length == 0)
+		return;
 
 	if ($("#embassy_flags").length == 0) {
 		var wfe = $("fieldset[class='wfe']");

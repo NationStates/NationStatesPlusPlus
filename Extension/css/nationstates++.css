@@ -770,3 +770,127 @@ fieldset.preview {
 	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
 	color: black;
 }
+.puppet-wa {
+	height: 25px !important;
+	padding-left: 19px !important;
+	border: none !important;
+	border-image-source: initial;
+	border-image-slice: initial;
+	border-image-width: initial;
+	border-image-outset: initial;
+	border-image-repeat: initial;
+	margin-bottom: -8px !important;
+	margin-left: 20px !important;
+	margin-top: -8px !important;
+}
+
+.puppet_remove {
+	float:right;
+	width: 16px;
+	height: 16px;
+	background-image: url("https://nationstatesplusplus.net/nationstates/static/remove.png");
+	cursor: pointer;
+}
+
+.puppet_remove:hover {
+	background-image: url("https://nationstatesplusplus.net/nationstates/static/remove_hover.png");
+}
+
+.puppet_row {
+	cursor: pointer;
+	-webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+.puppet_active_row {
+	background: black;
+	color: white;
+	-webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+.puppet_active_row:hover, .puppet_active_row:hover > td {
+	background: blue !important;
+	color: white;
+}
+
+.puppet_active_row > td {
+	border-radius: 0
+}
+
+.puppet_active_row > td:first-of-type {
+	border-top-left-radius: 1em;
+	border-bottom-left-radius: 1em;
+}
+
+.puppet_active_row > td:last-of-type {
+	border-top-right-radius: 1em;
+	border-bottom-right-radius: 1em;
+}
+
+.disable_page {
+	height: 100%;
+	width: 100%;
+	position: absolute;
+	top: 0px;
+	left: 0px;
+	z-index: 999;
+	background-color: white;
+	opacity: 0.7;
+}
+
+.centered_infobox {
+	height: 250px;
+	width: 400px;
+	position: absolute;
+	top: calc(50% - 125px);
+	left: calc(50% - 200px);
+	z-index: 1000;
+	background-color: white;
+	border: 2px solid black;
+	border-radius: 1em;
+	-webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+.centered_infobox > button {
+	position: relative;
+	left: calc(50% - 35px);
+	bottom: -40px;
+	font-weight: bold;
+}
+
+#login_progress {
+	position: relative;
+	left: 10px;
+	bottom: -20px;
+	border: 2px solid black;
+	width: 375px;
+	height: 20px;
+}
+
+#login_progress_bar {
+	position: relative;
+	bottom: 0;
+	left: 0;
+	background-color: blue;
+	width: 375px;
+	height: 20px;
+}
+
+#current_login {
+	position:relative;
+	left: 15px;
+}

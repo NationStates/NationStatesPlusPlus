@@ -11,7 +11,12 @@
 
 	var onWebsocketMessage = function(event) {
 		lastMessageReceived = Date.now();
-		var json = JSON.parse(event.data);
+		try {
+			var json = JSON.parse(event.data);
+		} catch (err) {
+			console.log("Error parsing json");
+			console.log(event.data);
+		}
 		for (var k in json) {
 			var r = json[k];
 			if (r != null) {
@@ -143,7 +148,7 @@
 			if (Date.now() > lastMessageReceived + delay) {
 				ws.send(JSON.stringify({ name: "keep_alive", data : {} }));
 				keepAliveAttempts += 1;
-				console.log("Sending keep alive, attempts: " + keepAliveAttempts);
+				//console.log("Sending keep alive, attempts: " + keepAliveAttempts);
 			} else {
 				keepAliveAttempts = 0;
 			}

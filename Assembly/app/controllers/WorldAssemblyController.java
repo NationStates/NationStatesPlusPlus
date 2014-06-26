@@ -68,7 +68,7 @@ public class WorldAssemblyController extends DatabaseController {
 			ResultSet result = statement.executeQuery();
 			while(result.next()) {
 				String title = result.getString(1);
-				nations.add(fullData ? (new Nation(result.getString(2), title, result.getString(4), result.getString(5), result.getInt(3), true, true)) : title);
+				nations.add(fullData ? (new Nation(result.getString(2), title, result.getString(4), result.getString(5), result.getInt(3), true, true, -1)) : title);
 			}
 			DbUtils.closeQuietly(result);
 			DbUtils.closeQuietly(statement);
@@ -104,7 +104,7 @@ public class WorldAssemblyController extends DatabaseController {
 			result = statement.executeQuery();
 			while(result.next()) {
 				if (!endorsements.contains(result.getInt(1)) && result.getInt(1) != nationId) {
-					nations.add(fullData ? (new Nation(result.getString(3), result.getString(2), result.getString(4), result.getString(5), result.getInt(1), true, true)) : result.getString(2));
+					nations.add(fullData ? (new Nation(result.getString(3), result.getString(2), result.getString(4), result.getString(5), result.getInt(1), true, true, -1)) : result.getString(2));
 				}
 			}
 			DbUtils.closeQuietly(result);
@@ -141,7 +141,7 @@ public class WorldAssemblyController extends DatabaseController {
 			result = statement.executeQuery();
 			while(result.next()) {
 				if (!endorsements.contains(result.getInt(1)) && result.getInt(1) != nationId) {
-					nations.add(fullData ? (new Nation(result.getString(3), result.getString(2), result.getString(4), result.getString(5), result.getInt(1), true, true)) : result.getString(2));
+					nations.add(fullData ? (new Nation(result.getString(3), result.getString(2), result.getString(4), result.getString(5), result.getInt(1), true, true, -1)) : result.getString(2));
 				}
 			}
 			DbUtils.closeQuietly(result);

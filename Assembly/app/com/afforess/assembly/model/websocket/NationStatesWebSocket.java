@@ -2,7 +2,6 @@ package com.afforess.assembly.model.websocket;
 
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 import org.apache.commons.dbutils.DbUtils;
@@ -128,14 +127,14 @@ public final class NationStatesWebSocket extends WebSocket<JsonNode>{
 	private boolean writeRequest(RequestType type, NationContext context, DataRequest request, Connection conn) throws SQLException {
 		if (type.shouldSendData(conn, context)) {
 			if (authenticated || !type.requiresAuthentication()) {
-				List<JsonNode> nodes = type.executeRequest(conn, request, context);
+				JsonNode[] nodes = type.executeRequest(conn, request, context);
 				//TODO remove this horrible hack with real logic
-				if (!authenticated && type == RequestType.AUTHENTICATE_RSS && nodes.size() == 1) {
-					authenticated = nodes.get(0).toString().contains("success");
+				if (!authenticated && type == RequestType.AUTHENTICATE_RSS && nodes.length == 1) {
+					authenticated = nodes[0].toString().contains("success");
 					Logger.info("Authenticated websocket from " + nation);
 				}
-				for (int i = 0; i < nodes.size(); i++) {
-					out.write(nodes.get(i));
+				for (int i = 0; i < nodes.length; i++) {
+					out.write(nodes[i]);
 				}
 				return true;
 			}

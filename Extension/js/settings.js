@@ -52,15 +52,12 @@ var settingsHTML = '<form id="target" class="form-horizontal"><fieldset><h1>Nati
 			$("#export_puppets").on("click", function(event) {
 				event.preventDefault();
 				var puppetArr = new Array();
-				var puppets = localStorage.getItem("puppets");
-				if (puppets == null) puppets = "";
-				var split = puppets.split(",");
+				var manager = getPuppetManager();
+				var puppets = manager.getActivePuppetList();
 				puppetArr.push('"Nation", "Password"\n');
-				for (var i = 0; i < split.length; i++) {
-					var name = split[i];
-					if (name.length > 0) {
-						puppetArr.push('"' + name.replaceAll("_", " ").toTitleCase() + '", "' + localStorage.getItem("puppet-" + name) + '"\n');
-					};
+				for (var name in puppets) {
+					var pass = puppets[name];
+					puppetArr.push('"' + name.replaceAll("_", " ").toTitleCase() + '", "' + pass + '"\n');
 				}
 				var blob = new Blob(puppetArr, {type: "text/plain;charset=utf-8"});
 				if (typeof saveAs != "undefined") {
@@ -94,6 +91,7 @@ var settingsHTML = '<form id="target" class="form-horizontal"><fieldset><h1>Nati
 							$("#unparseable").hide();
 							var split = evt.target.result.split("\n");
 							var imported = false;
+							var manager = getPuppetManager();
 							for (var i = 1; i < split.length; i++) {
 								var line = split[i];
 								if (line.trim() != "" && line.split(",").length == 2) {
@@ -101,12 +99,13 @@ var settingsHTML = '<form id="target" class="form-horizontal"><fieldset><h1>Nati
 									nation = nation.replaceAll('"', "").trim();
 									var pass = line.split(",")[1];
 									pass = pass.replaceAll('"', "").trim();
-									addPuppetNation(nation.toLowerCase().split(" ").join("_"), pass);
+									manager.addPuppet(nation.toLowerCase().split(" ").join("_"), pass, manager.getActiveList(), false);
 									imported = true;
 								}
 							}
 							if (imported) {
 								$("#parsed-success").show();
+								manager.save();
 							} else {
 								parsingError("No data found in file");
 							}
@@ -125,11 +124,8 @@ var settingsHTML = '<form id="target" class="form-horizontal"><fieldset><h1>Nati
 					$("#clear_all_puppets").html("Are You Sure?");
 					return;
 				}
-				var puppets = localStorage.getItem("puppets");
-				var split = puppets.split(",");
-				for (var i = 0; i < split.length; i++) {
-					removePuppet(split[i]);
-				}
+				var manager = getPuppetManager();
+				manager.clearPuppetList();
 				$("#clear_all_puppets").html("Clear Puppets");
 			});
 			$("#save_settings").on("click", function(event) {
