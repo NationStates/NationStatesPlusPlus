@@ -615,6 +615,11 @@ fieldset.preview {
 	margin-bottom: 2px !important;
 }
 
+.puppet_manager {
+	margin-top: -4px !important;
+	margin-bottom: 2px !important;
+}
+
 .dismiss_option {
 	padding: 15px;
 	width: -webkit-fit-content;

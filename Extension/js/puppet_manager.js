@@ -4,11 +4,11 @@
 		window.document.title = "Puppet Manager";
 		$("#content").html("<h1>Puppet Management</h1>");
 		$("#content").append("<div class='row' style='width: 100%;'> </div>");
-		$(".row").append("<div class='col-md-5' style='box-sizing: border-box; margin-left:4.1%;'><table class='table table-hover' id='active_puppets'><tr><th>Puppet Nations</th></tr></table></div>");
-		$(".row").append("<div class='col-md-5' style='box-sizing: border-box; margin-left:4.1%;'><table class='table table-hover' id='puppet_lists'><tr><th>Puppet Lists</th></tr></table></div>");
+		$(".row").append("<div class='col-md-6' style='box-sizing: border-box;'><table class='table table-hover' id='active_puppets'><tr><th>Puppet Nations</th></tr></table></div>");
+		$(".row").append("<div class='col-md-6' style='box-sizing: border-box;'><table class='table table-hover' id='puppet_lists'><tr><th>Puppet Lists</th></tr></table></div>");
 		$("#content").append("<div id='buttons' class='row' style='width: 100%;'></div>");
-		$("#buttons").append("<div id='left-buttons' class='col-md-5' style='box-sizing: border-box; margin-left:4.1%;'></div>");
-		$("#buttons").append("<div id='right-buttons' class='col-md-5' style='box-sizing: border-box; margin-left:4.1%;'></div>");
+		$("#buttons").append("<div id='left-buttons' class='col-md-6' style='box-sizing: border-box;'></div>");
+		$("#buttons").append("<div id='right-buttons' class='col-md-6' style='box-sizing: border-box;'></div>");
 		
 		$("#right-buttons").append("<button class='btn' id='rename_list' disabled>Rename List</button>");
 		$("#rename_list").on("click", function(event) {
