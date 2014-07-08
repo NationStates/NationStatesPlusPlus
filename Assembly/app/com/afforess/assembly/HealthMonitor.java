@@ -9,6 +9,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.apache.commons.dbutils.DbUtils;
 import org.spout.cereal.config.ConfigurationNode;
 
+import com.afforess.assembly.mongodb.PortForwardingRunnable;
 import com.afforess.assembly.util.DatabaseAccess;
 
 import play.Logger;
@@ -73,23 +74,25 @@ public class HealthMonitor extends Thread {
 				long lastHappening = time - lastHappeningHeartbeat.get();
 				Logger.debug("[HEALTH CHECK] Time since happenings run: " + lastHappening);
 				if (lastHappening / HAPPENINGS_TIME > happeningsThreshold) {
-					Logger.warn("Happening Monitoring Runs have exceeded 100% of the missing time threshold.");
-					Logger.error("APPLICATION UNRESPONSIVE. LAST HEARTBEAT: " + lastHappeningHeartbeat.get());
+					Logger.warn("[HEALTH CHECK] Happening Monitoring Runs have exceeded 100% of the missing time threshold.");
+					Logger.error("[HEALTH CHECK] APPLICATION UNRESPONSIVE. LAST HEARTBEAT: " + lastHappeningHeartbeat.get());
 					unresponsive = true;
 				} else if (lastHappening / HAPPENINGS_TIME > (happeningsThreshold / 2 + 1)) {
-					Logger.warn("Happening Monitoring Runs have exceeded 51% of the missing time threshold.");
+					Logger.warn("[HEALTH CHECK] Happening Monitoring Runs have exceeded 51% of the missing time threshold.");
 				}
 				
 				long lastEndorun = time - lastEndorsementHeartbeat.get();
 				Logger.debug("[HEALTH CHECK] Time since endorsement run: " + lastEndorun);
 				if (lastEndorun / ENDORSEMENT_TIME > endorsementThreshold) {
-					Logger.warn("Endorsement Monitoring runs have exceeded 100% of the missing time threshold.");
-					Logger.error("APPLICATION UNRESPONSIVE. LAST HEARTBEAT: " + lastEndorsementHeartbeat.get());
+					Logger.warn("[HEALTH CHECK] Endorsement Monitoring runs have exceeded 100% of the missing time threshold.");
+					Logger.error("[HEALTH CHECK] APPLICATION UNRESPONSIVE. LAST HEARTBEAT: " + lastEndorsementHeartbeat.get());
 					unresponsive = true;
 				} else if (lastEndorun / ENDORSEMENT_TIME > (endorsementThreshold / 2 + 1)) {
-					Logger.warn("Endorsement Monitoring Runs have exceeded 51% of the missing time threshold.");
+					Logger.warn("[HEALTH CHECK] Endorsement Monitoring Runs have exceeded 51% of the missing time threshold.");
 				}
 			}
+			
+			Logger.debug("[HEALTH CHECK] Total ssh port forwarding clients created: {}", PortForwardingRunnable.totalClients());
 
 			ConnectionTestThread connTest = new ConnectionTestThread();
 			boolean sqlAlive = false;
@@ -98,7 +101,7 @@ public class HealthMonitor extends Thread {
 				connTest.join(60 * 1000L);
 				sqlAlive = connTest.success;
 			} catch (InterruptedException e1) {
-				Logger.error("SQL Connection Test thread not responding");
+				Logger.error("[HEALTH CHECK] SQL Connection Test thread not responding");
 			}
 
 			if (unresponsive || !sqlAlive) {
@@ -109,7 +112,7 @@ public class HealthMonitor extends Thread {
 			try {
 				Thread.sleep(30000);
 			} catch (InterruptedException e) {
-				Logger.warn("Health Monitoring Interrupted", e);
+				Logger.warn("[HEALTH CHECK] Health Monitoring Interrupted", e);
 				return;
 			}
 		}

@@ -76,6 +76,7 @@ POST    /recruitment/target/confirm   @controllers.RecruitmentController.confirm
 GET     /wa/delegates/                @controllers.WorldAssemblyController.getWADelegates()
 GET     /wa/power_transfers/          @controllers.WorldAssemblyController.getRecentPowerTransfers()
 GET     /wa/nation_votes/             @controllers.WorldAssemblyController.getIndividualWAVotes()
+GET     /wa/resolution_votes/         @controllers.WorldAssemblyController.getWorldAssemblyResolutionVotingStats()
 
 GET    /admin/happenings/             @controllers.AdminController.recalculateHappenings(code: String ?= "", happeningType: Integer ?= -1)
 GET    /admin/invalidate_cache/       @controllers.AdminController.invalidateCaches(code: String ?= "")

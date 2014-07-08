@@ -46,6 +46,7 @@ public class NSWikiController  extends NationStatesController {
 	}
 
 	public Result verifyNationLogin() throws IOException, SQLException {
+		Utils.handleDefaultPostHeaders(request(), response());
 		Result ret = Utils.validateRequest(request(), response(), getAPI(), getDatabase(), false);
 		if (ret != null) {
 			return ret;

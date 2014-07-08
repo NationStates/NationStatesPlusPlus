@@ -5,6 +5,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -18,6 +19,7 @@ import com.afforess.assembly.model.Nation;
 import com.afforess.assembly.model.page.NationStatesPage;
 import com.afforess.assembly.model.page.RecruitmentAdministrationPage;
 import com.afforess.assembly.model.page.RegionPage;
+import com.afforess.assembly.util.Utils;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import controllers.NewspaperController;
@@ -25,8 +27,10 @@ import controllers.RMBController;
 import controllers.RecruitmentController;
 import controllers.RegionController;
 
-public enum RequestType {
-	KEEP_ALIVE("keep_alive"),
+public enum RequestType implements Request {
+	KEEP_ALIVE("keep_alive") {
+		
+	},
 	REGION_TITLE("region_titles"),
 	REGION_MAP("region_map"),
 	REGION_UPDATES("region_updates"),
@@ -114,6 +118,7 @@ public enum RequestType {
 		return context.getNation().equalsIgnoreCase("shadow_afforess");
 	}
 
+	@Override
 	public JsonNode[] executeRequest(Connection conn, DataRequest request, NationContext context) throws SQLException {
 		List<JsonNode> nodes = executeRequestImpl(conn, request, context);
 		final int size = nodes.size();
@@ -145,7 +150,7 @@ public enum RequestType {
 				}
 			case REGION_NEWSPAPER:
 				if (page instanceof RegionPage) {
-					return toList(NewspaperController.getNewspaper(conn, ((RegionPage)page).getRegion()));
+					return toList(NewspaperController.getNewspaper(conn, ((RegionPage)page).getRegionId()));
 				}
 			case REGION_UPDATES:
 				if (page instanceof RegionPage) {
@@ -168,7 +173,7 @@ public enum RequestType {
 			case ROLEPLAY_NEWS_SIDEBAR:
 				return toList(NewspaperController.getLatestUpdate(conn, NewspaperController.ROLEPLAY_NEWS));
 			case REGIONAL_NEWS_SIDEBAR:
-				return toList(NewspaperController.getLatestUpdate(conn, context.getUserRegion()));
+				return toList(NewspaperController.getLatestUpdateForRegion(conn, context.getUserRegionId()));
 			case PENDING_NEWS_SUBMISSIONS:
 				Set<Integer> newspapers = NewspaperController.getEditorshipsOfNation(context.getNationId(), conn);
 				List<JsonNode> nodes = new ArrayList<JsonNode>(newspapers.size());
@@ -366,15 +371,39 @@ public enum RequestType {
 			}
 			case GET_SETTING:
 				if (request != null) {
-					String setting = request.getValue("setting", null, String.class);
+					final String setting = request.getValue("setting", null, String.class);
+					final String user = Utils.sanitizeName(request.getValue("user", context.getNation(), String.class));
+					Logger.info("GET_SETTING for user: {}, setting: {}", user, setting);
 					if (setting != null) {
-						String[] path = setting.split("/");
-						if (path.length == 1) {
-							return toList(Json.toJson(context.getSettings().getValue(path[0], null, Object.class)));
+						 final JsonNode value;
+						if (user.equals(context.getNation())) {
+							value = context.getSettings().querySettings(setting);
+						} else {
+							value = context.getAccess().getNationSettings(setting).querySettings(setting);
 						}
-						for (int i = 0; i < path.length; i++) {
-						//	context.getSettings().getValue(setting, defaultVal, Map.class);
+						Logger.info("Setting result for: {} is {}", setting, value);
+						return toList(value);
+					}
+				}
+				return generateError("Missing request data", request);
+			case SET_SETTING:
+				if (request != null) {
+					final String setting = request.getValue("setting", null, String.class);
+					final Object value = request.getValue("value", null, Object.class);
+					Logger.info("SET_SETTING for setting: {} for value [class: {}, contents: {}]", setting, (value != null ? value.getClass() : "null"), value);
+					if (setting != null) {
+						final String prevValue = context.getSettings().querySettings(setting).toString();
+						final JsonNode newValue = Json.toJson(value);
+						if (!newValue.toString().equals(prevValue)) {
+							context.getSettings().updateSettings(setting, newValue);
+							Logger.info("Updated setting {}. Previous Value: {}, Current Value: {}", setting, prevValue, newValue);
+							Set<Integer> userId = new HashSet<Integer>(1);
+							userId.add(context.getNationId());
+							webManager.onUpdate(PageType.DEFAULT, GET_SETTING, DataRequest.getBlankRequest(GET_SETTING), context.getSettings().querySettings(setting), userId);
+						} else {
+							Logger.info("Rejected setting update {}. No change. Previous Value: {}, Current Value: {}", setting, prevValue, newValue);
 						}
+						return toSimpleResult("true");
 					}
 				}
 				return generateError("Missing request data", request);

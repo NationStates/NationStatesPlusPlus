@@ -1,6 +1,7 @@
 package com.afforess.assembly.model.websocket;
 
 import com.afforess.assembly.model.page.NationStatesPage;
+import com.afforess.assembly.nation.NationSettings;
 import com.afforess.assembly.util.DatabaseAccess;
 
 public class NationContext {

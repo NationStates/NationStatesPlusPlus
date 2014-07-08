@@ -4,9 +4,9 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.concurrent.ExecutionException;
 
-import org.apache.commons.dbutils.DbUtils;
-
 import com.afforess.assembly.model.page.NationStatesPage;
+import com.afforess.assembly.nation.DefaultSettings;
+import com.afforess.assembly.nation.NationSettings;
 import com.afforess.assembly.util.DatabaseAccess;
 import com.fasterxml.jackson.databind.JsonNode;
 
@@ -33,14 +33,10 @@ public final class NationStatesWebSocket extends WebSocket<JsonNode>{
 		this.nationId = access.getNationId(this.nation);
 		this.userRegionId = access.getRegionId(this.userRegion);
 		this.reconnect = reconnect;
-		try {
-			if (nationId > -1) {
-				settings = NationSettings.parse(access.getNationSettingsCache().get(nationId));
-			} else {
-				settings = new NationSettings();
-			}
-		} catch (ExecutionException e) {
-			Logger.error("Unable to lookup nation id", e);
+		if (nationId > -1) {
+			settings = access.getNationSettings(nation);
+		} else {
+			settings = new DefaultSettings();
 		}
 	}
 
@@ -100,15 +96,11 @@ public final class NationStatesWebSocket extends WebSocket<JsonNode>{
 	}
 
 	private void writeInitialData(WebSocket.Out<JsonNode> out) throws SQLException {
-		Connection conn = null;
-		try {
-			conn = access.getPool().getConnection();
+		try (Connection conn = access.getPool().getConnection()) {
 			for (RequestType type : getPageType().getInitialRequests()) {
 				final NationContext context = getContext();
 				writeRequest(type, context, null, conn);
 			}
-		} finally {
-			DbUtils.closeQuietly(conn);
 		}
 	}
 
@@ -153,16 +145,12 @@ public final class NationStatesWebSocket extends WebSocket<JsonNode>{
 			DataRequest request = DataRequest.parse(node);
 			RequestType type = RequestType.getTypeForName(request.getName());
 			if (type != null) {
-				Connection conn = null;
-				try {
-					conn = parent.access.getPool().getConnection();
+				try (Connection conn = parent.access.getPool().getConnection()) {
 					final NationContext context = parent.getContext();
 					parent.writeRequest(type, context, request, conn);
 					parent.activePage.onRequest(type, request);
 				} catch (Exception e) {
 					Logger.error("Exception while sending websocket data", e);
-				} finally {
-					DbUtils.closeQuietly(conn);
 				}
 			} else {
 				Logger.warn("Unknown request type: " + request.getName());

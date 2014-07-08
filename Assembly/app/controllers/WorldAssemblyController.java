@@ -29,6 +29,38 @@ public class WorldAssemblyController extends DatabaseController {
 		super(access, config);
 	}
 
+	public Result getWorldAssemblyResolutionVotingStats() throws SQLException {
+		List<Map<String, Object>> resolutions = new ArrayList<Map<String, Object>>();
+		try (Connection conn = getConnection()) {
+			try (PreparedStatement select = conn.prepareStatement("SELECT wa.id, wa.category, wa.desc, wa.name, wa.proposer, wa.created, wa.council, delegate_votes_against, delegate_votes_for, nation_votes_against, nation_votes_for FROM assembly.wa_resolutions AS wa LEFT JOIN assembly.final_wa_votes AS v ON wa.id = v.wa_resolution")) {
+				try (ResultSet result = select.executeQuery()) {
+					while (result.next()) {
+						Map<String, Object> json = new HashMap<String, Object>();
+						json.put("id", result.getInt("id"));
+						json.put("category", result.getString("category"));
+						json.put("description", result.getString("desc"));
+						json.put("name", result.getString("name"));
+						json.put("proposer", result.getString("proposer"));
+						json.put("created", result.getLong("created"));
+						json.put("council", result.getInt("council"));
+						json.put("delegate_votes_against", result.getInt("delegate_votes_against"));
+						json.put("delegate_votes_for", result.getInt("delegate_votes_for"));
+						json.put("nation_votes_against", result.getInt("nation_votes_against"));
+						json.put("nation_votes_for", result.getInt("nation_votes_for"));
+						
+						resolutions.add(json);
+					}
+				}
+			}
+		}
+		
+		Result result = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(resolutions.hashCode()), "3600");
+		if (result != null) {
+			return result;
+		}
+		return ok(Json.toJson(resolutions)).as("application/json");
+	}
+
 	public Result getWAMembers(String region) throws SQLException {
 		Map<String, Map<String, Object>> json = new HashMap<String, Map<String, Object>>();
 		Connection conn = null; 

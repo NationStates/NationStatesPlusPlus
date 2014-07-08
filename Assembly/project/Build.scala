@@ -22,11 +22,14 @@ object ApplicationBuild extends Build {
 	"com.fasterxml.jackson.core" % "jackson-annotations" % "2.3.0",
 	"com.fasterxml.jackson.core" % "jackson-databind" % "2.3.0",
 	"net.sourceforge" % "jwbf" % "2.0.0",
-	"com.rabbitmq" % "amqp-client" % "3.3.1"
+	"com.rabbitmq" % "amqp-client" % "3.3.1",
+	"org.mongodb" % "mongo-java-driver" % "2.12.2",
+	"net.schmizz" % "sshj" % "0.9.0"
   )
 
   val main = play.Project(appName, appVersion, appDependencies).settings(
-    resolvers += "Typesafe's Repository" at "http://repo.typesafe.com/typesafe/maven-releases"
+    resolvers += "Typesafe's Repository" at "http://repo.typesafe.com/typesafe/maven-releases",
+	javacOptions in Compile ++= Seq("-source", "1.7", "-target", "1.7")
   )
 
 }

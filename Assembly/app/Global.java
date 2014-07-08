@@ -1,10 +1,10 @@
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
+import java.net.UnknownHostException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.concurrent.ConcurrentHashMap;
-
 import org.apache.commons.dbutils.DbUtils;
 import org.joda.time.Duration;
 import org.spout.cereal.config.ConfigurationNode;
@@ -25,11 +25,14 @@ import com.afforess.assembly.model.AMQPQueue;
 import com.afforess.assembly.model.EmptyAMQPQueue;
 import com.afforess.assembly.model.HappeningType;
 import com.afforess.assembly.model.websocket.WebsocketManager;
+import com.afforess.assembly.mongodb.PortForwardingRunnable;
 import com.afforess.assembly.util.DatabaseAccess;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.google.common.collect.ObjectArrays;
 import com.limewoodMedia.nsapi.NationStates;
 import com.mchange.v2.c3p0.ComboPooledDataSource;
+import com.mongodb.DB;
+import com.mongodb.MongoClient;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.ShutdownSignalException;
@@ -85,9 +88,9 @@ public class Global extends GlobalSettings {
 		api.setRateLimit(49);
 		api.setUserAgent(settings.getChild("User-Agent").getString());
 		api.setRelaxed(true);
-		
+
 		Logger.info("NationStates++ API Initialized.");
-	
+
 		WebsocketManager manager;
 		AMQPQueue queue;
 		ConfigurationNode rabbitmq = config.getChild("rabbit-mq");
@@ -100,18 +103,18 @@ public class Global extends GlobalSettings {
 			try {
 				com.rabbitmq.client.Connection amqpConn = factory.newConnection();
 				queue = new AMQPThread(amqpConn.createChannel(), settings.getChild("server-name").getString());
-				((AMQPThread)queue).start();
-				
-				manager =  new WebsocketManager(queue, settings.getChild("server-name").getString());
+				((AMQPThread) queue).start();
+
+				manager = new WebsocketManager(queue, settings.getChild("server-name").getString());
 				Channel channel = amqpConn.createChannel();
-				
+
 				String serverName = settings.getChild("server-name").getString();
 				channel.queueDelete(serverName);
 				channel.queueDeclare(serverName, false, false, false, null);
 				try {
 					channel.queueBind(serverName, "nspp", serverName);
 				} catch (IOException e) {
-					if (e.getCause() instanceof ShutdownSignalException && ((ShutdownSignalException)e.getCause()).getMessage().contains("no exchange 'nspp' in vhost")) {
+					if (e.getCause() instanceof ShutdownSignalException && ((ShutdownSignalException) e.getCause()).getMessage().contains("no exchange 'nspp' in vhost")) {
 						Logger.warn("No NSPP exchange present, creating one...");
 						channel = amqpConn.createChannel();
 						channel.exchangeDeclare("nspp", "fanout", false);
@@ -135,9 +138,40 @@ public class Global extends GlobalSettings {
 			manager = new WebsocketManager(queue, settings.getChild("server-name").getString());
 		}
 
-		this.access = new DatabaseAccess(pool, settings.getChild("cache-size").getInt(1000), manager, backgroundTasks);
+		MongoClient mongoClient = null;
+		final int port = config.getChild("mongodb").getChild("port").getInt();
+		final String remoteHost = config.getChild("mongodb").getChild("host").getString();
+		final String user = config.getChild("mongodb").getChild("user").getString();
+		final String fingerprint = config.getChild("mongodb").getChild("fingerprint").getString();
+		
+		Runnable createListener = new Runnable() {
+			@Override
+			public void run() {
+				Logger.info("Starting port forwarding listening thread");
+				Thread listenThread = new Thread(new PortForwardingRunnable(remoteHost, port, user, fingerprint, this), "Mongodb port forwarding thread");
+				listenThread.start();
+			}
+		};
+		createListener.run();
 
-		//Setup health monitoring
+		try {
+			Thread.sleep(3000L);
+		} catch (InterruptedException e1) {	}
+		
+		Logger.info("Binding port forwarding for mongodb on {} with port {}", remoteHost, port);
+
+		try {
+			mongoClient = new MongoClient("127.0.0.1", port);
+			DB db = mongoClient.getDB("nspp");
+			Logger.info("MongoDB stats: " + db.getStats());
+		} catch (UnknownHostException e) {
+			Logger.error("Unable to connect to mongodb", e);
+			System.exit(1);
+		}
+
+		this.access = new DatabaseAccess(pool, mongoClient, settings.getChild("cache-size").getInt(1000), manager, backgroundTasks);
+
+		// Setup health monitoring
 		HealthMonitor health = null;
 		if (config.getChild("health").getChild("monitor").getBoolean()) {
 			Logger.info("NationStates++ Health Monitoring: [ ENABLED ]");
@@ -149,9 +183,9 @@ public class Global extends GlobalSettings {
 
 		this.admin = new AdminController(access, config, health);
 
-		//Setup background tasks
+		// Setup background tasks
 		if (backgroundTasks) {
-			//AWS creds
+			// AWS creds
 			BasicAWSCredentials awsCredentials = null;
 			ConfigurationNode aws = config.getChild("aws-credentials");
 			if (aws.getChild("access-key").getString() != null && aws.getChild("secret-key").getString() != null) {
@@ -165,13 +199,13 @@ public class Global extends GlobalSettings {
 			dailyDumps.start();
 
 			HappeningsTask task = new HappeningsTask(access, api, health);
-			schedule(Duration.standardSeconds(5), Duration.standardSeconds(3), task); //3-10 api calls
+			schedule(Duration.standardSeconds(5), Duration.standardSeconds(3), task); // 3-10 api calls
 			schedule(Duration.standardSeconds(60), Duration.standardSeconds(31), new NationUpdateTask(api, access, 12, 12, health, task));
 			schedule(Duration.standardSeconds(120), Duration.standardSeconds(31), new UpdateOrderTask(api, access)); // 2 api calls
 			schedule(Duration.standardSeconds(120), Duration.standardSeconds(31), new FlagUpdateTask(api, access)); // 4 api calls
 			schedule(Duration.standardSeconds(120), Duration.standardSeconds(60), new NSWikiTask(access, config)); // 0 api calls
-			schedule(Duration.standardSeconds(120), null, new WorldAssemblyTask(access, api, 0)); //3-10 api calls
-			schedule(Duration.standardSeconds(120), null, new WorldAssemblyTask(access, api, 1)); //3-10 api calls
+			schedule(Duration.standardSeconds(120), null, new WorldAssemblyTask(access, api, 0)); // 3-10 api calls
+			schedule(Duration.standardSeconds(120), null, new WorldAssemblyTask(access, api, 1)); // 3-10 api calls
 			Logger.info("NationStates++ Background Tasks Initialized.");
 		}
 	}
@@ -184,13 +218,14 @@ public class Global extends GlobalSettings {
 	@Override
 	public void onStop(Application app) {
 		pool.close();
+		PortForwardingRunnable.shutdownAll();
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T extends EssentialFilter> Class<T>[] filters() {
 		return (Class[]) ObjectArrays.concat(GzipFilter.class, super.filters());
-    }
+	}
 
 	@SuppressWarnings("unchecked")
 	@Override
@@ -201,12 +236,12 @@ public class Global extends GlobalSettings {
 		if (AdminController.class.isAssignableFrom(controllerClass)) {
 			return (A) admin;
 		} else if (NationStatesController.class.isAssignableFrom(controllerClass)) {
-			Constructor<A> cons = controllerClass.getConstructor(new Class[] {DatabaseAccess.class, YamlConfiguration.class, NationStates.class});
+			Constructor<A> cons = controllerClass.getConstructor(new Class[] { DatabaseAccess.class, YamlConfiguration.class, NationStates.class });
 			A controller = cons.newInstance(access, config, api);
 			controllers.put(controllerClass, (Controller) controller);
 			return controller;
 		} else if (DatabaseController.class.isAssignableFrom(controllerClass)) {
-			Constructor<A> cons = controllerClass.getConstructor(new Class[] {DatabaseAccess.class, YamlConfiguration.class});
+			Constructor<A> cons = controllerClass.getConstructor(new Class[] { DatabaseAccess.class, YamlConfiguration.class });
 			A controller = cons.newInstance(access, config);
 			controllers.put(controllerClass, (Controller) controller);
 			return controller;

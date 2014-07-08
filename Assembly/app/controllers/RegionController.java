@@ -225,6 +225,14 @@ public class RegionController extends NationStatesController {
 			}
 		}
 		
+		int totalRegions;
+		try (PreparedStatement select = conn.prepareStatement("SELECT count(id) FROM assembly.region WHERE alive = 1 AND update_order > -1")) {
+			try (ResultSet set = select.executeQuery()) {
+				set.next();
+				totalRegions = set.getInt(1);
+			}
+		}
+		
 		Map<String, Object> data = new HashMap<String, Object>();
 		Map<String, Object> majorUpdate = new HashMap<String, Object>();
 		majorUpdate.put("mean", Double.valueOf(major.getMean()).longValue());
@@ -234,7 +242,8 @@ public class RegionController extends NationStatesController {
 		majorUpdate.put("geomean", Double.valueOf(major.getGeometricMean()).longValue());
 		majorUpdate.put("variance", Double.valueOf(major.getVariance()).longValue());
 		majorUpdate.put("isGuess", majorIsGuess);
-		majorUpdate.put("update_order", updateOrder);
+		majorUpdate.put("update_order", updateOrder + 1);
+		majorUpdate.put("total_regions", totalRegions);
 		data.put("major", majorUpdate);
 		
 		Map<String, Object> minorUpdate = new HashMap<String, Object>();
@@ -245,7 +254,8 @@ public class RegionController extends NationStatesController {
 		minorUpdate.put("geomean", Double.valueOf(minor.getGeometricMean()).longValue());
 		minorUpdate.put("variance", Double.valueOf(minor.getVariance()).longValue());
 		minorUpdate.put("isGuess", minorIsGuess);
-		minorUpdate.put("update_order", updateOrder);
+		minorUpdate.put("update_order", updateOrder + 1);
+		minorUpdate.put("total_regions", totalRegions);
 		data.put("minor", minorUpdate);
 		return Json.toJson(data);
 	}
@@ -269,27 +279,24 @@ public class RegionController extends NationStatesController {
 
 	public Result getRegionSummary(String region) throws SQLException {
 		List<Map<String, Object>> regionData = new ArrayList<Map<String, Object>>();
-		Connection conn = null;
-		try {
-			conn = getConnection();
-			PreparedStatement statement = conn.prepareStatement("SELECT name, title, flag, influence, wa_member FROM assembly.nation WHERE alive = 1 AND region = ? ORDER BY update_order ASC");
-			statement.setInt(1, getDatabase().getRegionId(region));
-			ResultSet result = statement.executeQuery();
-			while(result.next()) {
-				Map<String, Object> nation = new HashMap<String, Object>();
-				nation.put("name", result.getString(1));
-				nation.put("title", result.getString(2));
-				nation.put("flag", result.getString(3));
-				nation.put("influence", result.getInt(4));
-				nation.put("wa_member", result.getByte(5) == 1);
-				regionData.add(nation);
+		if (!region.isEmpty() && getDatabase().getRegionId(region) != -1) {
+			try (Connection conn = getConnection()) {
+				try (PreparedStatement statement = conn.prepareStatement("SELECT name, title, flag, influence, wa_member FROM assembly.nation WHERE alive = 1 AND region = ? ORDER BY update_order ASC")) {
+					statement.setInt(1, getDatabase().getRegionId(region));
+					try (ResultSet result = statement.executeQuery()) {
+						while(result.next()) {
+							Map<String, Object> nation = new HashMap<String, Object>();
+							nation.put("name", result.getString(1));
+							nation.put("title", result.getString(2));
+							nation.put("flag", result.getString(3));
+							nation.put("influence", result.getInt(4));
+							nation.put("wa_member", result.getByte(5) == 1);
+							regionData.add(nation);
+						}
+					}
+				}
 			}
-			DbUtils.closeQuietly(result);
-			DbUtils.closeQuietly(statement);
-		} finally {
-			DbUtils.closeQuietly(conn);
 		}
-
 		Result r = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(regionData.hashCode()), "6");
 		if (r != null) {
 			return r;

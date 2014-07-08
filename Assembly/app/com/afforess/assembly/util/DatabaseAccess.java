@@ -6,6 +6,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
@@ -15,10 +17,19 @@ import org.joda.time.Duration;
 import play.Logger;
 
 import com.afforess.assembly.model.websocket.WebsocketManager;
+import com.afforess.assembly.nation.MongoSettings;
+import com.afforess.assembly.nation.NationSettings;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.mchange.v2.c3p0.ComboPooledDataSource;
+import com.mongodb.BasicDBObject;
+import com.mongodb.DB;
+import com.mongodb.DBCollection;
+import com.mongodb.DBCursor;
+import com.mongodb.MongoClient;
 
 public class DatabaseAccess {
 	private final ComboPooledDataSource pool;
@@ -29,11 +40,13 @@ public class DatabaseAccess {
 	@Deprecated
 	private final LoadingCache<Integer, String> nationSettings;
 	private final WebsocketManager websocketManager;
+	private final MongoClient mongo;
 	private final int cacheSize;
 
-	public DatabaseAccess(final ComboPooledDataSource pool, int cacheSize, WebsocketManager wm, boolean backgroundTasks) {
+	public DatabaseAccess(final ComboPooledDataSource pool, MongoClient client, int cacheSize, WebsocketManager wm, boolean backgroundTasks) {
 		this.cacheSize = cacheSize;
 		this.pool = pool;
+		this.mongo = client;
 		this.websocketManager = wm;
 		Logger.info("Creating Database Cache. Max Size: " + cacheSize);
 		this.regionIdCache = CacheBuilder.newBuilder()
@@ -164,6 +177,14 @@ public class DatabaseAccess {
 		});
 	}
 
+	public MongoClient getMongoClient() {
+		return mongo;
+	}
+
+	public DB getMongoDB() {
+		return mongo.getDB("nspp");
+	}
+
 	public final int getMaxCacheSize() {
 		return cacheSize;
 	}
@@ -221,6 +242,44 @@ public class DatabaseAccess {
 
 	public LoadingCache<Integer, String> getNationSettingsCache() {
 		return nationSettings;
+	}
+
+	public NationSettings getNationSettings(String nation) {
+		nation = Utils.sanitizeName(nation);
+		
+		DB nspp = getMongoDB();
+		DBCollection collection = nspp.getCollection("user_settings");
+		BasicDBObject find = new BasicDBObject("nation", nation);
+		DBCursor cursor = collection.find(find, new BasicDBObject("nation", 1));
+		if (cursor.hasNext()) {
+			return new MongoSettings(collection, nation);
+		}
+		Logger.info("Migrating user settings for " + nation);
+		try {
+			String settings = nationSettings.get(getNationId(nation));
+			settings = "{\"nation\":\"" + nation + "\", " + settings.substring(1);
+			Logger.info("Modified settings for " + nation + ": [" + settings + "]");
+			ObjectMapper mapper = new ObjectMapper();
+			try {
+				Map<String, Object> data = mapper.readValue(settings, new TypeReference<HashMap<String,Object>>() {});
+				BasicDBObject obj = new BasicDBObject(data);
+				collection.insert(obj);
+				find = new BasicDBObject("nation", nation);
+				cursor = collection.find(find, new BasicDBObject("nation", 1));
+				if (cursor.hasNext()) {
+					return new MongoSettings(collection, nation);
+				} else {
+					Logger.error("Migrated settings for " + nation + " not found!");
+				}
+			} catch (Exception e) {
+				throw new RuntimeException("Unable to parse nation settings", e);
+			}
+		} catch (ExecutionException e) {
+			Logger.error("Unable to read user settings for " + nation, e);
+		}
+		
+		//collection.
+		return null;
 	}
 
 	public ComboPooledDataSource getPool() {
