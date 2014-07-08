@@ -158,11 +158,9 @@
 				}
 			}
 
-			var event = jQuery.Event("websocket/request");
-			event.json = { name: "nation_status", data : { "nations": nations } };
-			$(window).trigger(event);
-			
-			$(window).one("websocket/nation_status", function(event) {
+			sendWebsocketEvent("nation_status", { "nations": nations });
+
+			$(window).one("websocket.nation_status", function(event) {
 				for (var name in event.json) {
 					if (Object.prototype.hasOwnProperty.call(event.json, name)) {
 						var flag = "//www.nationstates.net/images/flags/exnation.png";
@@ -244,6 +242,12 @@
 				
 				lastSelectedRow = $(this);
 			});
+			
+			if ($("#active_puppets tr.puppet_active_row").length > 0) {
+				$("#left-buttons button").removeAttr("disabled");
+			} else {
+				$("#left-buttons button").attr("disabled", true);
+			}
 		};
 		updatePuppetTable();
 	}

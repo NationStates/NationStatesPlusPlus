@@ -4,6 +4,43 @@
 		var region = $.QueryString["banhammer"];
 		window.document.title = "Banhammer!";
 		$("#content").html("<h1>Ban Management Settings</h1><div id='settings'>" + banhammerHTML + "</div><hr></hr><h1>Nation List <button id='refresh_list' class='button' style='position: relative;top: -8px;left: 25px;'>Refresh</button><span id='your_spdr'></span></h2><div id='nation_list'></div>");
+		
+		$("input[name='show_flags']").prop("checked", localStorage.getItem("banhammer_show_flags") != null);
+		$("#length_of_residency").prop("checked", localStorage.getItem("banhammer_length_of_residency") != null);
+		$("#influence").prop("checked", localStorage.getItem("banhammer_length_of_residency") == null);
+		$("input[name='inversion']").prop("checked", localStorage.getItem("banhammer_inversion") != null);
+		
+		$("input[name='show_flags']").on("click", function(event) {
+			if ($(this).prop("checked")) {
+				$(".bflag").show();
+				localStorage.setItem("banhammer_show_flags", true);
+			} else {
+				$(".bflag").hide();
+				localStorage.removeItem("banhammer_show_flags");
+			}
+		});
+		$("input[name='radio_controls']").on("click", function(event) {
+			listNations();
+			if ($("#length_of_residency").prop("checked")) {
+				localStorage.setItem("banhammer_length_of_residency", true);
+			} else {
+				localStorage.removeItem("banhammer_length_of_residency");
+			}
+		});
+		$("input[name='inversion']").on("click", function(event) {
+			listNations();
+			if ($("#inversion").prop("checked")) {
+				localStorage.setItem("banhammer_inversion", true);
+			} else {
+				localStorage.removeItem("banhammer_inversion");
+			}
+		});
+		$("input[name='filter_names']").on("keydown", function(event) {
+			if (event.which == 13) {
+				event.preventDefault();
+				listNations();
+			}
+		});
 		var updateSPDR = function() {
 			getSPDR(getUserNation(), function(spdr) { $("#your_spdr").attr("spdr", spdr); $("#your_spdr").html("(Current SPDR: " + spdr + ")"); });
 		}
@@ -12,8 +49,6 @@
 			$("#nation_list").html("<img style='margin-bottom: -2px; margin-right: 4px;' src='/images/loading1.gif'>");
 			$.get("https://nationstatesplusplus.net/api/region/summary/?region=" + region, function(data) {
 				var html = "";
-				
-				if (!getSettings().isEnabled("banhammer_length_of_residency", true)) $("#influence").prop("checked", true);
 				if ($("#length_of_residency").prop("checked")) {
 					data = $(data).get().reverse();
 				} else {
@@ -22,8 +57,6 @@
 					});
 				}
 				$("#nation_list").html("");
-				
-				if (getSettings().isEnabled("banhammer_inversion", false)) $("#inversion").prop("checked", true);
 				if ($("#inversion").prop("checked")) {
 					data = $(data).get().reverse();
 				}
@@ -40,7 +73,7 @@
 					
 					if (filter == "" || nation.title.toLowerCase().contains(filter)) {
 						html += "<div class='banhammer_row' name='" + nation.name + "'><p><a class='nlink' href='//www.nationstates.net/nation=" + nation.name + "' target='_blank' >";
-						html += "<img class='bflag miniflag' src='" + nation.flag + "' class='miniflag' alt='' title='" + nation.title + "'><span>"
+						html += "<img class='bflag miniflag' src='" + nation.flag + "' alt='' title='" + nation.title + "' style='" + ($("input[name='show_flags']").prop("checked") ? "" : "display:none") + "'><span>"
 						html += nation.title + "</span></a> <span class='spdr'>(SPDR: " + nation.influence + ")</span>";
 						html += (nation.wa_member ? "<span class='wa_status dossier-wa'></span>" : "");
 						
@@ -71,6 +104,7 @@
 					}
 				}
 				$("#nation_list").html(html);
+
 				var ejectOrBan = function(event, nation, param) {
 					event.preventDefault();
 					$("button").attr("disabled", true);
@@ -93,28 +127,6 @@
 				});
 				$("button[name='ban_eject']").on("click", function(event) {
 					ejectOrBan(event, $(this).parents(".banhammer_row").attr("name"), "ban=1");
-				});
-				$("input[name='show_flags']").on("click", function(event) {
-					if ($(this).prop("checked")) $(".bflag").show();
-					else $(".bflag").hide();
-					getSettings(true).setValue("banhammer_show_flags", $(this).prop("checked"));
-				});
-				$("input[name='show_flags']").prop("checked", getSettings().isEnabled("banhammer_show_flags", true));
-				if (!getSettings().isEnabled("banhammer_show_flags", true)) $(".bflag").hide();
-				
-				$("input[name='radio_controls']").on("click", function(event) {
-					listNations();
-					getSettings(true).setValue("banhammer_length_of_residency", $("#length_of_residency").prop("checked"));
-				});
-				$("input[name='inversion']").on("click", function(event) {
-					listNations();
-					getSettings(true).setValue("banhammer_inversion", $("#inversion").prop("checked"));
-				});
-				$("input[name='filter_names']").on("keydown", function(event) {
-					if (event.which == 13) {
-						event.preventDefault();
-						listNations();
-					}
 				});
 			});
 		};
@@ -141,6 +153,5 @@
 			callback(score);
 		});
 	}
-
 })();
 

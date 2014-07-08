@@ -1,8 +1,8 @@
 (function(){
-	var recruitmentHTML = '<h1>NationStates++ Recruitment</h1><form class="form-horizontal"><div class="control-group"><h2>Existing Recruitment Campaigns</h2><ul id="campaigns"><li>Loading Campaigns...</li></ul></div><hr><div class="control-group"><h2>Retired Recruitment Campaigns</h2><ul id="retired-campaigns"><li>Loading Campaigns...</li></ul></div><hr><div class="control-group"><h2>Recruitment Effectiveness</h2></div><hr><div class="control-group"><h2>Recruitment Officers</h2><div style="margin:8px">Recruitment Officers can contribute to your regions recruitment, view and edit recruitment campaigns.</div><div style="margin:8px">Only the regional founder and regional delegate can appoint or remove recruitment officers.</div><label class="control-label" for="recruitment_officers">Recruitment Officers</label><select id="recruitment_officers" name="recruitment_officers" class="input-xlarge" style="width:460px;height:200px;margin-left:24px" multiple="multiple"><option>Option one<option>Option two</select></div><div class="control-group"><div class="controls"><button id="remove_selected_officers" name="remove_selected_officers" class="btn btn-danger">Remove Selected Officers</button></div></div><div class="control-group"><label class="control-label" for="add_officer">Add Officer</label><div class="controls"><div class="input-append"><input id="add_officer" name="add_officer" class="input-xlarge" placeholder="Really Cool Nation" style="width:450px" type="text"><div class="btn-group"><button id="add_officer_btn" class="btn" style="height:32px">Add Officer</button></div></div><span id="officer_error" style="display:none;color:red">Not a valid nation</span> <span id="officer_duplicate" style="display:none;color:red">Nation is already an editor!</span></div></div><hr><div class="control-group"><label class="control-label" for="rtype">Recruitment Type</label><div class="controls"><select id="rtype" name="rtype" style="width:465px" class="input-xlarge"><option value="0">New Nations<option value="1">Refounded Nations<option value="2">Ejected Nations<option value="3">Active Gamerites<option value="4">Active Userites<option value="5">Active Nations<option value="6">Capitalist Nations<option value="7">Socialist Nations<option value="8">Centrist Nations<option value="9">Authoritarian Nations<option value="10">Libertarian Nations<option value="11">Lonely Nations</select></div><div style="margin-left:184px;margin-bottom:-20px"><p id="rdesc_0" name="rdesc" style="display:none">New Nations: Nations founded recently.</p><p id="rdesc_1" name="rdesc" style="display:none">Refounded Nations: Nations that ceased to exist and were refounded.</p><p id="rdesc_2" name="rdesc" style="display:none">Ejected Nations: Nations that have been forcibly relocated to the Rejected Realms.</p><p id="rdesc_3" name="rdesc" style="display:none">Active Gamerites: Nations residing in Game-Created Regions that are active in NationStates.</p><p id="rdesc_4" name="rdesc" style="display:none">Active Userites: Nations residing in User-Created Regions that are active in NationStates.</p><p id="rdesc_5" name="rdesc" style="display:none">Active Nations: Nations that are active in NationStates.</p><p id="rdesc_6" name="rdesc" style="display:none">Capitalist Nations: Active, new, or refounded nations with right-wing, capitalist views.</p><p id="rdesc_7" name="rdesc" style="display:none">Socialist Nations: Active, new, or refounded nations with left-wing, socialist views.</p><p id="rdesc_8" name="rdesc" style="display:none">Centrist Nations: Active, new, or refounded nations with centrist, inoffensive views.</p><p id="rdesc_9" name="rdesc" style="display:none">Authoritarian Nations: Active, new, or refounded nations that favour authoritarianism, dictators, or fascists.</p><p id="rdesc_10" name="rdesc" style="display:none">Libertarian Nations: Active, new, or refounded nations that favour libertarianism, tiny governments and an emphasis on civil and political rights.</p><p id="rdesc_11" name="rdesc" tyle="display:none;">Lonely Nations: Nations residing in tiny regions, with very few members.</p></div></div><div class="control-group"><label class="control-label" for="clientkey">Client Key</label><div class="controls"><input id="clientkey" name="clientkey" type="text" placeholder="Client Key" style="width:450px" class="input-xlarge"> <span title="A Client Key can be requested from a Getting Help Request. Once it has been requested, it may take up to 24 hours for the request to be filled, so be patient." style="font-size:10px"><a href="/page=help?recruitment">(What is this?)</a></span></div></div><div class="control-group"><label class="control-label" for="tgid">Telegram ID</label><div class="controls"><input id="tgid" name="tgid" type="text" placeholder="Telegram ID" style="width:450px" class="input-xlarge"> <span title="Send your recruitment telegram to &quot;tag:api&quot; to receive a tgid and secret key" style="font-size:10px"><a href="//www.nationstates.net/pages/api.html#telegrams">(What is this?)</a></span></div></div><div class="control-group"><label class="control-label" for="secretkey">Secret Key</label><div class="controls"><input id="secretkey" name="secretkey" type="text" placeholder="Secret Key" style="width:450px" class="input-xlarge"> <span title="Send your recruitment telegram to &quot;tag:api&quot; to receive a tgid and secret key" style="font-size:10px"><a href="//www.nationstates.net/pages/api.html#telegrams">(What is this?)</a></span></div></div><div class="control-group"><label class="control-label" for="allocation">Percent Allocated</label><div class="controls"><input id="allocation" name="allocation" type="range" min="1" value="100" max="100" style="width:414px;margin-right:10px" placeholder="" class="input-xlarge"> <span style="font-size:10px"><input style="min-width:26px;width:26px" class="text-input" name="percent_input" type="text" max="100" min="1" size="2" value="100"> (Percent of requests allocated)</span></div></div><div class="control-group"><label class="control-label" for="gcrs">GCR\'s Only</label><div class="controls"><label class="checkbox inline" for="gcrs"><input type="checkbox" name="gcrs" id="gcrs" value="(Arnhelm Signatories)"> (Arnhelm Signatories)</label></div></div><div class="control-group"><label class="control-label" for="filter">Filter Names</label><div class="controls"><input id="filter" name="filter" type="text" placeholder="Filter Names (Optional)" style="width:450px" class="input-xlarge"><p class="help-block">Comma separated list</p></div></div><div style="margin-left:184px"><p id="missing-client-key" name="error" style="display:none;color:red">Missing Client Key.</p><p id="invalid-client-key" name="error" style="display:none;color:red">Invalid Client Key. Client keys are 8 characters long, without spaces. Obtain one for your region with a <a href="/page=help?recruitment">Getting Help Request.</a></p><p id="missing-tgid" name="error" style="display:none;color:red">Missing Telegram ID.</p><p id="invalid-tgid" name="error" style="display:none;color:red">Invalid Telegram ID, Telegram ID\'s are numeric.</p><p id="missing-secret-key" name="error" style="display:none;color:red">Missing Secret Key.</p><p id="invalid-secret-key" name="error" style="display:none;color:red">Invalid Secret Key. Secret keys are 12 characters long, without spaces.</p><p id="unknown-error" name="error" style="display:none;color:red"></p></div><div class="control-group"><label class="control-label" for="submit"></label><div class="controls"><button id="submit" name="submit" class="btn btn-success">Create Recruitment Campaign</button></div></div></form>'
+	var recruitmentHTML = '<h1>NationStates++ Recruitment</h1><form class="form-horizontal"><div class="control-group"><h2>Existing Recruitment Campaigns</h2><ul id="campaigns"><li>Loading Campaigns...</li></ul></div><hr><div class="control-group"><h2>Retired Recruitment Campaigns</h2><ul id="retired-campaigns"><li>Loading Campaigns...</li></ul></div><hr><div class="control-group"><h2>Recruitment Effectiveness</h2></div><hr><div class="control-group"><h2>Recruitment Officers</h2><div style="margin:8px">Recruitment Officers can contribute to your regions recruitment, view and edit recruitment campaigns.</div><div style="margin:8px">Only the regional founder and regional delegate can appoint or remove recruitment officers.</div><label class="control-label" for="recruitment_officers">Recruitment Officers</label><select id="recruitment_officers" name="recruitment_officers" class="input-xlarge" style="width:460px;height:200px;margin-left:24px" multiple="multiple"><option>Option one<option>Option two</select></div><div class="control-group"><div class="controls"><button id="remove_selected_officers" name="remove_selected_officers" class="btn btn-danger">Remove Selected Officers</button></div></div><div class="control-group"><label class="control-label" for="add_officer">Add Officer</label><div class="controls"><div class="input-append"><input id="add_officer" name="add_officer" class="input-xlarge" placeholder="Really Cool Nation" style="width:450px" type="text"><div class="btn-group"><button id="add_officer_btn" class="btn" style="height:32px">Add Officer</button></div></div><span id="officer_error" style="display:none;color:red">Not a valid nation</span> <span id="officer_duplicate" style="display:none;color:red">Nation is already an editor!</span></div></div><hr><div class="control-group"><label class="control-label" for="rtype">Recruitment Type</label><div class="controls"><select id="rtype" name="rtype" style="width:465px" class="input-xlarge"><option value="0">New Nations<option value="1">Refounded Nations<option value="2">Ejected Nations<option value="3">Active Gamerites<option value="4">Active Userites<option value="5">Active Nations<option value="6">Capitalist Nations<option value="7">Socialist Nations<option value="8">Centrist Nations<option value="9">Authoritarian Nations<option value="10">Libertarian Nations<option value="11">Lonely Nations</select></div><div style="margin-left:184px;margin-bottom:-20px"><p id="rdesc_0" name="rdesc" style="display:none">New Nations: Nations founded recently.</p><p id="rdesc_1" name="rdesc" style="display:none">Refounded Nations: Nations that ceased to exist and were refounded.</p><p id="rdesc_2" name="rdesc" style="display:none">Ejected Nations: Nations that have been forcibly relocated to the Rejected Realms.</p><p id="rdesc_3" name="rdesc" style="display:none">Active Gamerites: Nations residing in Game-Created Regions that are active in NationStates.</p><p id="rdesc_4" name="rdesc" style="display:none">Active Userites: Nations residing in User-Created Regions that are active in NationStates.</p><p id="rdesc_5" name="rdesc" style="display:none">Active Nations: Nations that are active in NationStates.</p><p id="rdesc_6" name="rdesc" style="display:none">Capitalist Nations: Active, new, or refounded nations with right-wing, capitalist views.</p><p id="rdesc_7" name="rdesc" style="display:none">Socialist Nations: Active, new, or refounded nations with left-wing, socialist views.</p><p id="rdesc_8" name="rdesc" style="display:none">Centrist Nations: Active, new, or refounded nations with centrist, inoffensive views.</p><p id="rdesc_9" name="rdesc" style="display:none">Authoritarian Nations: Active, new, or refounded nations that favour authoritarianism, dictators, or fascists.</p><p id="rdesc_10" name="rdesc" style="display:none">Libertarian Nations: Active, new, or refounded nations that favour libertarianism, tiny governments and an emphasis on civil and political rights.</p><p id="rdesc_11" name="rdesc" tyle="display:none;">Lonely Nations: Nations residing in tiny regions, with very few members.</p></div></div><div class="control-group"><label class="control-label" for="clientkey">Client Key</label><div class="controls"><input id="clientkey" name="clientkey" type="text" placeholder="Client Key" style="width:450px" class="input-xlarge"> <span title="A Client Key can be requested from a Getting Help Request. Once it has been requested, it may take up to 24 hours for the request to be filled, so be patient." style="font-size:10px"><a href="/page=help?recruitment">(What is this?)</a></span></div></div><div class="control-group"><label class="control-label" for="tgid">Telegram ID</label><div class="controls"><input id="tgid" name="tgid" type="text" placeholder="Telegram ID" style="width:450px" class="input-xlarge"> <span title="Send your recruitment telegram to &quot;tag:api&quot; to receive a tgid and secret key" style="font-size:10px"><a href="//www.nationstates.net/page=dispatch/id=274000">(What is this?)</a></span></div></div><div class="control-group"><label class="control-label" for="secretkey">Secret Key</label><div class="controls"><input id="secretkey" name="secretkey" type="text" placeholder="Secret Key" style="width:450px" class="input-xlarge"> <span title="Send your recruitment telegram to &quot;tag:api&quot; to receive a tgid and secret key" style="font-size:10px"><a href="//www.nationstates.net/page=dispatch/id=274000">(What is this?)</a></span></div></div><div class="control-group"><label class="control-label" for="allocation">Percent Allocated</label><div class="controls"><input id="allocation" name="allocation" type="range" min="1" value="100" max="100" style="width:414px;margin-right:10px" placeholder="" class="input-xlarge"> <span style="font-size:10px"><input style="min-width:26px;width:26px" class="text-input" name="percent_input" type="text" max="100" min="1" size="2" value="100"> (Percent of requests allocated)</span></div></div><div class="control-group"><label class="control-label" for="gcrs">GCR\'s Only</label><div class="controls"><label class="checkbox inline" for="gcrs"><input type="checkbox" name="gcrs" id="gcrs" value="(Arnhelm Signatories)"> (Arnhelm Signatories)</label></div></div><div class="control-group"><label class="control-label" for="filter">Filter Names</label><div class="controls"><input id="filter" name="filter" type="text" placeholder="Filter Names (Optional)" style="width:450px" class="input-xlarge"><p class="help-block">Comma separated list</p></div></div><div style="margin-left:184px"><p id="missing-client-key" name="error" style="display:none;color:red">Missing Client Key.</p><p id="invalid-client-key" name="error" style="display:none;color:red">Invalid Client Key. Client keys are 8 characters long, without spaces. Obtain one for your region with a <a href="/page=help?recruitment">Getting Help Request.</a></p><p id="missing-tgid" name="error" style="display:none;color:red">Missing Telegram ID.</p><p id="invalid-tgid" name="error" style="display:none;color:red">Invalid Telegram ID, Telegram ID\'s are numeric.</p><p id="missing-secret-key" name="error" style="display:none;color:red">Missing Secret Key.</p><p id="invalid-secret-key" name="error" style="display:none;color:red">Invalid Secret Key. Secret keys are 12 characters long, without spaces.</p><p id="unknown-error" name="error" style="display:none;color:red"></p></div><div class="control-group"><label class="control-label" for="submit"></label><div class="controls"><button id="submit" name="submit" class="btn btn-success">Create Recruitment Campaign</button></div></div></form>'
 	var recruitmentTypes = ["New Nations", "Refounded Nations", "Ejected Nations", "Active Gamerites", "Active Userites", "Active Nations", "Capitalist Nations", "Socialist Nations", "Centrist Nations", "Authoritarian Nations", "Libertarian Nations", "Lonely Nations"];
 
-	$(window).on("websocket/is_recruitment_officer", function(data) {
+	$(window).on("websocket.is_recruitment_officer", function(data) {
 		if (data.json.result == "true") {
 			checkRecruitment();
 			$("#recruit-admin").show();
@@ -14,10 +14,7 @@
 	});
 
 	function checkRecruitment() {
-		var event = jQuery.Event("websocket/request");
-		event.json = { name: "recruitment_progress", data : {} };
-		event.requiresAuth = true;
-		$(window).trigger(event);
+		sendWebsocketEvent("recruitment_progress", { }, true);
 	}
 
 	function quickSetup() {
@@ -33,7 +30,7 @@
 	}
 	quickSetup();
 
-	$(window).on("websocket/recruitment_progress", function(event) {
+	$(window).on("websocket.recruitment_progress", function(event) {
 		localStorage.setItem(getUserNation() + "-last-recruitment", event.json.recruitment.timestamp);
 		localStorage.setItem(getUserNation() + "-last-recruitment-data", JSON.stringify(event.json.recruitment));
 		localStorage.removeItem(getUserNation() + "-last-recruitment-error");
@@ -115,10 +112,7 @@
 
 	function recruitNation(data) {
 		$.get("//www.nationstates.net/cgi-bin/api.cgi?a=sendTG&client=" + data.client_key + "&tgid=" + data.tgid + "&key=" + data.secret_key + "&to=" + data.nation + "&nspp=1", function(result) {
-			var event = jQuery.Event("websocket/request");
-			event.json = { name: "confirm_recruitment", data : { target: data.nation} };
-			event.requiresAuth = true;
-			$(window).trigger(event);
+			sendWebsocketEvent("confirm_recruitment", { target: data.nation}, true);
 			checkRecruitment();
 		}).fail(function(result, textStatus, jqXHR) {
 			console.log(result);
@@ -143,12 +137,9 @@
 			}
 		}
 		$("#content").html(recruitmentHTML);
-		var event = jQuery.Event("websocket/request");
-		event.json = { name: "recruitment_campaigns", data : { } };
-		event.requiresAuth = true;
-		$(window).trigger(event);
 		
-			
+		sendWebsocketEvent("recruitment_campaigns", { }, true);
+
 		var effectiveness = $("h2:contains('Recruitment Effectiveness')");
 		$("<div id='legend' style='margin-left: 10%;'></div>").insertAfter(effectiveness);
 		$("<h3>Legend:</h3>").insertAfter(effectiveness);
@@ -162,12 +153,12 @@
 		var effectivenessJson = null;
 		$(window).on("resize", function() {
 			if (effectivenessJson != null) {
-				var event = jQuery.Event("websocket/recruitment_effectiveness");
+				var event = jQuery.Event("websocket.recruitment_effectiveness");
 				event.json = effectivenessJson;
 				$(window).trigger(event);
 			}
 		});
-		$(window).on("websocket/recruitment_effectiveness", function(event) {
+		$(window).on("websocket.recruitment_effectiveness", function(event) {
 			effectivenessJson = event.json;
 			var day = 24 * 60 * 60 * 1000;
 			var week = 7 * day;
@@ -256,7 +247,7 @@
 			return html;
 		}
 
-		$(window).on("websocket/recruitment_campaigns", function(event) {
+		$(window).on("websocket.recruitment_campaigns", function(event) {
 			var data = event.json;
 			var html = "";
 			for (var i = 0; i < data.length; i += 1) {
@@ -291,7 +282,7 @@
 			} else {
 				var cid = $(this).data("cid");
 
-				var event = jQuery.Event("websocket/request");
+				var event = jQuery.Event("websocket.request");
 				event.json = { name: "retire_recruitment_campaign", data : { campaignId: cid} };
 				event.requiresAuth = true;
 				$(window).trigger(event);
@@ -307,11 +298,7 @@
 			} else {
 				var cid = $(this).data("cid");
 
-				var event = jQuery.Event("websocket/request");
-				event.json = { name: "delete_recruitment_campaign", data : { campaignId: cid} };
-				event.requiresAuth = true;
-				$(window).trigger(event);
-	
+				sendWebsocketEvent("delete_recruitment_campaign", { campaignId: cid}, true);
 				$("li[data-cid='" + cid + "']").animate({height: 'toggle'}, 500);
 			}
 		});
@@ -329,7 +316,7 @@
 		});
 
 		//Fetch officers list
-		$(window).on("websocket/recruitment_officers", function(event) {
+		$(window).on("websocket.recruitment_officers", function(event) {
 			var data = event.json;
 			$("#recruitment_officers").html("");
 			$("#add_officer").val("");
@@ -364,21 +351,13 @@
 		//Add officer event
 		$("#add_officer_btn").on("click", function(event) {
 			event.preventDefault();
-			
-			var event = jQuery.Event("websocket/request");
-			event.json = { name: "update_recruitment_officers", data : { add: $("#add_officer").val().toLowerCase().replaceAll(" ", "_")} };
-			event.requiresAuth = true;
-			$(window).trigger(event);
+			sendWebsocketEvent("update_recruitment_officers", { add: $("#add_officer").val().toLowerCase().replaceAll(" ", "_")}, true);
 		});
 
 		//Remove selected officer events
 		$("#remove_selected_officers").on("click", function(event) {
 			event.preventDefault();
-			
-			var event = jQuery.Event("websocket/request");
-			event.json = { name: "update_recruitment_officers", data : { remove: $("#recruitment_officers").val().join(",") } };
-			event.requiresAuth = true;
-			$(window).trigger(event);
+			sendWebsocketEvent("update_recruitment_officers", { remove: $("#recruitment_officers").val().join(",")}, true);
 		});
 
 		//Recruitment type descriptions
@@ -424,12 +403,10 @@
 			if ($("#filter").val().trim() != "") {
 				data.filters = $("#filter").val().trim();
 			}
-			var event = jQuery.Event("websocket/request");
-			event.json = { name: "create_recruitment_campaign", data : data };
-			event.requiresAuth = true;
-			$(window).trigger(event);
 			
-			$(window).one("websocket/recruitment_campaigns", function(event) {
+			sendWebsocketEvent("create_recruitment_campaign", data, true);
+
+			$(window).one("websocket.recruitment_campaigns", function(event) {
 				$("#content input[type='text']").val("");
 			});
 		});

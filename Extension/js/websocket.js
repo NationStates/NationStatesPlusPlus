@@ -24,11 +24,10 @@
 				if (k == "authenticate_rss") {
 					handleAuthentication(r);
 				} else {
-					var event = jQuery.Event("websocket/" + k);
+					var event = jQuery.Event("websocket." + k);
 					if (typeof r == "string") {
 						event.json = JSON.parse(r);
-					}
-					else {
+					} else {
 						event.json = r;
 					}
 					$(window).trigger(event);
@@ -163,7 +162,7 @@
 	}
 	setInterval(keepAlive, 1000);
 
-	$(window).on("websocket/request", function(event) {
+	$(window).on("websocket.request", function(event) {
 		if (ws == null || ws.readyState == 0) {
 			var request = { };
 			request.requiresAuth = event.requiresAuth;
@@ -176,3 +175,99 @@
 		}
 	});
 })();
+
+function sendWebsocketEvent() {
+	if (arguments.length > 1) {
+		var event = jQuery.Event("websocket.request");
+		event.json = { name: arguments[0], data : arguments[1] };
+		if (arguments.length > 2) {
+			event.requiresAuth = arguments[2];
+		}
+		$(window).trigger(event);
+		return true;
+	}
+	return false;
+}
+
+function UserSettings() {
+	this.user = getUserNation();
+	this.path = "";
+	this.callbacks = [];
+	if (arguments.length > 0) {
+		this.user = arguments[0];
+	}
+	if (arguments.length > 1) {
+		this.path = arguments[1];
+	}
+	this.child = function() {
+		if (arguments.length > 0) {
+			if (this.path.length > 0) {
+				return new UserSettings(this.user, this.path + "." + arguments[0]);
+			}
+			return new UserSettings(this.user, arguments[0]);
+		}
+		return this;
+	}
+	this.set = function() {
+		if (getUserNation() == this.user) {
+			if (arguments.length > 0) {
+				var setting = {setting: this.path, value: {}};
+				setting.value[this.path] = arguments[0];
+				console.log("setting for " + this.path + ": " + JSON.stringify(setting));
+				sendWebsocketEvent("set_setting", setting, true);
+				return true;
+			}
+		}
+		return false;
+	}
+	this.off = function() {
+		for (var i = 0; i < this.callbacks.length; i += 1) {
+			$(window).off("websocket.get_setting", this.callbacks[i]);
+		}
+		this.callbacks = [];
+	}
+	this.on = function() {
+		if (arguments.length > 0) {
+			var callback = arguments[0];
+			var defaultVal = (arguments.length > 1 ? arguments[1] : null);
+			var primaryNode = this.path.split(".")[0];
+			var eventCallback = function(event) {
+				if (event.json.hasOwnProperty(primaryNode)) {
+					console.log(event.json);
+					if (defaultVal != null && event.json[primaryNode] == null) {
+						event.json[primaryNode] = defaultVal;
+					}
+					callback(event.json);
+				}
+			};
+			this.callbacks.push(eventCallback);
+			$(window).on("websocket.get_setting", eventCallback);
+			console.log({user: this.user, setting: this.path });
+			sendWebsocketEvent("get_setting", {user: this.user, setting: this.path });
+			return true;
+		}
+		return false;
+	};
+	this.once = function() {
+		if (arguments.length > 0) {
+			var callback = arguments[0];
+			var primaryNode = this.path.split(".")[0];
+			var defaultVal = (arguments.length > 1 ? arguments[1] : null);
+			var eventCallback = function(event) {
+				if (event.json.hasOwnProperty(primaryNode)) {
+					console.log(event.json);
+					if (defaultVal != null && event.json[primaryNode] == null) {
+						event.json[primaryNode] = defaultVal;
+					}
+					callback(event.json);
+					$(window).off("websocket.get_setting", eventCallback);
+				}
+			};
+			$(window).on("websocket.get_setting", eventCallback);
+			console.log({user: this.user, setting: this.path });
+			sendWebsocketEvent("get_setting", {user: this.user, setting: this.path });
+			return true;
+		}
+		return false;
+	};
+}

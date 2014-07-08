@@ -7,43 +7,59 @@
 					$("<div id='region-irc'></div><div class='hzln'></div>").insertBefore($("h2:contains('Today's World Census Report')"));
 					$("#region-irc").append("<h2 style='display: inline-block; margin-bottom: 0;'>Regional IRC</h2>");
 					$("#region-irc").append("<div style='display: inline; margin-left: 10px;'><a class='irc-link' href='javascript:void(0)'>(Show)</a></div>");
+					
+					function hideIRC(update) {
+						$("a.irc-link").html("(Show)");
+						$("#irc-frame").remove();
+						if (update)
+							(new UserSettings()).child("show_irc").set(false);
+					}
+					
+					function showIRC(update) {
+						$("a.irc-link").html("(Hide)");
+						var ircURL = "https://kiwiirc.com/client/" + $("#region-irc").data("network");
+						if (isDarkTheme()) {
+							ircURL += "/?theme=cli&nick=";
+						} else {
+							ircURL += "/?theme=relaxed&nick=";
+						}
+						ircURL += $("#region-irc").data("user") + "&" + $("#region-irc").data("channel")
+						$("#region-irc").append("<iframe seamless='seamless' id='irc-frame' style='border:2px solid; width:100%; height:500px;' src='" + ircURL + "'></iframe>");
+						if (update)
+							(new UserSettings()).child("show_irc").set(true);
+					}
 
 					var toggleIRC = function() {
-						var irc = $("a.irc-link");
-						if (irc.html() == "(Hide)") {
-							irc.html("(Show)");
-							$("#irc-frame").hide();
-							getSettings(true).setValue("show_irc", false);
+						if ($("a.irc-link").html() == "(Hide)") {
+							hideIRC(true);
 						} else {
-							irc.html("(Hide)");
+							showIRC(true);
+						}
+					}
+
+					$("#region-irc").data("channel", region["channel"]);
+					$("#region-irc").data("network", region["network"]);
+					$("#region-irc").data("user", getUserNation().replaceAll("_", " ").toTitleCase().replaceAll(" ", "_"));
+					(new UserSettings()).child("irc_network_override").on(function(data) {
+						if (data["irc_network_override"] != null && data["irc_network_override"].length > 0) {
+							$("#region-irc").data("network", data["irc_network_override"]);
+						}
+					});
+					(new UserSettings()).child("irc_username_override").on(function(data) {
+						if (data["irc_username_override"] != null && data["irc_username_override"].length > 0) {
+							$("#region-irc").data("user", data["irc_username_override"]);
+						}
+					});
+					(new UserSettings()).child("show_irc").on(function(data) {
+						if (data["show_irc"] != null && data["show_irc"]) {
 							if ($("#irc-frame").length == 0) {
-								$("#region-irc").append("<iframe seamless='seamless' id='irc-frame' style='border:2px solid; width:100%; height:500px;' src='" + $("#region-irc").data("irc") + "'></iframe>");
+								showIRC(false);
 							}
-							$("#irc-frame").show();
-							getSettings(true).setValue("show_irc", true);
-						}
-					}
-
-					function generateIRCURL(region) {
-						var settings = getSettings();
-						var network = settings.getValue("irc_network_override", region["network"]);
-						var nick = settings.getValue("irc_username_override", getUserNation().replaceAll("_", " ").toTitleCase().replaceAll(" ", "_"));
-						var ircUrl = "https://kiwiirc.com/client/" + network;
-						if (isDarkTheme()) {
-							ircUrl += "/?theme=cli&nick=";
 						} else {
-							ircUrl += "/?theme=relaxed&nick=";
+							hideIRC(false);
 						}
-						ircUrl += nick + "&" + region["channel"];
-						return ircUrl;
-					}
-
-					$("#region-irc").data("irc", generateIRCURL(region));
+					});
 					$("a.irc-link").on("click", toggleIRC);
-	
-					if (getSettings().isEnabled("show_irc")) {
-						toggleIRC();
-					}
 
 					break;
 				}

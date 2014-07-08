@@ -1,8 +1,13 @@
 (function() {
 	if ((getVisiblePage() == "telegrams" || getVisiblePage() == "tg") && !isAntiquityTheme()) {
-		if (getSettings().isEnabled("clickable_telegram_links")) {
-			linkifyTelegrams();
-		}
+		(new UserSettings()).child("clickable_telegram_links").once(function(data) {
+			console.log(data["clickable_telegram_links"]);
+			if (data["clickable_telegram_links"]) {
+				linkifyTelegrams();
+			}
+		});
+		(new UserSettings()).child("clickable_telegram_links").once(function(data) {
+		});
 		addTelegramSearch();
 		addFormattingButtons();
 		addForwardButton();
@@ -15,7 +20,7 @@
 			}
 		});
 	}
-	
+
 	function addForwardButton() {
 		$("<button name='forward' title='Forward Telegram' style='font-weight:bold;' class='button icon arrowright'>Forward Telegram</button>").insertBefore(".tgreplybutton");
 		$('body').on('click', "button[name='forward']", function(event) {

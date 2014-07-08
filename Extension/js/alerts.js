@@ -41,7 +41,7 @@
 			css += "background: #2A2A2A; border: 1px solid #383838;"
 		}
 		var right = 248;
-		if (getSettings().isEnabled("show_puppet_switcher")) {
+		if ($("#puppet_setting:visible").length > 0) {
 			right += $("#puppet_setting a").width() + 18;
 		}
 		var title = $(banner).append("<a id='alert_msg' href='javascript:void(0)' style='" + css + " right: " + right + "px;'>" + msg.title.text + "</a>");

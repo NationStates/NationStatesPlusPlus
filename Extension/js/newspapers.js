@@ -96,11 +96,11 @@ var newspaperAdminHTML = '<form class="form-horizontal"><fieldset><div class="co
 		}
 		return handler;
 	}
-	$(window).on("websocket/gameplay_news_sidebar", createEventHandler("#gnews span[name='nag']"));
-	$(window).on("websocket/roleplay_news_sidebar", createEventHandler("#rpnews span[name='nag']"));
-	$(window).on("websocket/regional_news_sidebar", createEventHandler("#rnews span[name='nag']"));
+	$(window).on("websocket.gameplay_news_sidebar", createEventHandler("#gnews span[name='nag']"));
+	$(window).on("websocket.roleplay_news_sidebar", createEventHandler("#rpnews span[name='nag']"));
+	$(window).on("websocket.regional_news_sidebar", createEventHandler("#rnews span[name='nag']"));
 
-	$(window).on("websocket/pending_news_submissions", function(event) {
+	$(window).on("websocket.pending_news_submissions", function(event) {
 		var menu;
 		if (event.json.newspaper == 0) menu = $("#gnews");
 		else if (event.json.newspaper == 1) menu = $("#rpnews");

@@ -179,12 +179,13 @@
 	function checkPanelAlerts() {
 		setTimeout(function() {
 			var updateDelay = 30000; //30 sec
-			//If there is no content element, we are trapped in an iframe and can not accurately judge activity or lack of it
 			if ($("#content").length > 0) {
 				if (!isPageActive()) {
 					_pageInactiveCount += 1;
 					updateDelay = 300000 * _pageInactiveCount; //5 min
-				} else if (getLastActivity() + 60000 < Date.now()) {
+
+				//If there is no content element, we are trapped in an iframe and can not accurately judge activity or lack of it
+				} else if ($("#content").length > 0 && (getLastActivity() + 60000 < Date.now())) {
 					_pageInactiveCount += 1;
 					updateDelay = 150000 * _pageInactiveCount; //2.5 min
 				} else {

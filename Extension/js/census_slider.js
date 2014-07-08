@@ -1,16 +1,20 @@
 (function() {
-	if (!getSettings().isEnabled("scroll_nation_lists", true)) {
+	var shouldAddRegionFlags = getVisiblePage() == "list_regions" || getVisiblePage() == "tag_search";
+	var shouldAddCensusSlider = getVisiblePage() == "list_nations" || getVisiblePage() == "list_regions" || getVisiblePage() == "world" || getVisiblePage() == "tag_search" || getVisiblePage() == "region";
+	if (!shouldAddRegionFlags && !shouldAddCensusSlider) {
 		return;
 	}
+	(new UserSettings()).child("scroll_nation_lists").once(function(data) {
+		if (data["scroll_nation_lists"]) {
+			if (shouldAddRegionFlags) {
+				addRegionFlags();
+			}
+			if (shouldAddCensusSlider) {
+				setupPageSlider();
+			}
+		}
+	});
 
-	if (getVisiblePage() == "list_regions" || getVisiblePage() == "tag_search") {
-		addRegionFlags();
-	}
-
-	if (getVisiblePage() == "list_nations" || getVisiblePage() == "list_regions" || getVisiblePage() == "world" || getVisiblePage() == "tag_search" || getVisiblePage() == "region") {
-		setupPageSlider();
-	}
-	
 	function setupPageSlider() {
 		var paginator = $('h6[align$="center"]');
 		if (paginator.length != 0) {

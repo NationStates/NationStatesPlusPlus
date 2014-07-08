@@ -20,7 +20,7 @@
 		return added;
 	}
 	
-	$(window).on("websocket/region_happenings", function(event) {
+	$(window).on("websocket.region_happenings", function(event) {
 		$.get(window.location.href + "?nspp=1", function(page) {
 			var happenings = $(page).find("h3:contains('Regional Happenings')").next();
 			var current = $("h3:contains('Regional Happenings')").next();
@@ -29,7 +29,7 @@
 		});
 	});
 	
-	$(window).on("websocket/nation_happenings", function(event) {
+	$(window).on("websocket.nation_happenings", function(event) {
 		$.get(window.location.href + "?nspp=1", function(page) {
 			var happenings = $(page).find(".newsbox").find("ul");
 			var current = $(".newsbox").find("ul");

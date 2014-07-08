@@ -1,22 +1,47 @@
 (function() {
 	if (getVisiblePage() == "dossier_advanced") {
 		$("input[type='submit']").attr("class", "button").css("font-size", "12px");
-	} else if (getVisiblePage() == "dossier" && getSettings().isEnabled("fancy_dossier_theme")) {
+	} else if (getVisiblePage() == "dossier") {
 		if (isAntiquityTheme()) {
 			$("#main").html("<div id='content'>" + $("#main").html() + "</div>");
 		}
-		$("#content").html("<h1>" + getUserNation().replaceAll("_", " ").toTitleCase() + "'s Dossier</h1>");
 		
-		var advanced = "<i style='position: absolute; top: 135px; left: 500px;'><a href='page=dossier_advanced'>(Advanced)</a></i>";
-		$("#content").html("<div id='nation_dossier'><h1>National Dossier</h1>" + advanced + "</div><div id='region_dossier'><h1>Regional Dossier</h1>" + advanced + "</div>");
-		$("#nation_dossier").append("<button id='refresh_ndossier' title='Refresh Dossier' style='right: 400px !important' class='button clear-dossier'>Refresh</button>");
-		$("#nation_dossier").append("<button id='switch_to_region_dossier' title='Switch to Region Dossier' style='right: 200px !important' class='button clear-dossier'>View Regional Dossier</button>");
-		$("#nation_dossier").append("<button id='clear_national_dossier' title='Clear Dossier' class='button danger clear-dossier'>Clear National Dossier</button>");
+		$(".searchbox:first").html("<label id='toggle_dossier_label' for='toggle_dossier'>Toggle Fancy Dossier Theme<input id='toggle_dossier' type='checkbox' title='Toggle Dossier Theme' checked='true'></input></label>");
+		$('body').on('click', '#toggle_dossier', function(event) {
+			if ($("#toggle_dossier").prop("checked")) {
+				localStorage.removeItem("disable_fancy_dossier_theme");
+			} else {
+				localStorage.setItem("disable_fancy_dossier_theme", true);
+			}
+			window.location.reload();
+		});
+		if (localStorage.getItem("disable_fancy_dossier_theme") != null) {
+			$("#toggle_dossier").prop("checked", false);
+			return;
+		}
 		
-		$("#region_dossier").append("<button id='refresh_rdossier' title='Refresh Dossier' style='right: 400px !important' class='button clear-dossier'>Refresh</button>");
-		$("#region_dossier").append("<button id='switch_to_nation_dossier' title='Switch to Nation Dossier' style='right: 205px !important' class='button clear-dossier'>View National Dossier</button>");
-		$("#region_dossier").append("<button id='clear_regional_dossier' title='Clear Dossier' class='button danger clear-dossier'>Clear Regional Dossier</button>");
-		$("#region_dossier").hide();
+		var header = $("h1:first").html();
+
+		var html = "<hr id='dossier_seperator'><div id='nation_dossier'><h2>National Dossier</h2>";
+		
+		var ndossierHTML = "<i style='position: absolute; top: 210px; left: 500px;'><a href='page=dossier_advanced'>(Advanced)</a></i>";
+		ndossierHTML += "<button id='refresh_ndossier' title='Refresh Dossier' style='right: 400px !important' class='button clear-dossier'>Refresh</button>";
+		ndossierHTML += "<button id='switch_to_region_dossier' title='Switch to Region Dossier' style='right: 200px !important' class='button clear-dossier'>View Regional Dossier</button>";
+		ndossierHTML += "<button id='clear_national_dossier' title='Clear Dossier' class='button danger clear-dossier'>Clear National Dossier</button>";
+		
+		html += ndossierHTML;
+		html += "</div><div id='region_dossier' style='display:none'><h2>Regional Dossier</h2>";
+		
+		var rdossierHTML = "<hr id='dossier_seperator'><div id='nation_dossier'><h2>National Dossier</h2>";
+		rdossierHTML += "<button id='refresh_rdossier' title='Refresh Dossier' style='right: 400px !important' class='button clear-dossier'>Refresh</button>";
+		rdossierHTML += "<button id='switch_to_nation_dossier' title='Switch to Nation Dossier' style='right: 205px !important' class='button clear-dossier'>View National Dossier</button>";
+		rdossierHTML += "<button id='clear_regional_dossier' title='Clear Dossier' class='button danger clear-dossier'>Clear Regional Dossier</button>";
+		
+		html += rdossierHTML;
+		html += "</div>";
+		
+		$("#content").html("<div id='dossier_header'><h1>" + header + "</h1>" + $(".searchbox:first")[0].outerHTML + "</div>" + html);
+		$(".searchbox:first").prop("id", "toggle_dossier_div");
 		
 		$("#clear_national_dossier, #clear_regional_dossier").click(function(event) {
 			var isRegional = $(this).attr("id") == "clear_regional_dossier";
@@ -193,7 +218,7 @@
 
 						result.html += "<div id='" + nation + "' class='dossier_element'><img nation='" + nation + "' src='https://nationstatesplusplus.net/nationstates/static/remove.png' class='remove-dossier' title='Remove from Dossier'><img class='smallflag' src='" + flag + "'><a id='nation-link-" + nation + "' style='font-weight:bold; " + (alias != null ? "text-decoration:line-through;" : "") + "' target='_blank' href='//www.nationstates.net/nation=" + nation + "'>" + nation.replaceAll("_", " ").toTitleCase() + "</a>";
 						
-						var rssLink = alive ? "<a class='dossier-rss' href='/cgi-bin/rss.cgi?nation=" + nation + "'><img src='/images/rss3.png' alt='RSS' title='National Happenings Feed'></a>" : "<span style='margin-right:13px'></span>";
+						var rssLink = alive ? "<a class='dossier-rss' href='/cgi-bin/rss.cgi?nation=" + nation + "'><img style='width:13px' src='/images/rss3.png' alt='RSS' title='National Happenings Feed'></a>" : "<span style='margin-right:20px'></span>";
 
 						if (alias == null) {
 							result.html += "<span id='nation-alias-" + nation + "'><pre style='display: inline;'></pre></span>" + rssLink + "<img src='https://nationstatesplusplus.net/nationstates/static/alias.png' title='Set Alias' class='national_alias' id='alias-" + nation + "'>";
@@ -267,7 +292,7 @@
 		loadDossierPage(false, false);
 		currentNationPage += 1;
 		loadDossierPage(false, false);
-		setTimeout(function() { $(window).resize(); }, 500);
+		setTimeout(function() { $(window).resize(); }, 1000);
 
 		$(window).scroll(function () {
 			if ($(window).scrollTop() + 400 > ($(document).height() - $(window).height())) {

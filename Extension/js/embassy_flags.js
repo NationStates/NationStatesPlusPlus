@@ -1,4 +1,4 @@
-$(window).on("websocket/region_embassies", function(event) {
+$(window).on("websocket.region_embassies", function(event) {
 	var embassies = event.json;
 	if (embassies.length == 0)
 		return;
