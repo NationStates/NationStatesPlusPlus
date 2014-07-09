@@ -3,7 +3,6 @@ package com.afforess.assembly.nation;
 import java.util.Collections;
 import java.util.Map;
 
-import play.Logger;
 import play.libs.Json;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -48,7 +47,6 @@ public class MongoSettings implements NationSettings {
 				json = result.toMap();
 			}
 		}
-		Logger.info("Does MongoDB Map contain key for setting query: " + json.containsKey(name));
 		if (!json.containsKey(name)) {
 			json.put(name, null);
 		}
@@ -60,9 +58,6 @@ public class MongoSettings implements NationSettings {
 		BasicDBObject find = new BasicDBObject("nation", nation);
 		DBObject obj = (DBObject)JSON.parse(value.toString());
 		BasicDBObject update = new BasicDBObject("$set", obj);
-
-		Logger.info("Transforming Jackson JsonNode: {} to MongoDB DBObject: {}", value, obj);
-		
 		this.users.update(find, update);
 	}
 }

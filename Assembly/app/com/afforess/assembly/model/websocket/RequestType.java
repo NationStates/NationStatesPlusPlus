@@ -21,6 +21,7 @@ import com.afforess.assembly.model.page.RecruitmentAdministrationPage;
 import com.afforess.assembly.model.page.RegionPage;
 import com.afforess.assembly.util.Utils;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.google.common.collect.Lists;
 
 import controllers.NewspaperController;
 import controllers.RMBController;
@@ -58,6 +59,7 @@ public enum RequestType implements Request {
 	UPDATE_RECRUITMENT_OFFICERS("update_recruitment_officers", true),
 	RECRUITMENT_EFFECTIVENESS("recruitment_effectiveness"),
 	GET_SETTING("get_setting"),
+	INITIAL_REGION_SETTINGS("initial_region_settings"),
 	SET_SETTING("set_setting", true),
 	NATION_STATUS("nation_status"),
 	;
@@ -369,11 +371,12 @@ public enum RequestType implements Request {
 				}
 				return toList(RecruitmentController.getRecruitmentEffectiveness(conn, regionId));
 			}
+			case INITIAL_REGION_SETTINGS:
+				return Lists.newArrayList(context.getSettings().querySettings("infinite_scroll"), context.getSettings().querySettings("search_rmb"));
 			case GET_SETTING:
 				if (request != null) {
 					final String setting = request.getValue("setting", null, String.class);
 					final String user = Utils.sanitizeName(request.getValue("user", context.getNation(), String.class));
-					Logger.info("GET_SETTING for user: {}, setting: {}", user, setting);
 					if (setting != null) {
 						 final JsonNode value;
 						if (user.equals(context.getNation())) {
@@ -381,7 +384,6 @@ public enum RequestType implements Request {
 						} else {
 							value = context.getAccess().getNationSettings(setting).querySettings(setting);
 						}
-						Logger.info("Setting result for: {} is {}", setting, value);
 						return toList(value);
 					}
 				}
@@ -390,18 +392,14 @@ public enum RequestType implements Request {
 				if (request != null) {
 					final String setting = request.getValue("setting", null, String.class);
 					final Object value = request.getValue("value", null, Object.class);
-					Logger.info("SET_SETTING for setting: {} for value [class: {}, contents: {}]", setting, (value != null ? value.getClass() : "null"), value);
 					if (setting != null) {
 						final String prevValue = context.getSettings().querySettings(setting).toString();
 						final JsonNode newValue = Json.toJson(value);
 						if (!newValue.toString().equals(prevValue)) {
 							context.getSettings().updateSettings(setting, newValue);
-							Logger.info("Updated setting {}. Previous Value: {}, Current Value: {}", setting, prevValue, newValue);
 							Set<Integer> userId = new HashSet<Integer>(1);
 							userId.add(context.getNationId());
 							webManager.onUpdate(PageType.DEFAULT, GET_SETTING, DataRequest.getBlankRequest(GET_SETTING), context.getSettings().querySettings(setting), userId);
-						} else {
-							Logger.info("Rejected setting update {}. No change. Previous Value: {}, Current Value: {}", setting, prevValue, newValue);
 						}
 						return toSimpleResult("true");
 					}

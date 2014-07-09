@@ -412,7 +412,7 @@ public class DatabaseAccess {
 			disbandRecruitmentCampaigns.setInt(2, regionId);
 			disbandRecruitmentCampaigns.executeUpdate();
 			
-			PreparedStatement markDead = conn.prepareStatement("UPDATE assembly.region SET alive = 0, update_order = -1, embassies = NULL WHERE name = ?");
+			PreparedStatement markDead = conn.prepareStatement("UPDATE assembly.region SET alive = 0, update_order = -1, embassies = NULL, population = 0 WHERE name = ?");
 			markDead.setString(1, Utils.sanitizeName(region));
 			markDead.executeUpdate();
 		}
