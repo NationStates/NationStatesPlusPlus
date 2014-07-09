@@ -6,23 +6,8 @@ var newspaperAdminHTML = '<form class="form-horizontal"><fieldset><div class="co
 	}
 	var menu = $(".menu");
 	$("<li id='regional_newspaper' style='display:none;'><a id='rnews' style='display: inline;' href='//www.nationstates.net/page=blank/?regional_news=" + getUserRegion() + "'>REGIONAL NEWS<span name='nag'></span></a></li>").insertAfter($("#wa_props").length > 0 ? $("#wa_props") : menu.find("a[href='page=un']").parent());
-	$("<li id='gameplay_newspaper'><a id='gnews' style='display: inline;' href='//www.nationstates.net/page=blank/?gameplay_news'>GAMEPLAY NEWS<span name='nag'></span></a></li>").insertAfter($("#regional_newspaper"));
-	$("<li id='roleplay_newspaper'><a id='rpnews' style='display: inline;' href='//www.nationstates.net/page=blank/?roleplay_news'>ROLEPLAY NEWS<span name='nag'></span></a></li>").insertAfter($("#gameplay_newspaper"));
-	var settings = getSettings();
-	if (!settings.isEnabled("show_gameplay_news")) {
-		$("#gameplay_newspaper").hide();
-	}
-	if (!settings.isEnabled("show_roleplay_news")) {
-		$("#roleplay_newspaper").hide();
-	}
-	if (getUserRegion() != "") {
-		$.get("https://nationstatesplusplus.net/api/newspaper/region/?region=" + getUserRegion(), function(json) {
-			if (getSettings().isEnabled("show_regional_news")) {
-				$("#regional_newspaper").show();
-			}
-			$("#regional_newspaper").attr("news-id", json.newspaper_id);
-		});
-	}
+	$("<li id='gameplay_newspaper' style='display:none;'><a id='gnews' style='display: inline;' href='//www.nationstates.net/page=blank/?gameplay_news'>GAMEPLAY NEWS<span name='nag'></span></a></li>").insertAfter($("#regional_newspaper"));
+	$("<li id='roleplay_newspaper' style='display:none;'><a id='rpnews' style='display: inline;' href='//www.nationstates.net/page=blank/?roleplay_news'>ROLEPLAY NEWS<span name='nag'></span></a></li>").insertAfter($("#gameplay_newspaper"));
 
 	if (window.location.href.indexOf("regional_news") != -1) {
 		$.get("https://nationstatesplusplus.net/api/newspaper/region/?region=" + $.QueryString["regional_news"], function(json) {
@@ -86,19 +71,24 @@ var newspaperAdminHTML = '<form class="form-horizontal"><fieldset><div class="co
 	}
 
 	var createEventHandler = function(selector) {
+		var settings = (new UserSettings()).child("newspapers");
 		var handler = function(event) {
-			var lastRead = getSettings().getValue("newspapers", {})[event.json.newspaper_id];
-			var html = "";
-			if (lastRead == null || event.json.timestamp > parseInt(lastRead)) {
-				html = " (*)";
-			}
-			$(selector).html(html);
+			settings.off();
+			settings.on(function(data) {
+				var lastRead = data.newspapers[event.json.newspaper_id];
+				var html = "";
+				if (lastRead == null || event.json.timestamp > lastRead) {
+					html = " (*)";
+				}
+				$(selector).html(html);
+			}, []);
+			$(selector).parents("li").attr("news-id", event.json.newspaper_id).show();
 		}
 		return handler;
 	}
-	$(window).on("websocket.gameplay_news_sidebar", createEventHandler("#gnews span[name='nag']"));
-	$(window).on("websocket.roleplay_news_sidebar", createEventHandler("#rpnews span[name='nag']"));
-	$(window).on("websocket.regional_news_sidebar", createEventHandler("#rnews span[name='nag']"));
+	$(window).on("websocket.gameplay_news_sidebar", new createEventHandler("#gnews span[name='nag']"));
+	$(window).on("websocket.roleplay_news_sidebar", new createEventHandler("#rpnews span[name='nag']"));
+	$(window).on("websocket.regional_news_sidebar", new createEventHandler("#rnews span[name='nag']"));
 
 	$(window).on("websocket.pending_news_submissions", function(event) {
 		var menu;
@@ -328,9 +318,11 @@ var newspaperAdminHTML = '<form class="form-horizontal"><fieldset><div class="co
 	}
 
 	function openNationStatesNews(id) {
-		var settings = getSettings(true);
-		settings.getValue("newspapers", {})[id] = Date.now();
-		settings.pushUpdate();
+		(new UserSettings()).child("newspapers").once(function(data) {
+			data.newspapers[id] = Date.now();
+			console.log(data);
+			(new UserSettings()).child("newspapers").set(data.newspapers);
+		}, []);
 		$("#ns_news_nag").remove();
 		$("#content").html("<div id='news_header' style='text-align: center;'><h1 id='newspaper_name'></h1><div id='manage_newspaper'><p class='newspaper_controls'>Newspaper Controls</p><a class='button' style='font-weight: bold;' href='page=blank/?manage_newspaper=" + id + "'>Manage Newspaper</a><a class='button' style='font-weight: bold;' href='page=blank/?article_editor=" + id + "&article=-1'>Submit Article</a><a class='button pending_articles' style='font-weight: bold; display:none; background:red;' href='page=blank/?view_articles=" + id + "&pending=1'>View Pending Articles</a><a class='button' style='font-weight: bold;' href='page=blank/?view_articles=" + id + "'>View All Articles</a></div><div id='view_newspaper'><p class='newspaper_controls'>Newspaper Database</p><a class='button' style='font-weight: bold;' href='page=blank/?archived_articles=" + id + "'>View Archived Articles</a><a class='button' style='font-weight: bold;' href='page=blank/?article_editor=" + id + "&article=-1&volunteer=1'>Submit Article</a></div><i id='newspaper_byline'></i><hr></div><div id='inner-content'><iframe id='article-content' seamless='seamless' frameborder='no' scrolling='no' src='https://nationstatesplusplus.net/newspaper?id=" + id + "&embed=true" + (isDarkTheme() ? "&dark=true" : "") + "' style='width: 100%;height: 1000px;'></iframe></div>");
 		loadingAnimation();

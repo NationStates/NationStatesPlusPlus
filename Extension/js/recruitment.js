@@ -20,7 +20,7 @@
 	function quickSetup() {
 		if (getVisiblePage() != "panel" && getVisiblePage() != "hpanel") {
 			var progress = localStorage.getItem(getUserNation() + "-last-recruitment");
-			if (progress != null && parseInt(progress) + 190000 > Date.now() && getSettings().isEnabled("show_recruitment_progress")) {
+			if (progress != null && parseInt(progress) + 190000 > Date.now() && localStorage.getItem(getUserNation() + "-last-recruitment-visible")) {
 				setupRecruitment();
 				updateRecruitmentStatus(true);
 				for (var i = 1; i <= 50; i += 1)
@@ -33,6 +33,11 @@
 	$(window).on("websocket.recruitment_progress", function(event) {
 		localStorage.setItem(getUserNation() + "-last-recruitment", event.json.recruitment.timestamp);
 		localStorage.setItem(getUserNation() + "-last-recruitment-data", JSON.stringify(event.json.recruitment));
+		if (event.json.show_recruitment_progress) {
+			localStorage.setItem(getUserNation() + "-last-recruitment-visible", event.json.show_recruitment_progress);
+		} else {
+			localStorage.removeItem(getUserNation() + "-last-recruitment-visible");
+		}
 		localStorage.removeItem(getUserNation() + "-last-recruitment-error");
 
 		if (event.json.recruitment.wait) {
@@ -49,6 +54,12 @@
 			//Check that we have "show recruitment progress" setting enabled
 			if ($("#rprogress").length == 0 && event.json.show_recruitment_progress) {
 				setupRecruitment();
+			} else if (!event.json.show_recruitment_progress && $("#rprogress").length > 0) {
+				$("#rprogress").remove();
+				$("#content").css("margin-top", "0px");
+				if ($(".regional_power").length > 0) {
+					$(".regional_power").css("top", ($(".regional_power").position().top - 20) + "px");
+				}
 			}
 		}
 		

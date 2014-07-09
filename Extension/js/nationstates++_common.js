@@ -977,14 +977,23 @@ function isPageActive() {
 var _lastPageActivity;
 function getLastActivity() {
 	if (!_lastPageActivity) {
-		$("#main").mousemove(function (c) {
-			_lastPageActivity = Date.now();
-		}).mousedown(function (c) {
-			_lastPageActivity = Date.now();
-		}).mouseup(function (c) {
-			_lastPageActivity = Date.now();
-		});
-		_lastPageActivity = Date.now()
+		if ($("#main").length > 0) {
+			$("#main").mousemove(function (c) {
+				_lastPageActivity = Date.now();
+			}).mousedown(function (c) {
+				_lastPageActivity = Date.now();
+			}).mouseup(function (c) {
+				_lastPageActivity = Date.now();
+			});
+			_lastPageActivity = Date.now()
+		} else {
+			setInterval(function() {
+				if (isPageActive()) {
+					_lastPageActivity = Date.now()
+				}
+			}, 500);
+			console.log("can not measure activity normally, using page active fallback");
+		}
 	}
 	return _lastPageActivity;
 }

@@ -8,6 +8,7 @@
 	var lastMessageReceived = 0;
 	var keepAliveAttempts = 0;
 	var reconnect = false;
+	var time = Date.now();
 
 	var onWebsocketMessage = function(event) {
 		lastMessageReceived = Date.now();
@@ -66,6 +67,7 @@
 	}
 
 	var onWebsocketOpen = function(event) {
+		console.log("Websocket took " + (Date.now() - time) + "ms to open");
 		//Copy to new array
 		var copyOfPendingRequests = [];
 		for (var i = 0; i < pendingRequests.length; i++) {
@@ -213,7 +215,6 @@ function UserSettings() {
 			if (arguments.length > 0) {
 				var setting = {setting: this.path, value: {}};
 				setting.value[this.path] = arguments[0];
-				console.log("setting for " + this.path + ": " + JSON.stringify(setting));
 				sendWebsocketEvent("set_setting", setting, true);
 				return true;
 			}
@@ -233,7 +234,6 @@ function UserSettings() {
 			var primaryNode = this.path.split(".")[0];
 			var eventCallback = function(event) {
 				if (event.json.hasOwnProperty(primaryNode)) {
-					console.log(event.json);
 					if (defaultVal != null && event.json[primaryNode] == null) {
 						event.json[primaryNode] = defaultVal;
 					}
@@ -242,7 +242,6 @@ function UserSettings() {
 			};
 			this.callbacks.push(eventCallback);
 			$(window).on("websocket.get_setting", eventCallback);
-			console.log({user: this.user, setting: this.path });
 			sendWebsocketEvent("get_setting", {user: this.user, setting: this.path });
 			return true;
 		}
@@ -255,7 +254,6 @@ function UserSettings() {
 			var defaultVal = (arguments.length > 1 ? arguments[1] : null);
 			var eventCallback = function(event) {
 				if (event.json.hasOwnProperty(primaryNode)) {
-					console.log(event.json);
 					if (defaultVal != null && event.json[primaryNode] == null) {
 						event.json[primaryNode] = defaultVal;
 					}
@@ -264,7 +262,6 @@ function UserSettings() {
 				}
 			};
 			$(window).on("websocket.get_setting", eventCallback);
-			console.log({user: this.user, setting: this.path });
 			sendWebsocketEvent("get_setting", {user: this.user, setting: this.path });
 			return true;
 		}

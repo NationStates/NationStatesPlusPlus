@@ -347,7 +347,7 @@ function updateMoveRegionButton() {
 		}
 	}
 	//Remove silly redirect
-	$("button[name='move_region']").on("click", function(event) {
+	$("body").on("click", "button[name='move_region']", function(event) {
 		event.preventDefault();
 		if ($(this).attr("class").contains("lock")) {
 			if ($("#region_password_input:visible").length == 0) {

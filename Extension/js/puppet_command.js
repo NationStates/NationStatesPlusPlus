@@ -44,8 +44,8 @@
 			$("#random_motto").click();
 		});
 		//Remember last email
-		var settings = getSettings();
-		var lastEmail = settings.getValue("last_puppet_email");
+		(new UserSettings()).child("last_puppet_email").set("");
+		var lastEmail = localStorage.getItem("last_puppet_email");
 		if (lastEmail != null) {
 			$("#puppet_email").val(lastEmail);
 		}
@@ -108,9 +108,7 @@
 			else if ($("input[type='file']")[0].files.length > 0 && $("input[type='file']")[0].files[0].size > 250000)  $("#error_label").html("Flags can not be larger than 250kb").show();
 			else if ($("input[type='file']")[0].files.length > 0 && $("input[type='file']")[0].files[0].name.match(/.(jpg|png|gif)/) == null)  $("#error_label").html("Only PNG, JPG and GIF flags are supported").show();
 			else {
-				var settings = getSettings();
-				settings.setValue("last_puppet_email", $("#puppet_email").val());
-				settings.pushUpdate();
+				localStorage.setItem("last_puppet_email", $("#puppet_email").val());
 				$("#found_nation").attr("disabled", true);
 				$.get("https://nationstatesplusplus.net/api/recruitment/puppet/?nation=" + $("#puppet_name").val().toLowerCase(), function() {
 					var questions = "";
