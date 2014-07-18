@@ -683,7 +683,7 @@ public class RecruitmentController extends NationStatesController {
 
 	private static Map<String, Object> getRecruitmentTarget(DatabaseAccess access, Connection conn, int region, String nation) throws SQLException {
 		final Random rand = new Random();
-		PreparedStatement select = conn.prepareStatement("SELECT id, type, client_key, tgid, secret_key, allocation, gcrs_only, filters FROM assembly.recruit_campaign WHERE region = ? AND visible = 1 AND retired IS NULL ORDER BY RAND()");
+		PreparedStatement select = conn.prepareStatement("SELECT id, type, client_key, tgid, secret_key, allocation, gcrs_only, filters, min_happening_id FROM assembly.recruit_campaign WHERE region = ? AND visible = 1 AND retired IS NULL ORDER BY RAND()");
 		select.setInt(1, region);
 		ResultSet set = select.executeQuery();
 		while(set.next()) {
@@ -694,8 +694,9 @@ public class RecruitmentController extends NationStatesController {
 			final String secretKey = set.getString("secret_key");
 			final int allocation = set.getInt("allocation");
 			final boolean gcrsOnly = set.getInt("gcrs_only") == 1;
+			final int minHappeningId = set.getInt("min_happening_id");
 			if (rand.nextInt(100) < allocation || set.isLast()) {
-				final String target = type.findRecruitmentNation(conn, region, gcrsOnly, set.getString("filters"));
+				final String target = type.findRecruitmentNation(conn, region, gcrsOnly, set.getString("filters"), minHappeningId, campaign);
 				if (target != null) {
 					final int nationId = access.getNationId(target);
 					if (nationId != -1) {
