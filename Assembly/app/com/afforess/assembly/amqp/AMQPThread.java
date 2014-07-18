@@ -1,13 +1,12 @@
-package com.afforess.assembly;
+package com.afforess.assembly.amqp;
 
 import java.io.IOException;
 import java.util.concurrent.LinkedTransferQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import play.Logger;
 import play.libs.Json;
 
-import com.afforess.assembly.model.AMQPQueue;
-import com.afforess.assembly.model.page.AMQPMessage;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.base.Charsets;
 import com.rabbitmq.client.Channel;
@@ -16,6 +15,7 @@ public class AMQPThread extends Thread implements AMQPQueue {
 	private final LinkedTransferQueue<JsonNode> queue = new LinkedTransferQueue<JsonNode>();
 	private final Channel channel;
 	private final String serverName;
+	private final AtomicBoolean shutdown = new AtomicBoolean(false);
 	public AMQPThread(Channel channel, String serverName) {
 		super("AMQP Processing Thread");
 		setDaemon(true);
@@ -25,21 +25,39 @@ public class AMQPThread extends Thread implements AMQPQueue {
 
 	@Override
 	public void run() {
-		while (true) {
-			JsonNode node;
+		while (!this.shutdown.get()) {
 			try {
-				node = queue.take();
-				process(node);
-			} catch (InterruptedException e) { }
+				processNode();
+			} finally {
+				this.shutdown.set(true);
+			}
 		}
 	}
 
-	private void process(JsonNode node) {
+	private void processNode() {
+		JsonNode node;
+		try {
+			node = queue.take();
+		} catch (InterruptedException e) {
+			Logger.error("Rabbitmq processing thread interrupted!", e);
+			throw new RuntimeException(e);
+		}
 		try {
 			channel.basicPublish("nspp", "", null, wrapNode(node).toString().getBytes(Charsets.UTF_8));
 		} catch (IOException e) {
-			Logger.error("Error publishing rabbitmq message", e);
+			Logger.error("Error publishing rabbitmq message, killing AMQP connection", e);
+			throw new RuntimeException(e);
 		}
+	}
+
+	@Override
+	public boolean isShutdown() {
+		return shutdown.get();
+	}
+
+	@Override
+	public void shutdown() {
+		shutdown.set(true);
 	}
 
 	private JsonNode wrapNode(JsonNode node) {

@@ -105,7 +105,7 @@ public class NSWikiController  extends NationStatesController {
 		MediaWikiBot wikibot = new MediaWikiBot("http://nswiki.org/");
 		wikibot.login(nswikiAdmin, nswikiPass);
 		String result = wikibot.performAction(new CreateUser(nation, password));
-		if (result.contains("success")) {
+		if (result.toLowerCase().contains("success")) {
 			return Results.ok();
 		} else {
 			Logger.warn("Unable to create NSWiki user: " + result);

@@ -5,12 +5,12 @@ import java.net.UnknownHostException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.concurrent.ConcurrentHashMap;
+
 import org.apache.commons.dbutils.DbUtils;
 import org.joda.time.Duration;
 import org.spout.cereal.config.ConfigurationNode;
 import org.spout.cereal.config.yaml.YamlConfiguration;
 
-import com.afforess.assembly.AMQPThread;
 import com.afforess.assembly.DailyDumps;
 import com.afforess.assembly.NSWikiTask;
 import com.afforess.assembly.NationUpdateTask;
@@ -21,8 +21,8 @@ import com.afforess.assembly.RepeatingTaskThread;
 import com.afforess.assembly.Start;
 import com.afforess.assembly.UpdateOrderTask;
 import com.afforess.assembly.WorldAssemblyTask;
-import com.afforess.assembly.model.AMQPQueue;
-import com.afforess.assembly.model.EmptyAMQPQueue;
+import com.afforess.assembly.amqp.AMQPConnectionFactory;
+import com.afforess.assembly.amqp.NullAMQPConenctionFactory;
 import com.afforess.assembly.model.HappeningType;
 import com.afforess.assembly.model.websocket.WebsocketManager;
 import com.afforess.assembly.mongodb.PortForwardingRunnable;
@@ -33,9 +33,6 @@ import com.limewoodMedia.nsapi.NationStates;
 import com.mchange.v2.c3p0.ComboPooledDataSource;
 import com.mongodb.DB;
 import com.mongodb.MongoClient;
-import com.rabbitmq.client.Channel;
-import com.rabbitmq.client.ConnectionFactory;
-import com.rabbitmq.client.ShutdownSignalException;
 
 import controllers.AdminController;
 import controllers.DatabaseController;
@@ -92,50 +89,23 @@ public class Global extends GlobalSettings {
 		Logger.info("NationStates++ API Initialized.");
 
 		WebsocketManager manager;
-		AMQPQueue queue;
 		ConfigurationNode rabbitmq = config.getChild("rabbit-mq");
+		AMQPConnectionFactory amqpFactory = new NullAMQPConenctionFactory();
 		if (rabbitmq != null) {
-			ConnectionFactory factory = new ConnectionFactory();
-			factory.setUsername(rabbitmq.getChild("user").getString());
-			factory.setPassword(rabbitmq.getChild("password").getString());
-			factory.setHost(rabbitmq.getChild("host").getString());
-			factory.setPort(rabbitmq.getChild("port").getInt());
-			try {
-				com.rabbitmq.client.Connection amqpConn = factory.newConnection();
-				queue = new AMQPThread(amqpConn.createChannel(), settings.getChild("server-name").getString());
-				((AMQPThread) queue).start();
-
-				manager = new WebsocketManager(queue, settings.getChild("server-name").getString());
-				Channel channel = amqpConn.createChannel();
-
-				String serverName = settings.getChild("server-name").getString();
-				channel.queueDelete(serverName);
-				channel.queueDeclare(serverName, false, false, false, null);
-				try {
-					channel.queueBind(serverName, "nspp", serverName);
-				} catch (IOException e) {
-					if (e.getCause() instanceof ShutdownSignalException && ((ShutdownSignalException) e.getCause()).getMessage().contains("no exchange 'nspp' in vhost")) {
-						Logger.warn("No NSPP exchange present, creating one...");
-						channel = amqpConn.createChannel();
-						channel.exchangeDeclare("nspp", "fanout", false);
-						channel.queueBind(serverName, "nspp", serverName);
-					} else {
-						throw e;
-					}
-				}
-				Logger.info("Created Rabbitmq Queue");
-				channel.basicConsume(serverName, true, manager);
-
-				Logger.info("NationStates++ RabbitMQ Connection Initialized.");
-			} catch (IOException e) {
-				Logger.error("Error initializing rabbitmq", e);
-				System.exit(1);
-				return;
-			}
+			amqpFactory = new AMQPConnectionFactory(rabbitmq.getChild("host").getString(), rabbitmq.getChild("port").getInt(), rabbitmq.getChild("user").getString(), rabbitmq.getChild("password").getString(), settings.getChild("server-name").getString());
 		} else {
 			Logger.warn("No rabbitmq configuration set. Rabbitmq will not be used.");
-			queue = new EmptyAMQPQueue();
-			manager = new WebsocketManager(queue, settings.getChild("server-name").getString());
+		}
+		try {
+			manager = new WebsocketManager(amqpFactory, settings.getChild("server-name").getString());
+			amqpFactory.registerConsumer(manager);
+			if (rabbitmq != null) {
+				Logger.info("NationStates++ RabbitMQ Connection Initialized.");
+			}
+		} catch (IOException e) {
+			Logger.error("Error initializing rabbitmq", e);
+			System.exit(1);
+			return;
 		}
 
 		MongoClient mongoClient = null;

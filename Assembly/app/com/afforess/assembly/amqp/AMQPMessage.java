@@ -1,4 +1,4 @@
-package com.afforess.assembly.model.page;
+package com.afforess.assembly.amqp;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;

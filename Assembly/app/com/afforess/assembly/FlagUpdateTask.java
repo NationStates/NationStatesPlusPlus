@@ -16,7 +16,7 @@ import com.limewoodMedia.nsapi.exceptions.RateLimitReachedException;
 import com.limewoodMedia.nsapi.exceptions.UnknownRegionException;
 import com.limewoodMedia.nsapi.holders.RegionData;
 
-public class FlagUpdateTask implements Runnable{
+public class FlagUpdateTask implements Runnable {
 	private final NationStates api;
 	private final DatabaseAccess access;
 	private long lastRun = 0;
