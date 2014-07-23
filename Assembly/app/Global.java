@@ -129,6 +129,20 @@ public class Global extends GlobalSettings {
 			Thread.sleep(3000L);
 		} catch (InterruptedException e1) {	}
 
+		Logger.info("Binding port forwarding for mongodb on {} with port {}", remoteHost, port);
+
+		boolean mongodbSetup = true;
+		try {
+			mongoClient = new MongoClient("127.0.0.1", port);
+			DB db = mongoClient.getDB("nspp");
+			Logger.info("MongoDB stats: " + db.getStats());
+		} catch (Exception e) {
+			Logger.error("Unable to connect to mongodb", e);
+			mongodbSetup = false;
+		}
+
+		this.access = new DatabaseAccess(pool, mongoClient, settings.getChild("cache-size").getInt(1000), manager, backgroundTasks);
+
 		// Setup health monitoring
 		HealthMonitor health = null;
 		if (config.getChild("health").getChild("monitor").getBoolean()) {
@@ -138,23 +152,13 @@ public class Global extends GlobalSettings {
 		} else {
 			Logger.info("NationStates++ Health Monitoring [ DISABLED ]");
 		}
-
-		Logger.info("Binding port forwarding for mongodb on {} with port {}", remoteHost, port);
-
-		try {
-			mongoClient = new MongoClient("127.0.0.1", port);
-			DB db = mongoClient.getDB("nspp");
-			Logger.info("MongoDB stats: " + db.getStats());
-		} catch (UnknownHostException e) {
-			Logger.error("Unable to connect to mongodb", e);
+		if (!mongodbSetup) {
 			if (health != null) {
 				health.doRestart();
 			} else {
 				System.exit(1);
 			}
 		}
-
-		this.access = new DatabaseAccess(pool, mongoClient, settings.getChild("cache-size").getInt(1000), manager, backgroundTasks);
 
 		this.admin = new AdminController(access, config, health);
 
