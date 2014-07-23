@@ -14,6 +14,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 
+import net.nationstatesplusplus.assembly.util.DatabaseAccess;
+import net.nationstatesplusplus.assembly.util.Utils;
 import net.sourceforge.jwbf.core.RequestBuilder;
 import net.sourceforge.jwbf.core.actions.util.HttpAction;
 import net.sourceforge.jwbf.mediawiki.ApiRequestBuilder;
@@ -29,8 +31,6 @@ import play.Logger;
 import play.mvc.Result;
 import play.mvc.Results;
 
-import com.afforess.assembly.util.DatabaseAccess;
-import com.afforess.assembly.util.Utils;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.limewoodMedia.nsapi.NationStates;

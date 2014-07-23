@@ -4,11 +4,12 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
+
+import net.nationstatesplusplus.assembly.util.DatabaseAccess;
+import net.nationstatesplusplus.assembly.util.Utils;
+
 import org.apache.commons.dbutils.DbUtils;
 import org.spout.cereal.config.yaml.YamlConfiguration;
-
-import com.afforess.assembly.util.DatabaseAccess;
-import com.afforess.assembly.util.Utils;
 
 import play.mvc.*;
 import play.libs.Json;

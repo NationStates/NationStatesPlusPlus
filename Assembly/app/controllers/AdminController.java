@@ -7,18 +7,18 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 
+import net.nationstatesplusplus.assembly.HappeningsTask;
+import net.nationstatesplusplus.assembly.HealthMonitor;
+import net.nationstatesplusplus.assembly.model.HappeningType;
+import net.nationstatesplusplus.assembly.util.DatabaseAccess;
+import net.nationstatesplusplus.assembly.util.Utils;
+
 import org.apache.commons.dbutils.DbUtils;
 import org.spout.cereal.config.yaml.YamlConfiguration;
 
 import play.libs.Json;
 import play.mvc.Result;
 import play.mvc.Results;
-
-import com.afforess.assembly.HappeningsTask;
-import com.afforess.assembly.HealthMonitor;
-import com.afforess.assembly.model.HappeningType;
-import com.afforess.assembly.util.DatabaseAccess;
-import com.afforess.assembly.util.Utils;
 
 public class AdminController extends DatabaseController {
 	private final String adminCode;

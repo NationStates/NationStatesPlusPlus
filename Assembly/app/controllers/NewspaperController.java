@@ -17,6 +17,12 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import net.nationstatesplusplus.assembly.model.Nation;
+import net.nationstatesplusplus.assembly.model.websocket.PageType;
+import net.nationstatesplusplus.assembly.model.websocket.RequestType;
+import net.nationstatesplusplus.assembly.util.DatabaseAccess;
+import net.nationstatesplusplus.assembly.util.Utils;
+
 import org.apache.commons.dbutils.DbUtils;
 import org.spout.cereal.config.ConfigurationNode;
 import org.spout.cereal.config.yaml.YamlConfiguration;
@@ -26,15 +32,10 @@ import play.libs.Json;
 import play.mvc.Result;
 import play.mvc.Results;
 
-import com.afforess.assembly.model.Nation;
-import com.afforess.assembly.model.websocket.PageType;
-import com.afforess.assembly.model.websocket.RequestType;
-import com.afforess.assembly.util.DatabaseAccess;
-import com.afforess.assembly.util.Utils;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.limewoodMedia.nsapi.NationStates;
 
-import static com.afforess.assembly.model.websocket.DataRequest.getBlankRequest;
+import static net.nationstatesplusplus.assembly.model.websocket.DataRequest.getBlankRequest;
 
 public class NewspaperController extends NationStatesController {
 	private final String imgurClientKey;

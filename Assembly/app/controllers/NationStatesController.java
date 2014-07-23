@@ -1,8 +1,9 @@
 package controllers;
 
+import net.nationstatesplusplus.assembly.util.DatabaseAccess;
+
 import org.spout.cereal.config.yaml.YamlConfiguration;
 
-import com.afforess.assembly.util.DatabaseAccess;
 import com.limewoodMedia.nsapi.NationStates;
 
 public abstract class NationStatesController extends DatabaseController{

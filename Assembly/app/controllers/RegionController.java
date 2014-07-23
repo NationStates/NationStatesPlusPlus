@@ -15,6 +15,9 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import net.nationstatesplusplus.assembly.util.DatabaseAccess;
+import net.nationstatesplusplus.assembly.util.Utils;
+
 import org.apache.commons.dbutils.DbUtils;
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 
@@ -30,8 +33,6 @@ import play.libs.Json;
 import play.mvc.Result;
 import play.mvc.Results;
 
-import com.afforess.assembly.util.DatabaseAccess;
-import com.afforess.assembly.util.Utils;
 import com.limewoodMedia.nsapi.NationStates;
 
 public class RegionController extends NationStatesController {

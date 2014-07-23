@@ -3,9 +3,10 @@ package controllers;
 import java.sql.Connection;
 import java.sql.SQLException;
 
+import net.nationstatesplusplus.assembly.util.DatabaseAccess;
+
 import org.spout.cereal.config.yaml.YamlConfiguration;
 
-import com.afforess.assembly.util.DatabaseAccess;
 import com.mchange.v2.c3p0.ComboPooledDataSource;
 
 import play.mvc.Controller;

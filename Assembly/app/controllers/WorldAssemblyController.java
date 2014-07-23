@@ -11,17 +11,17 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import net.nationstatesplusplus.assembly.model.HappeningType;
+import net.nationstatesplusplus.assembly.model.Nation;
+import net.nationstatesplusplus.assembly.util.DatabaseAccess;
+import net.nationstatesplusplus.assembly.util.Utils;
+
 import org.apache.commons.dbutils.DbUtils;
 import org.joda.time.Duration;
 import org.spout.cereal.config.yaml.YamlConfiguration;
 
 import play.libs.Json;
 import play.mvc.Result;
-
-import com.afforess.assembly.model.HappeningType;
-import com.afforess.assembly.model.Nation;
-import com.afforess.assembly.util.DatabaseAccess;
-import com.afforess.assembly.util.Utils;
 
 public class WorldAssemblyController extends DatabaseController {
 

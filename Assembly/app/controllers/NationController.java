@@ -8,12 +8,13 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
+import net.nationstatesplusplus.assembly.util.DatabaseAccess;
+import net.nationstatesplusplus.assembly.util.Utils;
+
 import org.apache.commons.dbutils.DbUtils;
 import org.joda.time.Duration;
 import org.spout.cereal.config.yaml.YamlConfiguration;
 
-import com.afforess.assembly.util.DatabaseAccess;
-import com.afforess.assembly.util.Utils;
 import com.limewoodMedia.nsapi.NationStates;
 
 import play.libs.Json;

@@ -1,17 +1,18 @@
 package controllers;
 
+import net.nationstatesplusplus.assembly.model.page.DefaultPage;
+import net.nationstatesplusplus.assembly.model.page.NationPage;
+import net.nationstatesplusplus.assembly.model.page.RecruitmentAdministrationPage;
+import net.nationstatesplusplus.assembly.model.page.RegionPage;
+import net.nationstatesplusplus.assembly.model.websocket.NationStatesWebSocket;
+import net.nationstatesplusplus.assembly.util.DatabaseAccess;
+
 import org.spout.cereal.config.yaml.YamlConfiguration;
 
-import com.afforess.assembly.model.page.DefaultPage;
-import com.afforess.assembly.model.page.NationPage;
-import com.afforess.assembly.model.page.RecruitmentAdministrationPage;
-import com.afforess.assembly.model.page.RegionPage;
-import com.afforess.assembly.model.websocket.NationStatesWebSocket;
-import com.afforess.assembly.util.DatabaseAccess;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import play.mvc.WebSocket;
-import static com.afforess.assembly.util.Utils.sanitizeName;
+import static net.nationstatesplusplus.assembly.util.Utils.sanitizeName;
 
 public class WebSocketController extends DatabaseController {
 	public WebSocketController(DatabaseAccess access, YamlConfiguration config) {

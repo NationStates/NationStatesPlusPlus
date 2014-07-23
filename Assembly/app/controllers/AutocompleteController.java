@@ -8,6 +8,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import net.nationstatesplusplus.assembly.util.DatabaseAccess;
+import net.nationstatesplusplus.assembly.util.Utils;
+
 import org.apache.commons.dbutils.DbUtils;
 import org.apache.commons.lang3.text.WordUtils;
 import org.spout.cereal.config.yaml.YamlConfiguration;
@@ -15,9 +18,6 @@ import org.spout.cereal.config.yaml.YamlConfiguration;
 import play.libs.Json;
 import play.mvc.Result;
 import play.mvc.Results;
-
-import com.afforess.assembly.util.DatabaseAccess;
-import com.afforess.assembly.util.Utils;
 
 public class AutocompleteController extends DatabaseController {
 

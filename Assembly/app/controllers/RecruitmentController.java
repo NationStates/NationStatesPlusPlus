@@ -16,6 +16,12 @@ import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
+import net.nationstatesplusplus.assembly.HappeningsTask;
+import net.nationstatesplusplus.assembly.model.HappeningType;
+import net.nationstatesplusplus.assembly.model.RecruitmentType;
+import net.nationstatesplusplus.assembly.util.DatabaseAccess;
+import net.nationstatesplusplus.assembly.util.Utils;
+
 import org.apache.commons.dbutils.DbUtils;
 import org.joda.time.Duration;
 import org.spout.cereal.config.yaml.YamlConfiguration;
@@ -25,11 +31,6 @@ import play.libs.Json;
 import play.mvc.Result;
 import play.mvc.Results;
 
-import com.afforess.assembly.HappeningsTask;
-import com.afforess.assembly.model.HappeningType;
-import com.afforess.assembly.model.RecruitmentType;
-import com.afforess.assembly.util.DatabaseAccess;
-import com.afforess.assembly.util.Utils;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.limewoodMedia.nsapi.NationStates;
 import com.mysql.jdbc.exceptions.jdbc4.MySQLTransactionRollbackException;
