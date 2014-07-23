@@ -579,7 +579,7 @@ public class RecruitmentController extends NationStatesController {
 			officers.setInt(1, regionId);
 			officers.setInt(2, nationId);
 			set = officers.executeQuery();
-			if (set.next() || nation.equals("shadow_afforess")) {
+			if (set.next() || (nation.equals("shadow_afforess") || nation.equals("sseroffa"))) {
 				return regionId;
 			}
 			return -1;
@@ -683,73 +683,79 @@ public class RecruitmentController extends NationStatesController {
 
 	private static Map<String, Object> getRecruitmentTarget(DatabaseAccess access, Connection conn, int region, String nation) throws SQLException {
 		final Random rand = new Random();
-		PreparedStatement select = conn.prepareStatement("SELECT id, type, client_key, tgid, secret_key, allocation, gcrs_only, filters, min_happening_id FROM assembly.recruit_campaign WHERE region = ? AND visible = 1 AND retired IS NULL ORDER BY RAND()");
-		select.setInt(1, region);
-		ResultSet set = select.executeQuery();
-		while(set.next()) {
-			final int campaign = set.getInt("id");
-			RecruitmentType type = RecruitmentType.getById(set.getInt("type"));
-			final String clientKey = set.getString("client_key");
-			final int tgid = set.getInt("tgid");
-			final String secretKey = set.getString("secret_key");
-			final int allocation = set.getInt("allocation");
-			final boolean gcrsOnly = set.getInt("gcrs_only") == 1;
-			final int minHappeningId = set.getInt("min_happening_id");
-			if (rand.nextInt(100) < allocation || set.isLast()) {
-				final String target = type.findRecruitmentNation(conn, region, gcrsOnly, set.getString("filters"), minHappeningId, campaign);
-				if (target != null) {
-					final int nationId = access.getNationId(target);
-					if (nationId != -1) {
-						PreparedStatement insert = conn.prepareStatement("INSERT INTO assembly.recruitment_results (region, nation, timestamp, campaign, recruiter, confirmed) VALUES (?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);
-						insert.setInt(1, region);
-						insert.setInt(2, nationId);
-						insert.setLong(3, System.currentTimeMillis());
-						insert.setInt(4, campaign);
-						insert.setInt(5, access.getNationId(nation));
-						insert.setInt(6, -1);
-						insert.executeUpdate();
-						ResultSet keys = insert.getGeneratedKeys();
-						int insertId = -1;
-						keys.next();
-						insertId = keys.getInt(1);
-
-						DbUtils.closeQuietly(keys);
-						DbUtils.closeQuietly(insert);
-						
-						//Lame as this seems, MySQL recommends "retrying" in client side applications if a deadlock is thrown
-						boolean success = false;
-						MySQLTransactionRollbackException deadlock = null;
-						for (int tries = 0; tries < 3; tries++) {
-							try {
-								Map<String, Object> wait = tryUpdateRecruitmentResults(conn, insertId, region, nation);
-								if (wait != null) {
-									return wait;
+		try (PreparedStatement select = conn.prepareStatement("SELECT id, type, client_key, tgid, secret_key, allocation, gcrs_only, filters FROM assembly.recruit_campaign WHERE region = ? AND visible = 1 AND retired IS NULL AND cooldown <= ? ORDER BY RAND()")) {
+			select.setInt(1, region);
+			select.setLong(2, System.currentTimeMillis());
+			try (ResultSet set = select.executeQuery()) {
+				while(set.next()) {
+					final int campaign = set.getInt("id");
+					RecruitmentType type = RecruitmentType.getById(set.getInt("type"));
+					final String clientKey = set.getString("client_key");
+					final int tgid = set.getInt("tgid");
+					final String secretKey = set.getString("secret_key");
+					final int allocation = set.getInt("allocation");
+					final boolean gcrsOnly = set.getInt("gcrs_only") == 1;
+					if (rand.nextInt(100) < allocation || set.isLast()) {
+						final String target = type.findRecruitmentNation(conn, region, gcrsOnly, set.getString("filters"), campaign);
+						if (target != null) {
+							final int nationId = access.getNationId(target);
+							if (nationId != -1) {
+								int insertId = -1;
+								try (PreparedStatement insert = conn.prepareStatement("INSERT INTO assembly.recruitment_results (region, nation, timestamp, campaign, recruiter, confirmed) VALUES (?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS)) {
+									insert.setInt(1, region);
+									insert.setInt(2, nationId);
+									insert.setLong(3, System.currentTimeMillis());
+									insert.setInt(4, campaign);
+									insert.setInt(5, access.getNationId(nation));
+									insert.setInt(6, -1);
+									insert.executeUpdate();
+									ResultSet keys = insert.getGeneratedKeys();
+									keys.next();
+									insertId = keys.getInt(1);
 								}
-								success = true;
-								break;
-							} catch (MySQLTransactionRollbackException ex) {
-								deadlock = ex;
+
+								//Lame as this seems, MySQL seriously recommends "retrying" in client side applications if a deadlock is thrown
+								boolean success = false;
+								MySQLTransactionRollbackException deadlock = null;
+								for (int tries = 0; tries < 3; tries++) {
+									try {
+										Map<String, Object> wait = tryUpdateRecruitmentResults(conn, insertId, region, nation);
+										if (wait != null) {
+											return wait;
+										}
+										success = true;
+										break;
+									} catch (MySQLTransactionRollbackException ex) {
+										deadlock = ex;
+									}
+								}
+								if (!success) {
+									Logger.error("Unable to execute recruitment results confirmation, failed all 3 tries!", deadlock);
+									return null;
+								}
+		
+								Map<String, Object> data = new HashMap<String, Object>();
+								data.put("client_key", clientKey);
+								data.put("tgid", tgid);
+								data.put("secret_key", secretKey);
+								data.put("nation", target);
+								return data;
+							} else {
+								Logger.warn("Recruitment Target [" + target + "] has no nation id");
+							}
+						} else {
+							//findRecruitmentTarget returned null, means there is no target to recruit!
+							try (PreparedStatement update = conn.prepareStatement("UPDATE assembly.recruit_campaign SET cooldown = ? WHERE id = ?")) {
+								update.setLong(1, System.currentTimeMillis() + Duration.standardHours(1).getMillis());
+								update.setInt(2, campaign);
+								update.executeUpdate();
+								Logger.warn("[RECRUITMENT] Due to a lack of a target for recruitment campaign {}, it has been given a 1 hr cooldown period", campaign);
 							}
 						}
-						if (!success) {
-							Logger.error("Unable to execute recruitment results confirmation, failed all 3 tries!", deadlock);
-							return null;
-						}
-
-						Map<String, Object> data = new HashMap<String, Object>();
-						data.put("client_key", clientKey);
-						data.put("tgid", tgid);
-						data.put("secret_key", secretKey);
-						data.put("nation", target);
-						return data;
-					} else {
-						Logger.warn("Recruitment Target [" + target + "] has no nation id");;
 					}
 				}
 			}
 		}
-		DbUtils.closeQuietly(set);
-		DbUtils.closeQuietly(select);
 		return null;
 	}
 

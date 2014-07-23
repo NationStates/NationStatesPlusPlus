@@ -42,14 +42,14 @@ public enum RecruitmentType {
 		return null;
 	}
 
-	private PreparedStatement createRecruitmentStatement(Connection conn, int minId) throws SQLException {
+	private PreparedStatement createRecruitmentStatement(Connection conn) throws SQLException {
 		switch(this) {
 			case NEW_NATIONS:
-				return conn.prepareStatement("SELECT happening_id, nation AS id, name, region FROM assembly.founded_nations WHERE happening_id > " + minId + " puppet = 0 AND region <> ? ORDER BY timestamp DESC LIMIT ?, ?");
+				return conn.prepareStatement("SELECT nation AS id, name, region FROM assembly.founded_nations WHERE puppet = 0 AND region <> ? ORDER BY timestamp DESC LIMIT ?, ?");
 			case REFOUNDED_NATIONS:
-				return conn.prepareStatement("SELECT happening_id, nation AS id, name, region FROM assembly.refounded_nations WHERE happening_id > " + minId + " puppet = 0 AND region <> ? ORDER BY timestamp DESC LIMIT ?, ?");
+				return conn.prepareStatement("SELECT nation AS id, name, region FROM assembly.refounded_nations WHERE puppet = 0 AND region <> ? ORDER BY timestamp DESC LIMIT ?, ?");
 			case EJECTED_NATIONS:
-				return conn.prepareStatement("SELECT happening_id, nation AS id, name, region FROM assembly.ejected_nations WHERE happening_id > " + minId + " puppet = 0 AND region <> ? ORDER BY timestamp DESC LIMIT ?, ?");
+				return conn.prepareStatement("SELECT nation AS id, name, region FROM assembly.ejected_nations WHERE puppet = 0 AND region <> ? ORDER BY timestamp DESC LIMIT ?, ?");
 			case ACTIVE_GAMERITES:
 				return conn.prepareStatement("SELECT id, name, region FROM assembly.nation WHERE alive = 1 AND puppet = 0 AND region <> ? AND region = 1167 OR region = 6223 OR region = 8243 " +
 											"OR region = 11721 OR region = 13019 OR region = 13338 OR region = 13585 OR region = 14159 ORDER BY last_login DESC LIMIT ?, ?");
@@ -74,35 +74,29 @@ public enum RecruitmentType {
 		throw new IllegalStateException("Unknown RecruitmentType: " + name());
 	}
 
-	public String findRecruitmentNation(Connection conn, int region, boolean gcrsOnly, String filters, int minHappeningId, int campaign) throws SQLException {
-		int minimumId = -1;
+	public String findRecruitmentNation(Connection conn, int region, boolean gcrsOnly, String filters, int campaign) throws SQLException {
+		int prevAttempts = 0;
+		int spamNations = 0;
+		int gcrNations = 0;
+		int filteredNations = 0;
+		int tooRecent = 0;
 		try (PreparedStatement prevRecruitment = conn.prepareStatement("SELECT nation FROM assembly.recruitment_results WHERE region = ? AND nation = ? AND timestamp > ?")) {
 			for (int attempts = 0; attempts < 10; attempts++) {
-				try (PreparedStatement nations = createRecruitmentStatement(conn, minHappeningId)) {
+				try (PreparedStatement nations = createRecruitmentStatement(conn)) {
 					nations.setInt(1, region);
-					nations.setInt(2, attempts * 100);
-					nations.setInt(3, 100);
+					nations.setInt(2, attempts * 200);
+					nations.setInt(3, 200);
 					try (ResultSet set = nations.executeQuery()) {
 						while(set.next()) {
 							final int nationId = set.getInt("id");
 							final String name = set.getString("name");
 							final int regionId = set.getInt("region");
-							
-							int happeningId = -1;
-							if (this == NEW_NATIONS || this == REFOUNDED_NATIONS || this == EJECTED_NATIONS) {
-								happeningId = set.getInt("happening_id");
-							}
-							
-							if (attempts > 5) {
+
+							if (prevAttempts != attempts && attempts > 5) {
 								Logger.warn("[RECRUITMENT] Region {} is having a hard time finding recruitment target, on attempt {} with recruitment type {}", region, attempts, this);
 							}
-							if (happeningId != -1) {
-								if (minimumId == -1)
-									minimumId = happeningId;
-								else
-									minimumId = Math.min(minimumId, happeningId);
-							}
-		
+							prevAttempts = attempts;
+
 							if (gcrsOnly) {
 								boolean isGCR = false;
 								for (int gcr : GCRS) {
@@ -112,17 +106,20 @@ public enum RecruitmentType {
 									}
 								}
 								if (!isGCR) {
+									gcrNations++;
 									continue;
 								}
 							}
 		
 							if (isSpamNation(name)) {
+								spamNations++;
 								continue;
 							}
 		
 							if (filters != null) {
 								for (String filter : filters.split(", ")) {
 									if (name.contains(filter)) {
+										filteredNations++;
 										continue;
 									}
 								}
@@ -133,6 +130,7 @@ public enum RecruitmentType {
 							prevRecruitment.setLong(3, System.currentTimeMillis() - Duration.standardDays(31).getMillis());
 							try (ResultSet result = prevRecruitment.executeQuery()) {
 								if (result.next()) {
+									tooRecent++;
 									continue;
 								}
 							}
@@ -144,14 +142,7 @@ public enum RecruitmentType {
 				}
 			}
 
-			Logger.warn("[RECRUITMENT] Region completely failed to find recruitment target, attempts exhausted. Minimum ID checked {}", minimumId);
-			if (minimumId != -1) {
-				try (PreparedStatement update = conn.prepareStatement("UPDATE assembly.recruit_campaign SET min_happening_id = ? WHERE id = ?")) {
-					update.setInt(1, minimumId);
-					update.setInt(2, campaign);
-					update.executeUpdate();
-				}
-			}
+			Logger.warn("[RECRUITMENT] Region {} with campaign {} completely failed to find recruitment target ({}), attempts exhausted. Ignored {} spam nations, Ignored {} non-GCR nations, Ignored {} filtered nations, Ignored {} too recently recruited nations,", region, campaign, this, spamNations, gcrNations, filteredNations, tooRecent);
 			
 		} catch (SQLException e) {
 			Logger.error("Error finding recruitment target (type: " + this.name() + ") [region: " + region + " | gcsrsOnly: " + gcrsOnly + " | filters: " + filters);

@@ -25,12 +25,12 @@ public class AMQPThread extends Thread implements AMQPQueue {
 
 	@Override
 	public void run() {
-		while (!this.shutdown.get()) {
-			try {
+		try {
+			while (!this.shutdown.get()) {
 				processNode();
-			} finally {
-				this.shutdown.set(true);
 			}
+		} finally {
+			this.shutdown.set(true);
 		}
 	}
 

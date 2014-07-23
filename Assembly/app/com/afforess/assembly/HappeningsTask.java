@@ -292,6 +292,7 @@ public class HappeningsTask implements Runnable {
 							update.executeUpdate();
 							DbUtils.closeQuietly(update);
 							
+							//TODO: remove this hack once websockets are in full use
 							if (puppetCache.getIfPresent(nation) != null) {
 								String defaultSettings = "{\"settings\":{\"show_gameplay_news\":false,\"show_roleplay_news\":false,\"show_regional_news\":false,\"show_irc\":false,\"show_world_census\":false,\"show_regional_population\":false,},\"last_update\":" + System.currentTimeMillis() + "}";
 								PreparedStatement insert = conn.prepareStatement("INSERT INTO assembly.ns_settings (id, settings, last_settings_update) VALUES (?, ?, ?)");

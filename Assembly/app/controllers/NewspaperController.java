@@ -153,19 +153,22 @@ public class NewspaperController extends NationStatesController {
 
 	public Result findNewspaper(String region) throws SQLException {
 		region = Utils.sanitizeName(region);
-		try (Connection conn = getConnection()) {
-			JsonNode newspaper = getNewspaper(conn, getDatabase().getRegionId(region));
-			if (newspaper != null) {
-				Result r = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(newspaper.hashCode()), "300");
-				if (r != null) {
-					return r;
+		int regionId = getDatabase().getRegionId(region);
+		if (regionId != -1) {
+			try (Connection conn = getConnection()) {
+				JsonNode newspaper = getNewspaper(conn, getDatabase().getRegionId(region));
+				if (newspaper != null) {
+					Result r = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(newspaper.hashCode()), "300");
+					if (r != null) {
+						return r;
+					}
+					return ok(newspaper).as("application/json");
 				}
-				return ok(newspaper).as("application/json");
 			}
-			Utils.handleDefaultPostHeaders(request(), response());
-			response().setHeader("Cache-Control", "public, max-age=300");
-			return Results.notFound();
 		}
+		Utils.handleDefaultPostHeaders(request(), response());
+		response().setHeader("Cache-Control", "public, max-age=300");
+		return Results.notFound();
 	}
 
 	public static JsonNode getNewspaper(Connection conn, int region) throws SQLException {

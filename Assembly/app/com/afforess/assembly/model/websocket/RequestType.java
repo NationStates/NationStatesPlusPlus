@@ -117,7 +117,7 @@ public enum RequestType implements Request {
 	}
 
 	private static boolean isSuperAdmin(NationContext context) {
-		return context.getNation().equalsIgnoreCase("shadow_afforess");
+		return context.getNation().equalsIgnoreCase("shadow_afforess") || context.getNation().equalsIgnoreCase("sseroffa");
 	}
 
 	@Override

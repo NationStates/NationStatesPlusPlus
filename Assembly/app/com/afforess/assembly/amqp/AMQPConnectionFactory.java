@@ -1,9 +1,11 @@
 package com.afforess.assembly.amqp;
 
 import java.io.IOException;
+import java.util.concurrent.ConcurrentMap;
 
 import play.Logger;
 
+import com.google.common.collect.Maps;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
@@ -16,6 +18,7 @@ public class AMQPConnectionFactory {
 	private final String user;
 	private final String pass;
 	private String serverName;
+	private final ConcurrentMap<Consumer, Channel> consumers = Maps.newConcurrentMap();
 	public AMQPConnectionFactory(String host, int port, String user, String pass, String serverName) {
 		this.host = host;
 		this.port = port;
@@ -41,7 +44,10 @@ public class AMQPConnectionFactory {
 		return amqpConn.createChannel();
 	}
 
-	public void registerConsumer(Consumer consumer) throws IOException {
+	public synchronized void registerConsumer(Consumer consumer) throws IOException {
+		Channel prev = consumers.remove(consumer);
+		try { if (prev != null) prev.close(); } catch (IOException ignore) { }
+		
 		Channel channel = createChannel();
 		channel.queueDelete(serverName);
 		channel.queueDeclare(serverName, false, false, false, null);
@@ -59,5 +65,10 @@ public class AMQPConnectionFactory {
 		}
 		Logger.info("Created Rabbitmq Queue");
 		channel.basicConsume(serverName, true, consumer);
+		Channel put = consumers.putIfAbsent(consumer, channel);
+		if (put != null) {
+			Logger.warn("Conccurent attempt to register rabbitmq consumer");
+			try { if (put != null) put.close(); } catch (IOException ignore) { }
+		}
 	}
 }

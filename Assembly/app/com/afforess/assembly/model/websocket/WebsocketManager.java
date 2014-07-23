@@ -81,6 +81,8 @@ public class WebsocketManager implements Consumer {
 					if (!this.queue.compareAndSet(queue, newQueue)) {
 						queue = this.queue.get(); 
 						newQueue.shutdown();
+					} else {
+						factory.registerConsumer(this);
 					}
 				} catch (IOException e) {
 					Logger.error("Unable to restart rabbitmq connection! Message will be lost!", e);
