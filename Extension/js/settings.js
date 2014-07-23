@@ -23,155 +23,145 @@ var settingsHTML = '<form id="target" class="form-horizontal"><fieldset><h1>Nati
 	if (getVisiblePage() == "blank" && window.location.href.indexOf("ns_settings") != -1) {
 		window.document.title = "NationStates++ Settings"
 		$("#content").html("<div style='margin-top: 25px; margin-left:15px; font-weight:bold; font-size:16px;'><img style='margin-bottom: -2px; margin-right: 4px;' src='/images/loading1.gif'>Loading...</span>");
-		getSettings().update(function() {
-			$("#content").html(settingsHTML);
-			if (!window.chrome) {
-				$("div[name='chrome_only']").hide();
+		$("#content").html(settingsHTML);
+		if (!window.chrome) {
+			$("div[name='chrome_only']").hide();
+		}
+
+		sendWebsocketEvent("is_recruitment_officer", { }, false);
+		$(window).on("websocket.is_recruitment_officer", function(data) {
+			if (data.json.result == "true") {
+				$("#recruitment").show();
 			}
-			
-			isRecruitmentOfficer(function() { $("#recruitment").show(); });
-			
-			if (supportsColorInput) {
-				$("input[type='color']").css("width", "15px");
+		});
+
+		if (supportsColorInput) {
+			$("input[type='color']").css("width", "15px");
+		}
+		$("#content").find("input[type='checkbox']").each(function() {
+			var settingId = $(this).attr("id");
+			(new UserSettings()).child(settingId).on(function(data) {
+				$("#" + settingId).prop("checked", data[settingId]);
+			}, $(this).attr("default"));
+		});
+		$("#content").find("input[type='text'], input[type='color']").each(function() {
+			var settingId = $(this).attr("id");
+			(new UserSettings()).child(settingId).on(function(data) {
+				$("#" + settingId).val(data[settingId]);
+			}, $(this).attr("default"));
+		});
+		$("#export_puppets").on("click", function(event) {
+			event.preventDefault();
+			var puppetArr = new Array();
+			var manager = getPuppetManager();
+			var puppets = manager.getActivePuppetList();
+			puppetArr.push('"Nation", "Password"\n');
+			for (var name in puppets) {
+				var pass = puppets[name];
+				puppetArr.push('"' + name.replaceAll("_", " ").toTitleCase() + '", "' + pass + '"\n');
+			}
+			var blob = new Blob(puppetArr, {type: "text/plain;charset=utf-8"});
+			if (typeof saveAs != "undefined") {
+				saveAs(blob, "puppets.csv");
+			} else {
+				$(document.body).append("<div name='save_file' file='puppets.csv' style='display:none;'>" + JSON.stringify(puppetArr) + "</div>");
+			}
+		});
+		var parsingError = function(error) {
+			var log = "Error: " + error + "\n";
+			if (typeof error != "string") {
+				for (var prop in error) {
+					log += "    property: " + prop + " value: [" + error[prop] + "]\n"; 
+				}
+			}
+			$("#unparseable-span").remove();
+			$("#unparseable").html($("#unparseable").html() + "<span id='unparseable-span'><pre>" + log + "</pre></span>");
+			$("#unparseable").show();
+			console.log(log);
+		}
+		$("#import_puppets_btn").on("click", function(event) {
+			event.preventDefault();
+			var file = document.getElementById('import_buttons').files[0];
+			$("#parsed-success").hide();
+			$("#unparseable").hide();
+			if (file) {
+				var reader = new FileReader();
+				reader.readAsText(file, "UTF-8");
+				reader.onload = function (evt) {
+					try {
+						$("#unparseable").hide();
+						var split = evt.target.result.split("\n");
+						var imported = false;
+						var manager = getPuppetManager();
+						for (var i = 1; i < split.length; i++) {
+							var line = split[i];
+							if (line.trim() != "" && line.split(",").length == 2) {
+								var nation = line.split(",")[0];
+								nation = nation.replaceAll('"', "").trim();
+								var pass = line.split(",")[1];
+								pass = pass.replaceAll('"', "").trim();
+								manager.addPuppet(nation.toLowerCase().split(" ").join("_"), pass, manager.getActiveList(), false);
+								imported = true;
+							}
+						}
+						if (imported) {
+							$("#parsed-success").show();
+							manager.save();
+						} else {
+							parsingError("No data found in file");
+						}
+					} catch (error) {
+						parsingError(error);
+					}
+				}
+				reader.onerror = parsingError;
+			} else {
+				$("#unparseable").show();
+			}
+		});
+		$("#clear_all_puppets").on("click", function(event) {
+			event.preventDefault();
+			if ($("#clear_all_puppets").html() != "Are You Sure?") {
+				$("#clear_all_puppets").html("Are You Sure?");
+				return;
+			}
+			var manager = getPuppetManager();
+			manager.clearPuppetList();
+			$("#clear_all_puppets").html("Clear Puppets");
+		});
+		$("#save_settings").on("click", function(event) {
+			event.preventDefault();
+			if (!isNumber($("#highlight_color_transparency").val()) || parseFloat($("#highlight_color_transparency").val()) > 1 || parseFloat($("#highlight_color_transparency").val()) < 0) {
+				$("#highlight_color_transparency").val($("#highlight_color_transparency").attr('default'));
+			}
+			if (!(/(^#[0-9A-F]{6}$)|(^#[0-9A-F]{3}$)/i.test($("#highlight_color").val()))) {
+				$("#highlight_color").val($("#highlight_color").attr('default'));
 			}
 			$("#content").find("input[type='checkbox']").each(function() {
-				var settingId = $(this).attr("id");
-				(new UserSettings()).child(settingId).on(function(data) {
-					$("#" + settingId).prop("checked", data[settingId]);
-				}, $(this).attr("default"));
-				//$(this).prop("checked", settings.isEnabled($(this).attr("id"), $(this).attr("default")));
+				(new UserSettings()).child($(this).attr("id")).set($(this).prop("checked"));
 			});
 			$("#content").find("input[type='text'], input[type='color']").each(function() {
-				var settingId = $(this).attr("id");
-				(new UserSettings()).child(settingId).on(function(data) {
-					$("#" + settingId).prop("checked", data[settingId]);
-				}, $(this).attr("default"));
-				//$(this).val(getSettings().getValue($(this).attr("id"), $(this).attr("default")));
-			});
-			$("#export_puppets").on("click", function(event) {
-				event.preventDefault();
-				var puppetArr = new Array();
-				var manager = getPuppetManager();
-				var puppets = manager.getActivePuppetList();
-				puppetArr.push('"Nation", "Password"\n');
-				for (var name in puppets) {
-					var pass = puppets[name];
-					puppetArr.push('"' + name.replaceAll("_", " ").toTitleCase() + '", "' + pass + '"\n');
-				}
-				var blob = new Blob(puppetArr, {type: "text/plain;charset=utf-8"});
-				if (typeof saveAs != "undefined") {
-					saveAs(blob, "puppets.csv");
+				if ($(this).val() != "") {
+					(new UserSettings()).child($(this).attr("id")).set($(this).val());
 				} else {
-					$(document.body).append("<div name='save_file' file='puppets.csv' style='display:none;'>" + JSON.stringify(puppetArr) + "</div>");
-				}
-			});
-			var parsingError = function(error) {
-				var log = "Error: " + error + "\n";
-				if (typeof error != "string") {
-					for (var prop in error) {
-						log += "    property: " + prop + " value: [" + error[prop] + "]\n"; 
-					}
-				}
-				$("#unparseable-span").remove();
-				$("#unparseable").html($("#unparseable").html() + "<span id='unparseable-span'><pre>" + log + "</pre></span>");
-				$("#unparseable").show();
-				console.log(log);
-			}
-			$("#import_puppets_btn").on("click", function(event) {
-				event.preventDefault();
-				var file = document.getElementById('import_buttons').files[0];
-				$("#parsed-success").hide();
-				$("#unparseable").hide();
-				if (file) {
-					var reader = new FileReader();
-					reader.readAsText(file, "UTF-8");
-					reader.onload = function (evt) {
-						try {
-							$("#unparseable").hide();
-							var split = evt.target.result.split("\n");
-							var imported = false;
-							var manager = getPuppetManager();
-							for (var i = 1; i < split.length; i++) {
-								var line = split[i];
-								if (line.trim() != "" && line.split(",").length == 2) {
-									var nation = line.split(",")[0];
-									nation = nation.replaceAll('"', "").trim();
-									var pass = line.split(",")[1];
-									pass = pass.replaceAll('"', "").trim();
-									manager.addPuppet(nation.toLowerCase().split(" ").join("_"), pass, manager.getActiveList(), false);
-									imported = true;
-								}
-							}
-							if (imported) {
-								$("#parsed-success").show();
-								manager.save();
-							} else {
-								parsingError("No data found in file");
-							}
-						} catch (error) {
-							parsingError(error);
-						}
-					}
-					reader.onerror = parsingError;
-				} else {
-					$("#unparseable").show();
-				}
-			});
-			$("#clear_all_puppets").on("click", function(event) {
-				event.preventDefault();
-				if ($("#clear_all_puppets").html() != "Are You Sure?") {
-					$("#clear_all_puppets").html("Are You Sure?");
-					return;
-				}
-				var manager = getPuppetManager();
-				manager.clearPuppetList();
-				$("#clear_all_puppets").html("Clear Puppets");
-			});
-			$("#save_settings").on("click", function(event) {
-				event.preventDefault();
-				//var settings = getSettings();
-				if (!isNumber($("#highlight_color_transparency").val()) || parseFloat($("#highlight_color_transparency").val()) > 1 || parseFloat($("#highlight_color_transparency").val()) < 0) {
-					$("#highlight_color_transparency").val($("#highlight_color_transparency").attr('default'));
-				}
-				if (!(/(^#[0-9A-F]{6}$)|(^#[0-9A-F]{3}$)/i.test($("#highlight_color").val()))) {
-					$("#highlight_color").val($("#highlight_color").attr('default'));
-				}
-				$("#content").find("input[type='checkbox']").each(function() {
-					(new UserSettings()).child($(this).attr("id")).set($(this).prop("checked"));
-					//settings.setValue($(this).attr("id"), $(this).prop("checked"));
-				});
-				$("#content").find("input[type='text'], input[type='color']").each(function() {
-					if ($(this).val() != "") {
-						(new UserSettings()).child($(this).attr("id")).set($(this).val());
-						//settings.setValue($(this).attr("id"), $(this).val());
-					} else {
-						(new UserSettings()).child($(this).attr("id")).set(null);
-						//settings.setValue($(this).attr("id"), null);
-					}
-				});
-				//settings.pushUpdate(function() {
-				//	location.reload();
-				//});
-			});
-			$("#reset_settings").on("click", function(event) {
-				event.preventDefault();
-				if ($("#reset_settings").html() != "Are You Sure?") {
-					$("#reset_settings").html("Are You Sure?");
-					return;
-				}
-				//var settings = getSettings();
-				$("#content").find("input[type='checkbox']").each(function() {
-					(new UserSettings()).child($(this).attr("id")).set($(this).attr("default"));
-				});
-				$("#content").find("input[type='text']").each(function() {
 					(new UserSettings()).child($(this).attr("id")).set(null);
-				});
-				$("#content").find("input[type='color']").each(function() {
-					(new UserSettings()).child($(this).attr("id")).set($(this).attr("default"));
-				});
-				//settings.pushUpdate(function() {
-				//	location.reload();
-				//});
+				}
+			});
+		});
+		$("#reset_settings").on("click", function(event) {
+			event.preventDefault();
+			if ($("#reset_settings").html() != "Are You Sure?") {
+				$("#reset_settings").html("Are You Sure?");
+				return;
+			}
+			$("#content").find("input[type='checkbox']").each(function() {
+				(new UserSettings()).child($(this).attr("id")).set($(this).attr("default"));
+			});
+			$("#content").find("input[type='text']").each(function() {
+				(new UserSettings()).child($(this).attr("id")).set(null);
+			});
+			$("#content").find("input[type='color']").each(function() {
+				(new UserSettings()).child($(this).attr("id")).set($(this).attr("default"));
 			});
 		});
 	}

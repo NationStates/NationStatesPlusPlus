@@ -1,6 +1,11 @@
 (function() {
 	if (getVisiblePage() == "help") {
-		var requests = getUserData().getValue("ghr", {});
+		var requests = localStorage.getItem("ghr");
+		if (requests != null) {
+			requests = JSON.parse(requests);
+		} else {
+			requests = {};
+		}
 		var html = "<div class='hzln'></div><h2>Previous Reports</h2><ul>";
 		for (var request in requests) {
 			var requestBody = requests[request];
@@ -26,10 +31,15 @@
 			requestBody['problem'] = $("option[value='" + $("select[name='problem']").val() + "']").html();
 			requestBody['body'] = $("textarea[name='comment']").val().split("\n").join("<br/>");
 			requestBody['region'] = $("input[name='rname']").val();
-			var userData = getUserData();
-			var previousRequests = userData.getValue("ghr", {});
-			previousRequests[time] = requestBody;
-			userData.pushUpdate();
+			
+			var requests = localStorage.getItem("ghr");
+			if (requests != null) {
+				requests = JSON.parse(requests);
+			} else {
+				requests = {};
+			}
+			requests[time] = requestBody;
+			localStorage.setItem("ghr", JSON.stringify(requests));
 		});
 		
 		if (window.location.href.contains("?recruitment")) {

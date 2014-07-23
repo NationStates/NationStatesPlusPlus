@@ -71,3 +71,8 @@ h1, h1 a, h2, h3, h4, h5, h6 {
 #toggle_dossier_label {
 	border: 2px solid white !important;
 }
+
+.banner-theme {
+	background: #2A2A2A !important;
+	border: 1px solid #383838 !important;
+}

@@ -872,3 +872,16 @@ fieldset.preview {
 	border: 1px solid;
 	margin-top: -15px;
 }
+
+.banner-theme {
+	position:absolute;
+	top:0px;
+	margin:6px 0px 0px 0px;
+	z-index:98;
+	color: white !important;
+	font-weight: bold;
+	font-size: 8pt;
+	padding: 2px 8px 2px 8px;
+	background-color: rgba(0,0,0,0.2); 
+	border-radius: 8px;
+}

@@ -22,7 +22,7 @@
 				"js/administration.js", "js/settings.js", "js/history.js", "js/puppet_command.js", 
 				"js/alerts.js", "js/wa.js", "js/puppet_manager.js"],
 	  "css": ["css/nouislider.fox.css", "css/bootstrap-button.css", "css/two_column.css", "css/bootstrap-fileupload.min.css", "css/nprogress.css", "css/nationstates++.css"],
-      "matches": [ "https://www.nationstates.net/*", "https://nationstates.net/*", "http://www.nationstates.net/*"],
+      "matches": [ "https://www.nationstates.net/*", "https://nationstates.net/*", "http://www.nationstates.net/*", "https://rift.nationstates.net/*", "http://rift.nationstates.net/*"],
 	  "all_frames": true
 	},
 	{

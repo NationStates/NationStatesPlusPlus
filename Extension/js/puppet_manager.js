@@ -1,5 +1,31 @@
 (function(){
-	var puppetHTML = '';
+	if ($("#ns_setting").length == 0) {
+		var banner = $("#banner, #nsbanner");
+		$(banner).append("<div id='ns_setting'><a href='//www.nationstates.net/page=blank?ns_settings=true' class='banner-theme' style='right: 138px;'>NS++ Settings</a></div>");
+		if (window.location.href.indexOf('forum.nationstates.net/') == -1 ) {
+			$(banner).append("<div id='puppet_setting' style='display:none;'><a href='javascript:void(0)' class='banner-theme' style='right: 248px;'>Puppets</a></div>");
+		}
+	}
+	$("#puppet_setting").on("mouseover", function() { if ($("#puppet_setting_form:visible").length == 0) showPuppets(); });
+	(new UserSettings()).child("show_puppet_switcher").on(function(data) {
+		localStorage.setItem(getUserNation() + "_show_puppet_switcher", data["show_puppet_switcher"]);
+		if (data["show_puppet_switcher"]) {
+			$("#puppet_setting").show();
+		} else {
+			$("#puppet_setting").hide();
+		}
+	}, true);
+	(new UserSettings()).child("autologin-puppets").on(function(data) {
+		$("#puppet_setting").data("autologin-puppets", data["autologin-puppets"] ? true : false);
+	}, false);
+	(new UserSettings()).child("redirect-puppet-page").on(function(data) {
+		$("#puppet_setting").data("redirect-puppet-page", data["redirect-puppet-page"] ? true : false);
+	}, true);
+	var switcher = localStorage.getItem(getUserNation() + "_show_puppet_switcher");
+	if (switcher == null || switcher) {
+		$("#puppet_setting").show();
+	}
+	
 	if (getVisiblePage() == "blank" && window.location.href.contains("?puppet_manager")) {
 		window.document.title = "Puppet Manager";
 		$("#content").html("<h1>Puppet Management</h1>");

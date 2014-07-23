@@ -208,29 +208,7 @@
 		});
 	};
 //*** END OF LICENSED CODE BY GAVEN KISTNER ***//
-
-
-	if ($("#ns_setting").length == 0) {
-		var bannerStyle = "position:absolute; top:0px; margin:6px 0px 0px 0px; z-index:98; color: white !important; font-weight: bold; font-size: 8pt; padding: 2px 8px 2px 8px; background: black; background-color: rgba(0,0,0,0.2); 	border-radius: 8px;";
-		if (isDarkTheme()) {
-			bannerStyle += "background: #2A2A2A; border: 1px solid #383838;"
-		}
-
-		if (window.location.href.indexOf("hideBanner=true") != -1) {
-			$("#banner").hide();
-		} else {
-			var banner = $("#banner, #nsbanner");
-			$(banner).append("<div id='ns_setting'><a href='//www.nationstates.net/page=blank?ns_settings=true' style='" + bannerStyle + " right: 138px;'>NS++ Settings</a></div>");
-			if (window.location.href.indexOf('forum.nationstates.net/') == -1 ) {
-				$(banner).append("<div id='puppet_setting' style='display:none;'><a href='javascript:void(0)' style='" + bannerStyle + " right: 248px;'>Puppets</a></div>");
-			}
-		}
-	}
 	migratePuppets();
-	if (getSettings().isEnabled("show_puppet_switcher")) {
-		$("#puppet_setting").show();
-		$("#puppet_setting").on("mouseover", function() { if ($("#puppet_setting_form:visible").length == 0) showPuppets(); });
-	}
 	if (getUserNation() == "glen-rhodes") {
 		localStorage.setItem("ignore_theme_warning", true);
 	}
@@ -254,186 +232,6 @@ function isRecruitmentOfficer(callback) {
 			}
 		});
 	}
-}
-
-function getSettings(autoupdate) {
-	autoupdate = autoupdate || false;
-	var SettingsContainer = function() {
-		var data = {};
-		data.last_update = 0;
-		data.settings = {};
-		return data;
-	}
-
-	var api = {};
-	api.autoupdate = autoupdate;
-	api.refresh = function() {
-		var data = null;
-		try {
-			data = localStorage.getItem("settings");
-			data = data != null ? JSON.parse(data) : new SettingsContainer();
-		} catch(err) {
-			data = new SettingsContainer();
-			console.log(err);
-			console.log(JSON.stringify(localStorage.getItem("settings")));
-			localStorage.removeItem("settings");
-		}
-		api.last_update = data.last_update;
-		api.settings = data.settings;
-	}
-	api.refresh();
-
-	api.getValue = function(option, defVal) {
-		var value = this.settings[option];
-		if (value == null) {
-			if (typeof defVal != "undefined") {
-				this.settings[option] = defVal;
-				return defVal;
-			}
-			return null;
-		}
-		return value;
-	}
-
-	api.isEnabled = function(option, defVal) {
-		var value = this.getValue(option, (typeof defVal == "undefined") ? true : defVal);
-		return (typeof value === "string") ? ("true" === value) : value;
-	}
-
-	api.setValue = function(option, value) {
-		if (value != null) {
-			this.settings[option] = value;
-		} else {
-			delete this.settings[option];
-		}
-		if (this.autoupdate) {
-			this.pushUpdate();
-		}
-	}
-
-	api.update = function(callback) {
-		var api = this;
-		$.get("https://nationstatesplusplus.net/api/nation/latest_update/?name=" + getUserNation(), function(data, textStatus, xhr) {
-			data = data || {}
-			if (xhr.status != 204 && data.timestamp > api.last_update) {
-				api.last_update = data.timestamp;
-				$.get("https://nationstatesplusplus.net/api/nation/settings/?name=" + getUserNation(), function(data, textStatus, xhr) {
-					api.settings = data;
-					api.save();
-					if (typeof callback != "undefined") callback(data, textStatus, xhr);
-				}).fail(function(jqXHR, textStatus, errorThrown) {
-					if (typeof callback != "undefined") callback(jqXHR, textStatus, errorThrown);
-				});
-			} else if (data.timestamp <= api.last_update) {
-				api.pushUpdate(callback);
-			} else {
-				if (typeof callback != "undefined") callback();
-			}
-		});
-	}
-
-	api.save = function() {
-		var data = {};
-		data.settings = this.settings;
-		data.last_update = this.last_update;
-		localStorage.setItem("settings", JSON.stringify(data));
-	}
-
-	api.pushUpdate = function(callback) {
-		this.save();
-		var api = this;
-		doAuthorizedPostRequest("https://nationstatesplusplus.net/api/nation/settings/", "settings=" + encodeURIComponent(JSON.stringify(this.settings)), function(data, textStatus, xhr) {
-			api.last_update = Date.now();
-			if (typeof callback != "undefined") callback(data, textStatus, xhr);
-		});
-	}
-
-	return api;
-}
-
-function getUserData(autoupdate) {
-	autoupdate = autoupdate || false;
-	var DataContainer = function() {
-		var data = {};
-		data.last_update = 0;
-		data.userData = {};
-		return data;
-	}
-
-	var api = {};
-	api.autoupdate = autoupdate;
-	api.refresh = function() {
-		var data = null;
-		try {
-			data = localStorage.getItem(getUserNation() + "-data");
-			data = data != null ? JSON.parse(data) : new DataContainer();
-		} catch(err) {
-			data = new DataContainer();
-			console.log(err);
-			console.log(JSON.stringify(localStorage.getItem(getUserNation() + "-data")));
-			localStorage.removeItem(getUserNation() + "-data");
-		}
-		api.last_update = data.last_update;
-		api.userData = data.userData;
-	}
-	api.refresh();
-
-	api.getValue = function(option, defVal) {
-		var value = this.userData[option];
-		if (value == null) {
-			if (typeof defVal != "undefined") {
-				this.userData[option] = defVal;
-				return defVal;
-			}
-			return null;
-		}
-		return value;
-	}
-
-	api.setValue = function(option, value) {
-		if (value != null) {
-			this.userData[option] = value;
-		} else {
-			delete this.userData[option];
-		}
-		if (this.autoupdate) {
-			this.save();
-		}
-	}
-
-	api.update = function(callback) {
-		var api = this;
-		$.get("https://nationstatesplusplus.net/api/nation/data/?name=" + getUserNation(), function(data, textStatus, xhr) {
-			data = data || {}
-			if (xhr.status != 204 && data.timestamp > api.last_update) {
-				api.last_update = data.timestamp;
-				doAuthorizedPostRequest("https://nationstatesplusplus.net/api/nation/data/get/", "", function(data) {
-					api.userData = data;
-					api.save();
-					if (typeof callback != "undefined") callback();
-				});
-			} else if (data.timestamp <= api.last_update) {
-				api.pushUpdate(callback);
-			} else {
-				if (typeof callback != "undefined") callback();
-			}
-		});
-	}
-
-	api.save = function() {
-		var data = {};
-		data.userData = this.userData;
-		data.last_update = this.last_update;
-		localStorage.setItem(getUserNation() + "-data", JSON.stringify(data));
-	}
-
-	api.pushUpdate = function(callback) {
-		this.last_update = Date.now();
-		this.save();
-		doAuthorizedPostRequest("https://nationstatesplusplus.net/api/nation/data/set/", "data=" + encodeURIComponent(JSON.stringify(this.userData)), callback);
-	}
-
-	return api;
 }
 
 /**
@@ -474,25 +272,20 @@ function searchToKeywords(search) {
 }
 
 function showPuppets() {
-	if (!getSettings().isEnabled("show_puppet_switcher")) {
-		return;
-	}
 	if ($("#puppet_setting_form").length == 0) {
 		$("#puppet_setting").append("<div id='puppet_setting_form' class='puppet-form'></div>");
 		$("#puppet_setting_form").hover(function() { $("#puppet_setting_form").css('display', 'block').css('opacity', '.75'); }, function() { $("#puppet_setting_form").css('display', 'none'); });
 	}
 	$("#puppet_setting_form").css('opacity', '.75').show();
-	var html = "<h3>Puppets</h3><ul>";
 	
 	var manager = getPuppetManager();
 	var puppets = manager.getActivePuppetList();
 	
+	var html = "<h3>Puppets</h3><ul>";
 	var numPuppets = 0;
 	for (var name in puppets) {
 		if (name.length > 0) {
-			var cache = getPuppetCache(name);
-			var region = cache.region;
-			html += "<li><div class='puppet-form-inner' style='margin-bottom: -15px;'><p style='margin-top: 3px;'><a class='puppet-name' id='" + name + "' href='/nation=" + name + "' style='color: white;'>" + name.split("_").join(" ").toTitleCase() + "</a>" + (cache.wa == "true" ? "<span style='color:green'> (WA) </span>" : "") + "</p><ul style='display:none;'><li id='puppet-region-" + name + "'>(<a style='color: white;' href='/region=" + region + "'>" + region.split("_").join(" ").toTitleCase() + "</a>)</li></ul></div><img name='" + name + "' class='puppet-form-remove' src='https://nationstatesplusplus.net/nationstates/static/remove.png'></img></li>";
+			html += "<li><div class='puppet-form-inner' style='margin-bottom: -15px;'><p style='margin-top: 3px;'><a class='puppet-name' id='" + name + "' href='/nation=" + name + "' style='color: white;'>" + name.split("_").join(" ").toTitleCase() + "</a></p></div><img name='" + name + "' class='puppet-form-remove' src='https://nationstatesplusplus.net/nationstates/static/remove.png'></img></li>";
 			numPuppets++;
 		}
 	}
@@ -502,21 +295,23 @@ function showPuppets() {
 	html += "</ul>";
 	html += "<p style='margin-top: -20px; margin-bottom: 1px;'><input class='text-input' type='text' id='puppet_nation' size='18' placeholder='Nation'></p>";
 	html += "<p style='margin-top: 1px;'><input class='text-input' type='password' id='puppet_password' size='18' placeholder='Password'></p>";
-	html += "<div id='puppet_invalid_login' style='display:none;'><p>Invalid Login</p></div><p class='puppet_creator'><a style='color:white;' href='//www.nationstates.net/page=blank?puppet_creator'>Create New Puppet Nations</a></p><p class='puppet_manager'><a style='color:white;' href='//www.nationstates.net/page=blank?puppet_manager'>Manage Puppets</a></p>";
-
+	html += "<div id='puppet_invalid_login' style='display:none;'><p>Invalid Login</p></div>";
+	html += "<p class='puppet_creator'><a style='color:white;' href='//www.nationstates.net/page=blank?puppet_creator'>Create New Puppet Nations</a></p>";
+	html += "<p class='puppet_manager'><a style='color:white;' href='//www.nationstates.net/page=blank?puppet_manager'>Manage Puppets</a></p>";
 	$("#puppet_setting_form").html(html);
 	
 	$("#puppet_nation, #puppet_password").on("keydown", function(event) {
 		if (event.keyCode == 13) {
-			addPuppet();
-		}
-	});
-
-	$("a.puppet-name").on("mouseenter", function() { 
-		if (getSettings().isEnabled("show-region-on-hover")) {
-			if (!$("#puppet-region-" + $(this).attr("id")).parent().is(":visible")) {
-				$("#puppet-region-" + $(this).attr("id")).parent().animate({ height: 'toggle' }, 500);
+			var nationName = $("#puppet_nation");
+			var nationPassword = $("#puppet_password");
+			if ($("#puppet_nation").val() == "" || $("#puppet_password").val() == "") {
+				$("#puppet_invalid_login").show();
+				return;
 			}
+			getPuppetManager().addPuppet($("#puppet_nation").val().toLowerCase().split(" ").join("_"), nationPassword.val());
+
+			showPuppets();
+			$("#puppet_nation").focus();
 		}
 	});
 
@@ -532,63 +327,20 @@ function showPuppets() {
 	});
 }
 
-function getPuppetCache(name) {
-	/*var cache = localStorage.getItem("puppet-" + name + "-cache");
-	localStorage.removeItem("puppet-" + name + "-region");
-	if (cache != null) {
-		cache = JSON.parse(cache);
-		if (cache.timestamp > Date.now()) {
-			return cache;
-		}
-	}
-	$.get("/nation=" + name + "?nspp=1", function(data) {
-		if (typeof $(data).find(".rlink:first").attr('href') != "undefined") {
-			var region = $(data).find(".rlink:first").attr('href').substring(7);
-			$("#puppet-region-" + name).html("(<a style='color: white;' href='/region=" + region + "'>" + region.split("_").join(" ").toTitleCase() + "</a>)");
-			var cache = {}
-			cache.region = region;
-			cache.wa = $(data).find(".wa_status").length > 0 ? "true" : "false";
-			cache.timestamp = (Date.now() + 60 * 60 * 1000);
-			localStorage.setItem("puppet-" + name + "-cache", JSON.stringify(cache));
-		}
-	});
-	*/
-	var cache = new Object();
-	cache.region = "UNKNOWN REGION";
-	cache.wa = false;
-	return cache;
-}
-
 function switchToPuppet(name) {
 	var manager = getPuppetManager();
 	var pass = manager.getActivePuppetList()[name];
-	$.post("//www.nationstates.net/?nspp=1", "logging_in=1&nation=" + encodeURIComponent(name) + "&password=" + encodeURIComponent(pass) + (getSettings().isEnabled("autologin-puppets", false) ? "&autologin=yes" : ""), function(data) {
+	$.post("//www.nationstates.net/?nspp=1", "logging_in=1&nation=" + encodeURIComponent(name) + "&password=" + encodeURIComponent(pass) + ($("#puppet_setting").data("autologin-puppets") ? "&autologin=yes" : ""), function(data) {
 		if (data.contains("Would you like to restore it?")) {
 			$("#content").html($(data).find("#content").html());
 		} else {
-			if (getSettings().isEnabled("redirect-puppet-page")) {
+			if ($("#puppet_setting").data("redirect-puppet-page")) {
 				window.location.href = "/nation=" + name;
 			} else {
 				window.location.reload(false);
 			}
 		}
 	});
-}
-
-function addPuppet() {
-	var nationName = $("#puppet_nation");
-	var nationPassword = $("#puppet_password");
-	if (nationName.val() == "" || nationPassword.val() == "") {
-		$("#puppet_invalid_login").show();
-		return;
-	}
-	var formattedName = nationName.val().toLowerCase().split(" ").join("_");
-
-	var manager = getPuppetManager();
-	manager.addPuppet(formattedName, nationPassword.val());
-
-	showPuppets();
-	$("#puppet_nation").focus();
 }
 
 function migratePuppets() {
@@ -1200,90 +952,6 @@ function setNationAlias(nation, alias) {
 		}
 		localStorage.setItem("aliases-" + getUserNation(), JSON.stringify(aliases));
 	}
-}
-
-function getNationStatesAPI() {
-	var api = {};
-
-	var reachedRateLimit = false;
-	api.canUseAPI = function() {
-		return getSettings().isEnabled("use_nationstates_api") && !reachedRateLimit;
-	};
-	var doRequestInternal = function(url, result) {
-		if (result == null) {
-			result = {};
-		}
-		var requests = localStorage.getItem("api_requests");
-		if (requests == null) {
-			requests = new Object();
-		} else {
-			try {
-				requests = JSON.parse(requests);
-			} catch (error) {
-				numRequests = 50;
-				localStorage.removeItem("api_requests");
-				requests = new Object();
-			}
-		}
-		var numRequests = 0;
-		var oldest = Date.now();
-		for (var time in requests) {
-			var num = requests[time];
-			if (time > Date.now() - 30000) {
-				numRequests += num;
-				oldest = Math.min(oldest, time);
-			} else {
-				delete requests[time];
-			}
-		}
-		result.done = function(callback) {
-			result._done = callback;
-			return result;
-		}
-		result.fail = function(callback) {
-			result._fail = callback;
-			return result;
-		}
-		result.always = function(callback) {
-			result._always = callback;
-			return result;
-		}
-		if (numRequests >= 49) {
-			setTimeout(doRequestInternal(url, result),	30001);
-		} else {
-			var num = requests["" + Date.now()];
-			requests["" + Date.now()] = (num != null ? num + 1 : 1);
-			var call = $.ajax({url: url, type: 'GET', dataType: "text"});
-			if (typeof result["_done"] !== "undefined") {
-				call.done(result["_done"]);
-			}
-			if (typeof result["_fail"] !== "undefined") {
-				call.fail(result["_fail"]);
-			}
-			if (typeof result["_always"] !== "undefined") {
-				call.always(result["_always"]);
-			}
-			result.done = function(callback) {
-				call.done(callback);
-				return result;
-			}
-			result.fail = function(callback) {
-				call.fail(callback);
-				return result;
-			}
-			result.always = function(callback) {
-				call.always(callback);
-				return result;
-			}
-		}
-		localStorage.setItem("api_requests", JSON.stringify(requests));
-		return result;
-	};
-	api.doRequest = function(url) {
-		return doRequestInternal(url, null);
-	};
-
-	return api;
 }
 
 function timestampToTimeAgo(timestamp) {
