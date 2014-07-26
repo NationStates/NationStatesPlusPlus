@@ -240,6 +240,7 @@ public class Utils {
 		final int nationId = nation != null ? access.getNationId(nation) : -1;
 		if (nation != null && nationId != -1) {
 			if (authToken != null && access.isValidAuthToken(nationId, authToken)) {
+				Logger.debug("Authenticated [{}] with NS++ Auth Token", nation);
 				return null;
 			}
 			reason = "INVALID AUTH TOKEN";
@@ -256,11 +257,11 @@ public class Utils {
 				if (verify) {
 					response.setHeader("Access-Control-Expose-Headers", "X-Auth-Token");
 					response.setHeader("X-Auth-Token", access.generateAuthToken(nationId));
-					Logger.info("Authenticated [" + nation + "] with NS Auth API");
+					Logger.debug("Authenticated [{}] with NS Auth API", nation);
 					return null;
 				} else {
 					reason = "INVALID NS AUTH CODE";
-					Logger.info("Failed to Authenticate [" + nation + "] with NS Auth API | Code: [" + auth + "]");
+					Logger.debug("Failed to Authenticate [{}] with NS Auth API | Code: [{}]", nation, auth);
 				}
 			}
 		}

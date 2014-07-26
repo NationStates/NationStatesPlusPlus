@@ -195,10 +195,11 @@ public class RecruitmentController extends NationStatesController {
 
 	public Result getRecruitmentCampaigns(String region, boolean includeStats) throws SQLException {
 		Result ret = Utils.validateRequest(request(), response(), getAPI(), getDatabase());
+		String nation = Utils.sanitizeName(Utils.getPostValue(request(), "nation"));
 		if (ret != null) {
+			Logger.debug("Nation {} tried to view recruitment campaigns for {} but did not have permission", nation, region);
 			return ret;
 		}
-		String nation = Utils.sanitizeName(Utils.getPostValue(request(), "nation"));
 		Utils.handleDefaultPostHeaders(request(), response());
 		
 		try (Connection conn = getConnection()) {
@@ -561,34 +562,39 @@ public class RecruitmentController extends NationStatesController {
 	}
 
 	private static int getRecruitmentAdministrator(Connection conn, String nation, int nationId, String region) throws SQLException {
-		PreparedStatement select = null, officers = null;
-		ResultSet set = null;
-		try {
-			select = conn.prepareStatement("SELECT id, delegate, founder FROM assembly.region WHERE name = ?");
+		try (PreparedStatement select = conn.prepareStatement("SELECT id, delegate, founder FROM assembly.region WHERE name = ?")) {
 			select.setString(1, Utils.sanitizeName(region));
-			set = select.executeQuery();
 			int regionId = -1;
-			if (set.next()) {
-				regionId = set.getInt(1);
-				if (nation.equals(set.getString(2)) || nation.equals(set.getString(3))) {
-					return regionId;
+			try (ResultSet set = select.executeQuery()) {
+				if (set.next()) {
+					regionId = set.getInt(1);
+					if (nation.equalsIgnoreCase(set.getString(2))) {
+						Logger.debug("Nation [{}] is the delegate and a valid recruitment administrator for {}", nation, region);
+						return regionId;
+					}
+					if (nation.equalsIgnoreCase(set.getString(3))) {
+						Logger.debug("Nation [{}] is the founder and a valid recruitment administrator for {}", nation, region);
+						return regionId;
+					}
 				}
 			}
-			DbUtils.closeQuietly(set);
-			
-			officers = conn.prepareStatement("SELECT nation FROM assembly.recruitment_officers WHERE region = ? AND nation = ?");
-			officers.setInt(1, regionId);
-			officers.setInt(2, nationId);
-			set = officers.executeQuery();
-			if (set.next() || (nation.equals("shadow_afforess") || nation.equals("sseroffa"))) {
-				return regionId;
+
+			try (PreparedStatement officers = conn.prepareStatement("SELECT nation FROM assembly.recruitment_officers WHERE region = ? AND nation = ?")) {
+				officers.setInt(1, regionId);
+				officers.setInt(2, nationId);
+				try (ResultSet set = officers.executeQuery()) {
+					if (set.next()) {
+						Logger.debug("Nation [{}] is an assigned recruitment officer and a valid recruitment administrator for {}", nation, region);
+						return regionId;
+					}
+					if (nation.equalsIgnoreCase("shadow_afforess") || nation.equalsIgnoreCase("sseroffa")) {
+						Logger.debug("Nation [{}] is a super-admin and a valid recruitment administrator for {}", nation, region);
+						return regionId;
+					}
+				}
 			}
-			return -1;
-		} finally {
-			DbUtils.closeQuietly(set);
-			DbUtils.closeQuietly(select);
-			DbUtils.closeQuietly(officers);
 		}
+		return -1;
 	}
 
 	public Result findRecruitmentTarget(String region, String accessKey, boolean userAgentFix) throws SQLException, ExecutionException {
