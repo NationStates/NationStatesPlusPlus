@@ -303,7 +303,7 @@ public class Utils {
 		}
 	}
 
-	public static void updateNation(final Connection conn, final DatabaseAccess access, final NationStates api, final String nation, final int id) throws Exception {
+	public static void updateNation(final Connection conn, final DatabaseAccess access, final NationStates api, final String nation, final int id) throws SQLException {
 		NationData.Shards.CENSUS_SCORE.clearIds();
 		for (int i = 0; i <= 70; i++) {
 			NationData.Shards.CENSUS_SCORE.addIds(i);
@@ -404,7 +404,7 @@ public class Utils {
 		DbUtils.closeQuietly(result);
 	}
 
-	public static void updateEndorsements(final Connection conn, final NationData data, final DatabaseAccess access, final int nationId) throws Exception {
+	public static void updateEndorsements(final Connection conn, final NationData data, final DatabaseAccess access, final int nationId) throws SQLException {
 		conn.setAutoCommit(false);
 		Savepoint save =  conn.setSavepoint();
 		try {
@@ -434,7 +434,7 @@ public class Utils {
 			
 			conn.commit();
 			conn.releaseSavepoint(save);
-		} catch (Exception e) {
+		} catch (SQLException e) {
 			conn.rollback(save);
 			Logger.error("Rolling back endorsement transaction");
 			throw e;

@@ -1,7 +1,6 @@
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
-import java.net.UnknownHostException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.concurrent.ConcurrentHashMap;

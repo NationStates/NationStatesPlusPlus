@@ -1,14 +1,18 @@
 import sbt._
 import Keys._
-import play.Project._
+import play.Play.autoImport._
+import PlayKeys._
 
-object ApplicationBuild extends Build {
+name := "Assembly"
 
-  val appName         = "Assembly"
-  val appVersion      = "1.0-SNAPSHOT"
+version := "1.0-SNAPSHOT"
 
-  val appDependencies = Seq(
-    javaCore, filters, 
+lazy val root = (project in file(".")).enablePlugins(PlayJava)
+
+scalaVersion := "2.11.1"
+
+libraryDependencies ++= Seq(
+	javaJdbc, filters,
 	"mysql" % "mysql-connector-java" % "5.1.31",
 	"commons-io" % "commons-io" % "2.4",
 	"commons-lang" % "commons-lang" % "2.6",
@@ -26,9 +30,3 @@ object ApplicationBuild extends Build {
 	"org.mongodb" % "mongo-java-driver" % "2.12.2",
 	"net.schmizz" % "sshj" % "0.9.0"
   )
-
-  val main = play.Project(appName, appVersion, appDependencies).settings(
-    resolvers += "Typesafe's Repository" at "http://repo.typesafe.com/typesafe/maven-releases"
-  )
-
-}

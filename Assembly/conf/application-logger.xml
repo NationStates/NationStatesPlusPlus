@@ -2,7 +2,7 @@
     <appender name="FILE_DEBUG" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>${application.home}/logs/debug_log.log</file>
         <encoder>
-            <pattern>%date - [%level] - %logger{15}: %message%n%xException%n</pattern>
+            <pattern>%date [%level]: %logger{40}: %message%n%xException</pattern>
         </encoder>
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
             <level>DEBUG</level>
@@ -15,7 +15,7 @@
 	<appender name="FILE_INFO" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>${application.home}/logs/info_log.log</file>
         <encoder>
-            <pattern>%date - [%level] - %logger{15}: %message%n%xException%n</pattern>
+            <pattern>%date [%level]: %logger{40}: %message%n%xException</pattern>
         </encoder>
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
             <level>INFO</level>
@@ -28,7 +28,7 @@
     <appender name="FILE_WARN" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>${application.home}/logs/warn_log.log</file>
         <encoder>
-            <pattern>%date - [%level] - %logger{15}: %message%n%xException%n</pattern>
+            <pattern>%date [%level]: %logger{40}: %message%n%xException</pattern>
         </encoder>
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
             <level>WARN</level>
@@ -43,7 +43,7 @@
 
 	<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
 		<encoder>
-            <pattern>%coloredLevel %logger{15} - %message%n%xException{5}</pattern>
+            <pattern>%coloredLevel %logger{40} - %message%n%xException{5}</pattern>
         </encoder>
 		<filter class="ch.qos.logback.classic.filter.ThresholdFilter">
             <level>INFO</level>
@@ -52,8 +52,10 @@
 
     <logger name="play" level="DEBUG"/>
     <logger name="application" level="DEBUG" />
+	<logger name="net.nationstatesplusplus.assembly.DumpUpdateTask" level="DEBUG" />
+	<logger name="net.nationstatesplusplus.assembly.FlagUpdateTask" level="DEBUG" />
 
-    <root level="WARN">
+    <root level="INFO">
         <appender-ref ref="FILE_DEBUG"/>
 		<appender-ref ref="FILE_INFO"/>
         <appender-ref ref="FILE_WARN"/>
