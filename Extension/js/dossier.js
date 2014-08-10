@@ -24,24 +24,28 @@
 
 		var html = "<hr id='dossier_seperator'><div id='nation_dossier'><h2>National Dossier</h2>";
 		
-		var ndossierHTML = "<i style='position: absolute; top: 210px; left: 500px;'><a href='page=dossier_advanced'>(Advanced)</a></i>";
-		ndossierHTML += "<button id='refresh_ndossier' title='Refresh Dossier' style='right: 400px !important' class='button clear-dossier'>Refresh</button>";
-		ndossierHTML += "<button id='switch_to_region_dossier' title='Switch to Region Dossier' style='right: 200px !important' class='button clear-dossier'>View Regional Dossier</button>";
-		ndossierHTML += "<button id='clear_national_dossier' title='Clear Dossier' class='button danger clear-dossier'>Clear National Dossier</button>";
+		var ndossierHTML = "<i id='advanced_id' style='position: absolute; top: 180px; left: 500px;'><a href='page=dossier_advanced'>(Advanced)</a></i>";
+		ndossierHTML += "<button id='refresh_ndossier' title='Refresh Dossier' style='right: 400px !important; margin-top: -20px;' class='button clear-dossier'>Refresh</button>";
+		ndossierHTML += "<button id='switch_to_region_dossier' title='Switch to Region Dossier' style='right: 200px !important; margin-top: -20px;' class='button clear-dossier'>View Regional Dossier</button>";
+		ndossierHTML += "<button id='clear_national_dossier' title='Clear Dossier' style='margin-top: -20px;' class='button danger clear-dossier'>Clear National Dossier</button>";
 		
 		html += ndossierHTML;
-		html += "</div><div id='region_dossier' style='display:none'><h2>Regional Dossier</h2>";
-		
-		var rdossierHTML = "<hr id='dossier_seperator'><div id='nation_dossier'><h2>National Dossier</h2>";
-		rdossierHTML += "<button id='refresh_rdossier' title='Refresh Dossier' style='right: 400px !important' class='button clear-dossier'>Refresh</button>";
-		rdossierHTML += "<button id='switch_to_nation_dossier' title='Switch to Nation Dossier' style='right: 205px !important' class='button clear-dossier'>View National Dossier</button>";
-		rdossierHTML += "<button id='clear_regional_dossier' title='Clear Dossier' class='button danger clear-dossier'>Clear Regional Dossier</button>";
+
+		rdossierHTML = "</div><div id='region_dossier' style='display:none'><h2>Regional Dossier</h2>";
+		rdossierHTML = "<button id='refresh_rdossier' title='Refresh Dossier' style='right: 400px !important; margin-top: -20px;' class='button clear-dossier'>Refresh</button>";
+		rdossierHTML += "<button id='switch_to_nation_dossier' title='Switch to Nation Dossier' style='right: 205px !important; margin-top: -20px;' class='button clear-dossier'>View National Dossier</button>";
+		rdossierHTML += "<button id='clear_regional_dossier' title='Clear Dossier' style='margin-top: -20px;' class='button danger clear-dossier'>Clear Regional Dossier</button>";
 		
 		html += rdossierHTML;
 		html += "</div>";
 		
 		$("#content").html("<div id='dossier_header'><h1>" + header + "</h1>" + $(".searchbox:first")[0].outerHTML + "</div>" + html);
 		$(".searchbox:first").prop("id", "toggle_dossier_div");
+		if (isRiftTheme()) {
+			$("#toggle_dossier_div").css("top", "61px");
+			$("#nation_dossier button").css("margin-top", "-60px");
+			$("#advanced_id").css("top", "140px");
+		}
 		
 		$("#clear_national_dossier, #clear_regional_dossier").click(function(event) {
 			var isRegional = $(this).attr("id") == "clear_regional_dossier";
@@ -261,6 +265,9 @@
 					result = parseRegionDossier(html);
 				} else {
 					result = parseNationDossier(html);
+				}
+				if ((region ? $("#region_dossier") : $("#nation_dossier")).find(".last_dossier_element").length > 0) {
+					return;
 				}
 				dossier.append(result.html);
 				if (animate) {

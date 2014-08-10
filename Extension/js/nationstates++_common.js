@@ -219,19 +219,14 @@ function isDarkTheme() {
 	return $("link[href^='/ns.dark']").length > 0;
 }
 
-function isRecruitmentOfficer(callback) {
-	if (getUserNation() != "") {
-		$.get("https://nationstatesplusplus.net/api/recruitment/officers/get?region=" + getUserRegion() + "&includeAdmins=true", function(data) {
-			if (data != null) {
-				for (var i = 0; i < data.length; i += 1) {
-					if (data[i].name == getUserNation()) {
-						callback();
-						return;
-					}
-				}
-			}
-		});
-	}
+function isCenturyTheme() {
+	//Todo: turn this on when rift is released
+	//return $("link[href^='/ns.century']").length > 0;
+	return $(".bel").length == 0;
+}
+
+function isRiftTheme() {
+	return !isCenturyTheme();
 }
 
 /**
@@ -594,6 +589,9 @@ function doAuthorizedPostRequestInternal(nation, url, authToken, postData, succe
 	Returns the nation name of the active user, or empty string if no active user.
 */
 function getUserNation() {
+	if ($(".bannernation a").attr("href")) {
+		return $(".bannernation a").attr("href").trim().substring(8);
+	}
 	if ($(".STANDOUT:first").attr("href")) {
 		return $(".STANDOUT:first").attr("href").substring(7);
 	} else {
@@ -609,6 +607,8 @@ function getUserNation() {
 	Returns the region name of the active user, or empty string if no active user.
 */
 function getUserRegion() {
+	if ($(".menu li:first a:first").attr("href") && $(".menu li:first a:first").attr("href").startsWith("region="))
+		return $(".menu li:first a:first").attr("href").substring(7);
 	return $(".STANDOUT:eq(1)").attr("href") ? $(".STANDOUT:eq(1)").attr("href").substring(7) : "";
 }
 
@@ -616,6 +616,9 @@ function getUserRegion() {
 	Returns the name of the nation the user is currently viewing, or empty string if none.
 */
 function getVisibleNation() {
+	if ($(".newtitlename a").attr("href")) {
+		return $(".newtitlename a").attr("href").trim().substring(8);
+	}
 	return $(".nationname > a").attr("href") ? $(".nationname > a").attr("href").trim().substring(8) : "";
 }
 

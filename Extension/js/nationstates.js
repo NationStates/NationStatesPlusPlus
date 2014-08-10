@@ -10,16 +10,20 @@
 		return;
 	}
 	var menu = $(".menu");
-	$("<li><a href='//www.nationstates.net/page=activity/view=world/filter=all'>ACTIVITY</a></li>").insertAfter(menu.find("a[href='page=dossier']").parent());
+	if (!isRiftTheme()) {
+		$("<li><a href='//www.nationstates.net/page=activity/view=world/filter=all'>ACTIVITY</a></li>").insertAfter(menu.find("a[href='page=dossier']").parent());
+	}
 	checkPanelAlerts();
 	//TODO: turn back on some day
 	//addWAProposals();
 
-	(new UserSettings()).child("show_dispatches").on(function(data) {
-		if (!data["show_dispatches"]) {
-			menu.find("a[href='page=dispatches']").hide();
-		}
-	}, true);
+	if (!isRiftTheme()) {
+		(new UserSettings()).child("show_dispatches").on(function(data) {
+			if (!data["show_dispatches"]) {
+				menu.find("a[href='page=dispatches']").hide();
+			}
+		}, true);
+	}
 
 	if ($(".STANDOUT").length > 0) {
 		var flagScroll = function() {
@@ -63,7 +67,13 @@
 	}
 
 	function handleDismissAllIssues() {
-		if ($(".menu").find("a[href='page=dilemmas']").html().match(/[0-9]+/) != null) {
+		var hasIssuesToDismiss = false;
+		if (isRiftTheme()) {
+			hasIssuesToDismiss = $("a.bellink[href='/page=dilemmas'] .notificationnumber").length > 0;
+		} else {
+			hasIssuesToDismiss = $(".menu").find("a[href='page=dilemmas']").html().match(/[0-9]+/) != null;
+		}
+		if (hasIssuesToDismiss) {
 			(new UserSettings()).child("dismiss_all").once(function(data) {
 				if (data["dismiss_all"]) {
 					$.post("//www.nationstates.net/page=dilemmas?nspp=1", "dismiss_all=1", function() { });
@@ -79,23 +89,25 @@
 		$("#main").append("<div id='content'></div>");
 	}
 
-	(new UserSettings()).child("automatically_hide_flag").once(function(data) {
-		if (data["automatically_hide_flag"]) {
-			var minHeight = $("#panel").css("min-height");
-			$("#panel").css("min-height", "0px");
-			if ($("#panel").height() - 50 > $(window).height() || ($("#content").length == 0 && userSettings.isEnabled("small_screen_height", false))) {
-				$("#panel_flag").hide();
-				//Use this as a setting to sync with forumside
-				(new UserSettings()).child("small_screen_height").set(true);
-			} else {
-				(new UserSettings()).child("small_screen_height").set(false);
+	if (!isRiftTheme()) {
+		(new UserSettings()).child("automatically_hide_flag").once(function(data) {
+			if (data["automatically_hide_flag"]) {
+				var minHeight = $("#panel").css("min-height");
+				$("#panel").css("min-height", "0px");
+				if ($("#panel").height() - 50 > $(window).height() || ($("#content").length == 0 && userSettings.isEnabled("small_screen_height", false))) {
+					$("#panel_flag").hide();
+					//Use this as a setting to sync with forumside
+					(new UserSettings()).child("small_screen_height").set(true);
+				} else {
+					(new UserSettings()).child("small_screen_height").set(false);
+				}
+				$("#panel").css("min-height", minHeight);
 			}
-			$("#panel").css("min-height", minHeight);
-		}
-	}, false);
+		}, false);
+	}
 
 	//Unread forum posts
-	if (window.chrome) {
+	if (window.chrome && !isRiftTheme()) {
 		(new UserSettings()).child("show_unread_forum_posts").on(function(data) {
 			if (data["show_unread_forum_posts"]) {
 				(new UserSettings()).child("unread_forum_posts").once(function(data) {
@@ -193,7 +205,14 @@
 		var chk = $("input[name='chk']");
 		if (chk.length != 0) {
 			$.get("/page=tgsettings?nspp=1", function(html) {
-				if ($(html).find(".STANDOUT:first").attr("href").substring(7) == getUserNation()) {
+				var nation = "";
+				if ($(html).find(".bannernation a").attr("href")) {
+					nation = $(html).find(".bannernation a").attr("href").trim().substring(8);
+				} else {
+					nation = $(html).find(".STANDOUT:first").attr("href").substring(7);
+				}
+				
+				if (nation == getUserNation()) {
 					chk.val($(html).find("input[name='chk']").val());
 				} else {
 					console.log("Changed nations, can not update chk code");
@@ -241,7 +260,14 @@
 		if (getUserNation() != "") {
 			$.get("/page=panel/template-overall=none?nspp=1", function(html) {
 				//Verify we haven't switched nations/logged out
-				if ($(html).find(".STANDOUT:first").attr("href").substring(7) == getUserNation()) {
+				var nation = "";
+				if ($(html).find(".bannernation a").attr("href")) {
+					nation = $(html).find(".bannernation a").attr("href").trim().substring(8);
+				} else if ($(html).find(".STANDOUT:first").attr("href")) {
+					nation = $(html).find(".STANDOUT:first").attr("href").substring(7);
+				}
+				
+				if (nation == getUserNation()) {
 					var page = $(html);
 					var panel = $("#panel");
 					if ($("#panel").length == 0) panel = $(document);
@@ -251,7 +277,7 @@
 					panel.find("a[href='page=news']").html(page.find("a[href='page=news']").html());
 				}
 			});
-			if (window.chrome) {
+			if (window.chrome && !isRiftTheme()) {
 				(new UserSettings()).child("show_unread_forum_posts").once(function(data) {
 					if (!data["show_unread_forum_posts"]) {
 						return;

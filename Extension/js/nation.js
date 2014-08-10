@@ -20,28 +20,34 @@
 					window.history.replaceState(event.state, "", "/nation=" + getVisibleNation() + "/detail=wa_stats/stat=" + event.state.page);
 				}
 			};
-			$(window).on("resize", function() {
-				if ($("body").width() < 1100) {
-					$("#wa_stats_link").html("W.A.");
-				} else {
-					$("#wa_stats_link").html("World Assembly");
-				}
-				if ($("body").width() < 1000) {
-					$("a[href='nation=" + getVisibleNation() + "/detail=economy']").html("Econ.");
-					$("a[href='nation=" + getVisibleNation() + "/detail=government']").html("Gov't");
-					$("a[href='page=dispatches/nation=" + getVisibleNation() + "']").html("Dispatch");
-				} else {
-					$("a[href='nation=" + getVisibleNation() + "/detail=economy']").html("Economy");
-					$("a[href='nation=" + getVisibleNation() + "/detail=government']").html("Government");
-					$("a[href='page=dispatches/nation=" + getVisibleNation() + "']").html("Dispatches");
-				}
-			});
-			$(window).trigger("resize");
+			if (!isRiftTheme()) {
+				$(window).on("resize", function() {
+					if ($("body").width() < 1100) {
+						$("#wa_stats_link").html("W.A.");
+					} else {
+						$("#wa_stats_link").html("World Assembly");
+					}
+					if ($("body").width() < 1000) {
+						$("a[href='nation=" + getVisibleNation() + "/detail=economy']").html("Econ.");
+						$("a[href='nation=" + getVisibleNation() + "/detail=government']").html("Gov't");
+						$("a[href='page=dispatches/nation=" + getVisibleNation() + "']").html("Dispatch");
+					} else {
+						$("a[href='nation=" + getVisibleNation() + "/detail=economy']").html("Economy");
+						$("a[href='nation=" + getVisibleNation() + "/detail=government']").html("Government");
+						$("a[href='page=dispatches/nation=" + getVisibleNation() + "']").html("Dispatches");
+					}
+				});
+				$(window).trigger("resize");
+			}
 		}
 	}
 	
 	function showNSWikiLink() {
-		$(".nationnavbar").append($('<div/>').html(" &#8226; ").text() + "<a href='http://nswiki.org/Nation/" + $(".nationname span").text() + "'>NSWiki</a>");
+		if (isRiftTheme()) {
+			$(".nationnavbar").append("<a href='http://nswiki.org/Nation/" + $(".newtitlename a").text() + "'><i class='fa fa-university'></i><span class='navtext'>NSWiki</span></a>");
+		} else {
+			$(".nationnavbar").append($('<div/>').html(" &#8226; ").text() + "<a href='http://nswiki.org/Nation/" + $(".nationname span").text() + "'>NSWiki</a>");
+		}
 	}
 
 	function displayAfforess() {
@@ -106,31 +112,49 @@
 	}
 
 	function showNationChallenge() {
-		if (getUserNation() != getVisibleNation()) {
-			$(".nationnavbar").append($('<div/>').html(" &#8226; ").text() + "<a id='challenge-link' href='/page=challenge?entity_name=" + getVisibleNation() + "'>Challenge</a>");
+		if (isRiftTheme()) {
+			if (getUserNation() != getVisibleNation()) {
+				$(".nationnavbar").append("<a id='challenge-link' href='/page=challenge?entity_name=" + getVisibleNation() + "'><i class='fa fa-empire'></i><span class='navtext'>Challenge</span></a>");
+			} else {
+				$(".nationnavbar").append("<a id='challenge-link' href='/page=challenge'><i class='fa fa-empire'></i><span class='navtext'>Challenge</span></a>");
+			}
 		} else {
-			$(".nationnavbar").append($('<div/>').html(" &#8226; ").text() + "<a id='challenge-link' href='/page=challenge'>Challenge</a>");
+			if (getUserNation() != getVisibleNation()) {
+				$(".nationnavbar").append($('<div/>').html(" &#8226; ").text() + "<a id='challenge-link' href='/page=challenge?entity_name=" + getVisibleNation() + "'>Challenge</a>");
+			} else {
+				$(".nationnavbar").append($('<div/>').html(" &#8226; ").text() + "<a id='challenge-link' href='/page=challenge'>Challenge</a>");
+			}
 		}
 	}
 
 	function showWorldAssemblyInfo() {
-		$(".nationnavbar").append($('<div/>').html(" &#8226; ").text() + "<a id='wa_stats_link' href='nation=" + getVisibleNation() + "/detail=wa_stats'>World Assembly</a>");
+		if (isRiftTheme()) {
+			$(".nationnavbar").append("<a id='wa_stats_link' href='nation=" + getVisibleNation() + "/detail=wa_stats'><i class='fa fa-users'></i><span class='navtext'>World Assembly</span></a>");
+		} else {
+			$(".nationnavbar").append($('<div/>').html(" &#8226; ").text() + "<a id='wa_stats_link' href='nation=" + getVisibleNation() + "/detail=wa_stats'>World Assembly</a>");
+		}
 		if (getPageDetail() == "wa_stats") {
 			$(".nationnavbar a").removeClass("quietlink");
 			$("#wa_stats_link").addClass("quietlink");
 			
 			$("form").filter(function() { return $(this).attr("action") == null || $(this).attr("action").startsWith("page"); }).remove();
 			
-			$($("#content").children()).each(function() {
-				
-				if ($(this).attr("id") == "namebox" || $(this).attr("class") == "widebox2" || $(this).attr("id") == "rinf") {
-					return;
-				}
-				if ($(this).find("strong .rlink").length > 0 || $(this).attr("class") == "nationnavbar") {
-					return;
-				}
-				$(this).hide();
-			});
+			if (isRiftTheme()) {
+				$(".nationsummary").hide();
+				$(".nationsummary").next().hide();
+				$(".newsbox").hide();
+				$(".newsbox").next().hide();
+			} else {
+				$($("#content").children()).each(function() {
+					if ($(this).attr("id") == "namebox" || $(this).attr("class") == "widebox2" || $(this).attr("id") == "rinf") {
+						return;
+					}
+					if ($(this).find("strong .rlink").length > 0 || $(this).attr("class") == "nationnavbar") {
+						return;
+					}
+					$(this).hide();
+				});
+			}
 			$("<div id='wa_stats'></div>").insertAfter($(".nationnavbar"));
 			openWorldAssemblyStats();
 		}
@@ -257,7 +281,7 @@
 			
 			var end = data.indexOf('}', index);
 			var score = data.substring(index, end).trim();
-			var html = $("#rinf").html();
+			var html = $("#rinf, .newrinfbubble .newmainlinebubblebottom").html();
 			
 			var nextScore = 0;
 			var endos = 1;
@@ -269,8 +293,9 @@
 			//Add * for GCR's
 			var gcrs = {the_south_pacific: true, the_north_pacific: true, the_pacific: true, the_west_pacific: true, the_east_pacific: true, lazarus: true, balder: true, osiris: true, the_rejected_realms: true};
 			
-			html = html.substring(0, html.length - 4)
-			html = html + " (<a href='/page=compare/nations=" + getVisibleNation() + "?censusid=65'>" + score;
+			if (!isRiftTheme())
+				html = html.substring(0, html.length - 4);
+			html += " (<a href='/page=compare/nations=" + getVisibleNation() + "?censusid=65'>" + score;
 			//Gaining influence
 			if (nextScore > score) {
 				var region = $(".rlink:first").attr("href").substring(7);
@@ -279,8 +304,10 @@
 					html = html + '<span title="Influence growth in Game Created Region\'s is not well-predictable, and this estimate may be off">*</span>';
 				}
 			}
-			html = html + "</a>)</p>"
-			$("#rinf").html(html);
+			html += "</a>)";
+			if (!isRiftTheme())
+				html += "</p>";
+			$("#rinf, .newrinfbubble .newmainlinebubblebottom").html(html);
 		});
 	}
 })();

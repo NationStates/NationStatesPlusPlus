@@ -69,11 +69,7 @@ function setupRegionPage() {
 			//Move msg box to top
 			relocatePostMessageBox();
 			//Relocate ads
-			(new UserSettings()).child("hide_ads").once(function(data) {
-				if (!data["hide_ads"]) {
-					handleRMBAds();
-				}
-			}, false);
+			handleRMBAds();
 			//Move forum view link
 			var forumViewHTML = $('#content .rmbview')[0].outerHTML;
 			$('#content .rmbview').remove();
@@ -198,8 +194,9 @@ function handleRMBAds() {
 			adBox.css("border", "2px solid black");
 		}
 		if (lastTop != filler.offset().top) {
-			adBox.css("position", "absolute").css("top", filler.offset().top + 5 + "px").css("margin-left", "16.5%").css("margin-left", "calc(50% - " + (adBox.width() / 2 + 100) + "px")
+			adBox.css("position", "absolute").css("top", filler.offset().top + 5 + "px").css("margin-left", "16.5%").css("margin-left", "calc(50% - " + (adBox.width() / 2 + 100) + "px");
 			lastTop = filler.offset().top;
+			filler.height(adBox.height());
 		}
 		setTimeout(updateAdPosition, 50);
 	};
@@ -411,6 +408,9 @@ function addFontAwesomeIcons() {
 		var parent = regionalPower.parent();
 		parent.addClass("regional_power");
 		parent.css("right", Math.max($("img.rflag:first").width() - parent.width() + 8, 20) + "px");
+		if (isRiftTheme()) {
+			parent.css("top", "170px");
+		}
 		if ($("strong:contains('Founder'):first").length == 0) {
 			$("strong:contains('WA Delegate'):first").parent().css("min-height", "50px");
 		}
@@ -814,7 +814,6 @@ function handleInfiniteScroll() {
 			var html = "";
 			var newPosts = [];
 			$($(data).get().reverse()).each( function() {
-				console.log("infinite scroll id: " + $(this).attr("id"));
 				if ($("#" +  $(this).attr("id")).length == 0) {
 					newPosts.push($(this).attr("id").substring(1));
 					html += $(this).prop("outerHTML");

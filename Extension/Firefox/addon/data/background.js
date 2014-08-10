@@ -21,21 +21,6 @@ var pageUrl = window.location.href;
 		return;
 	}
 	$("#banneradbox").remove();
-	var settings = localStorage.getItem("settings")
-	if (settings != null && settings.indexOf('"hide_ads":false') == -1) {
-		$("#paneladbox").remove();
-		$("a[href='/page=store']").remove()
-		$("#sidebaradbox").remove();
-		$("#footeradbox").remove();
-		$("#removead").remove();
-		$("#maxad").remove();
-		$("#regionadbox").remove();
-		$("#dilemmasadbox").remove();
-		$("#google_image_div").remove();
-		$("iframe[name='google_osd_static_frame']").remove();
-		$("#panelad").remove();
-		$("#regionbanneradbox").remove();
-	}
 
 	if (localStorage.getItem("ignore_theme_warning") != "true" && $("#outdated").length == 0) {
 		if (document.head.innerHTML.indexOf("antiquity") != -1) {

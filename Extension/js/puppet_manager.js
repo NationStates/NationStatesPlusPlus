@@ -1,7 +1,11 @@
 (function(){
 	if ($("#ns_setting").length == 0) {
 		var banner = $("#banner, #nsbanner");
-		$(banner).append("<div id='ns_setting'><a href='//www.nationstates.net/page=blank?ns_settings=true' class='banner-theme' style='right: 138px;'>NS++ Settings</a></div>");
+		if (isRiftTheme()) {
+			$("<div class='bel' id='ns_setting'><a href='//www.nationstates.net/page=blank?ns_settings=true' class='bellink'><i class='fa fa-wrench'></i>NS++ Settings</a></div>").insertAfter($(".belspacer.belspacermain .belspacer"));
+		} else {
+			$(banner).append("<div id='ns_setting'><a href='//www.nationstates.net/page=blank?ns_settings=true' class='banner-theme' style='right: 138px;'>NS++ Settings</a></div>");
+		}
 		if (window.location.href.indexOf('forum.nationstates.net/') == -1 ) {
 			$(banner).append("<div id='puppet_setting' style='display:none;'><a href='javascript:void(0)' class='banner-theme' style='right: 248px;'>Puppets</a></div>");
 		}

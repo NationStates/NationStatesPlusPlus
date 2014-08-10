@@ -19,22 +19,6 @@ var pageUrl = window.location.href;
 		return;
 	}
 	$("#banneradbox").remove();
-	var settings = localStorage.getItem("settings")
-	if (settings != null && settings.indexOf('"hide_ads":false') == -1) {
-		$("#paneladbox").remove();
-		$("a[href='/page=store']").remove()
-		$("#sidebaradbox").remove();
-		$("#footeradbox").remove();
-		$("#removead").remove();
-		$("#maxad").remove();
-		$("#regionadbox").remove();
-		$("#dilemmasadbox").remove();
-		$("#google_image_div").remove();
-		$("iframe[name='google_osd_static_frame']").remove();
-		$("#panelad").remove();
-		$("#regionbanneradbox").remove();
-	}
-
 	if (localStorage.getItem("ignore_theme_warning") != "true" && $("#outdated").length == 0) {
 		if (document.head.innerHTML.indexOf("antiquity") != -1) {
 			$("#main").prepend("<div id='outdated' style='height: 60px; width: 100%; background-image: linear-gradient(-45deg, rgba(255, 255, 0, 1) 25%, transparent 25%, transparent 50%, rgba(255, 255, 0, 1) 50%, rgba(255, 255, 0, 1) 75%, transparent 75%, transparent); background-color: #F00; background-size: 50px 50px;font-size: 56px;font-family: impact;text-align: center;'><a style='color: black;' href='javascript:void(0)' id='fix_theme'>NationStates++ Does Not Support The Antiquity Theme</a></div>");

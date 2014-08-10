@@ -5,9 +5,14 @@ var newspaperAdminHTML = '<form class="form-horizontal"><fieldset><div class="co
 		return;
 	}
 	var menu = $(".menu");
-	$("<li id='regional_newspaper' style='display:none;'><a id='rnews' style='display: inline;' href='//www.nationstates.net/page=blank/?regional_news=" + getUserRegion() + "'>REGIONAL NEWS<span name='nag'></span></a></li>").insertAfter($("#wa_props").length > 0 ? $("#wa_props") : menu.find("a[href='page=un']").parent());
-	$("<li id='gameplay_newspaper' style='display:none;'><a id='gnews' style='display: inline;' href='//www.nationstates.net/page=blank/?gameplay_news'>GAMEPLAY NEWS<span name='nag'></span></a></li>").insertAfter($("#regional_newspaper"));
-	$("<li id='roleplay_newspaper' style='display:none;'><a id='rpnews' style='display: inline;' href='//www.nationstates.net/page=blank/?roleplay_news'>ROLEPLAY NEWS<span name='nag'></span></a></li>").insertAfter($("#gameplay_newspaper"));
+	
+	if (isRiftTheme()) {
+		$("<li id='regional_newspaper' style='display:none;'><a id='rnews' style='display: inline;' href='//www.nationstates.net/page=blank/?regional_news=" + getUserRegion() + "'><i class='icon-news'></i><div class='paneltext'>REGIONAL NEWS</div><div name='nag' class='notificationnumber' style='display:none'>0</div></a></li>").insertAfter($("#wa_props").length > 0 ? $("#wa_props") : menu.find("a[href='page=un']").parent());
+	} else {
+		$("<li id='regional_newspaper' style='display:none;'><a id='rnews' style='display: inline;' href='//www.nationstates.net/page=blank/?regional_news=" + getUserRegion() + "'>REGIONAL NEWS<span name='nag'></span></a></li>").insertAfter($("#wa_props").length > 0 ? $("#wa_props") : menu.find("a[href='page=un']").parent());
+	}
+	//$("<li id='gameplay_newspaper' style='display:none;'><a id='gnews' style='display: inline;' href='//www.nationstates.net/page=blank/?gameplay_news'>GAMEPLAY NEWS<span name='nag'></span></a></li>").insertAfter($("#regional_newspaper"));
+	//$("<li id='roleplay_newspaper' style='display:none;'><a id='rpnews' style='display: inline;' href='//www.nationstates.net/page=blank/?roleplay_news'>ROLEPLAY NEWS<span name='nag'></span></a></li>").insertAfter($("#gameplay_newspaper"));
 
 	if (window.location.href.indexOf("regional_news") != -1) {
 		$.get("https://nationstatesplusplus.net/api/newspaper/region/?region=" + $.QueryString["regional_news"], function(json) {
@@ -78,17 +83,24 @@ var newspaperAdminHTML = '<form class="form-horizontal"><fieldset><div class="co
 				var lastRead = data.newspapers[event.json.newspaper_id];
 				var html = "";
 				if (lastRead == null || event.json.timestamp > lastRead) {
-					html = " (*)";
+					html = " (1)";
 				}
-				$(selector).html(html);
+				if (isRiftTheme()) {
+					if (html.length > 0)
+						$(selector).html(1).show();
+					else
+						$(selector).html(0).hide();
+				} else {
+					$(selector).html(html);
+				}
 			}, []);
 			$(selector).parents("li").attr("news-id", event.json.newspaper_id).show();
 		}
 		return handler;
 	}
-	$(window).on("websocket.gameplay_news_sidebar", new createEventHandler("#gnews span[name='nag']"));
-	$(window).on("websocket.roleplay_news_sidebar", new createEventHandler("#rpnews span[name='nag']"));
-	$(window).on("websocket.regional_news_sidebar", new createEventHandler("#rnews span[name='nag']"));
+	//$(window).on("websocket.gameplay_news_sidebar", new createEventHandler("#gnews span[name='nag']"));
+	//$(window).on("websocket.roleplay_news_sidebar", new createEventHandler("#rpnews span[name='nag']"));
+	$(window).on("websocket.regional_news_sidebar", new createEventHandler("#rnews span[name='nag'], #rnews div[name='nag']"));
 
 	$(window).on("websocket.pending_news_submissions", function(event) {
 		var menu;
@@ -114,7 +126,7 @@ var newspaperAdminHTML = '<form class="form-horizontal"><fieldset><div class="co
 					var article = articles[i];
 					html += "<div class='article_summary'><div style='position:absolute; right: 20px;'><a class='btn edit_article' href='page=blank/?article_editor=" + article.newspaper + "&article=" + article.article_id + "'>Edit Article</a></div><b>Article: </b>" + parseBBCodes(article.title) + "<br/><b>Author: </b>" + parseBBCodes(article.author) + "</br><b>Last Edited: </b>" + (new Date(parseInt(article.timestamp, 10))).customFormat("#D##th# #MMMM# #YYYY#") + "</br><b>Status: </b>" + visibleTypes[article.visible] + "</div>"
 				}
-				$("#inner-content").html(html);
+				$("#inner-content").html(html);				
 			});
 		}).fail(function() {
 			$("#inner-content").html("<span style='color:red'>You do not have permission to view the article database for this newspaper!</span>");
@@ -331,16 +343,17 @@ var newspaperAdminHTML = '<form class="form-horizontal"><fieldset><div class="co
 			$.get("https://nationstatesplusplus.net/api/newspaper/editor/?newspaper=" + id + "&nation=" + getUserNation(), function(data, textStatus, jqXHR) {
 				$(".edit_article").show();
 				$("#manage_newspaper").show();
-				//This just prevents GP and RP news editors from approving articles...sick of their sloppy approvals
-				if (getUserNation() == "shadow_afforess" || id > 1) {
-					$.get("https://nationstatesplusplus.net/api/newspaper/lookup/?id=" + id + "&hideBody=true&visible=3", function(json) {
-						if (json.articles.length > 0) {
-							$("a.pending_articles").html("Pending Articles (" + json.articles.length + ")").show();
-						}
-					});
-				}
+				$.get("https://nationstatesplusplus.net/api/newspaper/lookup/?id=" + id + "&hideBody=true&visible=3", function(json) {
+					if (json.articles.length > 0) {
+						$("a.pending_articles").html("Pending Articles (" + json.articles.length + ")").show();
+					}
+				});
 			}).fail(function() {
 				$("#view_newspaper").show();
+			}).always(function() {
+				if (isRiftTheme()) {
+					$("#view_newspaper, #manage_newspaper").css("top", "75px");
+				}
 			});
 			window.document.title = json.newspaper;
 			$("#newspaper_name").html("<a href='https://nationstatesplusplus.net/newspaper?id=" + id + "'>" + parseBBCodes(json.newspaper) + "</a>");

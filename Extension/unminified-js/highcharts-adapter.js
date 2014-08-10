@@ -19,6 +19,9 @@
 	}	
 
 	function getVisibleNation() {
+		if ($(".bannernation a").length > 0) {
+			return $(".bannernation a").attr("href").trim().substring(8);
+		}
 		return $(".nationname > a").attr("href") ? $(".nationname > a").attr("href").trim().substring(8) : "";
 	}
 
@@ -34,7 +37,7 @@
 			chart.visibleNation = $("#highcharts_graph").attr("visible_nation");
 			chart.showInfluence = $("#highcharts_graph").attr("show_influence") == "true";
 			$("#highcharts_graph").remove();
-			
+
 			if (chart.type == "region_chart" && getVisibleRegion() == chart.region) {
 				drawRegionPopulationChart(chart.region, chart.title);
 			} else if (chart.type == "set_chart_size") {
