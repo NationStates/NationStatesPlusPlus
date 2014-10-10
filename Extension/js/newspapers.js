@@ -110,7 +110,11 @@ var newspaperAdminHTML = '<form class="form-horizontal"><fieldset><div class="co
 
 		menu.find("span[name='pending-nag']").remove();
 		if (event.json.submissions > 0) {
-			menu.append("<span style='color:red;' name='pending-nag'> (" + event.json.submissions + ")</span>");
+			if (isRiftTheme()) {
+				menu.append("<span class='notificationnumber' style='background-color:red;' name='pending-nag'>" + event.json.submissions + "</span>");
+			} else {
+				menu.append("<span style='color:red;' name='pending-nag'> (" + event.json.submissions + ")</span>");
+			}
 		}
 	});
 

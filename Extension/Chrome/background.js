@@ -75,42 +75,40 @@ function loadJavascript() {
 	} else if (pageUrl.indexOf('forum.nationstates.net/') > -1 ) {
 		console.log('[NationStates++] Detected NationStates Forum Page. Loading...');
 		addStylesheet("//www.nationstates.net/ghbuttons_v2.css", false);
-		$("#sidebaradbox").hide();
-		var settings = getSettings();
-		settings.update();
 
 		if (window.location.href.indexOf("posting.php?mode=post&f=15") != -1) {
 			$("#postingbox").find(".inner:first").prepend("<div style='font-size: 16px; color: red; font-weight: bold; text-align: center;'>If you are reporting a bug in NationStates, be sure you disable NationStates++ and reproduce the bug to verify that it is not a bug with the NationStates++ extension first!</div>");
 		}
 
-		if (settings.isEnabled("highlight_op_posts")) {
+		//if (settings.isEnabled("highlight_op_posts")) {
 			var color = hexToRgb(settings.getValue("highlight_color", "#39EE00"));
 			color.alpha = parseFloat(settings.getValue("highlight_color_transparency", "0.1"));
 			$("body").append("<style type='text/css'>.op_posts { background-color: rgba(" + color.r + ", " + color.g + ", " + color.b + ", " + color.alpha + ") !important; }</style>");
 			highlightAuthorPosts();
-		}
+		//}
 
-		if (settings.isEnabled("floating_sidepanel")) {
+		/*if (settings.isEnabled("floating_sidepanel")) {
+			$("#sidebaradbox").hide();
 			$("#nssidebar").css("margin-top", "-" + Math.min($(window).scrollTop(), 100) + "px");
 			$("#nssidebar").find("iframe").css("height", Math.max($(window).height(), 800) + "px");
 			$( window ).scroll(function() {
 				$("#nssidebar").css("margin-top", "-" + Math.min($(window).scrollTop(), 100) + "px");
 			});
 			$("#nssidebar").css("position", "fixed");
-		}
+		}*/
 
-		if (settings.isEnabled("egosearch_ignore")) {
+		//if (settings.isEnabled("egosearch_ignore")) {
 			showForumEgoposts();
-		}
+		//}
 
-		if (settings.isEnabled("post_ids")) {
+		//if (settings.isEnabled("post_ids")) {
 			if (window.location.href.indexOf("viewtopic.php") != -1) {
 				$("div.post").each(function() {
 					var marginLeft = 11 + (8 - $(this).attr("id").substring(1).length) * 4.4;
 					$(this).find(".profile-icons").prepend("<li class='post-id-icon'><a href=" + window.location.href.split("#")[0] + "#" + $(this).attr("id") + " title='Post Number' target='_blank'><span class='post-id-text' style='margin-left:" + marginLeft + "px;'>" + $(this).attr("id").substring(1) + "</span></a></li>");
 				});
 			}
-		}
+		//}
 
 		$(".icon-logout").hide();
 		console.log('[NationStates++] Loading Completed Successfully.');

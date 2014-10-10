@@ -68,10 +68,15 @@
 	
 	function setupRecruitment() {
 		var rProgress = "<div id='rprogress'><span id='rprogress-text'><i class='fa fa-envelope-o' style='margin-right: 5px;'></i>Telegramming: <span id='tg-nation'></span></span><span id='r-sender'></span><div id='rprogress-bar'></div></div>";
-		$("body").prepend(rProgress);
-		$("#content").css("margin-top", "20px");
-		if ($(".regional_power").length > 0) {
-			$(".regional_power").css("top", ($(".regional_power").position().top + 20) + "px");
+		if (isRiftTheme()) {
+			$("#banner").append(rProgress);
+			$("#rprogress").css("top", "60px");
+		} else {
+			$("body").prepend(rProgress);
+			$("#content").css("margin-top", "20px");
+			if ($(".regional_power").length > 0) {
+				$(".regional_power").css("top", ($(".regional_power").position().top + 20) + "px");
+			}
 		}
 		//Support old browsers that do not allow css calc
 		if ($("#rprogress").width() < 10) {

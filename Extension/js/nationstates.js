@@ -222,8 +222,15 @@
 		var localid = $("input[name='localid']");
 		if (localid.length != 0) {
 			$.get("/page=settings?nspp=1", function(html) {
-				if ($(html).find(".STANDOUT:first").attr("href").substring(7) == getUserNation()) {
+				var nation = null;
+				if ($(html).find(".bannernation a").attr("href")) {
+					nation = $(html).find(".bannernation a").attr("href").trim().substring(8);
+				} else if ($(html).find(".STANDOUT:first").attr("href")) {
+					nation = $(html).find(".STANDOUT:first").attr("href").substring(7);
+				}
+				if (nation == getUserNation()) {
 					localid.val($(html).find("input[name='localid']").val());
+					console.log("Updating localid, nation unchanged");
 				} else {
 					console.log("Changed nations, can not update localid code");
 				}

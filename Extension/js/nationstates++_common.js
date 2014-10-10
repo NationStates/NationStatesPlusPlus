@@ -269,7 +269,7 @@ function searchToKeywords(search) {
 function showPuppets() {
 	if ($("#puppet_setting_form").length == 0) {
 		$("#puppet_setting").append("<div id='puppet_setting_form' class='puppet-form'></div>");
-		$("#puppet_setting_form").hover(function() { $("#puppet_setting_form").css('display', 'block').css('opacity', '.75'); }, function() { $("#puppet_setting_form").css('display', 'none'); });
+		$("#puppet_setting_form").hover(function() { $("#puppet_setting_form").css('display', 'block').css('opacity', '1.0'); }, function() { $("#puppet_setting_form").css('display', 'none'); });
 	}
 	$("#puppet_setting_form").css('opacity', '.75').show();
 	
@@ -294,6 +294,10 @@ function showPuppets() {
 	html += "<p class='puppet_creator'><a style='color:white;' href='//www.nationstates.net/page=blank?puppet_creator'>Create New Puppet Nations</a></p>";
 	html += "<p class='puppet_manager'><a style='color:white;' href='//www.nationstates.net/page=blank?puppet_manager'>Manage Puppets</a></p>";
 	$("#puppet_setting_form").html(html);
+	if (isRiftTheme()) {
+		$("#puppet_setting_form").css("top", "50px").css("opacity", "1.0");
+		$("#puppet_setting_form h3").css("text-align", "center").html($("#puppet_setting_form h3").html().toUpperCase());
+	}
 	
 	$("#puppet_nation, #puppet_password").on("keydown", function(event) {
 		if (event.keyCode == 13) {
