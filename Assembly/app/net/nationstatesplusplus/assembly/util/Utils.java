@@ -20,9 +20,12 @@ import javax.net.ssl.HttpsURLConnection;
 import org.apache.commons.dbutils.DbUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.WordUtils;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.type.TypeReference;
+
 import org.joda.time.DateTime;
+import org.joda.time.Duration;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.DateTimeFormatterBuilder;
 
@@ -350,58 +353,64 @@ public class Utils {
 		}
 		statement.append(")");
 		
-		PreparedStatement insert = conn.prepareStatement(statement.toString());
-		insert.setInt(1, nationId);
-		insert.setLong(2, System.currentTimeMillis());
-		for (int i = 0; i <= 70; i++) {
-			insert.setFloat((3 + i), data.censusScore.get(i));
-		}
-		insert.executeUpdate();
-
-		//Check if insert
-		PreparedStatement select = conn.prepareStatement("SELECT nation FROM assembly.newest_nation_shards WHERE nation = ?");
-		select.setInt(1, nationId);
-		ResultSet result = select.executeQuery();
-		if (!result.next()) {
-			statement = new StringBuilder("INSERT INTO assembly.newest_nation_shards (nation, ");
-			for (int i = 0; i <= 70; i++) {
-				statement.append("shard_").append(i);
-				if ( i != 70 ) statement.append(", ");
-			}
-			statement.append(") VALUES (?, ");
-			for (int i = 0; i <= 70; i++) {
-				statement.append("?");
-				if ( i != 70 ) statement.append(", ");
-			}
-			statement.append(")");
-	
-			DbUtils.closeQuietly(insert);
-			insert = conn.prepareStatement(statement.toString());
+		try (PreparedStatement insert = conn.prepareStatement(statement.toString())) {
 			insert.setInt(1, nationId);
+			insert.setLong(2, System.currentTimeMillis());
 			for (int i = 0; i <= 70; i++) {
-				insert.setFloat((2 + i), data.censusScore.get(i));
+				insert.setFloat((3 + i), data.censusScore.get(i));
 			}
 			insert.executeUpdate();
-			DbUtils.closeQuietly(insert);
-		} else {
-			statement = new StringBuilder("UPDATE assembly.newest_nation_shards SET ");
-			for (int i = 0; i <= 70; i++) {
-				statement.append("shard_").append(i).append(" = ?");
-				if ( i != 70 ) statement.append(", ");
-			}
-			statement.append(" WHERE nation = ?");
-	
-			DbUtils.closeQuietly(insert);
-			insert = conn.prepareStatement(statement.toString());
-			for (int i = 0; i <= 70; i++) {
-				insert.setFloat(i + 1, data.censusScore.get(i));
-			}
-			insert.setInt(72, nationId);
-			insert.executeUpdate();
-			DbUtils.closeQuietly(insert);
 		}
-		DbUtils.closeQuietly(select);
-		DbUtils.closeQuietly(result);
+
+		//Drop data over 60 days old
+		try (PreparedStatement delete = conn.prepareStatement("DELETE FROM assembly.nation_shards WHERE nation = ? AND timestamp < ?")) {
+			delete.setInt(1, nationId);
+			delete.setLong(2, System.currentTimeMillis() - Duration.standardDays(60).getMillis());
+			delete.executeUpdate();
+		}
+
+		//Check if it exists, if so update, else insert
+		try (PreparedStatement select = conn.prepareStatement("SELECT nation FROM assembly.newest_nation_shards WHERE nation = ?")) {
+			select.setInt(1, nationId);
+			try (ResultSet result = select.executeQuery()) {
+				if (!result.next()) {
+					statement = new StringBuilder("INSERT INTO assembly.newest_nation_shards (nation, ");
+					for (int i = 0; i <= 70; i++) {
+						statement.append("shard_").append(i);
+						if ( i != 70 ) statement.append(", ");
+					}
+					statement.append(") VALUES (?, ");
+					for (int i = 0; i <= 70; i++) {
+						statement.append("?");
+						if ( i != 70 ) statement.append(", ");
+					}
+					statement.append(")");
+
+					try (PreparedStatement insert = conn.prepareStatement(statement.toString())) {
+						insert.setInt(1, nationId);
+						for (int i = 0; i <= 70; i++) {
+							insert.setFloat((2 + i), data.censusScore.get(i));
+						}
+						insert.executeUpdate();
+					}
+				} else {
+					statement = new StringBuilder("UPDATE assembly.newest_nation_shards SET ");
+					for (int i = 0; i <= 70; i++) {
+						statement.append("shard_").append(i).append(" = ?");
+						if ( i != 70 ) statement.append(", ");
+					}
+					statement.append(" WHERE nation = ?");
+			
+					try (PreparedStatement insert = conn.prepareStatement(statement.toString())) {
+						for (int i = 0; i <= 70; i++) {
+							insert.setFloat(i + 1, data.censusScore.get(i));
+						}
+						insert.setInt(72, nationId);
+						insert.executeUpdate();
+					}
+				}
+			}
+		}
 	}
 
 	public static void updateEndorsements(final Connection conn, final NationData data, final DatabaseAccess access, final int nationId) throws SQLException {

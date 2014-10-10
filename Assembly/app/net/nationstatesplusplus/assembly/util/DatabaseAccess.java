@@ -279,7 +279,6 @@ public class DatabaseAccess {
 			Logger.error("Unable to read user settings for " + nation, e);
 		}
 		
-		//collection.
 		return null;
 	}
 

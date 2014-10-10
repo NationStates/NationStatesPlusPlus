@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
+import net.nationstatesplusplus.assembly.nation.NationSettings;
 import net.nationstatesplusplus.assembly.util.DatabaseAccess;
 import net.nationstatesplusplus.assembly.util.Utils;
 
@@ -15,6 +16,7 @@ import org.apache.commons.dbutils.DbUtils;
 import org.joda.time.Duration;
 import org.spout.cereal.config.yaml.YamlConfiguration;
 
+import com.google.common.collect.Maps;
 import com.limewoodMedia.nsapi.NationStates;
 
 import play.libs.Json;
@@ -230,4 +232,21 @@ public class NationController extends NationStatesController {
 			DbUtils.closeQuietly(conn);
 		}
 	}
+
+	public Result retreiveForumSettings(String nation) throws SQLException, ExecutionException {
+		Utils.handleDefaultPostHeaders(request(), response());
+		final int nationId = getDatabase().getNationId(nation);
+		if (nationId == -1) {
+			return Results.badRequest();
+		}
+		NationSettings settings = getDatabase().getNationSettings(nation);
+		Map<String, Object> json = Maps.newHashMap();
+		json.put("post_ids", settings.getValue("post_ids", true, Boolean.class));
+		json.put("egosearch_ignore", settings.getValue("egosearch_ignore", true, Boolean.class));
+		json.put("highlight_op_posts", settings.getValue("highlight_op_posts", true, Boolean.class));
+		json.put("highlight_color_transparency", settings.getValue("highlight_color_transparency", 0.1, Double.class));
+		json.put("highlight_color", settings.getValue("highlight_color", "#39EE00", String.class));
+		return Results.ok(Json.toJson(json)).as("application/json");
+	}
+
 }
