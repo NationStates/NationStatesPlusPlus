@@ -78,7 +78,8 @@ public class HealthMonitor extends Thread {
 					Logger.error("[HEALTH CHECK] APPLICATION UNRESPONSIVE. LAST HEARTBEAT: " + lastHappeningHeartbeat.get());
 					unresponsive = true;
 				} else if (lastHappening / HAPPENINGS_TIME > (happeningsThreshold / 2 + 1)) {
-					Logger.warn("[HEALTH CHECK] Happening Monitoring Runs have exceeded 51% of the missing time threshold.");
+					float percent = happeningsThreshold / (float)(lastHappening / HAPPENINGS_TIME);
+					Logger.warn("[HEALTH CHECK] Happening Monitoring Runs have exceeded {}% of the missing time threshold.", percent);
 				}
 				
 				long lastEndorun = time - lastEndorsementHeartbeat.get();
@@ -88,7 +89,8 @@ public class HealthMonitor extends Thread {
 					Logger.error("[HEALTH CHECK] APPLICATION UNRESPONSIVE. LAST HEARTBEAT: " + lastEndorsementHeartbeat.get());
 					unresponsive = true;
 				} else if (lastEndorun / ENDORSEMENT_TIME > (endorsementThreshold / 2 + 1)) {
-					Logger.warn("[HEALTH CHECK] Endorsement Monitoring Runs have exceeded 51% of the missing time threshold.");
+					float percent = endorsementThreshold / (float)(lastEndorun / ENDORSEMENT_TIME);
+					Logger.warn("[HEALTH CHECK] Endorsement Monitoring Runs have exceeded {}% of the missing time threshold.", percent * 100);
 				}
 			}
 			
