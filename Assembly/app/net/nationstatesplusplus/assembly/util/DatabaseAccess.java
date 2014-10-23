@@ -25,6 +25,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.collect.Maps;
 import com.mchange.v2.c3p0.ComboPooledDataSource;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
@@ -273,7 +274,12 @@ public class DatabaseAccess {
 					Logger.error("Migrated settings for " + nation + " not found!");
 				}
 			} catch (Exception e) {
-				throw new RuntimeException("Unable to parse nation settings", e);
+				Logger.error("Unable to parse nation settings, falling back to default settings", e);
+				Map<String, Object> data = Maps.newHashMap();
+				data.put("nation", nation);
+				BasicDBObject obj = new BasicDBObject(data);
+				collection.insert(obj);
+				return new MongoSettings(collection, nation);
 			}
 		} catch (ExecutionException e) {
 			Logger.error("Unable to read user settings for " + nation, e);

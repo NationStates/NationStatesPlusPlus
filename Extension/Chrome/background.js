@@ -79,15 +79,28 @@ function loadJavascript() {
 		if (window.location.href.indexOf("posting.php?mode=post&f=15") != -1) {
 			$("#postingbox").find(".inner:first").prepend("<div style='font-size: 16px; color: red; font-weight: bold; text-align: center;'>If you are reporting a bug in NationStates, be sure you disable NationStates++ and reproduce the bug to verify that it is not a bug with the NationStates++ extension first!</div>");
 		}
+		
+		if (getUserNation() != "") {
+			$.get("https://nationstatesplusplus.net/api/nation/settings/forum?name=" + getUserNation(), function(data) {
+				localStorage.setItem("forum_settings", JSON.stringify(data));
+			});
+		}
+		
+		var forumSettings = localStorage.getItem("forum_settings");
+		if (forumSettings == null) {
+			forumSettings = { highlight_color_transparency:0.1, egosearch_ignore:true, highlight_op_posts:true, highlight_color:"#39ee00", post_ids:true, floating_sidepanel: true };
+		} else {
+			forumSettings = JSON.parse(forumSettings);
+		}
 
-		//if (settings.isEnabled("highlight_op_posts")) {
-			var color = hexToRgb(settings.getValue("highlight_color", "#39EE00"));
-			color.alpha = parseFloat(settings.getValue("highlight_color_transparency", "0.1"));
+		if (forumSettings["highlight_op_posts"]) {
+			var color = hexToRgb(forumSettings["highlight_color"]);
+			color.alpha = parseFloat(forumSettings["highlight_color_transparency"]);
 			$("body").append("<style type='text/css'>.op_posts { background-color: rgba(" + color.r + ", " + color.g + ", " + color.b + ", " + color.alpha + ") !important; }</style>");
 			highlightAuthorPosts();
-		//}
+		}
 
-		/*if (settings.isEnabled("floating_sidepanel")) {
+		if (forumSettings["floating_sidepanel"]) {
 			$("#sidebaradbox").hide();
 			$("#nssidebar").css("margin-top", "-" + Math.min($(window).scrollTop(), 100) + "px");
 			$("#nssidebar").find("iframe").css("height", Math.max($(window).height(), 800) + "px");
@@ -95,20 +108,20 @@ function loadJavascript() {
 				$("#nssidebar").css("margin-top", "-" + Math.min($(window).scrollTop(), 100) + "px");
 			});
 			$("#nssidebar").css("position", "fixed");
-		}*/
+		}
 
-		//if (settings.isEnabled("egosearch_ignore")) {
+		if (forumSettings["egosearch_ignore"]) {
 			showForumEgoposts();
-		//}
+		}
 
-		//if (settings.isEnabled("post_ids")) {
+		if (forumSettings["post_ids"]) {
 			if (window.location.href.indexOf("viewtopic.php") != -1) {
 				$("div.post").each(function() {
 					var marginLeft = 11 + (8 - $(this).attr("id").substring(1).length) * 4.4;
 					$(this).find(".profile-icons").prepend("<li class='post-id-icon'><a href=" + window.location.href.split("#")[0] + "#" + $(this).attr("id") + " title='Post Number' target='_blank'><span class='post-id-text' style='margin-left:" + marginLeft + "px;'>" + $(this).attr("id").substring(1) + "</span></a></li>");
 				});
 			}
-		//}
+		}
 
 		$(".icon-logout").hide();
 		console.log('[NationStates++] Loading Completed Successfully.');
@@ -149,9 +162,12 @@ function showForumEgoposts() {
 	//Search page
 	if (pageUrl.indexOf("/search.php?") > -1) {
 		$(".lastpost:not(:first)").parent().append("<button class='ignore-egopost btn'><div class='ignore-egopost-body'>Ignore</div></button>");
-		getUserData(true).update();
-		var userData = getUserData(true);
-		var ignoredTopics = userData.getValue("ignored_topics", {});
+		var ignoredTopics = localStorage.getItem("ignored_topics");
+		if (ignoredTopics == null) {
+			ignoredTopics = {};
+		} else {
+			ignoredTopics = JSON.parse(ignoredTopics);
+		}
 		var modified = false;
 		$("ul.topiclist.topics").find("li.row").find("h3:first a").each(function() {
 			var threadId = $(this).attr("href").match("t=[0-9]+")[0].substring(2);
@@ -165,10 +181,9 @@ function showForumEgoposts() {
 				$(this).parents("li.row").hide();
 			}
 		});
-		userData.setValue("ignored_topics", ignoredTopics);
 		if (modified) {
 			console.log("Updating user data");
-			userData.pushUpdate();
+			localStorage.setItem("ignored_topics", JSON.stringify(ignoredTopics));
 		}
 		$(".lastpost:first").parent().append("<button class='showall-egopost btn'><div class='showall-egopost-body'>Show All Posts</div></button>");
 		$("button.ignore-egopost").on("click", function(event) {
@@ -176,23 +191,24 @@ function showForumEgoposts() {
 			$(this).parents("li.row").animate({ height: 'toggle' }, 500);
 			var threadId = $(this).parents("li.row").find("h3:first a").attr("href").match("t=[0-9]+")[0].substring(2);
 			console.log("Hiding: " + threadId);
-			var userData = getUserData(true);
-			userData.setValue(userData.getValue("ignored_topics", {})[threadId] = true);
-			userData.pushUpdate();
+			
+			var ignoredTopics = localStorage.getItem("ignored_topics");
+			if (ignoredTopics == null) {
+				ignoredTopics = {};
+			} else {
+				ignoredTopics = JSON.parse(ignoredTopics);
+			}
+			ignoredTopics[threadId] = true;
+			localStorage.setItem("ignored_topics", JSON.stringify(ignoredTopics));
 		});
 		$("button.showall-egopost").on("click", function(event) {
 			$("button.showall-egopost").attr("disabled", true);
-			var userData = getUserData(true);
-			var igoredTopics = userData.getValue("ignored_topics", {});
 			$("ul.topiclist.topics").find("li.row:hidden").each(function() {
 				$(this).animate({ height: 'toggle' }, 500);
 				var threadId = $(this).find("h3:first a").attr("href").match("t=[0-9]+")[0].substring(2);
 				console.log("restoring: " + threadId);
 			});
-			userData.setValue("ignored_topics", {});
-			userData.pushUpdate(function() { 
-				$("button.showall-egopost").removeAttr("disabled");
-			});
+			localStorage.removeItem("ignored_topics");
 		});
 	}
 };

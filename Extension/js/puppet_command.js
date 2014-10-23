@@ -121,28 +121,28 @@
 					$("#error_label").html("Attempting Puppet Creation...").removeClass("success_alert").removeClass("danger_alert").addClass("progress_alert").show();
 					var type = ($("#type").val() == "random" ? Math.floor(Math.random() * 38) + 100 : $("#type").val());
 					var history = ($("#history").val() == "random" ? Math.floor(($("#history").find("option").length - 1) * Math.random()) : $("#history").val());
-					$.post("//www.nationstates.net/cgi-bin/build_nation.cgi?nspp=1", questions + "&name=" + encodeURIComponent($("#puppet_name").val()) +
+					$.post("//www.nationstates.net/cgi-bin/build_nation.cgi", questions + "&name=" + encodeURIComponent($("#puppet_name").val()) +
 							"&type=" + type + "&flag=Default.png&history=" + history +
 							"&style=" + $("#style").val() + "&currency=" + encodeURIComponent($("#currency").val()) +
 							"&animal=" + encodeURIComponent($("#animal").val()) + "&slogan=" +
 							encodeURIComponent($("#motto").val()) + 
 							($("#puppet_email").val().length > 0 ? "&email=" + encodeURIComponent($("#puppet_email").val()) : "") + 
 							"&password=" + encodeURIComponent($("#password").val()) + "&confirm_password=" + 
-							encodeURIComponent($("#password").val()) + "&autologin=0&create_nation=Continue&legal=1", function(data) {
+							encodeURIComponent($("#password").val()) + "&rname=&regionpw=&autologin=0&create_nation=Continue&legal=1", function(data) {
 						if ($(data).find("p.error").length > 0) {
 							$("#error_label").html($(data).find("p.error").html()).show();
 						} else {
 							//Set puppet to auto-dismiss issues
 							localStorage.setItem($("#puppet_name").val().toLowerCase().replaceAll(" ", "_") + "-data", '{"userData":{"dismiss_all":true},"last_update":' + Date.now() + '}');
 							if ($("#add_to_puppets_list").prop("checked")) {
-								addPuppetNation($("#puppet_name").val(), $("#password").val());
+								getPuppetManager().addPuppet($("#puppet_name").val(), $("#password").val());
 							}
 							//Disable recruitment/wa telegrams
 							var disableRecruitment = function(callback) {
 								$("#error_label").html("10% - Blocking Recruitment Telegrams...").show();
 								$.get("//www.nationstates.net/page=tgsettings?nspp=1", function(data) {
 									$("#error_label").html("20% - Blocking Recruitment Telegrams...").show();
-									$.post("//www.nationstates.net/page=tgsettings?nspp=1", "chk=" + $(data).find('input[name="chk"]').val() + "&C1=3&C2=3&C3=3&C4=0&update_filter=1", function(data) {
+									$.post("//www.nationstates.net/page=tgsettings?nspp=1", "chk=" + $(data).find('input[name="chk"]').val() + "&C1=3&C2=3&C3=3&C4=3&update_filter=1", function(data) {
 										if (typeof callback != "undefined") callback();
 									});
 								});

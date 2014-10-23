@@ -246,6 +246,7 @@ public class NationController extends NationStatesController {
 		json.put("highlight_op_posts", settings.getValue("highlight_op_posts", true, Boolean.class));
 		json.put("highlight_color_transparency", settings.getValue("highlight_color_transparency", 0.1, Double.class));
 		json.put("highlight_color", settings.getValue("highlight_color", "#39EE00", String.class));
+		json.put("floating_sidepanel", settings.getValue("floating_sidepanel", true, Boolean.class));
 		return Results.ok(Json.toJson(json)).as("application/json");
 	}
 
