@@ -27,7 +27,6 @@ import org.joda.time.Duration;
 import org.spout.cereal.config.ConfigurationNode;
 import org.spout.cereal.config.yaml.YamlConfiguration;
 
-import com.amazonaws.auth.BasicAWSCredentials;
 import com.google.common.collect.ObjectArrays;
 import com.limewoodMedia.nsapi.NationStates;
 import com.mchange.v2.c3p0.ComboPooledDataSource;
@@ -163,15 +162,8 @@ public class Global extends GlobalSettings {
 
 		// Setup background tasks
 		if (backgroundTasks) {
-			// AWS creds
-			BasicAWSCredentials awsCredentials = null;
-			ConfigurationNode aws = config.getChild("aws-credentials");
-			if (aws.getChild("access-key").getString() != null && aws.getChild("secret-key").getString() != null) {
-				awsCredentials = new BasicAWSCredentials(aws.getChild("access-key").getString(), aws.getChild("secret-key").getString());
-			}
-
 			File dumpsDir = new File(settings.getChild("dailydumps").getString());
-			DailyDumps dumps = new DailyDumps(access, dumpsDir, settings.getChild("User-Agent").getString(), awsCredentials);
+			DailyDumps dumps = new DailyDumps(access, dumpsDir, settings.getChild("User-Agent").getString());
 			Thread dailyDumps = new Thread(dumps);
 			dailyDumps.setDaemon(true);
 			dailyDumps.start();

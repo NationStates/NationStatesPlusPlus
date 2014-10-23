@@ -17,9 +17,6 @@ import org.joda.time.Duration;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 
-import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.services.s3.AmazonS3Client;
-
 import play.Logger;
 
 /**
@@ -47,15 +44,13 @@ public class DailyDumps implements Runnable {
 	private final File nationsDir;
 	private final DatabaseAccess access;
 	private final String userAgent;
-	private final BasicAWSCredentials awsCredentials;
-	public DailyDumps(DatabaseAccess access, File directory, String userAgent, BasicAWSCredentials awsCredentials) {
+	public DailyDumps(DatabaseAccess access, File directory, String userAgent) {
 		this.access = access;
 		this.userAgent = userAgent;
 		regionsDir = new File(directory, "regions");
 		regionsDir.mkdirs();
 		nationsDir = new File(directory, "nations");
 		nationsDir.mkdirs();
-		this.awsCredentials = awsCredentials;
 	}
 
 	@Override
@@ -131,12 +126,6 @@ public class DailyDumps implements Runnable {
 					IOUtils.copy(stream, fos);
 					Logger.info("Saved regions dump, size: {}", regionsDump.length());
 				}
-
-				if (awsCredentials != null) {
-					final AmazonS3Client client = new AmazonS3Client(awsCredentials);
-					client.putObject("dailydumps", "regions/" + regionsDump.getName(), regionsDump);
-					Logger.info("Successfully uploaded regions dump for {} to s3", serverModified);
-				}
 			} else {
 				Logger.debug("Regions dump is up to date");
 			}
@@ -173,13 +162,6 @@ public class DailyDumps implements Runnable {
 					IOUtils.copy(stream, fos);
 					Logger.info("Saved nations dump successfully, size: {}", nationsDump.length());
 				}
-
-				if (awsCredentials != null) {
-					final AmazonS3Client client = new AmazonS3Client(awsCredentials);
-					client.putObject("dailydumps", "nations/" + nationsDump.getName(), nationsDump);
-					Logger.info("Successfully uploaded nations dump for {}to s3", serverModified);
-				}
-
 				(new Thread(new DumpUpdateTask(access, getMostRecentRegionDump(), nationsDump), "Daily Dump Update Thread")).start();
 			} else {
 				Logger.debug("Nations dump is up to date");

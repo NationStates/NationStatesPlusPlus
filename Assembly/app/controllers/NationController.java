@@ -233,13 +233,13 @@ public class NationController extends NationStatesController {
 		}
 	}
 
-	public Result retreiveForumSettings(String nation) throws SQLException, ExecutionException {
+	public Result retreiveForumSettings(String name) throws SQLException, ExecutionException {
 		Utils.handleDefaultPostHeaders(request(), response());
-		final int nationId = getDatabase().getNationId(nation);
+		final int nationId = getDatabase().getNationId(name);
 		if (nationId == -1) {
 			return Results.badRequest();
 		}
-		NationSettings settings = getDatabase().getNationSettings(nation);
+		NationSettings settings = getDatabase().getNationSettings(name);
 		Map<String, Object> json = Maps.newHashMap();
 		json.put("post_ids", settings.getValue("post_ids", true, Boolean.class));
 		json.put("egosearch_ignore", settings.getValue("egosearch_ignore", true, Boolean.class));

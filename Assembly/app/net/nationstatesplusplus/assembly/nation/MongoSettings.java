@@ -21,6 +21,7 @@ public class MongoSettings implements NationSettings {
 
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public <V> V getValue(String name, V defaultVal, Class<V> type) {
 		BasicDBObject find = new BasicDBObject("nation", nation);
@@ -29,6 +30,19 @@ public class MongoSettings implements NationSettings {
 			if (cursor.hasNext()) {
 				DBObject result = cursor.next();
 				Object obj = result.get(name);
+				//Auto-magically convert any strings to numbers, if we requested a number type
+				if (obj instanceof String && Number.class.isAssignableFrom(type)) {
+					double val = Double.parseDouble((String)obj);
+					if (type == Double.class) {
+						return (V) Double.valueOf(val);
+					} else if (type == Float.class) {
+						return (V) Float.valueOf((float)val);
+					} else if (type == Integer.class) {
+						return (V) Integer.valueOf((int)val);
+					} else if (type == Long.class) {
+						return (V) Long.valueOf((long)val);
+					}
+				}
 				return type.cast(obj);
 			}
 		}
