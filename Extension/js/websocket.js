@@ -218,6 +218,11 @@ function UserSettings() {
 		}
 		return this;
 	}
+
+	/**
+	* Sets the value of the setting with the value passed in. This will trigger any callbacks that are listening to this setting with the new value.
+	*	@value to set for this setting
+	*/
 	this.set = function() {
 		if (getUserNation() == this.user) {
 			if (arguments.length > 0) {
@@ -229,16 +234,29 @@ function UserSettings() {
 		}
 		return false;
 	}
+
+	/**
+	* Removes all callbacks from this settings handler
+	*/
 	this.off = function() {
 		for (var i = 0; i < this.callbacks.length; i += 1) {
 			$(window).off("websocket.get_setting", this.callbacks[i]);
 		}
 		this.callbacks = [];
 	}
+
+	/**
+	* Listens to changes in the setting value. The websocket immediately requests the state of the setting value from the server
+	* unless sendImmediateRequest is false. The callback will be fired as soon as the websocket has a response, or whenever the setting changes.
+	* 	@callback to send data to when the setting value changes
+	* 	@defaultValue to use if the setting has no value
+	* 	@sendImmediateRequest whether the state of the value should be requested immediately (defaults to true)
+	*/
 	this.on = function() {
 		if (arguments.length > 0) {
 			var callback = arguments[0];
 			var defaultVal = (arguments.length > 1 ? arguments[1] : null);
+			var sendImmediateRequest = (arguments.length > 2 ? arguments[2] : true);
 			var primaryNode = this.path.split(".")[0];
 			var eventCallback = function(event) {
 				if (event.json.hasOwnProperty(primaryNode)) {
@@ -250,11 +268,20 @@ function UserSettings() {
 			};
 			this.callbacks.push(eventCallback);
 			$(window).on("websocket.get_setting", eventCallback);
-			sendWebsocketEvent("get_setting", {user: this.user, setting: this.path });
+			if (sendImmediateRequest) {
+				sendWebsocketEvent("get_setting", {user: this.user, setting: this.path });
+			}
 			return true;
 		}
 		return false;
 	};
+
+	/**
+	* Queries the current setting value once and returns the value to the callback. The websocket immediately requests the state of the setting value from the server. 
+	* The callback will be fired as soon as the websocket has a response. After the initial response, the callback is removed.
+	* 	@callback to send data to when the setting value changes
+	* 	@defaultValue to use if the setting has no value
+	*/
 	this.once = function() {
 		if (arguments.length > 0) {
 			var callback = arguments[0];
