@@ -121,7 +121,7 @@
 					$("#error_label").html("Attempting Puppet Creation...").removeClass("success_alert").removeClass("danger_alert").addClass("progress_alert").show();
 					var type = ($("#type").val() == "random" ? Math.floor(Math.random() * 38) + 100 : $("#type").val());
 					var history = ($("#history").val() == "random" ? Math.floor(($("#history").find("option").length - 1) * Math.random()) : $("#history").val());
-					$.post("//www.nationstates.net/cgi-bin/build_nation.cgi", questions + "&name=" + encodeURIComponent($("#puppet_name").val()) +
+					$.post("//www.nationstates.net/cgi-bin/build_nation.cgi?nspp=1", questions + "&name=" + encodeURIComponent($("#puppet_name").val()) +
 							"&type=" + type + "&flag=Default.png&history=" + history +
 							"&style=" + $("#style").val() + "&currency=" + encodeURIComponent($("#currency").val()) +
 							"&animal=" + encodeURIComponent($("#animal").val()) + "&slogan=" +
