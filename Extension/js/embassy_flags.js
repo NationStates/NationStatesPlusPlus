@@ -1,17 +1,19 @@
-(new UserSettings()).child("embassy_flags").on(function(data) {
-	console.log(data);
-	if (data["embassy_flags"]) {
-		sendWebsocketEvent("region_embassies", {});
-	} else if ($("#embassy_flags").length != 0) {
-		var wfe = $("fieldset[class='wfe']");
-		$("<fieldset class='wfe'>" + wfe.html() + "</fieldset>").insertBefore($("div.colmask.rightmenu"));
-		$("div.colmask.rightmenu").remove();
-	}
-}, true, false);
+if (getVisiblePage() == "region") {
+	//Dynamically hide or show embassy flags when the setting changes
+	(new UserSettings()).child("embassy_flags").on(function(data) {
+		console.log(data);
+		if (data["embassy_flags"]) {
+			sendWebsocketEvent("region_embassies", {});
+		} else if ($("#embassy_flags").length != 0) {
+			var wfe = $("fieldset[class='wfe']");
+			$("<fieldset class='wfe'>" + wfe.html() + "</fieldset>").insertBefore($("div.colmask.rightmenu"));
+			$("div.colmask.rightmenu").remove();
+		}
+	}, true, false);
+}
 
 $(window).on("websocket.region_embassies", function(event) {
 	var embassies = event.json;
-	console.log(embassies);
 	if (embassies.length == 0)
 		return;
 
