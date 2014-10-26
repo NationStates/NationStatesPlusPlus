@@ -107,7 +107,7 @@
 			else if ($("#motto").val().length > 55) $("#error_label").html("National Motto Can Not Exceed 55 Characters!").show();
 			else if ($("input[type='file']")[0].files.length > 0 && $("input[type='file']")[0].files[0].size > 250000)  $("#error_label").html("Flags can not be larger than 250kb").show();
 			else if ($("input[type='file']")[0].files.length > 0 && $("input[type='file']")[0].files[0].name.match(/.(jpg|png|gif)/) == null)  $("#error_label").html("Only PNG, JPG and GIF flags are supported").show();
-			else $.get('//www.nationstates.net/page=ajax2/a=checknationname/name='+$("#puppet_name").val(), function(data) {
+			else $.get('//www.nationstates.net/page=ajax2/a=checknationname/name='+$("#puppet_name").val()+'?nspp=1', function(data) {
 				if ( $(data).hasClass("error") ) {
 					$("#error_label").html($(data).html()).show();
 					return;
