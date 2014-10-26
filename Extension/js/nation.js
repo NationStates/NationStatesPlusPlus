@@ -7,7 +7,9 @@
 			$.get("https://nationstatesplusplus.net/nationstates/static/francos_spain.html", function(data) {
 				$("#content").html(data);
 			});
-		} else {
+		
+		//Verify this is a valid nation page (and not the error, unknown nation page)
+		} else if ($("p.error").length == 0) {
 			displaySoftPowerScore();
 			showNationChallenge();
 			showWorldAssemblyInfo();

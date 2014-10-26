@@ -112,7 +112,7 @@
 		$.get("https://nationstatesplusplus.net/api/nation/title/?name=shadow_afforess", function(data) { 
 			if (getVisiblePage() == "region") {
 				ws = new WebSocket(protocol + "nationstatesplusplus.net/api/ws/region/?nation=" + getUserNation() + "&userRegion=" + getUserRegion() + "&region=" + getVisibleRegion() + "&reconnect=" + reconnect);
-			} else if (getVisiblePage() == "nation") {
+			} else if (getVisiblePage() == "nation" && $("p.error").length == 0) {
 				ws = new WebSocket(protocol + "nationstatesplusplus.net/api/ws/nation/?nation=" + getUserNation() + "&userRegion=" + getUserRegion() + "&visibleNation=" + getVisibleNation() + "&reconnect=" + reconnect);
 			} else if (getVisiblePage() == "blank" && typeof $.QueryString["recruitment"] != "undefined") {
 				ws = new WebSocket(protocol + "nationstatesplusplus.net/api/ws/recruitmentAdmin/?nation=" + getUserNation() + "&userRegion=" + getUserRegion() + "&adminRegion=" + $.QueryString["recruitment"] + "&reconnect=" + reconnect);

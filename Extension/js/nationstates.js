@@ -14,8 +14,6 @@
 		$("<li><a href='//www.nationstates.net/page=activity/view=world/filter=all'>ACTIVITY</a></li>").insertAfter(menu.find("a[href='page=dossier']").parent());
 	}
 	checkPanelAlerts();
-	//TODO: turn back on some day
-	//addWAProposals();
 
 	if (!isRiftTheme()) {
 		(new UserSettings()).child("show_dispatches").on(function(data) {
@@ -120,87 +118,6 @@
 		}, true);
 	}
 
-/* 	function updateProposals(start) {
-		$.get("//www.nationstates.net/page=UN_proposal/council=0?start=" + start + "&nspp=1", function(data) {
-			var totalProposals = 0;
-			$(data).find("table.shiny").find("td[colspan='3']:contains('ID: ')").find("a").each(function() {
-				var userData = getUserData();
-				var proposals = userData.getValue("wa_proposals", {last_viewed: 0});
-				if (proposals[$(this).text()] == null) {
-					proposals[$(this).text()] = Date.now();
-					userData.setValue("wa_proposals", proposals);
-					userData.save();
-				}
-				totalProposals++;
-			});
-			if (totalProposals > 0) {
-				var count = 0;
-				var userData = getUserData();
-				var proposals = userData.getValue("wa_proposals", {last_viewed: 0});
-				var updated = {};
-				updated.last_viewed = proposals.last_viewed;
-				for (proposal in proposals) {
-					if (proposal != "last_viewed") {
-						if (proposals[proposal] > (Date.now - 7 * 24 * 60 * 60 * 1000)) {
-							updated[proposal] = proposals[proposal];
-							if (proposals[proposal] > proposals.last_viewed) {
-								count++;
-							}
-						}
-					}
-				}
-				userData.setValue("wa_proposals", updated);
-				userData.pushUpdate();
-				if (count > 0) {
-					$("#wa_proposals").html("WA PROPOSALS (" + count + ")");
-				} else {
-					$("#wa_proposals").html("WA PROPOSALS");
-				}
-				
-				updateProposals(start + 5);
-			}
-		});
-	}
-
-	function addWAProposals() {
-		var delegateCache = localStorage.getItem("wa_delegate_cache");
-		if (delegateCache != null && delegateCache.timestamp + 60 * 60 * 1000 < Date.now()) {
-			delegateCache = null;
-		}
-		if (delegateCache != null) {
-			delegateCache = JSON.parse(delegateCache);
-		}
-		if (getUserNation() == "shadow_afforess") {
-			delegateCache = {wa_delegate:true};
-		}
-		if (delegateCache == null || delegateCache.wa_delegate) {
-			(new UserSettings()).child("show_wa_proposals").once(function(data) {
-				if (data["show_wa_proposals"]) {
-					updateWAProposals(delegateCache);
-				}
-			}, true);
-		}
-	}
-
-	function updateWAProposals(delegateCache) {
-		if (delegateCache == null) {
-			$.get("//www.nationstates.net/nation=" + getUserNation() + "&nspp=1", function(data) {
-				if ($(data).find(".wa_status:contains('WA Delegate')").length > 0) {
-					localStorage.setItem("wa_delegate_cache", JSON.stringify({wa_delegate: true, timestamp: Date.now()}));
-				} else {
-					localStorage.setItem("wa_delegate_cache", JSON.stringify({wa_delegate: false, timestamp: Date.now()}));
-				}
-			});
-		} else {
-			$("<li id='wa_props'><a id='wa_proposals' href='//www.nationstates.net/page=UN_proposal/council=0'>WA PROPOSALS</a></li").insertAfter($(".menu").find("a[href='page=un']").parent());
-			updateProposals(0);
-			$(window).on("page/update", function() {
-				updateProposals(0);
-				
-			});
-		}
-	}
- */
 	function updateSecurityCodes() {
 		var chk = $("input[name='chk']");
 		if (chk.length != 0) {
@@ -284,33 +201,6 @@
 					panel.find("a[href='page=news']").html(page.find("a[href='page=news']").html());
 				}
 			});
-			if (window.chrome && !isRiftTheme()) {
-				(new UserSettings()).child("show_unread_forum_posts").once(function(data) {
-					if (!data["show_unread_forum_posts"]) {
-						return;
-					}
-					$.get("//forum.nationstates.net/search.php?search_id=egosearch&nspp=1", function(data) {
-						var count = 0;
-						(new UserSettings()).child("ignored_topics").once(function(data) {
-							var ignoredTopics = data["ignored_topics"];
-							$(data.replace(/[ ]src=/gim," data-src=")).find("ul.topiclist.topics").find("li.row").find("h3:first a").each(function() {
-								var threadId = $(this).attr("href").match("t=[0-9]+")[0].substring(2);
-								if (!ignoredTopics[threadId]) {
-									if ($(this).parents("li.row").find("dl:first").attr("style").contains("topic_unread_mine")) {
-										count += 1;
-									}
-								}
-							});
-							(new UserSettings()).child("unread_forum_posts").set(count);
-							if (count > 0) {
-								$(".menu").find("a:contains('FORUM')").html("FORUM (" + count + ")");
-							} else {
-								$(".menu").find("a:contains('FORUM')").html("FORUM");
-							}
-						}, {});
-					});
-				}, true);
-			}
 		}
 	}
 	$(window).on("page/update", updatePanelAlerts);
