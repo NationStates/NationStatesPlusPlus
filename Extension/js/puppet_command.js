@@ -107,7 +107,11 @@
 			else if ($("#motto").val().length > 55) $("#error_label").html("National Motto Can Not Exceed 55 Characters!").show();
 			else if ($("input[type='file']")[0].files.length > 0 && $("input[type='file']")[0].files[0].size > 250000)  $("#error_label").html("Flags can not be larger than 250kb").show();
 			else if ($("input[type='file']")[0].files.length > 0 && $("input[type='file']")[0].files[0].name.match(/.(jpg|png|gif)/) == null)  $("#error_label").html("Only PNG, JPG and GIF flags are supported").show();
-			else {
+			else $.get('//www.nationstates.net/page=ajax2/a=checknationname/name='+$("#puppet_name").val(), function(data) {
+				if ( $(data).hasClass("error") ) {
+					$("#error_label").html($(data).html()).show();
+					return;
+				}
 				localStorage.setItem("last_puppet_email", $("#puppet_email").val());
 				$("#found_nation").attr("disabled", true);
 				$.get("https://nationstatesplusplus.net/api/recruitment/puppet/?nation=" + $("#puppet_name").val().toLowerCase(), function() {
@@ -123,7 +127,7 @@
 					var history = ($("#history").val() == "random" ? Math.floor(($("#history").find("option").length - 1) * Math.random()) : $("#history").val());
 					$.post("//www.nationstates.net/cgi-bin/build_nation.cgi", questions + "&name=" + encodeURIComponent($("#puppet_name").val()) +
 							"&type=" + type + "&flag=Default.png&history=" + history +
-							"&style=" + $("#style").val() + "&currency=" + encodeURIComponent($("#currency").val()) +
+							"&style=" + $("#government_style").val() + "&currency=" + encodeURIComponent($("#currency").val()) +
 							"&animal=" + encodeURIComponent($("#animal").val()) + "&slogan=" +
 							encodeURIComponent($("#motto").val()) + 
 							($("#puppet_email").val().length > 0 ? "&email=" + encodeURIComponent($("#puppet_email").val()) : "") + 
@@ -221,7 +225,7 @@
 					$("#found_nation").removeAttr("disabled");
 					$("#error_label").html("Nation Already Exists. Nation Names Must Be Unique!").show();
 				});
-			}
+			});
 		});
 	}
 
