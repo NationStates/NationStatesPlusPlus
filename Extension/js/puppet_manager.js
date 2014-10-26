@@ -235,9 +235,11 @@
 			$("#add_puppet_name").on("keydown", function(event) { if (event.keyCode == 13) addPuppet(); });
 			$("#add_puppet_pass").on("keydown", function(event) { if (event.keyCode == 13) addPuppet(); });
 			
+			//Track shift/control key states
 			var shiftDown = false;
 			var ctrlDown = false;
 			$(window).keydown(function(event) {
+				console.log(event.which);
 				if (event.which == 16) shiftDown = true;
 				if (event.which == 17) ctrlDown = true;
 			}).keyup(function(event) {
@@ -247,7 +249,10 @@
 			
 			var lastSelectedRow = null;
 			$("#active_puppets tr.puppet_row").on("click", function() {
-				if (ctrlDown && lastSelectedRow) {
+				console.log("Last selected:");
+				console.log(lastSelectedRow);
+				//Shift multiselect
+				if (shiftDown && lastSelectedRow) {
 					var selected = $(this);
 					var select = false;
 					$("#active_puppets tr.puppet_row").each(function() {
@@ -259,22 +264,28 @@
 						}
 					});
 				}
+				//Regular single select
 				if (!shiftDown && !ctrlDown) {
 					$("#active_puppets tr.puppet_row").removeClass("puppet_active_row");
 				}
-				if (shiftDown && $(this).hasClass("puppet_active_row")) {
+				//Control add/remove single select
+				if (ctrlDown && $(this).hasClass("puppet_active_row")) {
 					$(this).removeClass("puppet_active_row");
 				} else {
 					$(this).addClass("puppet_active_row");
 				}
 				
+				//Toggle buttons enabled/disabled if there are any rows selected
 				if ($("#active_puppets tr.puppet_active_row").length > 0) {
 					$("#left-buttons button").removeAttr("disabled");
 				} else {
 					$("#left-buttons button").attr("disabled", true);
 				}
 				
-				lastSelectedRow = $(this);
+				//Store the last selected row
+				if ($(this).hasClass("puppet_active_row")) {
+					lastSelectedRow = $(this);
+				}
 			});
 			
 			if ($("#active_puppets tr.puppet_active_row").length > 0) {
