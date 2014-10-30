@@ -222,7 +222,7 @@ function relocatePostMessageBox() {
 function handleNewRegionalMessages() {
 	$(window).on("rmb/update", function(event) {
 		var id = event.postId;
-		var post = $("#rmb-post-" + id);
+		var post = $("#p" + id);
 		post.find(".rmbmsg2").append("<div postid='" + id + "' class='post-ratings'><ul class='post-rating-list' style='opacity: 0;'><li class='undo-rating' style='display:none;'><a href='javascript:void(0)'>Undo Rating</a></li><li name='like'><a href='javascript:void(0)'><img style='margin-right: 3px;' src='https://nationstatesplusplus.net/nationstates/static/like.png' alt='Like'></a></li><li name='dislike'><a href='javascript:void(0)'><img style='margin-right: 3px;' src='https://nationstatesplusplus.net/nationstates/static/dislike2.png' alt='Dislike'></a></li></ul></div>");
 		setTimeout(function(post) {
 			var authorHeight = post.find(".rmbauthor2").height() + 17;
@@ -246,21 +246,19 @@ function handleNewRegionalMessages() {
 		post.find("li[name='like']").find("a").on("click", function (e) {
 			e.preventDefault();
 			var id = $(this).parents(".post-ratings:first").attr("postid");
-			var post = $("#rmb-post-" + id);
 			
 			sendWebsocketEvent("rate_rmb_post", { "rmb_post_id": id, "rating" : 1 }, true);
 		});
 		post.find("li[name='dislike']").find("a").on("click", function (e) {
 			e.preventDefault();
 			var id = $(this).parents(".post-ratings:first").attr("postid");
-			var post = $("#rmb-post-" + id);
 			
 			sendWebsocketEvent("rate_rmb_post", { "rmb_post_id": id, "rating" : 0 }, true);
 		});
 		post.find(".undo-rating").find("a").on("click", function(event) {
 			event.preventDefault();
 			var id = $(this).parents(".post-ratings:first").attr("postid");
-			var post = $("#rmb-post-" + id);
+			var post = $("#p" + id);
 			var rating = post.find("span[rated='1']");
 			var amt = rating.attr("amt");
 			if (amt == 1) {
@@ -279,6 +277,8 @@ function handleNewRegionalMessages() {
 function handlePostRatings() {
 	var updateRatings = function(event) {
 		var data = event.json;
+		console.log("rmb ratings: ");
+		console.log(data);
 		var likes = 0;
 		var dislikes = 0;
 		var rating = -1;
@@ -300,7 +300,8 @@ function handlePostRatings() {
 				rating = data.ratings[i].type;
 			}
 		}
-		var post = $("#rmb-post-" + postId);
+		var post = $("#p" + postId);
+		console.log(post);
 		post.find(".post-ratings").find("span[name='rating-container']").remove();
 		post.find(".post-ratings").prepend("<span name='rating-container'></span>");
 		if (rating > -1) {
