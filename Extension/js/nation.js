@@ -78,18 +78,20 @@
 		}
 		trophyContainer.prepend("<img id='nspp_trophy' src='https://nationstatesplusplus.net/nationstates/static/nspp.png?v' class='trophy' title='A Proud NationStates++ User!'>");
 		$("#nspp_trophy").hide();
-		$.get("https://nationstatesplusplus.net/api/nation/latest_update/?name=" + getVisibleNation(), function(data, textStatus, xhr) {
-			if (xhr.status != 204 && data.timestamp > (Date.now() - 30 * 24 * 60 * 60 * 1000)) {
-				if (data.timestamp > (Date.now() - 15 * 60 * 1000)) {
-					$("#nspp_trophy").attr("src", "https://nationstatesplusplus.net/nationstates/static/nspp_online.png");
-					$("#nspp_trophy").attr("title", $("#nspp_trophy").attr("title") + "\nCurrently Online!");
-				} else {
-					var opacity = 1 - ((Date.now() - data.timestamp + 3 * 24 * 60 * 60 * 1000) / (30 * 24 * 60 * 60 * 1000));
-					$("#nspp_trophy").attr("title", $("#nspp_trophy").attr("title") + "\nLast seen " + timestampToTimeAgo(data.timestamp).toLowerCase() + " ago.");
-					$("#nspp_trophy").css("opacity", Math.max(0, Math.min(1, opacity)));
-				}
+		$(window).on("websocket.last_nation_activity", function(event) {
+			var data = event.json;
+			console.log("last nation activity: ");
+			console.log(data);
+			if (data.last_nation_activity > (Date.now() - 15 * 60 * 1000)) {
+				$("#nspp_trophy").attr("src", "https://nationstatesplusplus.net/nationstates/static/nspp_online.png");
+				$("#nspp_trophy").attr("title", $("#nspp_trophy").attr("title") + "\nCurrently Online!");
 				$("#nspp_trophy").show();
-			}
+			} else {
+				var opacity = 1 - ((Date.now() - data.last_nation_activity + 3 * 24 * 60 * 60 * 1000) / (30 * 24 * 60 * 60 * 1000));
+				$("#nspp_trophy").attr("title", $("#nspp_trophy").attr("title") + "\nLast seen " + timestampToTimeAgo(data.last_nation_activity).toLowerCase() + " ago.");
+				$("#nspp_trophy").css("opacity", Math.max(0, Math.min(1, opacity)));
+				$("#nspp_trophy").show();
+			}				
 		});
 		$.get("https://nationstatesplusplus.net/nationstates/feature_authors.json", function(data) {
 			var nation = getVisibleNation();
