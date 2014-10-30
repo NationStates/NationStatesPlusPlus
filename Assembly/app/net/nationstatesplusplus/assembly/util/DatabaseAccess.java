@@ -12,6 +12,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import net.nationstatesplusplus.assembly.model.websocket.WebsocketManager;
+import net.nationstatesplusplus.assembly.nation.DefaultSettings;
 import net.nationstatesplusplus.assembly.nation.MongoSettings;
 import net.nationstatesplusplus.assembly.nation.NationSettings;
 
@@ -298,7 +299,7 @@ public class DatabaseAccess {
 			Logger.error("Unable to read user settings for " + nation, e);
 		}
 		
-		return null;
+		return new DefaultSettings();
 	}
 
 	public ComboPooledDataSource getPool() {
