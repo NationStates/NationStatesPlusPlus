@@ -10,6 +10,9 @@ import net.nationstatesplusplus.assembly.util.Utils;
 
 import org.apache.commons.dbutils.DbUtils;
 
+/**
+ * Regional Statistics used to populate NSWiki region pages.
+ */
 public class RegionalStats {
 	private final String name;
 	private int id;

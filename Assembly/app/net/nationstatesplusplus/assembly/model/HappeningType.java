@@ -14,14 +14,42 @@ import java.util.regex.Pattern;
 
 import net.nationstatesplusplus.assembly.util.Utils;
 
-public class HappeningType {
-	private static final Map<Integer, HappeningType> types = new LinkedHashMap<Integer, HappeningType>();
-	private static final Map<String, HappeningType> categories = new HashMap<String, HappeningType>();
+/**
+ * Represents a type of national happening that can occur for a nation
+ */
+public final class HappeningType {
+	/**
+	 * Represents the id <-> HappeningType mapping for database queries
+	 */
+	private static final Map<Integer, HappeningType> TYPES = new LinkedHashMap<Integer, HappeningType>();
+	/**
+	 * Represents the happening name <-> HappeningType mapping
+	 */
+	private static final Map<String, HappeningType> CATEGORIES = new HashMap<String, HappeningType>();
+	/**
+	 * The happenning type id for database queries
+	 */
 	private final int id;
+	/**
+	 * The regular expression pattern a happening has to match to be considered a happening of this type
+	 */
 	private final Pattern match;
+	/**
+	 * The name of this happening type
+	 */
 	private final String name;
+	/**
+	 * The happening type that this nation happening type will transform into for a regional happening. 
+	 * It may contain @@ variables for a nation name, %% for a region name or !! for regular expression matches.
+	 * 
+	 * For example, a moving to a new region is associated with two region happenings, one leaving its former region
+	 * and a second region happening representing the arrival at the nations new region.
+	 */
 	private final String region1Transform;
 	private final String region2Transform;
+	/**
+	 * Caches regular expressions for the region transformation, so they are built only once
+	 */
 	private final List<Pattern> region1Regex = new ArrayList<Pattern>(1);
 	private final List<Pattern> region2Regex = new ArrayList<Pattern>(1);
 	private HappeningType(final int id, final String match, final String name, final String region1Transform, final String region2Transform) {
@@ -51,8 +79,8 @@ public class HappeningType {
 		ResultSet result = select.executeQuery();
 		while(result.next()) {
 			HappeningType type = new HappeningType(result.getInt(1), result.getString(2), result.getString(3), result.getString(4), result.getString(5));
-			types.put(type.id, type);
-			categories.put(type.name, type);
+			TYPES.put(type.id, type);
+			CATEGORIES.put(type.name, type);
 		}
 	}
 
@@ -111,17 +139,37 @@ public class HappeningType {
 		return transformToRegionHappening(2, happening);
 	}
 
+	/**
+	 * Returns a happening type based on the id, or null if no happening exists for the given id
+	 * 
+	 * @param id to lookup
+	 * 
+	 * @return happening type or null if none exists
+	 */
 	public static HappeningType getType(int id) {
-		return types.get(id);
+		return TYPES.get(id);
 	}
 
+	/**
+	 * Returns a happening type based on the name, or null if no happening exists for the given name
+	 * 
+	 * @param name to lookup
+	 * 
+	 * @return happening type or null if none exists
+	 */
 	public static HappeningType getType(String name) {
-		return categories.get(name);
+		return CATEGORIES.get(name);
 	}
 
+	/**
+	 * Returns the happening id that a national happening string matches, or -1 if it does not match any known happening
+	 * 
+	 * @param happening to parse
+	 * @return id of the happening matched, or -1 if no happening was matched
+	 */
 	public static int match(String happening) {
 		happening = happening.toLowerCase();
-		for (HappeningType type : types.values()) {
+		for (HappeningType type : TYPES.values()) {
 			if (type.match.matcher(happening).find()) {
 				return type.id;
 			}

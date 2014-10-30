@@ -314,6 +314,7 @@ public class Utils {
 		try {
 			NationData data = api.getNationInfo(nation, Shards.ENDORSEMENTS, Shards.WA_STATUS, Shards.INFLUENCE, Shards.CENSUS_SCORE, Shards.FLAG, Shards.FULL_NAME, Shards.NAME, Shards.LAST_LOGIN, Shards.REGION);
 			String flag = data.flagURL;
+			//Trim off the http:// and use a protocol-free path
 			if (flag.startsWith("http://")) {
 				flag = "//" + flag.substring(7);
 			}
@@ -333,7 +334,7 @@ public class Utils {
 			DbUtils.closeQuietly(updateNation);
 			
 			updateShards(conn, data, id);
-			updateEndorsements(conn, data, access, id);
+			updateEndorsements(conn, access, data, id);
 		} catch (UnknownNationException e) {
 			access.markNationDead(id, conn);
 		}
@@ -413,43 +414,53 @@ public class Utils {
 		}
 	}
 
-	public static void updateEndorsements(final Connection conn, final NationData data, final DatabaseAccess access, final int nationId) throws SQLException {
+	/**
+	 * Updates a nation's endorsements in nationstates based on the available NationData. The nation's existing endorsements are cleared, and the endorsements from the
+	 * NationData are set. The total number of endorsements and the current time is also updated in the endorsement trends table. If any part of this process fails, 
+	 * rolled back, leaving the database in the same state as it was previously.
+	 * 
+	 * @param conn
+	 * @param access 
+	 * @param data to use to update endorsements with
+	 * @param nationId of the nation to update
+	 * @throws SQLException
+	 */
+	public static void updateEndorsements(final Connection conn, final DatabaseAccess access, final NationData data, final int nationId) throws SQLException {
 		conn.setAutoCommit(false);
 		Savepoint save =  conn.setSavepoint();
 		try {
-			PreparedStatement endorsements = conn.prepareStatement("INSERT INTO assembly.endorsements (endorser, endorsed) VALUES (?, ?)");
-			for (String endorsed : data.endorsements) {
-				if (endorsed.trim().length() > 0) {
-					endorsements.setInt(1, access.getNationId(endorsed));
-					endorsements.setInt(2, nationId);
-					endorsements.addBatch();
+			try (PreparedStatement endorsements = conn.prepareStatement("INSERT INTO assembly.endorsements (endorser, endorsed) VALUES (?, ?)")) {
+				for (String endorsed : data.endorsements) {
+					if (endorsed.trim().length() > 0) {
+						endorsements.setInt(1, access.getNationId(endorsed));
+						endorsements.setInt(2, nationId);
+						endorsements.addBatch();
+					}
 				}
+
+				try (PreparedStatement hasEndorsement = conn.prepareStatement("DELETE FROM assembly.endorsements WHERE endorsed = ?")) {
+					hasEndorsement.setInt(1, nationId);
+					hasEndorsement.executeUpdate();
+				}
+
+				endorsements.executeBatch();
 			}
 
-			PreparedStatement hasEndorsement = conn.prepareStatement("DELETE FROM assembly.endorsements WHERE endorsed = ?");
-			hasEndorsement.setInt(1, nationId);
-			hasEndorsement.executeUpdate();
-			DbUtils.closeQuietly(hasEndorsement);
-			
-			endorsements.executeBatch();
-			DbUtils.closeQuietly(endorsements);
-			
-			PreparedStatement updateEndorsementTrends = conn.prepareStatement("INSERT INTO assembly.nation_endorsement_trends (nation, endorsements, timestamp) VALUES (?, ?, ?)");
-			updateEndorsementTrends.setInt(1, nationId);
-			updateEndorsementTrends.setInt(2, data.endorsements.length);
-			updateEndorsementTrends.setLong(3, System.currentTimeMillis());
-			updateEndorsementTrends.executeUpdate();
-			DbUtils.closeQuietly(updateEndorsementTrends);
+			try (PreparedStatement updateEndorsementTrends = conn.prepareStatement("INSERT INTO assembly.nation_endorsement_trends (nation, endorsements, timestamp) VALUES (?, ?, ?)")) {
+				updateEndorsementTrends.setInt(1, nationId);
+				updateEndorsementTrends.setInt(2, data.endorsements.length);
+				updateEndorsementTrends.setLong(3, System.currentTimeMillis());
+				updateEndorsementTrends.executeUpdate();
+			}
 			
 			conn.commit();
 			conn.releaseSavepoint(save);
 		} catch (SQLException e) {
 			conn.rollback(save);
-			Logger.error("Rolling back endorsement transaction");
+			Logger.warn("Rolling back endorsement transaction");
 			throw e;
 		} finally {
 			conn.setAutoCommit(true);
 		}
 	}
-
 }

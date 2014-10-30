@@ -118,9 +118,34 @@ public class Nation {
 		this.region = region;
 	}
 
+	/**
+	 * Creates a nation object model that represents the nation, with region data, if it is included
+	 * 
+	 * @param conn to use to populate the nation data from
+	 * @param id of the nation
+	 * @param includeRegion whether to include region data in the nation object
+	 * @return nation, or null if no nation has the given id
+	 * @throws SQLException
+	 */
 	public static Nation getNationById(Connection conn, int id, boolean includeRegion) throws SQLException {
 		try (PreparedStatement select = conn.prepareStatement("SELECT id, name, title, full_name, wa_member, flag, alive, last_login, region FROM assembly.nation WHERE id = ?")) {
 			select.setInt(1, id);
+			return buildNation(conn, select, includeRegion);
+		}
+	}
+
+	/**
+	 * Creates a nation object model that represents the nation, with region data, if it is included
+	 * 
+	 * @param conn to use to populate the nation data from
+	 * @param name of the nation
+	 * @param includeRegion whether to include region data in the nation object
+	 * @return nation, or null if no nation has the given id
+	 * @throws SQLException
+	 */
+	public static Nation getNationByName(Connection conn, String name, boolean includeRegion) throws SQLException {
+		try (PreparedStatement select = conn.prepareStatement("SELECT id, name, title, full_name, wa_member, flag, alive, last_login, region FROM assembly.nation WHERE name = ?")) {
+			select.setString(1, Utils.sanitizeName(name));
 			return buildNation(conn, select, includeRegion);
 		}
 	}
@@ -143,12 +168,5 @@ public class Nation {
 			}
 		}
 		return null;
-	}
-
-	public static Nation getNationByName(Connection conn, String name, boolean includeRegion) throws SQLException {
-		try (PreparedStatement select = conn.prepareStatement("SELECT id, name, title, full_name, wa_member, flag, alive, last_login, region FROM assembly.nation WHERE name = ?")) {
-			select.setString(1, Utils.sanitizeName(name));
-			return buildNation(conn, select, includeRegion);
-		}
 	}
 }
