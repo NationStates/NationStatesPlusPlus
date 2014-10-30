@@ -399,7 +399,7 @@ public enum RequestType implements Request {
 						final String prevValue = context.getSettings().querySettings(settingName).toString();
 						final JsonNode newValue = Json.toJson(value);
 						if (!newValue.toString().equals(prevValue)) {
-							context.getSettings().updateSettings(settingName, newValue);
+							context.getSettings().updateSettings(newValue);
 							Set<Integer> userId = new HashSet<Integer>(1);
 							userId.add(context.getNationId());
 							webManager.onUpdate(PageType.DEFAULT, GET_SETTING, DataRequest.getBlankRequest(GET_SETTING), context.getSettings().querySettings(settingName), userId);
@@ -420,7 +420,7 @@ public enum RequestType implements Request {
 				}
 				return generateError("Missing request data", request);
 			case LAST_NATION_ACTIVITY:
-				if (request != null && context.getActivePage() instanceof NationPage) {
+				if (context.getActivePage() instanceof NationPage) {
 					NationPage visibleNationPage = (NationPage) context.getActivePage();
 					if (visibleNationPage.getNation() != null) {
 						//Note: this is the settings for the nation we are viewing, not ourselves!
@@ -432,7 +432,7 @@ public enum RequestType implements Request {
 					}
 					return generateError("Invalid nation page", request);
 				}
-				return generateError("Missing request data", request);
+				return generateError("Nation Activity is only available on nation pages.", request);
 			default:
 				throw new IllegalStateException("Unimplemented RequestType: " + name());
 		}

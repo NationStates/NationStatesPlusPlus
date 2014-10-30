@@ -261,7 +261,9 @@ public class DatabaseAccess {
 		if (cursor.hasNext()) {
 			MongoSettings settings = new MongoSettings(collection, nation);
 			if (updateLastActivity) {
-				settings.updateSettings("last_nation_activity", Json.toJson(System.currentTimeMillis()));
+				Map<String, Long> lastActivity = new HashMap<>(); 
+				lastActivity.put("last_nation_activity", System.currentTimeMillis());
+				settings.updateSettings(Json.toJson(lastActivity));
 			}
 			return settings;
 		}

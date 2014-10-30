@@ -8,5 +8,5 @@ public interface NationSettings {
 
 	public JsonNode querySettings(String query);
 
-	public void updateSettings(String name, JsonNode update);
+	public void updateSettings(JsonNode update);
 }

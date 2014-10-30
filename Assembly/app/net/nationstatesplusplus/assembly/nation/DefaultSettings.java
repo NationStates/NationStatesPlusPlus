@@ -14,7 +14,7 @@ public class DefaultSettings implements NationSettings {
 	}
 
 	@Override
-	public void updateSettings(String name, JsonNode update) {
+	public void updateSettings(JsonNode update) {
 		
 	}
 }

@@ -68,7 +68,7 @@ public class MongoSettings implements NationSettings {
 	}
 
 	@Override
-	public void updateSettings(String name, JsonNode value) {
+	public void updateSettings(JsonNode value) {
 		BasicDBObject find = new BasicDBObject("nation", nation);
 		DBObject obj = (DBObject)JSON.parse(value.toString());
 		BasicDBObject update = new BasicDBObject("$set", obj);
