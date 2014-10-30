@@ -13,9 +13,11 @@ import java.util.concurrent.ExecutionException;
 
 import net.nationstatesplusplus.assembly.auth.Authentication;
 import net.nationstatesplusplus.assembly.model.Nation;
+import net.nationstatesplusplus.assembly.model.page.NationPage;
 import net.nationstatesplusplus.assembly.model.page.NationStatesPage;
 import net.nationstatesplusplus.assembly.model.page.RecruitmentAdministrationPage;
 import net.nationstatesplusplus.assembly.model.page.RegionPage;
+import net.nationstatesplusplus.assembly.nation.NationSettings;
 import net.nationstatesplusplus.assembly.util.Utils;
 import play.Logger;
 import play.libs.Json;
@@ -62,6 +64,7 @@ public enum RequestType implements Request {
 	INITIAL_REGION_SETTINGS("initial_region_settings"),
 	SET_SETTING("set_setting", true),
 	NATION_STATUS("nation_status"),
+	LAST_NATION_ACTIVITY("last_nation_activity"),
 	;
 
 	private static final Map<String, RequestType> types = new HashMap<String, RequestType>();
@@ -382,7 +385,7 @@ public enum RequestType implements Request {
 						if (user.equals(context.getNation())) {
 							value = context.getSettings().querySettings(setting);
 						} else {
-							value = context.getAccess().getNationSettings(setting).querySettings(setting);
+							value = context.getAccess().getNationSettings(setting, false).querySettings(setting);
 						}
 						return toList(value);
 					}
@@ -390,16 +393,16 @@ public enum RequestType implements Request {
 				return generateError("Missing request data", request);
 			case SET_SETTING:
 				if (request != null) {
-					final String setting = request.getValue("setting", null, String.class);
+					final String settingName = request.getValue("setting", null, String.class);
 					final Object value = request.getValue("value", null, Object.class);
-					if (setting != null) {
-						final String prevValue = context.getSettings().querySettings(setting).toString();
+					if (settingName != null) {
+						final String prevValue = context.getSettings().querySettings(settingName).toString();
 						final JsonNode newValue = Json.toJson(value);
 						if (!newValue.toString().equals(prevValue)) {
-							context.getSettings().updateSettings(setting, newValue);
+							context.getSettings().updateSettings(settingName, newValue);
 							Set<Integer> userId = new HashSet<Integer>(1);
 							userId.add(context.getNationId());
-							webManager.onUpdate(PageType.DEFAULT, GET_SETTING, DataRequest.getBlankRequest(GET_SETTING), context.getSettings().querySettings(setting), userId);
+							webManager.onUpdate(PageType.DEFAULT, GET_SETTING, DataRequest.getBlankRequest(GET_SETTING), context.getSettings().querySettings(settingName), userId);
 						}
 						return toSimpleResult("true");
 					}
@@ -415,6 +418,21 @@ public enum RequestType implements Request {
 					}
 					return toList(Json.toJson(data));
 				}
+				return generateError("Missing request data", request);
+			case LAST_NATION_ACTIVITY:
+				if (request != null && context.getActivePage() instanceof NationPage) {
+					NationPage visibleNationPage = (NationPage) context.getActivePage();
+					if (visibleNationPage.getNation() != null) {
+						//Note: this is the settings for the nation we are viewing, not ourselves!
+						NationSettings visibleSettings = context.getAccess().getNationSettings(visibleNationPage.getNation(), false);
+						long lastActivity = visibleSettings.getValue("last_nation_activity", 0L, Long.class);
+						Map<String, Long> data = new HashMap<String, Long>();
+						data.put("last_nation_activity", lastActivity);
+						return toList(Json.toJson(data));
+					}
+					return generateError("Invalid nation page", request);
+				}
+				return generateError("Missing request data", request);
 			default:
 				throw new IllegalStateException("Unimplemented RequestType: " + name());
 		}

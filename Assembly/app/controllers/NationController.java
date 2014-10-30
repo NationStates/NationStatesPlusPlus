@@ -239,7 +239,7 @@ public class NationController extends NationStatesController {
 		if (nationId == -1) {
 			return Results.badRequest();
 		}
-		NationSettings settings = getDatabase().getNationSettings(name);
+		NationSettings settings = getDatabase().getNationSettings(name, false);
 		Map<String, Object> json = Maps.newHashMap();
 		json.put("post_ids", settings.getValue("post_ids", true, Boolean.class));
 		json.put("egosearch_ignore", settings.getValue("egosearch_ignore", true, Boolean.class));

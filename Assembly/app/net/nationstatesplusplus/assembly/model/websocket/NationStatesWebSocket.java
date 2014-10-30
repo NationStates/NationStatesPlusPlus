@@ -15,17 +15,24 @@ import play.Logger;
 import play.libs.F.Callback;
 import play.mvc.WebSocket;
 
-public final class NationStatesWebSocket extends WebSocket<JsonNode>{
+/**
+ * Represents a websocket connection to a nation viewing a page on nationstates
+ */
+public final class NationStatesWebSocket extends WebSocket<JsonNode> {
 	private final DatabaseAccess access;
-	private NationStatesPage activePage;
-	private String nation;
-	private int nationId;
-	private String userRegion;
-	private int userRegionId;
-	private NationSettings settings;
+	/**
+	 * The active page the user is on
+	 */
+	private final NationStatesPage activePage;
+	private final String nation;
+	private final int nationId;
+	private final String userRegion;
+	private final int userRegionId;
+	private final NationSettings settings;
 	private WebSocket.Out<JsonNode> out = null;
 	private boolean authenticated = false;
 	private final boolean reconnect;
+
 	public NationStatesWebSocket(DatabaseAccess access, NationStatesPage page, String nation, String userRegion, boolean reconnect) {
 		this.access = access;
 		this.activePage = page;
@@ -85,7 +92,7 @@ public final class NationStatesWebSocket extends WebSocket<JsonNode>{
 	public void onReady(WebSocket.In<JsonNode> in, WebSocket.Out<JsonNode> out) {
 		try {
 			this.out = out;
-			//Only write out initial data for new connections, not reconnections
+			// Only write out initial data for new connections, not reconnections
 			if (!reconnect) {
 				writeInitialData(out);
 			}
@@ -106,7 +113,8 @@ public final class NationStatesWebSocket extends WebSocket<JsonNode>{
 	}
 
 	/**
-	 * Writes out the request to the given websocket, given a db connection, context and (optional) data request. Returns true if any data was written.
+	 * Writes out the request to the given websocket, given a db connection,
+	 * context and (optional) data request. Returns true if any data was written.
 	 * 
 	 * @param out
 	 * @param type
@@ -121,7 +129,7 @@ public final class NationStatesWebSocket extends WebSocket<JsonNode>{
 		if (type.shouldSendData(conn, context)) {
 			if (authenticated || !type.requiresAuthentication()) {
 				JsonNode[] nodes = type.executeRequest(conn, request, context);
-				//TODO remove this horrible hack with real logic
+				// TODO remove this horrible hack with real logic
 				if (!authenticated && type == RequestType.AUTHENTICATE_RSS && nodes.length == 1) {
 					authenticated = nodes[0].toString().contains("success");
 					Logger.info("Authenticated websocket from " + nation);
@@ -137,6 +145,7 @@ public final class NationStatesWebSocket extends WebSocket<JsonNode>{
 
 	private static class NationStatesCallback implements Callback<JsonNode> {
 		private final NationStatesWebSocket parent;
+
 		NationStatesCallback(NationStatesWebSocket parent) {
 			this.parent = parent;
 		}

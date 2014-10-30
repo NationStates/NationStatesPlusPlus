@@ -19,6 +19,7 @@ import org.apache.commons.dbutils.DbUtils;
 import org.joda.time.Duration;
 
 import play.Logger;
+import play.libs.Json;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -247,6 +248,10 @@ public class DatabaseAccess {
 	}
 
 	public NationSettings getNationSettings(String nation) {
+		return getNationSettings(nation, true);
+	}
+
+	public NationSettings getNationSettings(String nation, boolean updateLastActivity) {
 		nation = Utils.sanitizeName(nation);
 		
 		DB nspp = getMongoDB();
@@ -254,7 +259,11 @@ public class DatabaseAccess {
 		BasicDBObject find = new BasicDBObject("nation", nation);
 		DBCursor cursor = collection.find(find, new BasicDBObject("nation", 1));
 		if (cursor.hasNext()) {
-			return new MongoSettings(collection, nation);
+			MongoSettings settings = new MongoSettings(collection, nation);
+			if (updateLastActivity) {
+				settings.updateSettings("last_nation_activity", Json.toJson(System.currentTimeMillis()));
+			}
+			return settings;
 		}
 		Logger.info("Migrating user settings for " + nation);
 		try {
