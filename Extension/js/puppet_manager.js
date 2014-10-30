@@ -239,7 +239,6 @@
 			var shiftDown = false;
 			var ctrlDown = false;
 			$(window).keydown(function(event) {
-				console.log(event.which);
 				if (event.which == 16) shiftDown = true;
 				if (event.which == 17) ctrlDown = true;
 			}).keyup(function(event) {
@@ -249,8 +248,6 @@
 			
 			var lastSelectedRow = null;
 			$("#active_puppets tr.puppet_row").on("click", function() {
-				console.log("Last selected:");
-				console.log(lastSelectedRow);
 				//Shift multiselect
 				if (shiftDown && lastSelectedRow) {
 					var selected = $(this);

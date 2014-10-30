@@ -27,7 +27,7 @@ public final class HappeningType {
 	 */
 	private static final Map<String, HappeningType> CATEGORIES = new HashMap<String, HappeningType>();
 	/**
-	 * The happenning type id for database queries
+	 * The happening type id for database queries
 	 */
 	private final int id;
 	/**
@@ -43,7 +43,7 @@ public final class HappeningType {
 	 * It may contain @@ variables for a nation name, %% for a region name or !! for regular expression matches.
 	 * 
 	 * For example, a moving to a new region is associated with two region happenings, one leaving its former region
-	 * and a second region happening representing the arrival at the nations new region.
+	 * and a second region happening representing the arrival at the nation's new region.
 	 */
 	private final String region1Transform;
 	private final String region2Transform;

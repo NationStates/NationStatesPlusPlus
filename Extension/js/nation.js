@@ -80,18 +80,15 @@
 		$("#nspp_trophy").hide();
 		$(window).on("websocket.last_nation_activity", function(event) {
 			var data = event.json;
-			console.log("last nation activity: ");
-			console.log(data);
 			if (data.last_nation_activity > (Date.now() - 15 * 60 * 1000)) {
 				$("#nspp_trophy").attr("src", "https://nationstatesplusplus.net/nationstates/static/nspp_online.png");
 				$("#nspp_trophy").attr("title", $("#nspp_trophy").attr("title") + "\nCurrently Online!");
-				$("#nspp_trophy").show();
 			} else {
 				var opacity = 1 - ((Date.now() - data.last_nation_activity + 3 * 24 * 60 * 60 * 1000) / (30 * 24 * 60 * 60 * 1000));
 				$("#nspp_trophy").attr("title", $("#nspp_trophy").attr("title") + "\nLast seen " + timestampToTimeAgo(data.last_nation_activity).toLowerCase() + " ago.");
 				$("#nspp_trophy").css("opacity", Math.max(0, Math.min(1, opacity)));
-				$("#nspp_trophy").show();
 			}				
+			$("#nspp_trophy").show();
 		});
 		$.get("https://nationstatesplusplus.net/nationstates/feature_authors.json", function(data) {
 			var nation = getVisibleNation();

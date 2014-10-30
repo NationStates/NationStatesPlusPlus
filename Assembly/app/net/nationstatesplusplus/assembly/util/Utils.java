@@ -417,7 +417,7 @@ public class Utils {
 	/**
 	 * Updates a nation's endorsements in nationstates based on the available NationData. The nation's existing endorsements are cleared, and the endorsements from the
 	 * NationData are set. The total number of endorsements and the current time is also updated in the endorsement trends table. If any part of this process fails, 
-	 * rolled back, leaving the database in the same state as it was previously.
+	 * roll back, leaving the database in the same state as it was previously.
 	 * 
 	 * @param conn
 	 * @param access 
@@ -444,6 +444,9 @@ public class Utils {
 				}
 
 				endorsements.executeBatch();
+				// NOTE: hasEndorsement is executed before endorsements --
+				//       first the nation's endos are reset, then the new ones 
+				//       are added.
 			}
 
 			try (PreparedStatement updateEndorsementTrends = conn.prepareStatement("INSERT INTO assembly.nation_endorsement_trends (nation, endorsements, timestamp) VALUES (?, ?, ?)")) {

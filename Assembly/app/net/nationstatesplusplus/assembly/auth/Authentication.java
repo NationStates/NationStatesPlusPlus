@@ -35,7 +35,7 @@ public class Authentication {
 	}
 
 	/**
-	 * Returns true if the rss key, is valid. Validation first checks to see if the database contains the bcrypted hash of the key is in the database.
+	 * Returns true if the rss key, is valid. Validation first checks to see if the database contains the bcrypted hash of the key.
 	 * If the hash is not in the database, or the hash does not match the database value, and this authentication attempt is not too recent
 	 *  (> 1 min since the previous attempt), then a connection to nationstates is opened to verify the rss key.
 	 *  If the rss key is confirmed valid, a bcrypted-hash of the key is stored in the database to avoid unnecessary future nationstates calls.
