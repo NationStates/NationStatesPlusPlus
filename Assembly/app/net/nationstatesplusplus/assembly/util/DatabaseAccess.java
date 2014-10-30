@@ -257,15 +257,16 @@ public class DatabaseAccess {
 		DB nspp = getMongoDB();
 		DBCollection collection = nspp.getCollection("user_settings");
 		BasicDBObject find = new BasicDBObject("nation", nation);
-		DBCursor cursor = collection.find(find, new BasicDBObject("nation", 1));
-		if (cursor.hasNext()) {
-			MongoSettings settings = new MongoSettings(collection, nation);
-			if (updateLastActivity) {
-				Map<String, Long> lastActivity = new HashMap<>(); 
-				lastActivity.put("last_nation_activity", System.currentTimeMillis());
-				settings.updateSettings(Json.toJson(lastActivity));
+		try (DBCursor cursor = collection.find(find, new BasicDBObject("nation", 1))) {
+			if (cursor.hasNext()) {
+				MongoSettings settings = new MongoSettings(collection, nation);
+				if (updateLastActivity) {
+					Map<String, Long> lastActivity = new HashMap<>(); 
+					lastActivity.put("last_nation_activity", System.currentTimeMillis());
+					settings.updateSettings(Json.toJson(lastActivity));
+				}
+				return settings;
 			}
-			return settings;
 		}
 		Logger.info("Migrating user settings for " + nation);
 		try {
@@ -278,11 +279,12 @@ public class DatabaseAccess {
 				BasicDBObject obj = new BasicDBObject(data);
 				collection.insert(obj);
 				find = new BasicDBObject("nation", nation);
-				cursor = collection.find(find, new BasicDBObject("nation", 1));
-				if (cursor.hasNext()) {
-					return new MongoSettings(collection, nation);
-				} else {
-					Logger.error("Migrated settings for " + nation + " not found!");
+				try (DBCursor cursor = collection.find(find, new BasicDBObject("nation", 1))) {
+					if (cursor.hasNext()) {
+						return new MongoSettings(collection, nation);
+					} else {
+						Logger.error("Migrated settings for " + nation + " not found!");
+					}
 				}
 			} catch (Exception e) {
 				Logger.error("Unable to parse nation settings, falling back to default settings", e);
