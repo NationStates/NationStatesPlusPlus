@@ -46,17 +46,14 @@ function setupRegionPage() {
 	(new UserSettings()).child("clickable_links").once(function(data) {
 		if (data["clickable_links"]) {
 			$(window).on("rmb/update", function(event) {
-				var html = $("#p" + event.postId).html();
-				if (typeof html == "undefined") {
-					console.log("UNDEFINED POST!!");
-					console.log($("#p" + event.postId));
-					console.log(event.postId);
-					console.log(event);
-				}
-				var linkifiedHtml = linkify(html);
-				if (html != linkifiedHtml) {
-					$("#p" + event.postId).html(linkifiedHtml);
-				}
+				$("#p" + event.postId + " p").each(function() {
+					var html = $(this).html();
+					var linkifiedHtml = linkify(html);
+					if (html != linkifiedHtml) {
+						$(this).html(linkifiedHtml);
+					}
+				});
+				
 			});
 		}
 	}, true);
@@ -223,7 +220,7 @@ function handleNewRegionalMessages() {
 	$(window).on("rmb/update", function(event) {
 		var id = event.postId;
 		var post = $("#p" + id);
-		post.find(".rmbmsg2").append("<div postid='" + id + "' class='post-ratings'><ul class='post-rating-list' style='opacity: 0;'><li class='undo-rating' style='display:none;'><a href='javascript:void(0)'>Undo Rating</a></li><li name='like'><a href='javascript:void(0)'><img style='margin-right: 3px;' src='https://nationstatesplusplus.net/nationstates/static/like.png' alt='Like'></a></li><li name='dislike'><a href='javascript:void(0)'><img style='margin-right: 3px;' src='https://nationstatesplusplus.net/nationstates/static/dislike2.png' alt='Dislike'></a></li></ul></div>");
+		post.find(".rmbmsg2").append("<div postid='" + id + "' class='post-ratings'><ul class='post-rating-list' style='opacity: 0;'><li class='undo-rating' style='display:none;'><a href='javascript:void(0)'>Undo Rating</a></li><li class='like'><a href='javascript:void(0)'><img style='margin-right: 3px;' src='https://nationstatesplusplus.net/nationstates/static/like.png' alt='Like'></a></li><li class='dislike'><a href='javascript:void(0)'><img style='margin-right: 3px;' src='https://nationstatesplusplus.net/nationstates/static/dislike2.png' alt='Dislike'></a></li></ul></div>");
 		setTimeout(function(post) {
 			var authorHeight = post.find(".rmbauthor2").height() + 17;
 			var msgHeight = post.find(".rmbmsg2").height();
@@ -243,13 +240,13 @@ function handleNewRegionalMessages() {
 		post.on("mouseleave", function(e){
 			$(e.currentTarget).find(".post-rating-list").stop().animate({opacity:"0"},200);
 		});
-		post.find("li[name='like']").find("a").on("click", function (e) {
+		post.find("li.like").find("a").on("click", function (e) {
 			e.preventDefault();
 			var id = $(this).parents(".post-ratings:first").attr("postid");
 			
 			sendWebsocketEvent("rate_rmb_post", { "rmb_post_id": id, "rating" : 1 }, true);
 		});
-		post.find("li[name='dislike']").find("a").on("click", function (e) {
+		post.find("li.dislike").find("a").on("click", function (e) {
 			e.preventDefault();
 			var id = $(this).parents(".post-ratings:first").attr("postid");
 			
