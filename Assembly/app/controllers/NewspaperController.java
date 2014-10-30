@@ -700,18 +700,13 @@ public class NewspaperController extends NationStatesController {
 			//Send update to clients
 			if (Integer.parseInt(visible) == Visibility.VISIBLE.getType()) {
 				Set<Integer> nations = null;
-				RequestType rType;
-				if (newspaper == GAMEPLAY_NEWS) rType = RequestType.GAMEPLAY_NEWS_SIDEBAR;
-				else if (newspaper == ROLEPLAY_NEWS) rType = RequestType.ROLEPLAY_NEWS_SIDEBAR;
-				else {
-					rType = RequestType.REGIONAL_NEWS_SIDEBAR;
-					try (PreparedStatement regionResidents = conn.prepareStatement("SELECT nation.id FROM assembly.nation INNER JOIN assembly.newspapers ON newspapers.region = nation.region WHERE newspapers.id = ?")) {
-						regionResidents.setInt(1, newspaper);
-						try (ResultSet set = regionResidents.executeQuery()) {
-							nations = new HashSet<Integer>();
-							while (set.next()) {
-								nations.add(set.getInt(1));
-							}
+				RequestType rType = RequestType.REGIONAL_NEWS_SIDEBAR;
+				try (PreparedStatement regionResidents = conn.prepareStatement("SELECT nation.id FROM assembly.nation INNER JOIN assembly.newspapers ON newspapers.region = nation.region WHERE newspapers.id = ?")) {
+					regionResidents.setInt(1, newspaper);
+					try (ResultSet set = regionResidents.executeQuery()) {
+						nations = new HashSet<Integer>();
+						while (set.next()) {
+							nations.add(set.getInt(1));
 						}
 					}
 				}

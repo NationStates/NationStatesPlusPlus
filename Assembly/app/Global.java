@@ -124,7 +124,7 @@ public class Global extends GlobalSettings {
 		createListener.run();
 
 		try {
-			Thread.sleep(3000L);
+			Thread.sleep(7000L);
 		} catch (InterruptedException e1) {	}
 
 		Logger.info("Binding port forwarding for mongodb on {} with port {}", remoteHost, port);

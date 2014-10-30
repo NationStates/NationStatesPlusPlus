@@ -21,9 +21,17 @@ public class MongoSettings implements NationSettings {
 
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
 	public <V> V getValue(String name, V defaultVal, Class<V> type) {
+		V value = getValueImpl(name, defaultVal, type);
+		if (value == null) {
+			return defaultVal;
+		}
+		return value;
+	}
+
+	@SuppressWarnings("unchecked")
+	private <V> V getValueImpl(String name, V defaultVal, Class<V> type) {
 		BasicDBObject find = new BasicDBObject("nation", nation);
 		BasicDBObject query = new BasicDBObject(name, 1);
 		try (DBCursor cursor = this.users.find(find, query)) {
