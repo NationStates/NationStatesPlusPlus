@@ -31,9 +31,7 @@ import controllers.RecruitmentController;
 import controllers.RegionController;
 
 public enum RequestType implements Request {
-	KEEP_ALIVE("keep_alive") {
-		
-	},
+	KEEP_ALIVE("keep_alive"),
 	REGION_TITLE("region_titles"),
 	REGION_MAP("region_map"),
 	REGION_UPDATES("region_updates"),
@@ -63,7 +61,6 @@ public enum RequestType implements Request {
 	SET_SETTING("set_setting", true),
 	NATION_STATUS("nation_status"),
 	LAST_NATION_ACTIVITY("last_nation_activity"),
-	PONG("ping"),
 	;
 
 	private static final Map<String, RequestType> types = new HashMap<String, RequestType>();

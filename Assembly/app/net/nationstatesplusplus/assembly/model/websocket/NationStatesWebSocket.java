@@ -168,17 +168,13 @@ public final class NationStatesWebSocket extends WebSocket<JsonNode> {
 			DataRequest request = DataRequest.parse(node);
 			RequestType type = RequestType.getTypeForName(request.getName());
 			if (type != null) {
-				//TODO: make this handled like a normal request?
-				if (type == RequestType.PONG) {
-					parent.pong();
-				} else {
-					try (Connection conn = parent.access.getPool().getConnection()) {
-						final NationContext context = parent.getContext();
-						parent.writeRequest(type, context, request, conn);
-						parent.activePage.onRequest(type, request);
-					} catch (Exception e) {
-						Logger.error("Exception while sending websocket data", e);
-					}
+				parent.pong();
+				try (Connection conn = parent.access.getPool().getConnection()) {
+					final NationContext context = parent.getContext();
+					parent.writeRequest(type, context, request, conn);
+					parent.activePage.onRequest(type, request);
+				} catch (Exception e) {
+					Logger.error("Exception while sending websocket data", e);
 				}
 			} else {
 				Logger.warn("Unknown request type: " + request.getName());

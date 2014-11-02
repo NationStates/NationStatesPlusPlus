@@ -162,7 +162,7 @@ public class WebsocketManager implements Consumer {
 			while(true) {
 				checkWebsockets();
 				try {
-					Thread.sleep(Duration.standardSeconds(30).getMillis());
+					Thread.sleep(Duration.standardSeconds(60).getMillis());
 				} catch (InterruptedException e) {
 					Logger.info("WebsocketWatchdog interrupted", e);
 					return;
@@ -175,7 +175,7 @@ public class WebsocketManager implements Consumer {
 			for (PageType page : PageType.values()) {
 				final Set<NationStatesWebSocket> sockets = pages.get(page);
 				synchronized(sockets) {
-					final long timeout = System.currentTimeMillis() - Duration.standardSeconds(30).getMillis();
+					final long timeout = System.currentTimeMillis() - Duration.standardMinutes(11).getMillis();
 					final Iterator<NationStatesWebSocket> iter = sockets.iterator();
 					while(iter.hasNext()) {
 						final NationStatesWebSocket websocket = iter.next();
