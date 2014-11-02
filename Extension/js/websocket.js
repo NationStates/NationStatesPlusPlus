@@ -155,7 +155,7 @@
 	}
 
 	function keepAlive() {
-		var delay = isPageActive() ? 600000 : 30000; // 10 min or 30 s
+		var delay = isPageActive() ? 60000 : 30000; // 1 min or 30 s
 		delay += keepAliveAttempts * 5000;
 		if (ws != null && ws.readyState === 1) {
 			if (Date.now() > lastMessageReceived + delay) {
