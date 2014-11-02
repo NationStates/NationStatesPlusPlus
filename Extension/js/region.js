@@ -42,25 +42,38 @@ function setupRegionPage() {
 			});
 		}
 	}, true);
-	
-	(new UserSettings()).child("clickable_links").once(function(data) {
+
+	var linkifyRMB = function(event) {
+		$("#p" + event.postId + " p").each(function() {
+			var html = $(this).html();
+			var linkifiedHtml = linkify(html);
+			if (html != linkifiedHtml) {
+				$(this).html(linkifiedHtml);
+			}
+		});
+	};
+	(new UserSettings()).child("clickable_links").on(function(data) {
+		console.log("clickable links: " + data["clickable_links"]);
 		if (data["clickable_links"]) {
-			$(window).on("rmb/update", function(event) {
-				$("#p" + event.postId + " p").each(function() {
-					var html = $(this).html();
-					var linkifiedHtml = linkify(html);
-					if (html != linkifiedHtml) {
-						$(this).html(linkifiedHtml);
-					}
-				});
-				
+			$(window).on("rmb/update", linkifyRMB);
+			$(".rmbtable2").children().each(function() {
+				var event = jQuery.Event("rmb/update");
+				event.postId = $(this).attr("id").substring(1)
+				linkifyRMB(event);
+			});
+		} else {
+			$(window).off("rmb/update", linkifyRMB);
+			$("a.linkified").each(function() {
+				$(this).insertBefore($(this).html());
+				$(this).remove();
 			});
 		}
 	}, true);
 
-	(new UserSettings()).child("infinite_scroll").once(function(data) {
+	var doInfiniteScroll = function() {
+		var infiniteScroll = localStorage.getItem("infinite_scroll");
 		var children;
-		if (data["infinite_scroll"]) {
+		if (infiniteScroll == null) {
 			//Remove older link
 			$(".rmbolder").remove();
 			//Move msg box to top
@@ -81,6 +94,7 @@ function setupRegionPage() {
 		} else {
 			children = $(".rmbtable2").children().get();
 		}
+		
 		var postIds = [];
 		var html = "";
 		$(children).each(function() {
@@ -94,10 +108,19 @@ function setupRegionPage() {
 			event.postId = postIds[i];
 			$(window).trigger(event);
 		}
+	};
+	doInfiniteScroll();
+	(new UserSettings()).child("infinite_scroll").once(function(data) {
+		if (data["infinite_scroll"]) {
+			localStorage.removeItem("infinite_scroll");
+		} else {
+			localStorage.setItem("infinite_scroll", false);
+		}
 	}, true);
 
-	(new UserSettings()).child("search_rmb").once(function(data) {
-		if (data["search_rmb"]) {
+	var createRMBSearch = function() {
+		var rmbSearch = localStorage.getItem("search_rmb");
+		if (rmbSearch == null) {
 			relocatePostMessageBox();
 			$(window).scroll(handleSearchScroll);
 			$('.rmbolder').css("margin-top", "20px");
@@ -110,6 +133,14 @@ function setupRegionPage() {
 			$("button.search-rmb").on("click", toggleSearchForm);
 			$("button.rmb-message").on("click", toggleRMBPostForm);
 			$("#rmb-search-input, #rmb-search-input-region, #rmb-search-input-author").on("keydown", searchRMB);
+		}
+	};
+	createRMBSearch();
+	(new UserSettings()).child("search_rmb").once(function(data) {
+		if (data["search_rmb"]) {
+			localStorage.removeItem("search_rmb");
+		} else {
+			localStorage.setItem("search_rmb", false);
 		}
 	}, true);
 
@@ -274,8 +305,6 @@ function handleNewRegionalMessages() {
 function handlePostRatings() {
 	var updateRatings = function(event) {
 		var data = event.json;
-		console.log("rmb ratings: ");
-		console.log(data);
 		var likes = 0;
 		var dislikes = 0;
 		var rating = -1;
@@ -298,7 +327,6 @@ function handlePostRatings() {
 			}
 		}
 		var post = $("#p" + postId);
-		console.log(post);
 		post.find(".post-ratings").find("span[name='rating-container']").remove();
 		post.find(".post-ratings").prepend("<span name='rating-container'></span>");
 		if (rating > -1) {

@@ -1,4 +1,8 @@
 (function() {
+	if (getVisiblePage() == "panel" || getVisiblePage() == "hpanel") {
+		console.log("Disabling websocket on panel iframe");
+		return;
+	}
 	var ws = null;
 	var isAuthenticated = false;
 	var isAuthPending = false;
