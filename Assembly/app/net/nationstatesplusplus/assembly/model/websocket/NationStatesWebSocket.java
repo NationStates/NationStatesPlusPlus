@@ -32,6 +32,7 @@ public final class NationStatesWebSocket extends WebSocket<JsonNode> {
 	private WebSocket.Out<JsonNode> out = null;
 	private boolean authenticated = false;
 	private final boolean reconnect;
+	private long lastPing = System.currentTimeMillis();
 
 	public NationStatesWebSocket(DatabaseAccess access, NationStatesPage page, String nation, String userRegion, boolean reconnect) {
 		this.access = access;
@@ -78,6 +79,18 @@ public final class NationStatesWebSocket extends WebSocket<JsonNode> {
 		} else {
 			throw new IllegalStateException("Attempted to write to an unopened websocket");
 		}
+	}
+
+	private void pong() {
+		lastPing = System.currentTimeMillis();
+	}
+
+	public long lastPing() {
+		return lastPing;
+	}
+
+	public void close() {
+		out.close();
 	}
 
 	public NationContext getContext() {
@@ -155,12 +168,17 @@ public final class NationStatesWebSocket extends WebSocket<JsonNode> {
 			DataRequest request = DataRequest.parse(node);
 			RequestType type = RequestType.getTypeForName(request.getName());
 			if (type != null) {
-				try (Connection conn = parent.access.getPool().getConnection()) {
-					final NationContext context = parent.getContext();
-					parent.writeRequest(type, context, request, conn);
-					parent.activePage.onRequest(type, request);
-				} catch (Exception e) {
-					Logger.error("Exception while sending websocket data", e);
+				//TODO: make this handled like a normal request?
+				if (type == RequestType.PONG) {
+					parent.pong();
+				} else {
+					try (Connection conn = parent.access.getPool().getConnection()) {
+						final NationContext context = parent.getContext();
+						parent.writeRequest(type, context, request, conn);
+						parent.activePage.onRequest(type, request);
+					} catch (Exception e) {
+						Logger.error("Exception while sending websocket data", e);
+					}
 				}
 			} else {
 				Logger.warn("Unknown request type: " + request.getName());

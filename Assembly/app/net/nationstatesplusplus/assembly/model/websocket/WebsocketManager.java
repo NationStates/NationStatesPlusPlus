@@ -2,9 +2,12 @@ package net.nationstatesplusplus.assembly.model.websocket;
 
 import java.io.IOException;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
+
+import org.joda.time.Duration;
 
 import net.nationstatesplusplus.assembly.amqp.AMQPConnectionFactory;
 import net.nationstatesplusplus.assembly.amqp.AMQPMessage;
@@ -36,6 +39,10 @@ public class WebsocketManager implements Consumer {
 		for (PageType page : PageType.values()) {
 			pages.put(page, new HashSet<NationStatesWebSocket>());
 		}
+		
+		Thread watchdog = new Thread(new WebsocketWatchdog(), "Websocket Watchdog Thread");
+		watchdog.setDaemon(true);
+		watchdog.start();
 	}
 
 	protected void register(NationStatesWebSocket socket, WebSocket.In<JsonNode> in) {
@@ -147,5 +154,42 @@ public class WebsocketManager implements Consumer {
 
 	@Override
 	public void handleRecoverOk(String consumerTag) {
+	}
+
+	private class WebsocketWatchdog implements Runnable {
+		@Override
+		public void run() {
+			while(true) {
+				checkWebsockets();
+				try {
+					Thread.sleep(Duration.standardSeconds(30).getMillis());
+				} catch (InterruptedException e) {
+					Logger.info("WebsocketWatchdog interrupted", e);
+					return;
+				}
+			}
+		}
+
+		public void checkWebsockets() {
+			int removed = 0;
+			for (PageType page : PageType.values()) {
+				final Set<NationStatesWebSocket> sockets = pages.get(page);
+				synchronized(sockets) {
+					final long timeout = System.currentTimeMillis() - Duration.standardSeconds(30).getMillis();
+					final Iterator<NationStatesWebSocket> iter = sockets.iterator();
+					while(iter.hasNext()) {
+						final NationStatesWebSocket websocket = iter.next();
+						if (websocket.lastPing() < timeout) {
+							iter.remove();
+							try {
+								websocket.close();
+							} catch (Exception ignore) { }
+							removed++;
+						}
+					}
+				}
+			}
+			Logger.info("Closed and removed {} inactive websockets", removed);
+		}
 	}
 }
