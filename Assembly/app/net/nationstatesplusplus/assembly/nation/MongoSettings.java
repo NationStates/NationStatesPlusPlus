@@ -40,16 +40,22 @@ public class MongoSettings implements NationSettings {
 				Object obj = result.get(name);
 				//Auto-magically convert any strings to numbers, if we requested a number type
 				if (obj instanceof String && Number.class.isAssignableFrom(type)) {
-					double val = Double.parseDouble((String)obj);
-					if (type == Double.class) {
-						return (V) Double.valueOf(val);
-					} else if (type == Float.class) {
-						return (V) Float.valueOf((float)val);
-					} else if (type == Integer.class) {
-						return (V) Integer.valueOf((int)val);
-					} else if (type == Long.class) {
-						return (V) Long.valueOf((long)val);
+					try {
+						double val = Double.parseDouble((String)obj);
+						if (type == Double.class) {
+							return (V) Double.valueOf(val);
+						} else if (type == Float.class) {
+							return (V) Float.valueOf((float)val);
+						} else if (type == Integer.class) {
+							return (V) Integer.valueOf((int)val);
+						} else if (type == Long.class) {
+							return (V) Long.valueOf((long)val);
+						}
+					} catch (NumberFormatException e) {
+						return defaultVal;
 					}
+				} else if (obj instanceof String && Boolean.class.isAssignableFrom(type)) {
+					return (V) Boolean.valueOf("true".equalsIgnoreCase((String)obj));
 				}
 				return type.cast(obj);
 			}

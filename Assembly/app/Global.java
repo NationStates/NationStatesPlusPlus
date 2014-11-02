@@ -1,5 +1,6 @@
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.lang.reflect.Constructor;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -21,11 +22,18 @@ import net.nationstatesplusplus.assembly.model.HappeningType;
 import net.nationstatesplusplus.assembly.model.websocket.WebsocketManager;
 import net.nationstatesplusplus.assembly.mongodb.PortForwardingRunnable;
 import net.nationstatesplusplus.assembly.util.DatabaseAccess;
-
+import net.nationstatesplusplus.assembly.logging.LoggerOutputStream;
 import org.apache.commons.dbutils.DbUtils;
 import org.joda.time.Duration;
+import org.slf4j.LoggerFactory;
 import org.spout.cereal.config.ConfigurationNode;
 import org.spout.cereal.config.yaml.YamlConfiguration;
+
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.joran.JoranConfigurator;
+import ch.qos.logback.core.joran.spi.JoranException;
+import ch.qos.logback.core.util.StatusPrinter;
 
 import com.google.common.collect.ObjectArrays;
 import com.limewoodMedia.nsapi.NationStates;
@@ -51,6 +59,8 @@ public class Global extends GlobalSettings {
 
 	@Override
 	public void onStart(Application app) {
+		setupLogback();
+		
 		config = Start.loadConfig();
 		ConfigurationNode settings = config.getChild("settings");
 
@@ -112,7 +122,7 @@ public class Global extends GlobalSettings {
 		final String remoteHost = config.getChild("mongodb").getChild("host").getString();
 		final String user = config.getChild("mongodb").getChild("user").getString();
 		final String fingerprint = config.getChild("mongodb").getChild("fingerprint").getString();
-		
+
 		Runnable createListener = new Runnable() {
 			@Override
 			public void run() {
@@ -125,7 +135,8 @@ public class Global extends GlobalSettings {
 
 		try {
 			Thread.sleep(7000L);
-		} catch (InterruptedException e1) {	}
+		} catch (InterruptedException e1) {
+		}
 
 		Logger.info("Binding port forwarding for mongodb on {} with port {}", remoteHost, port);
 
@@ -217,5 +228,24 @@ public class Global extends GlobalSettings {
 			return controller;
 		}
 		return super.getControllerInstance(controllerClass);
+	}
+
+	private static void setupLogback() {
+		LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
+		Logger.info("Setting up Logback");
+		Logger.info("Application running from: {}", Start.getApplicationDirectory().getAbsolutePath());
+		System.setProperty("application.home", Start.getApplicationDirectory().getAbsolutePath());
+		try {
+			JoranConfigurator configurator = new JoranConfigurator();
+			configurator.setContext(context);
+			context.reset();
+			configurator.doConfigure(new File(new File(Start.getApplicationDirectory(), "conf"), "application-logger.xml"));
+		} catch (JoranException je) {
+			// StatusPrinter will handle this
+		}
+		//System.setOut(new PrintStream(new LoggerOutputStream(Level.INFO, Logger.underlying()), true));
+		System.setErr(new PrintStream(new LoggerOutputStream(Level.OFF, Logger.underlying()), true));
+		Logger.info("Logback Setup");
+		StatusPrinter.printInCaseOfErrorsOrWarnings(context);
 	}
 }

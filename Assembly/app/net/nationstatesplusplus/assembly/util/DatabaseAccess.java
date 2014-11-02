@@ -272,20 +272,28 @@ public class DatabaseAccess {
 		Logger.info("Migrating user settings for " + nation);
 		try {
 			String settings = nationSettings.get(getNationId(nation));
-			settings = "{\"nation\":\"" + nation + "\", " + settings.substring(1);
-			Logger.info("Modified settings for " + nation + ": [" + settings + "]");
-			ObjectMapper mapper = new ObjectMapper();
-			
-			Map<String, Object> data = mapper.readValue(settings, new TypeReference<HashMap<String,Object>>() {});
-			BasicDBObject obj = new BasicDBObject(data);
-			collection.insert(obj);
-			find = new BasicDBObject("nation", nation);
-			try (DBCursor cursor = collection.find(find, new BasicDBObject("nation", 1))) {
-				if (cursor.hasNext()) {
-					return new MongoSettings(collection, nation);
-				} else {
-					Logger.error("Migrated settings for " + nation + " not found!");
+			if (!settings.isEmpty()) {
+				settings = "{\"nation\":\"" + nation + "\", " + settings.substring(1);
+				Logger.info("Modified settings for " + nation + ": [" + settings + "]");
+				ObjectMapper mapper = new ObjectMapper();
+				
+				Map<String, Object> data = mapper.readValue(settings, new TypeReference<HashMap<String,Object>>() {});
+				BasicDBObject obj = new BasicDBObject(data);
+				collection.insert(obj);
+				find = new BasicDBObject("nation", nation);
+				try (DBCursor cursor = collection.find(find, new BasicDBObject("nation", 1))) {
+					if (cursor.hasNext()) {
+						return new MongoSettings(collection, nation);
+					} else {
+						Logger.error("Migrated settings for " + nation + " not found!");
+					}
 				}
+			} else {
+				Map<String, Object> data = Maps.newHashMap();
+				data.put("nation", nation);
+				BasicDBObject obj = new BasicDBObject(data);
+				collection.insert(obj);
+				return new MongoSettings(collection, nation);
 			}
 		} catch (Exception e) {
 			Logger.error("Unable to parse nation settings, falling back to default settings", e);

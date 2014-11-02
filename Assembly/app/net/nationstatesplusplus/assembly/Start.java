@@ -24,6 +24,10 @@ public class Start {
 		return config;
 	}
 
+	public static File getApplicationDirectory() {
+		return new File(Start.class.getProtectionDomain().getCodeSource().getLocation().getPath()).getParentFile().getParentFile();
+	}
+
 	public static ComboPooledDataSource loadDatabase(ConfigurationNode settings) {
 		try {
 			Logger.info("Initializing database connection pool to [ " + settings.getChild("jbdc").getString() + " ]");

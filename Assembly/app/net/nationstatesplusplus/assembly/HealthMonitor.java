@@ -4,6 +4,8 @@ import java.io.File;
 import java.lang.ProcessBuilder.Redirect;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 import net.nationstatesplusplus.assembly.mongodb.PortForwardingRunnable;
@@ -11,6 +13,8 @@ import net.nationstatesplusplus.assembly.util.DatabaseAccess;
 
 import org.apache.commons.dbutils.DbUtils;
 import org.spout.cereal.config.ConfigurationNode;
+
+import com.google.common.collect.Lists;
 
 import play.Logger;
 import play.api.Play;
@@ -68,7 +72,7 @@ public class HealthMonitor extends Thread {
 		while(!this.isInterrupted()) {
 			final long time = System.currentTimeMillis();
 			boolean unresponsive = false;
-
+			
 			//If background tasks are not enabled for this instance, these will never run
 			if (backgroundTasks) {
 				long lastHappening = time - lastHappeningHeartbeat.get();
@@ -126,7 +130,9 @@ public class HealthMonitor extends Thread {
 		try {
 			(new File("RUNNING_PID")).delete();
 			ProcessBuilder builder = new ProcessBuilder();
-			builder.command(restartCommand.split(","));
+			final List<String> commands = Lists.transform(Arrays.asList(restartCommand.split(",")), s -> s.replaceAll("@@WORKING_DIR@@", Start.getApplicationDirectory().getAbsolutePath()));
+			Logger.info("Restart Commands: {}", commands);
+			builder.command(commands);
 			builder.redirectOutput(Redirect.INHERIT);
 			builder.redirectError(Redirect.INHERIT);
 			builder.redirectInput(Redirect.INHERIT);
