@@ -14,6 +14,13 @@ var newspaperAdminHTML = '<form class="form-horizontal"><fieldset><div class="co
 	//$("<li id='gameplay_newspaper' style='display:none;'><a id='gnews' style='display: inline;' href='//www.nationstates.net/page=blank/?gameplay_news'>GAMEPLAY NEWS<span name='nag'></span></a></li>").insertAfter($("#regional_newspaper"));
 	//$("<li id='roleplay_newspaper' style='display:none;'><a id='rpnews' style='display: inline;' href='//www.nationstates.net/page=blank/?roleplay_news'>ROLEPLAY NEWS<span name='nag'></span></a></li>").insertAfter($("#gameplay_newspaper"));
 
+	//Newspaper sidebar link fallback for Forum pages
+	if (getVisiblePage() == "hpanel" || getVisiblePage() == "panel") {
+		$.get("https://nationstatesplusplus.net/api/newspaper/region/?region=" + getUserRegion(), function(json) {
+			$("#regional_newspaper").show();
+		});
+	}
+	
 	if (window.location.href.indexOf("regional_news") != -1) {
 		$.get("https://nationstatesplusplus.net/api/newspaper/region/?region=" + $.QueryString["regional_news"], function(json) {
 			openNationStatesNews(json.newspaper_id);
