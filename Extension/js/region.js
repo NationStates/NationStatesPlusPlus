@@ -63,10 +63,7 @@ function setupRegionPage() {
 			});
 		} else {
 			$(window).off("rmb/update", linkifyRMB);
-			$("a.linkified").each(function() {
-				$(this).insertBefore($(this).html());
-				$(this).remove();
-			});
+			$("a.linkified").contents().unwrap();
 		}
 	}, true);
 
