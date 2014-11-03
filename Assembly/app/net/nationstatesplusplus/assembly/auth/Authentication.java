@@ -42,7 +42,7 @@ public class Authentication {
 	 *  <p>
 	 *  If the authentication is not valid, a failure reason will be available from getFailureReason
 	 * 
-	 * @return if the authenticaton is valid
+	 * @return if the authentication is valid
 	 */
 	public boolean isValid() {
 		String hash = getHashFromDatabase();

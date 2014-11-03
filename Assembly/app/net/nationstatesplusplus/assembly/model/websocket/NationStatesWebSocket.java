@@ -10,7 +10,6 @@ import net.nationstatesplusplus.assembly.nation.NationSettings;
 import net.nationstatesplusplus.assembly.util.DatabaseAccess;
 
 import com.fasterxml.jackson.databind.JsonNode;
-
 import play.Logger;
 import play.libs.F.Callback;
 import play.mvc.WebSocket;
@@ -125,6 +124,10 @@ public final class NationStatesWebSocket extends WebSocket<JsonNode> {
 		}
 	}
 
+	private static final long[] requestTimes = new long[RequestType.values().length];
+	private static final long[] requestTotals = new long[RequestType.values().length];
+	private static volatile long requestCount = 0;
+	
 	/**
 	 * Writes out the request to the given websocket, given a db connection,
 	 * context and (optional) data request. Returns true if any data was written.
@@ -139,21 +142,35 @@ public final class NationStatesWebSocket extends WebSocket<JsonNode> {
 	 * @throws ExecutionException
 	 */
 	private boolean writeRequest(RequestType type, NationContext context, DataRequest request, Connection conn) throws SQLException {
-		if (type.shouldSendData(conn, context)) {
-			if (authenticated || !type.requiresAuthentication()) {
-				JsonNode[] nodes = type.executeRequest(conn, request, context);
-				// TODO remove this horrible hack with real logic
-				if (!authenticated && type == RequestType.AUTHENTICATE_RSS && nodes.length == 1) {
-					authenticated = nodes[0].toString().contains("success");
-					Logger.info("Authenticated websocket from " + nation);
-				}
-				for (int i = 0; i < nodes.length; i++) {
-					out.write(nodes[i]);
-				}
-				return true;
+		long start = System.currentTimeMillis();
+		requestCount++;
+		if (requestCount % 500 == 0) {
+			Logger.info("Request timings...");
+			for (int i = 0; i < RequestType.values().length; i++) {
+				RequestType rt = RequestType.values()[i];
+				Logger.info("Request Type: {} - Total Requests: {}, Total Time: {}, Average Time: {}", rt.name(), requestTotals[i], requestTimes[i], requestTimes[i] / (double)requestTotals[i]);
 			}
 		}
-		return false;
+		try {
+			if (type.shouldSendData(conn, context)) {
+				if (authenticated || !type.requiresAuthentication()) {
+					JsonNode[] nodes = type.executeRequest(conn, request, context);
+					// TODO remove this horrible hack with real logic
+					if (!authenticated && type == RequestType.AUTHENTICATE_RSS && nodes.length == 1) {
+						authenticated = nodes[0].toString().contains("success");
+						Logger.info("Authenticated websocket from " + nation);
+					}
+					for (int i = 0; i < nodes.length; i++) {
+						out.write(nodes[i]);
+					}
+					return true;
+				}
+			}
+			return false;
+		} finally {
+			requestTimes[type.ordinal()] += (System.currentTimeMillis() - start);
+			requestTotals[type.ordinal()]++;
+		}
 	}
 
 	private static class NationStatesCallback implements Callback<JsonNode> {

@@ -45,6 +45,7 @@ public class WebsocketManager implements Consumer {
 		watchdog.start();
 	}
 
+	private volatile int count = 0;
 	protected void register(NationStatesWebSocket socket, WebSocket.In<JsonNode> in) {
 		Set<NationStatesWebSocket> set = pages.get(socket.getPageType());
 		synchronized(set) {
@@ -52,14 +53,17 @@ public class WebsocketManager implements Consumer {
 			in.onClose(new UnregisterCallback(socket));
 		}
 		
-		int total = 0;
-		for (PageType page : PageType.values()) {
-			Set<NationStatesWebSocket> sockets = pages.get(page);
-			synchronized(sockets) {
-				total += sockets.size();
+		count++;
+		if (count % 25 == 0) {
+			int total = 0;
+			for (PageType page : PageType.values()) {
+				Set<NationStatesWebSocket> sockets = pages.get(page);
+				synchronized(sockets) {
+					total += sockets.size();
+				}
 			}
+			Logger.info("Currently " + total + " registered websockets");
 		}
-		Logger.info("Currently " + total + " registered websockets");
 	}
 
 	public void onUpdate(PageType page, RequestType type, DataRequest request, JsonNode node) {

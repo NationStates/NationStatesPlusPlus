@@ -24,6 +24,7 @@ import play.libs.Json;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -41,6 +42,7 @@ public class DatabaseAccess {
 	private final LoadingCache<String, Integer> nationIdCache;
 	private final LoadingCache<Integer, String> reverseIdCache;
 	private final LoadingCache<String, String> nationTitleCache;
+	private final Cache<Integer, Integer> authenticationCache;
 	@Deprecated
 	private final LoadingCache<Integer, String> nationSettings;
 	private final WebsocketManager websocketManager;
@@ -179,6 +181,8 @@ public class DatabaseAccess {
 				return "";
 			}
 		});
+		
+		this.authenticationCache = CacheBuilder.newBuilder().maximumSize(cacheSize).expireAfterAccess(3, TimeUnit.HOURS).build();
 	}
 
 	public MongoClient getMongoClient() {
@@ -233,6 +237,10 @@ public class DatabaseAccess {
 
 	public LoadingCache<String, String> getNationTitleCache() {
 		return nationTitleCache;
+	}
+
+	public Cache<Integer, Integer> getAuthenticationCache() {
+		return authenticationCache;
 	}
 
 	public String getNationTitle(String name) {
