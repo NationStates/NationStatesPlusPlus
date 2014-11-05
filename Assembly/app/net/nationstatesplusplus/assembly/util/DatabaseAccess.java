@@ -61,19 +61,17 @@ public class DatabaseAccess {
 			.expireAfterWrite(1, TimeUnit.HOURS)
 			.build(new CacheLoader<String, Integer>() {
 			public Integer load(String key) throws SQLException {
-				Connection conn = null;
-				try {
-					conn = pool.getConnection();
-					PreparedStatement statement = conn.prepareStatement("SELECT id FROM assembly.region WHERE name = ?");
-					statement.setString(1, key);
-					ResultSet result = statement.executeQuery();
-					if (result.next()) {
-						return result.getInt(1);
+				try (Connection conn = pool.getConnection()) {
+					try (PreparedStatement statement = conn.prepareStatement("SELECT id FROM assembly.region WHERE name = ?")) {
+						statement.setString(1, key);
+						try (ResultSet result = statement.executeQuery()) {
+							if (result.next()) {
+								return result.getInt(1);
+							}
+						}
 					}
 				} catch (SQLException e) {
 					Logger.error("Unable to look up region", e);
-				} finally {
-					DbUtils.closeQuietly(conn);
 				}
 				return -1;
 			}
@@ -85,19 +83,17 @@ public class DatabaseAccess {
 			.expireAfterWrite(1, TimeUnit.HOURS)
 			.build(new CacheLoader<String, Integer>() {
 			public Integer load(String key) throws SQLException {
-				Connection conn = null;
-				try {
-					conn = pool.getConnection();
-					PreparedStatement statement = conn.prepareStatement("SELECT id from assembly.nation WHERE name = ?");
-					statement.setString(1, key);
-					ResultSet result = statement.executeQuery();
-					if (result.next()) {
-						return result.getInt(1);
+				try (Connection conn = pool.getConnection()) {
+					try (PreparedStatement statement = conn.prepareStatement("SELECT id from assembly.nation WHERE name = ?")) {
+						statement.setString(1, key);
+						try (ResultSet result = statement.executeQuery()) {
+							if (result.next()) {
+								return result.getInt(1);
+							}
+						}
 					}
 				} catch (SQLException e) {
 					Logger.error("Unable to look up nation id", e);
-				} finally {
-					DbUtils.closeQuietly(conn);
 				}
 				return -1;
 			}
@@ -109,19 +105,17 @@ public class DatabaseAccess {
 			.expireAfterWrite(1, TimeUnit.HOURS)
 			.build(new CacheLoader<Integer, String>() {
 			public String load(Integer key) throws SQLException {
-				Connection conn = null;
-				try {
-					conn = pool.getConnection();
-					PreparedStatement statement = conn.prepareStatement("SELECT name from assembly.nation WHERE id = ?");
-					statement.setInt(1, key);
-					ResultSet result = statement.executeQuery();
-					if (result.next()) {
-						return result.getString(1);
+				try (Connection conn = pool.getConnection()) {
+					try (PreparedStatement statement = conn.prepareStatement("SELECT name from assembly.nation WHERE id = ?")) {
+						statement.setInt(1, key);
+						try (ResultSet result = statement.executeQuery()) {
+							if (result.next()) {
+								return result.getString(1);
+							}
+						}
 					}
 				} catch (SQLException e) {
 					Logger.error("Unable to look up nation id", e);
-				} finally {
-					DbUtils.closeQuietly(conn);
 				}
 				throw new RuntimeException("No nation with id [" + key + "] found!");
 			}
@@ -133,19 +127,17 @@ public class DatabaseAccess {
 				.expireAfterWrite(1, TimeUnit.HOURS)
 				.build(new CacheLoader<String, String>() {
 				public String load(String key) throws SQLException {
-					Connection conn = null;
-					try {
-						conn = pool.getConnection();
-						PreparedStatement statement = conn.prepareStatement("SELECT title from assembly.nation WHERE name = ?");
-						statement.setString(1, key);
-						ResultSet result = statement.executeQuery();
-						if (result.next()) {
-							return result.getString(1);
+					try (Connection conn = pool.getConnection()) {
+						try (PreparedStatement statement = conn.prepareStatement("SELECT title from assembly.nation WHERE name = ?")) {
+							statement.setString(1, key);
+							try (ResultSet result = statement.executeQuery()) {
+								if (result.next()) {
+									return result.getString(1);
+								}
+							}
 						}
 					} catch (SQLException e) {
 						Logger.error("Unable to look up nation title", e);
-					} finally {
-						DbUtils.closeQuietly(conn);
 					}
 					throw new RuntimeException("No nation with name [" + key + "] found!");
 				}
@@ -157,26 +149,20 @@ public class DatabaseAccess {
 			.expireAfterWrite(1, TimeUnit.HOURS)
 			.build(new CacheLoader<Integer, String>() {
 			public String load(Integer key) throws SQLException {
-				Connection conn = null;
-				PreparedStatement select = null;
-				ResultSet set = null;
-				try {
-					conn = pool.getConnection();
-					select = conn.prepareStatement("SELECT settings FROM assembly.ns_settings WHERE id = ?");
-					select.setInt(1, key);
-					set = select.executeQuery();
-					if (set.next()) {
-						String json = set.getString(1);
-						if (!set.wasNull()) {
-							return json;
+				try (Connection conn = pool.getConnection()) {
+					try (PreparedStatement select = conn.prepareStatement("SELECT settings FROM assembly.ns_settings WHERE id = ?")) {
+						select.setInt(1, key);
+						try (ResultSet set = select.executeQuery()) {
+							if (set.next()) {
+								String json = set.getString(1);
+								if (!set.wasNull()) {
+									return json;
+								}
+							}
 						}
 					}
 				} catch (SQLException e) {
 					Logger.error("Unable to look up nation settings", e);
-				} finally {
-					DbUtils.closeQuietly(set);
-					DbUtils.closeQuietly(select);
-					DbUtils.closeQuietly(conn);
 				}
 				return "";
 			}

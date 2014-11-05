@@ -2,6 +2,10 @@ package net.nationstatesplusplus.assembly.model.websocket;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 import net.nationstatesplusplus.assembly.model.page.NationStatesPage;
@@ -10,6 +14,7 @@ import net.nationstatesplusplus.assembly.nation.NationSettings;
 import net.nationstatesplusplus.assembly.util.DatabaseAccess;
 
 import com.fasterxml.jackson.databind.JsonNode;
+
 import play.Logger;
 import play.libs.F.Callback;
 import play.mvc.WebSocket;
@@ -116,18 +121,21 @@ public final class NationStatesWebSocket extends WebSocket<JsonNode> {
 	}
 
 	private void writeInitialData(WebSocket.Out<JsonNode> out) throws SQLException {
+		List<JsonNode> nodes = new ArrayList<>();
+		//Creates all of the data that must be sent to a client first, then close db connection
+		//Finally send the data. This prevents the db connection remaining open while writing out
+		//Which may be a problem if the client connection is slow
 		try (Connection conn = access.getPool().getConnection()) {
 			for (RequestType type : getPageType().getInitialRequests()) {
 				final NationContext context = getContext();
-				writeRequest(type, context, null, conn);
+				nodes.addAll(createRequest(type, context, null, conn));
 			}
+		}
+		for (JsonNode node : nodes) {
+			out.write(node);
 		}
 	}
 
-	private static final long[] requestTimes = new long[RequestType.values().length];
-	private static final long[] requestTotals = new long[RequestType.values().length];
-	private static volatile long requestCount = 0;
-	
 	/**
 	 * Writes out the request to the given websocket, given a db connection,
 	 * context and (optional) data request. Returns true if any data was written.
@@ -141,36 +149,19 @@ public final class NationStatesWebSocket extends WebSocket<JsonNode> {
 	 * @throws SQLException
 	 * @throws ExecutionException
 	 */
-	private boolean writeRequest(RequestType type, NationContext context, DataRequest request, Connection conn) throws SQLException {
-		long start = System.currentTimeMillis();
-		requestCount++;
-		if (requestCount % 500 == 0) {
-			Logger.info("Request timings...");
-			for (int i = 0; i < RequestType.values().length; i++) {
-				RequestType rt = RequestType.values()[i];
-				Logger.info("Request Type: {} - Total Requests: {}, Total Time: {}, Average Time: {}", rt.name(), requestTotals[i], requestTimes[i], requestTimes[i] / (double)requestTotals[i]);
-			}
-		}
-		try {
-			if (type.shouldSendData(conn, context)) {
-				if (authenticated || !type.requiresAuthentication()) {
-					JsonNode[] nodes = type.executeRequest(conn, request, context);
-					// TODO remove this horrible hack with real logic
-					if (!authenticated && type == RequestType.AUTHENTICATE_RSS && nodes.length == 1) {
-						authenticated = nodes[0].toString().contains("success");
-						Logger.info("Authenticated websocket from " + nation);
-					}
-					for (int i = 0; i < nodes.length; i++) {
-						out.write(nodes[i]);
-					}
-					return true;
+	private List<JsonNode> createRequest(RequestType type, NationContext context, DataRequest request, Connection conn) throws SQLException {
+		if (type.shouldSendData(conn, context)) {
+			if (authenticated || !type.requiresAuthentication()) {
+				JsonNode[] nodes = type.executeRequest(conn, request, context);
+				// TODO remove this horrible hack with real logic
+				if (!authenticated && type == RequestType.AUTHENTICATE_RSS && nodes.length == 1) {
+					authenticated = nodes[0].toString().contains("success");
+					Logger.info("Authenticated websocket from " + nation);
 				}
+				return Arrays.asList(nodes);
 			}
-			return false;
-		} finally {
-			requestTimes[type.ordinal()] += (System.currentTimeMillis() - start);
-			requestTotals[type.ordinal()]++;
 		}
+		return Collections.emptyList();
 	}
 
 	private static class NationStatesCallback implements Callback<JsonNode> {
@@ -186,13 +177,19 @@ public final class NationStatesWebSocket extends WebSocket<JsonNode> {
 			RequestType type = RequestType.getTypeForName(request.getName());
 			if (type != null) {
 				parent.pong();
+				
+				final List<JsonNode> nodes = new ArrayList<>();
 				try (Connection conn = parent.access.getPool().getConnection()) {
 					final NationContext context = parent.getContext();
-					parent.writeRequest(type, context, request, conn);
-					parent.activePage.onRequest(type, request);
+					nodes.addAll(parent.createRequest(type, context, request, conn));
 				} catch (Exception e) {
-					Logger.error("Exception while sending websocket data", e);
+					Logger.error("Exception creating websocket request", e);
 				}
+				
+				for (JsonNode n : nodes) {
+					parent.out.write(n);
+				}
+				parent.activePage.onRequest(type, request);
 			} else {
 				Logger.warn("Unknown request type: " + request.getName());
 			}
