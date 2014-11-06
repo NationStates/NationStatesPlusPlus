@@ -52,8 +52,10 @@
 
     <logger name="play" level="DEBUG"/>
     <logger name="application" level="DEBUG" />
+	<logger name="net.nationstatesplusplus.assembly" level="DEBUG" />
 	<logger name="net.nationstatesplusplus.assembly.DumpUpdateTask" level="DEBUG" />
 	<logger name="net.nationstatesplusplus.assembly.FlagUpdateTask" level="DEBUG" />
+	<logger name="net.nationstatesplusplus.assembly.HealthMonitor" level="DEBUG" />
 
     <root level="INFO">
         <appender-ref ref="FILE_DEBUG"/>

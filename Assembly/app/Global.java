@@ -12,6 +12,7 @@ import net.nationstatesplusplus.assembly.HappeningsTask;
 import net.nationstatesplusplus.assembly.HealthMonitor;
 import net.nationstatesplusplus.assembly.NSWikiTask;
 import net.nationstatesplusplus.assembly.NationUpdateTask;
+import net.nationstatesplusplus.assembly.RecruitmentTargetTask;
 import net.nationstatesplusplus.assembly.RepeatingTaskThread;
 import net.nationstatesplusplus.assembly.Start;
 import net.nationstatesplusplus.assembly.UpdateOrderTask;
@@ -19,10 +20,12 @@ import net.nationstatesplusplus.assembly.WorldAssemblyTask;
 import net.nationstatesplusplus.assembly.amqp.AMQPConnectionFactory;
 import net.nationstatesplusplus.assembly.amqp.NullAMQPConenctionFactory;
 import net.nationstatesplusplus.assembly.model.HappeningType;
+import net.nationstatesplusplus.assembly.model.RecruitmentType;
 import net.nationstatesplusplus.assembly.model.websocket.WebsocketManager;
 import net.nationstatesplusplus.assembly.mongodb.PortForwardingRunnable;
 import net.nationstatesplusplus.assembly.util.DatabaseAccess;
 import net.nationstatesplusplus.assembly.logging.LoggerOutputStream;
+
 import org.apache.commons.dbutils.DbUtils;
 import org.joda.time.Duration;
 import org.slf4j.LoggerFactory;
@@ -187,6 +190,11 @@ public class Global extends GlobalSettings {
 			schedule(Duration.standardSeconds(120), Duration.standardSeconds(60), new NSWikiTask(access, config)); // 0 api calls
 			schedule(Duration.standardSeconds(120), null, new WorldAssemblyTask(access, api, 0)); // 3-10 api calls
 			schedule(Duration.standardSeconds(120), null, new WorldAssemblyTask(access, api, 1)); // 3-10 api calls
+			for (int i = 0; i < RecruitmentType.values().length; i++) {
+				final RecruitmentType type = RecruitmentType.values()[i];
+				//Staggers the tasks 15 seconds apart
+				schedule(Duration.standardMinutes(3).plus(Duration.standardSeconds(15 * i)), Duration.standardMinutes(3), new RecruitmentTargetTask(type, access));
+			}
 			Logger.info("NationStates++ Background Tasks Initialized.");
 		}
 	}

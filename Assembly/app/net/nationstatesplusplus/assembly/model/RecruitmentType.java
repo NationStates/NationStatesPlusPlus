@@ -42,7 +42,7 @@ public enum RecruitmentType {
 		return null;
 	}
 
-	private PreparedStatement createRecruitmentStatement(Connection conn) throws SQLException {
+	public PreparedStatement createRecruitmentStatement(Connection conn) throws SQLException {
 		switch(this) {
 			case NEW_NATIONS:
 				return conn.prepareStatement("SELECT nation AS id, name, region FROM assembly.founded_nations WHERE puppet = 0 AND region <> ? ORDER BY timestamp DESC LIMIT ?, ?");
@@ -75,75 +75,58 @@ public enum RecruitmentType {
 	}
 
 	public String findRecruitmentNation(Connection conn, int region, boolean gcrsOnly, String filters, int campaign) throws SQLException {
-		int prevAttempts = 0;
-		int spamNations = 0;
 		int gcrNations = 0;
 		int filteredNations = 0;
 		int tooRecent = 0;
 		try (PreparedStatement prevRecruitment = conn.prepareStatement("SELECT nation FROM assembly.recruitment_results WHERE region = ? AND nation = ? AND timestamp > ?")) {
-			for (int attempts = 0; attempts < 10; attempts++) {
-				try (PreparedStatement nations = createRecruitmentStatement(conn)) {
-					nations.setInt(1, region);
-					nations.setInt(2, attempts * 200);
-					nations.setInt(3, 200);
-					try (ResultSet set = nations.executeQuery()) {
-						while(set.next()) {
-							final int nationId = set.getInt("id");
-							final String name = set.getString("name");
-							final int regionId = set.getInt("region");
+			try (PreparedStatement nations = conn.prepareStatement("SELECT nation_id, nation_name, region_id FROM assembly.recruitment_targets WHERE recruitment_type = ? AND region_id <> ?")) {
+				nations.setInt(1, getId());
+				nations.setInt(2, region);
+				try (ResultSet set = nations.executeQuery()) {
+					while(set.next()) {
+						final int nationId = set.getInt("nation_id");
+						final String name = set.getString("nation_name");
+						final int regionId = set.getInt("region_id");
 
-							if (prevAttempts != attempts && attempts > 5) {
-								Logger.warn("[RECRUITMENT] Region {} is having a hard time finding recruitment target, on attempt {} with recruitment type {}", region, attempts, this);
-							}
-							prevAttempts = attempts;
-
-							if (gcrsOnly) {
-								boolean isGCR = false;
-								for (int gcr : GCRS) {
-									if (regionId == gcr) {
-										isGCR = true;
-										break;
-									}
-								}
-								if (!isGCR) {
-									gcrNations++;
-									continue;
+						if (gcrsOnly) {
+							boolean isGCR = false;
+							for (int gcr : GCRS) {
+								if (regionId == gcr) {
+									isGCR = true;
+									break;
 								}
 							}
-		
-							if (isSpamNation(name)) {
-								spamNations++;
+							if (!isGCR) {
+								gcrNations++;
 								continue;
 							}
-		
-							if (filters != null) {
-								for (String filter : filters.split(", ")) {
-									if (name.contains(filter)) {
-										filteredNations++;
-										continue;
-									}
-								}
-							}
-		
-							prevRecruitment.setInt(1, region);
-							prevRecruitment.setInt(2, nationId);
-							prevRecruitment.setLong(3, System.currentTimeMillis() - Duration.standardDays(31).getMillis());
-							try (ResultSet result = prevRecruitment.executeQuery()) {
-								if (result.next()) {
-									tooRecent++;
+						}
+
+						if (filters != null) {
+							for (String filter : filters.split(", ")) {
+								if (name.contains(filter)) {
+									filteredNations++;
 									continue;
 								}
 							}
-							
-							
-							return name;
 						}
+
+						prevRecruitment.setInt(1, region);
+						prevRecruitment.setInt(2, nationId);
+						prevRecruitment.setLong(3, System.currentTimeMillis() - Duration.standardDays(31).getMillis());
+						try (ResultSet result = prevRecruitment.executeQuery()) {
+							if (result.next()) {
+								tooRecent++;
+								continue;
+							}
+						}
+
+						return name;
 					}
 				}
 			}
 
-			Logger.warn("[RECRUITMENT] Region {} with campaign {} completely failed to find recruitment target ({}), attempts exhausted. Ignored {} spam nations, Ignored {} non-GCR nations, Ignored {} filtered nations, Ignored {} too recently recruited nations,", region, campaign, this, spamNations, gcrNations, filteredNations, tooRecent);
-			
+			Logger.info("[RECRUITMENT] Region {} with campaign {} completely failed to find recruitment target ({}). Ignored {} non-GCR nations, Ignored {} filtered nations, Ignored {} too recently recruited nations,", region, campaign, this, gcrNations, filteredNations, tooRecent);
 		} catch (SQLException e) {
 			Logger.error("Error finding recruitment target (type: " + this.name() + ") [region: " + region + " | gcsrsOnly: " + gcrsOnly + " | filters: " + filters);
 			throw e;
@@ -152,7 +135,7 @@ public enum RecruitmentType {
 		return null;
 	}
 
-	private boolean isSpamNation(String nation) {
+	public static boolean isSpamNation(String nation) {
 		for (Pattern penalty : PENALTY_NAMES) {
 			if (penalty.matcher(nation).find()) {
 				return true;

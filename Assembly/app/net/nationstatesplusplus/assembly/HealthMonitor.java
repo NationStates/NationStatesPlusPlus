@@ -12,14 +12,16 @@ import net.nationstatesplusplus.assembly.mongodb.PortForwardingRunnable;
 import net.nationstatesplusplus.assembly.util.DatabaseAccess;
 
 import org.apache.commons.dbutils.DbUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.spout.cereal.config.ConfigurationNode;
 
 import com.google.common.collect.Lists;
 
-import play.Logger;
 import play.api.Play;
 
 public class HealthMonitor extends Thread {
+	private static final Logger logger = LoggerFactory.getLogger(HealthMonitor.class);
 	private static final long HAPPENINGS_TIME = 3000L;
 	private static final long ENDORSEMENT_TIME = 30000L;
 	private final String restartCommand;
@@ -76,29 +78,29 @@ public class HealthMonitor extends Thread {
 			//If background tasks are not enabled for this instance, these will never run
 			if (backgroundTasks) {
 				long lastHappening = time - lastHappeningHeartbeat.get();
-				Logger.debug("[HEALTH CHECK] Time since happenings run: " + lastHappening);
+				logger.debug("[HEALTH CHECK] Time since happenings run: " + lastHappening);
 				if (lastHappening / HAPPENINGS_TIME > happeningsThreshold) {
-					Logger.warn("[HEALTH CHECK] Happening Monitoring Runs have exceeded 100% of the missing time threshold.");
-					Logger.error("[HEALTH CHECK] APPLICATION UNRESPONSIVE. LAST HEARTBEAT: " + lastHappeningHeartbeat.get());
+					logger.warn("[HEALTH CHECK] Happening Monitoring Runs have exceeded 100% of the missing time threshold.");
+					logger.error("[HEALTH CHECK] APPLICATION UNRESPONSIVE. LAST HEARTBEAT: " + lastHappeningHeartbeat.get());
 					unresponsive = true;
 				} else if (lastHappening / HAPPENINGS_TIME > (happeningsThreshold / 2 + 1)) {
-					float percent = happeningsThreshold / (float)(lastHappening / HAPPENINGS_TIME);
-					Logger.warn("[HEALTH CHECK] Happening Monitoring Runs have exceeded {}% of the missing time threshold.", percent);
+					float percent = (float)(lastHappening / HAPPENINGS_TIME) / happeningsThreshold;
+					logger.warn("[HEALTH CHECK] Happening Monitoring Runs have exceeded {}% of the missing time threshold.", percent);
 				}
 				
 				long lastEndorun = time - lastEndorsementHeartbeat.get();
-				Logger.debug("[HEALTH CHECK] Time since endorsement run: " + lastEndorun);
+				logger.debug("[HEALTH CHECK] Time since endorsement run: " + lastEndorun);
 				if (lastEndorun / ENDORSEMENT_TIME > endorsementThreshold) {
-					Logger.warn("[HEALTH CHECK] Endorsement Monitoring runs have exceeded 100% of the missing time threshold.");
-					Logger.error("[HEALTH CHECK] APPLICATION UNRESPONSIVE. LAST HEARTBEAT: " + lastEndorsementHeartbeat.get());
+					logger.warn("[HEALTH CHECK] Endorsement Monitoring runs have exceeded 100% of the missing time threshold.");
+					logger.error("[HEALTH CHECK] APPLICATION UNRESPONSIVE. LAST HEARTBEAT: " + lastEndorsementHeartbeat.get());
 					unresponsive = true;
 				} else if (lastEndorun / ENDORSEMENT_TIME > (endorsementThreshold / 2 + 1)) {
-					float percent = endorsementThreshold / (float)(lastEndorun / ENDORSEMENT_TIME);
-					Logger.warn("[HEALTH CHECK] Endorsement Monitoring Runs have exceeded {}% of the missing time threshold.", percent * 100);
+					float percent = (float)(lastEndorun / ENDORSEMENT_TIME) / endorsementThreshold;
+					logger.warn("[HEALTH CHECK] Endorsement Monitoring Runs have exceeded {}% of the missing time threshold.", percent * 100);
 				}
 			}
 			
-			Logger.debug("[HEALTH CHECK] Total ssh port forwarding clients created: {}", PortForwardingRunnable.totalClients());
+			logger.debug("[HEALTH CHECK] Total ssh port forwarding clients created: {}", PortForwardingRunnable.totalClients());
 
 			ConnectionTestThread connTest = new ConnectionTestThread();
 			boolean sqlAlive = false;
@@ -107,7 +109,11 @@ public class HealthMonitor extends Thread {
 				connTest.join(60 * 1000L);
 				sqlAlive = connTest.success;
 			} catch (InterruptedException e1) {
-				Logger.error("[HEALTH CHECK] SQL Connection Test thread not responding");
+				logger.error("[HEALTH CHECK] SQL Connection Test thread not responding");
+			}
+			
+			if (!sqlAlive) {
+				logger.error("[HEALTH CHECK] SQL Connection Test Failed");
 			}
 
 			if (unresponsive || !sqlAlive) {
@@ -118,20 +124,20 @@ public class HealthMonitor extends Thread {
 			try {
 				Thread.sleep(30000);
 			} catch (InterruptedException e) {
-				Logger.warn("[HEALTH CHECK] Health Monitoring Interrupted", e);
+				logger.warn("[HEALTH CHECK] Health Monitoring Interrupted", e);
 				return;
 			}
 		}
 	}
 
 	public void doRestart() {
-		Logger.error("Attempting Application Restart.");
-		try { Play.stop(); } catch (Throwable t) { Logger.error("Error stopping play!", t); }
+		logger.error("Attempting Application Restart.");
+		try { Play.stop(); } catch (Throwable t) { logger.error("Error stopping play!", t); }
 		try {
 			(new File("RUNNING_PID")).delete();
 			ProcessBuilder builder = new ProcessBuilder();
 			final List<String> commands = Lists.transform(Arrays.asList(restartCommand.split(",")), s -> s.replaceAll("@@WORKING_DIR@@", Start.getApplicationDirectory().getAbsolutePath()));
-			Logger.info("Restart Commands: {}", commands);
+			logger.info("Restart Commands: {}", commands);
 			builder.command(commands);
 			builder.redirectOutput(Redirect.INHERIT);
 			builder.redirectError(Redirect.INHERIT);
@@ -139,7 +145,7 @@ public class HealthMonitor extends Thread {
 			builder.start();
 			System.exit(0);
 		} catch (Throwable t) {
-			Logger.error("Unable to restart application!", t);
+			logger.error("Unable to restart application!", t);
 		}
 	}
 
@@ -154,7 +160,7 @@ public class HealthMonitor extends Thread {
 				select = conn.prepareStatement("SELECT 1");
 				success = select.execute();
 			} catch (Throwable t) {
-				Logger.error("Unable to open connection", t);
+				logger.error("Unable to open connection", t);
 			} finally {
 				DbUtils.closeQuietly(select);
 				DbUtils.closeQuietly(conn);

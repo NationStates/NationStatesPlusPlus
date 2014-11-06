@@ -179,7 +179,7 @@ public class WebsocketManager implements Consumer {
 			for (PageType page : PageType.values()) {
 				final Set<NationStatesWebSocket> sockets = pages.get(page);
 				synchronized(sockets) {
-					final long timeout = System.currentTimeMillis() - Duration.standardMinutes(11).getMillis();
+					final long timeout = System.currentTimeMillis() - Duration.standardMinutes(3).getMillis();
 					final Iterator<NationStatesWebSocket> iter = sockets.iterator();
 					while(iter.hasNext()) {
 						final NationStatesWebSocket websocket = iter.next();
