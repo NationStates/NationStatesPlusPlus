@@ -78,6 +78,8 @@ public class RepeatingTaskThread extends Thread {
 		while(!shutdown.get()) {
 			Future<Boolean> future = submitTask(task);
 			if (repeatingDelay != null) {
+				final long start = System.currentTimeMillis();
+				
 				boolean executionFinished = false;
 				for (int attempts = 0; attempts <= 5; attempts++) {
 					if (isFutureCompleted(future, repeatingDelay)) {
@@ -88,6 +90,12 @@ public class RepeatingTaskThread extends Thread {
 				if (!executionFinished) {
 					Logger.error("Execution of running task [" + task.getClass().getSimpleName() + "] has exceeded 5x max its duration, the task will be interrupted forcefully!");
 					future.cancel(true);
+				}
+				
+				//If the task completed fast than the delay
+				final long executionTime = System.currentTimeMillis() - start;
+				if (executionTime < repeatingDelay.getMillis()) {
+					Thread.sleep(repeatingDelay.getMillis() - executionTime);
 				}
 			} else {
 				synchronized(threads) {
