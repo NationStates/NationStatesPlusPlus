@@ -12,9 +12,12 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicLong;
 
 import net.nationstatesplusplus.assembly.HappeningsTask;
 import net.nationstatesplusplus.assembly.model.HappeningType;
@@ -407,24 +410,26 @@ public class RecruitmentController extends NationStatesController {
 
 	public static Set<Integer> getRecruitmentOfficerIds(Connection conn, DatabaseAccess access, int regionId) throws SQLException {
 		HashSet<Integer> officers = new HashSet<Integer>();
-		PreparedStatement select = conn.prepareStatement("SELECT nation FROM assembly.recruitment_officers WHERE region = ?");
-		select.setInt(1, regionId);
-		ResultSet set = select.executeQuery();
-		while(set.next()) {
-			officers.add(set.getInt(1));
-		}
-		DbUtils.closeQuietly(set);
-		DbUtils.closeQuietly(select);
-		
-		select = conn.prepareStatement("SELECT delegate, founder FROM assembly.region WHERE id = ?");
-		select.setInt(1, regionId);
-		set = select.executeQuery();
-		if(set.next()) {
-			if (!"0".equals(set.getString(1))) {
-				officers.add(access.getNationId(set.getString(1)));
+		try (PreparedStatement select = conn.prepareStatement("SELECT nation FROM assembly.recruitment_officers WHERE region = ?")) {
+			select.setInt(1, regionId);
+			try (ResultSet set = select.executeQuery()) {
+				while(set.next()) {
+					officers.add(set.getInt(1));
+				}
 			}
-			if (!"0".equals(set.getString(2))) {
-				officers.add(access.getNationId(set.getString(2)));
+		}
+		
+		try (PreparedStatement select = conn.prepareStatement("SELECT delegate, founder FROM assembly.region WHERE id = ?")) {
+			select.setInt(1, regionId);
+			try (ResultSet set = select.executeQuery()) {
+				if (set.next()) {
+					if (set.getString(1) != null && !"0".equals(set.getString(1))) {
+						officers.add(access.getNationId(set.getString(1)));
+					}
+					if (set.getString(2) != null && !"0".equals(set.getString(2))) {
+						officers.add(access.getNationId(set.getString(2)));
+					}
+				}
 			}
 		}
 		return officers;
@@ -599,6 +604,7 @@ public class RecruitmentController extends NationStatesController {
 
 	public Result findRecruitmentTarget(String region, String accessKey, boolean userAgentFix) throws SQLException, ExecutionException {
 		Utils.handleDefaultPostHeaders(request(), response());
+		//TODO: this is legacy, phase out client side code that sets this query parameter, then remove the parameter
 		if (!userAgentFix) {
 			Map<String, Object> temp = new HashMap<String, Object>();
 			temp.put("wait", "30");
@@ -614,10 +620,7 @@ public class RecruitmentController extends NationStatesController {
 			}
 		}
 		String nation = Utils.sanitizeName(Utils.getPostValue(request(), "nation"));
-		Connection conn = null;
-		try {
-			conn = getConnection();
-			
+		try (Connection conn = getConnection()) {
 			final int regionId;
 			//Bypass region officer authentication if we are a valid script
 			if (!validScriptAccess) {
@@ -629,36 +632,69 @@ public class RecruitmentController extends NationStatesController {
 			if (regionId == -1) {
 				return Results.unauthorized();
 			}
-
-			return ok(Json.toJson(calculateRecruitmentTarget(getDatabase(), conn, regionId, nation))).as("application/json");
-		} finally {
-			DbUtils.closeQuietly(conn);
+			return ok(Json.toJson(calculateRecruitmentTarget(getDatabase(), conn, regionId, nation, getDatabase().getNationId(nation)))).as("application/json");
 		}
 	}
 
-	public static JsonNode calculateRecruitmentTarget(DatabaseAccess access, Connection conn, int regionId, String nation) throws SQLException, ExecutionException {
+	private static volatile long recruitmentCount = 0;
+	private static final ConcurrentHashMap<Integer, AtomicLong> recruiterPerformance = new ConcurrentHashMap<Integer, AtomicLong>();
+	private static final ConcurrentHashMap<Integer, String> recruiterNames = new ConcurrentHashMap<Integer, String>();
+	private static final ConcurrentHashMap<Integer, AtomicLong> recruitmentCounts = new ConcurrentHashMap<Integer, AtomicLong>();
+	public static JsonNode calculateRecruitmentTarget(DatabaseAccess access, Connection conn, int regionId, String nation, int nationId) throws SQLException, ExecutionException {
+		
+		Logger.info("Recruitment count: {}", recruitmentCount);
+		recruitmentCount++;
+		if (recruitmentCount % 50 == 0) {
+			for (Entry<Integer, AtomicLong> e : recruiterPerformance.entrySet()) {
+				Logger.info("Recruitment time for nation: [" + e.getKey() + ", " + recruiterNames.get(e.getKey()) + "] was {} ({} times)", e.getValue().get(), recruitmentCounts.get(e.getKey()));
+			}
+			recruiterPerformance.clear();
+			recruitmentCounts.clear();
+		}
+		recruiterNames.putIfAbsent(nationId, nation);
+		final AtomicLong count = recruitmentCounts.putIfAbsent(nationId, new AtomicLong(1));
+		if (count != null) count.incrementAndGet();
+		final AtomicLong timeSpent = recruiterPerformance.getOrDefault(nationId, new AtomicLong(0L));
+		long time = System.currentTimeMillis();
+		
+
+		//TODO: fix!!!!
+		/*
+		if (regionId != 1837) {
+			Map<String, Object> wait = new HashMap<String, Object>();
+			wait.put("wait", Duration.standardMinutes(3).getMillis());
+			return Json.toJson(wait);
+		}
+		*/
 		//If another nation is already recruiting right now, abort
 		if (canRecruit(conn, regionId)) {
 			Map<String, Object> data = getRecruitmentTarget(access, conn, regionId, nation);
 			if (data != null) {
+				
+				timeSpent.getAndAdd(System.currentTimeMillis() - time);
+				recruiterPerformance.putIfAbsent(nationId, timeSpent);
+				
 				return Json.toJson(data);
 			}
 		}
 		
 		Map<String, Object> wait = new HashMap<String, Object>();
-		PreparedStatement lastRecruitment = conn.prepareStatement("SELECT nation, timestamp, recruiter FROM assembly.recruitment_results WHERE region = ? ORDER BY timestamp DESC LIMIT 0, 1");
-		lastRecruitment.setInt(1, regionId);
-		ResultSet set = lastRecruitment.executeQuery();
 		long timestamp = System.currentTimeMillis();
-		if (set.next()) {
-			wait.put("nation", access.getReverseIdCache().get(set.getInt("nation")));
-			wait.put("timestamp", set.getLong("timestamp"));
-			wait.put("recruiter", access.getReverseIdCache().get(set.getInt("recruiter")));
-			timestamp = set.getLong("timestamp");
+		try (PreparedStatement lastRecruitment = conn.prepareStatement("SELECT nation, timestamp, recruiter FROM assembly.recruitment_results WHERE region = ? ORDER BY timestamp DESC LIMIT 0, 1")) {
+			lastRecruitment.setInt(1, regionId);
+			try (ResultSet set = lastRecruitment.executeQuery()) {
+				if (set.next()) {
+					wait.put("nation", access.getReverseIdCache().get(set.getInt("nation")));
+					wait.put("timestamp", set.getLong("timestamp"));
+					wait.put("recruiter", access.getReverseIdCache().get(set.getInt("recruiter")));
+					timestamp = set.getLong("timestamp");
+				}
+			}
 		}
-		DbUtils.closeQuietly(set);
-		DbUtils.closeQuietly(lastRecruitment);
 		wait.put("wait", Math.max(((Duration.standardMinutes(3).getMillis() + SAFETY_FACTOR + timestamp) - System.currentTimeMillis()) / 1000 + 1, 10));
+		
+		timeSpent.getAndAdd(System.currentTimeMillis() - time);
+		recruiterPerformance.putIfAbsent(nationId, timeSpent);
 		return Json.toJson(wait);
 	}
 

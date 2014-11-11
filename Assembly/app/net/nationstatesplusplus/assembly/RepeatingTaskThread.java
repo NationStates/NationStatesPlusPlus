@@ -2,6 +2,12 @@ package net.nationstatesplusplus.assembly;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.joda.time.Duration;
@@ -14,6 +20,7 @@ public class RepeatingTaskThread extends Thread {
 	private final Duration initialDelay;
 	private final Duration repeatingDelay;
 	private final AtomicBoolean shutdown = new AtomicBoolean(false);
+	private final ExecutorService service = Executors.newFixedThreadPool(1);
 	public RepeatingTaskThread(Duration initialDelay, Duration repeatingDelay, Runnable task) {
 		super("Repeating Task Thread - [" + task.getClass().getSimpleName() + "]");
 		this.initialDelay = initialDelay;
@@ -24,28 +31,74 @@ public class RepeatingTaskThread extends Thread {
 			threads.add(this);
 		}
 	}
-
+	
 	@Override
 	public void run() {
 		try {
-			Thread.sleep(initialDelay.getMillis());
-		} catch (InterruptedException e) { }
-		while(!shutdown.get()) {
-			try {
-				task.run();
-			} catch (Exception e) {
-				Logger.error("Unhandled exception running task [" + task.getClass().getSimpleName() + "]", e);
+			runInterruptable();
+		} catch (Exception e) {
+			Logger.error("Interrupted in handling repeated task - [" + task.getClass().getSimpleName() + "]", e);
+		}
+		Logger.info("Execution of all tasks of [" + task.getClass().getSimpleName() + "] has completed. Repeating Task Thread shutting down.");
+		service.shutdownNow();
+	}
+
+	private static boolean isFutureCompleted(final Future<Boolean> task, final Duration duration) {
+		try {
+			final Boolean result = task.get(duration.getMillis(), TimeUnit.MILLISECONDS);
+			//Only a boolean "true" result signifies successful completion
+			if (result != null && result.booleanValue() == true) {
+				return true;
 			}
-			if (!shutdown.get()) {
-				if (repeatingDelay == null) {
-					synchronized(threads) {
-						threads.remove(this);
-					}
-					return;
-				}
+			return false;
+		} catch (TimeoutException timeout) {
+			return false; //execution is not completed yet
+		} catch (InterruptedException e) {
+			return true; // interrupted, but is finished
+		} catch (ExecutionException e) {
+			return true; //execution failed, but is finished
+		}
+	}
+
+	private Future<Boolean> submitTask(final Runnable runnable) {
+		return service.submit(new Runnable() {
+			@Override
+			public void run() {
 				try {
-					Thread.sleep(repeatingDelay.getMillis());
-				} catch (InterruptedException e) { }
+					runnable.run();
+				} catch (Exception e) {
+					Logger.error("Unhandled exception running task [" + runnable.getClass().getSimpleName() + "]", e);
+				}
+			}
+		}, true);
+	}
+
+	public void runInterruptable() throws InterruptedException {
+		Thread.sleep(initialDelay.getMillis());
+		while(!shutdown.get()) {
+			Future<Boolean> future = submitTask(task);
+			if (repeatingDelay != null) {
+				boolean executionFinished = false;
+				for (int attempts = 0; attempts <= 5; attempts++) {
+					if (isFutureCompleted(future, repeatingDelay)) {
+						executionFinished = true;
+						break;
+					}
+				}
+				if (!executionFinished) {
+					Logger.error("Execution of running task [" + task.getClass().getSimpleName() + "] has exceeded 5x max its duration, the task will be interrupted forcefully!");
+					future.cancel(true);
+				}
+			} else {
+				synchronized(threads) {
+					threads.remove(this);
+				}
+				service.shutdown();
+				shutdown.set(true);
+				//Attempt to kill any threads that take excessive time
+				if (!service.awaitTermination(1, TimeUnit.HOURS)) {
+					service.shutdownNow();
+				}
 			}
 		}
 	}

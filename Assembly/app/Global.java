@@ -192,8 +192,8 @@ public class Global extends GlobalSettings {
 			schedule(Duration.standardSeconds(120), null, new WorldAssemblyTask(access, api, 1)); // 3-10 api calls
 			for (int i = 0; i < RecruitmentType.values().length; i++) {
 				final RecruitmentType type = RecruitmentType.values()[i];
-				//Staggers the tasks 15 seconds apart
-				schedule(Duration.standardMinutes(3).plus(Duration.standardSeconds(15 * i)), Duration.standardMinutes(3), new RecruitmentTargetTask(type, access));
+				//Staggers the tasks 30 seconds apart
+				schedule(Duration.standardMinutes(3).plus(Duration.standardSeconds(30 * i)), Duration.standardMinutes(6), new RecruitmentTargetTask(type, access));
 			}
 			Logger.info("NationStates++ Background Tasks Initialized.");
 		}

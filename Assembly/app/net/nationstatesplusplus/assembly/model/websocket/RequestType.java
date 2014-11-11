@@ -240,7 +240,7 @@ public enum RequestType implements Request {
 				validateRecruitment(conn, context);
 				try {
 					Map<String, Object> progress = new HashMap<String, Object>();
-					progress.put("recruitment", RecruitmentController.calculateRecruitmentTarget(context.getAccess(), conn, context.getUserRegionId(), context.getNation()));
+					progress.put("recruitment", RecruitmentController.calculateRecruitmentTarget(context.getAccess(), conn, context.getUserRegionId(), context.getNation(), context.getNationId()));
 					progress.put("show_recruitment_progress", context.getSettings().getValue("show_recruitment_progress", true, Boolean.class));
 					return toList(Json.toJson(progress));
 				} catch (ExecutionException e) {
