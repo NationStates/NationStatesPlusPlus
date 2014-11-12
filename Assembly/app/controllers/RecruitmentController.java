@@ -26,6 +26,7 @@ import net.nationstatesplusplus.assembly.util.DatabaseAccess;
 import net.nationstatesplusplus.assembly.util.Utils;
 
 import org.apache.commons.dbutils.DbUtils;
+import org.joda.time.DateTime;
 import org.joda.time.Duration;
 import org.spout.cereal.config.yaml.YamlConfiguration;
 
@@ -692,14 +693,16 @@ public class RecruitmentController extends NationStatesController {
 				}
 			}
 		}
-		wait.put("wait", Math.max(((Duration.standardMinutes(3).getMillis() + SAFETY_FACTOR + timestamp) - System.currentTimeMillis()) / 1000 + 1, 10));
+		final Duration timeSinceLastRecruitment = new Duration(DateTime.now(), new DateTime(timestamp));
+		final Duration timeUntilNextRecruitment = Duration.standardMinutes(3).plus(SAFETY_FACTOR).minus(timeSinceLastRecruitment);
+		wait.put("wait", Math.max(timeUntilNextRecruitment.getStandardSeconds(), 10));
 		
 		timeSpent.getAndAdd(System.currentTimeMillis() - time);
 		recruiterPerformance.putIfAbsent(nationId, timeSpent);
 		return Json.toJson(wait);
 	}
 
-	private static final long SAFETY_FACTOR = Duration.standardSeconds(10).getMillis();
+	private static final Duration SAFETY_FACTOR = Duration.standardSeconds(10);
 	private static boolean canRecruit(Connection conn, int region) throws SQLException {
 		PreparedStatement lastRecruitment = null;
 		ResultSet recruitment = null;
@@ -710,9 +713,11 @@ public class RecruitmentController extends NationStatesController {
 			if (recruitment.next()) {
 				long timestamp = recruitment.getLong(1);
 				int confirmed = recruitment.getInt(2);
-				if (confirmed == 1 && timestamp + SAFETY_FACTOR + Duration.standardMinutes(3).getMillis() < System.currentTimeMillis()) {
+				
+				final DateTime time = new DateTime(timestamp);
+				if (confirmed == 1 && time.plus(SAFETY_FACTOR).plus(Duration.standardMinutes(3)).isBefore(DateTime.now())) {
 					return true;
-				} else if (confirmed == 0 && timestamp + SAFETY_FACTOR + Duration.standardMinutes(4).getMillis() < System.currentTimeMillis()) {
+				} else if (confirmed == 0 && time.plus(SAFETY_FACTOR).plus(Duration.standardMinutes(4)).isBefore(DateTime.now())) {
 					return true;
 				}
 			} else {
@@ -814,7 +819,7 @@ public class RecruitmentController extends NationStatesController {
 			delete.executeUpdate();
 			Logger.info("Prevented double recruitment for region [" + region + "], by [" + nation + "].");
 			Map<String, Object> wait = new HashMap<String, Object>();
-			wait.put("wait", (Duration.standardMinutes(3).getMillis() + SAFETY_FACTOR) / 1000L);
+			wait.put("wait", Duration.standardMinutes(3).plus(SAFETY_FACTOR).getStandardSeconds());
 			return wait;
 		}
 		return null;
