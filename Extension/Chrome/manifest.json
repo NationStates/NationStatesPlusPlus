@@ -4,7 +4,7 @@
   "short_name": "NS++",
   "minimum_chrome_version": "22",
   "description": "Improves the NationStates.net experience",
-  "version": "2.5.0.2",
+  "version": "2.5.0.3",
   "content_scripts": [ {
 	  "run_at": "document_end",
       "js": [ "jquery-2.0.3.min.js", "js/nationstates++_common.js", "background.js"],
@@ -22,14 +22,14 @@
 				"js/administration.js", "js/settings.js", "js/history.js", "js/puppet_command.js", 
 				"js/alerts.js", "js/wa.js", "js/puppet_manager.js"],
 	  "css": ["css/nouislider.fox.css", "css/bootstrap-button.css", "css/two_column.css", "css/bootstrap-fileupload.min.css", "css/nprogress.css", "css/nationstates++.css"],
-      "matches": [ "https://www.nationstates.net/*", "https://nationstates.net/*", "http://www.nationstates.net/*", "https://rift.nationstates.net/*", "http://rift.nationstates.net/*"],
+      "matches": [ "https://www.nationstates.net/*", "https://nationstates.net/*", "http://www.nationstates.net/*"],
 	  "all_frames": true
 	},
 	{
 	  "run_at": "document_end",
       "js": [ "js/bootstrap-dropdown.min.js", "js/bootstrap-fileupload.min.js" ],
 	  "css": ["css/bootstrap-fileupload.min.css", "css/newspaper_bootstrap.min.css", "css/bootstrap-table.min.css"],
-      "matches": [ "http://www.nationstates.net/page=blank*", "https://www.nationstates.net/page=blank*", "https://rift.nationstates.net/page=blank*"],
+      "matches": [ "http://www.nationstates.net/page=blank*", "https://www.nationstates.net/page=blank*"],
 	  "all_frames": true
 	} ]
 }
