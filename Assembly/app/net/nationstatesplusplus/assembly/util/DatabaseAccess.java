@@ -335,59 +335,62 @@ public class DatabaseAccess {
 	}
 
 	public String generateAuthToken(int id) {
-		return generateAuthToken(id, false, null);
+		return generateAuthToken(id, false, null, 0);
 	}
 
-	public String generateAuthToken(int id, boolean force, String rssHash) {
-		Connection conn = null;
-		try {
-			conn = pool.getConnection();
+	public String generateAuthToken(int id, boolean force, String rssHash, long rssSalt) {
+		try (Connection conn = pool.getConnection()) {
 			if (!force) {
-				PreparedStatement statement = conn.prepareStatement("SELECT auth from assembly.nation_auth WHERE nation_id = ? AND time > ?");
-				statement.setInt(1, id);
-				statement.setLong(2, System.currentTimeMillis());
-				ResultSet result = statement.executeQuery();
-				if (result.next()) {
-					return result.getString(1);
+				try (PreparedStatement statement = conn.prepareStatement("SELECT auth from assembly.nation_auth WHERE nation_id = ? AND time > ?")) {
+					statement.setInt(1, id);
+					statement.setLong(2, System.currentTimeMillis());
+					try (ResultSet result = statement.executeQuery()) {
+						if (result.next()) {
+							return result.getString(1);
+						}
+					}
 				}
 			}
 
 			SecureRandom random = new SecureRandom();
 			String auth = Sha.hash256(id + "-" + System.nanoTime() + "-" + random.nextInt(Integer.MAX_VALUE));
 
-			PreparedStatement select = conn.prepareStatement("SELECT nation_id from assembly.nation_auth WHERE nation_id = ?");
-			select.setInt(1, id);
-			ResultSet result = select.executeQuery();
-			if (result.next()) {
-				PreparedStatement update = conn.prepareStatement("UPDATE assembly.nation_auth SET auth = ?, time = ?" + (rssHash != null ? " , rss_hash = ?" : "") + " WHERE nation_id = ?");
-				update.setString(1, auth);
-				update.setLong(2, System.currentTimeMillis() + Duration.standardDays(1).getMillis());
-				if (rssHash != null) {
-					update.setString(3, rssHash);
-					update.setInt(4, id);
-				} else {
-					update.setInt(3, id);
+			try (PreparedStatement select = conn.prepareStatement("SELECT nation_id from assembly.nation_auth WHERE nation_id = ?")) {
+				select.setInt(1, id);
+				try (ResultSet result = select.executeQuery()) {
+					if (result.next()) {
+						try (PreparedStatement update = conn.prepareStatement("UPDATE assembly.nation_auth SET auth = ?, time = ?" + (rssHash != null ? " , rss_sha_hash = ?, rss_salt = ?" : "") + " WHERE nation_id = ?")) {
+							update.setString(1, auth);
+							update.setLong(2, System.currentTimeMillis() + Duration.standardDays(1).getMillis());
+							if (rssHash != null) {
+								update.setString(3, rssHash);
+								update.setLong(4, rssSalt);
+								update.setInt(5, id);
+							} else {
+								update.setInt(3, id);
+							}
+							update.executeUpdate();
+						}
+					} else {
+						try (PreparedStatement insert = conn.prepareStatement("INSERT INTO assembly.nation_auth (nation_id, auth, time, rss_sha_hash, rss_salt) VALUES (?, ?, ?, ?, ?)")) {
+							insert.setInt(1, id);
+							insert.setString(2, auth);
+							insert.setLong(3, System.currentTimeMillis() + Duration.standardDays(1).getMillis());
+							if (rssHash != null) {
+								insert.setString(4, rssHash);
+								insert.setLong(5, rssSalt);
+							} else {
+								insert.setNull(4, Types.CHAR);
+								insert.setNull(5, Types.BIGINT);
+							}
+							insert.executeUpdate();
+						}
+					}
 				}
-				update.executeUpdate();
-				DbUtils.closeQuietly(update);
-			} else {
-				PreparedStatement insert = conn.prepareStatement("INSERT INTO assembly.nation_auth (nation_id, auth, time, rss_hash) VALUES (?, ?, ?, ?)");
-				insert.setInt(1, id);
-				insert.setString(2, auth);
-				insert.setLong(3, System.currentTimeMillis() + Duration.standardDays(1).getMillis());
-				if (rssHash != null) {
-					insert.setString(4, rssHash);
-				} else {
-					insert.setNull(4, Types.CHAR);
-				}
-				insert.executeUpdate();
-				DbUtils.closeQuietly(insert);
 			}
 			return auth;
 		} catch (SQLException e) {
 			throw new RuntimeException(e);
-		} finally {
-			DbUtils.closeQuietly(conn);
 		}
 	}
 

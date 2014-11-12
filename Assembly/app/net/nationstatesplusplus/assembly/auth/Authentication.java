@@ -10,8 +10,7 @@ import java.sql.SQLException;
 import java.util.concurrent.TimeUnit;
 
 import net.nationstatesplusplus.assembly.util.DatabaseAccess;
-
-import org.joda.time.DateTime;
+import net.nationstatesplusplus.assembly.util.Sha;
 
 import play.Logger;
 
@@ -35,7 +34,7 @@ public class Authentication {
 	}
 
 	/**
-	 * Returns true if the rss key, is valid. Validation first checks to see if the database contains the bcrypted hash of the key.
+	 * Returns true if the rss key, is valid. Validation first checks to see if the database contains the sha256 hash of the key.
 	 * If the hash is not in the database, or the hash does not match the database value, and this authentication attempt is not too recent
 	 *  (> 1 min since the previous attempt), then a connection to nationstates is opened to verify the rss key.
 	 *  If the rss key is confirmed valid, a bcrypted-hash of the key is stored in the database to avoid unnecessary future nationstates calls.
@@ -45,11 +44,24 @@ public class Authentication {
 	 * @return if the authentication is valid
 	 */
 	public boolean isValid() {
-		String hash = getHashFromDatabase();
+		Hashsums hash = getHashFromDatabase();
 		if (hash != null) {
 			//If the hash check fails with the database value, it may be because the user revoked and regenerated the feed, can't assume they are invalid
-			if (BCrypt.checkpw(String.valueOf(rssKey), hash)) {
-				return true;
+			
+			//Try the nation's sha256 hash of the rss key first
+			if (hash.shaHash != null) {
+				String calculatedHash = Sha.hash256(String.valueOf(rssKey) + String.valueOf(hash.shaSalt));
+				if (calculatedHash.equals(hash.shaHash)) {
+					return true;
+				}
+			}
+			
+			//Check the nation's bcrypt hash of the rss key next
+			if (hash.bcyrptHash != null) {
+				if (BCrypt.checkpw(String.valueOf(rssKey), hash.bcyrptHash)) {
+					migrateBcryptHash(rssKey);
+					return true;
+				}
 			}
 		}
 		if (LAST_RSS_AUTHENTICATION_ATTEMPT.getIfPresent(nationId) != null) {
@@ -67,9 +79,24 @@ public class Authentication {
 			failureReason = "Unknown error process rss key authentication";
 			return false;
 		}
-		hash = BCrypt.hashpw(String.valueOf(rssKey), BCrypt.gensalt(getNumLogRounds()));
-		updateDatabaseHash(hash);
+		final long salt = System.nanoTime();
+		final String shaHash = Sha.hash256(String.valueOf(rssKey) + String.valueOf(salt));
+		updateDatabaseHash(shaHash, salt);
 		return true;
+	}
+
+	private void migrateBcryptHash(int rssKey) {
+		final long salt = System.nanoTime();
+		final String shaHash = Sha.hash256(String.valueOf(rssKey) + String.valueOf(salt));
+		updateDatabaseHash(shaHash, salt);
+		try (Connection conn = access.getPool().getConnection()) {
+			try (PreparedStatement update = conn.prepareStatement("UPDATE assembly.nation_auth SET rss_hash = NULL WHERE nation_id = ?")) {
+				update.setInt(1, nationId);
+				update.execute();
+			}
+		} catch (SQLException e) {
+			Logger.error("SQLException retreiving SQL rss hash", e);
+		}
 	}
 
 	/**
@@ -92,31 +119,29 @@ public class Authentication {
 		return false;
 	}
 
-	/**
-	 * Controls how many bcrypt rounds are used in hashing the rss key. It increases the number of rounds over time, to account for Moore's Law.
-	 * 
-	 * @return number of bcrypt encryption rounds.
-	 */
-	private static int getNumLogRounds() {
-		//Keep up with Moore's law, surrounded with Math.max in case server time is reset, to prevent changing the time from weakening
-		int rounds = 14 + Math.max(0, ((new DateTime()).getYear() - 2014));
-		return Math.min(31, rounds);
+	private void updateDatabaseHash(String hash, long salt) {
+		access.generateAuthToken(nationId, true, hash, salt);
 	}
 
-	private void updateDatabaseHash(String hash) {
-		access.generateAuthToken(nationId, true, hash);
-	}
-
-	private String getHashFromDatabase() {
+	private Hashsums getHashFromDatabase() {
 		try (Connection conn = access.getPool().getConnection()) {
-			try (PreparedStatement select = conn.prepareStatement("SELECT rss_hash FROM assembly.nation_auth WHERE nation_id = ?")) {
+			try (PreparedStatement select = conn.prepareStatement("SELECT rss_hash, rss_sha_hash, rss_salt FROM assembly.nation_auth WHERE nation_id = ?")) {
 				select.setInt(1, nationId);
 				try (ResultSet result = select.executeQuery()) {
 					if (result.next()) {
-						String hash = result.getString(1);
-						if (!result.wasNull()) {
-							return hash;
+						String bcryptHash = result.getString(1);
+						if (result.wasNull()) {
+							bcryptHash = null;
 						}
+						String shaHash = result.getString(2);
+						if (result.wasNull()) {
+							shaHash = null;
+						}
+						long shaSalt = result.getLong(3);
+						if (result.wasNull()) {
+							shaSalt = 0;
+						}
+						return new Hashsums(bcryptHash, shaHash, shaSalt);
 					}
 				}
 			}
@@ -124,6 +149,17 @@ public class Authentication {
 			Logger.error("SQLException retreiving SQL rss hash", e);
 		}
 		return null;
+	}
+
+	private static class Hashsums {
+		private final String bcyrptHash;
+		private final String shaHash;
+		private final long shaSalt;
+		Hashsums(String bcryptHash, String shaHash, long shaSalt) {
+			this.bcyrptHash = bcryptHash;
+			this.shaHash = shaHash;
+			this.shaSalt = shaSalt;
+		}
 	}
 
 	private static final Cache<Integer, Boolean> LAST_RSS_AUTHENTICATION_ATTEMPT = CacheBuilder.newBuilder().expireAfterWrite(1, TimeUnit.MINUTES).build();
