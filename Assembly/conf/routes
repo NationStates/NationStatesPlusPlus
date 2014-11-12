@@ -79,10 +79,6 @@ GET     /wa/power_transfers/          @controllers.WorldAssemblyController.getRe
 GET     /wa/nation_votes/             @controllers.WorldAssemblyController.getIndividualWAVotes()
 GET     /wa/resolution_votes/         @controllers.WorldAssemblyController.getWorldAssemblyResolutionVotingStats()
 
-GET    /admin/happenings/             @controllers.AdminController.recalculateHappenings(code: String ?= "", happeningType: Integer ?= -1)
-GET    /admin/invalidate_cache/       @controllers.AdminController.invalidateCaches(code: String ?= "")
-GET    /admin/restart/                @controllers.AdminController.doRestart(code: String ?= "")
-
 POST   /xenforo/login/                @controllers.XenforoController.verifyNationLogin()
 POST   /xenforo/register/             @controllers.XenforoController.createXenforoUser()
 

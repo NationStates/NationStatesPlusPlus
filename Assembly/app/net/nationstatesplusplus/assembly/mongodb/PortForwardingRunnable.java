@@ -21,15 +21,14 @@ public class PortForwardingRunnable implements Runnable {
 	private final String user;
 	private final String fingerprint;
 	private final AtomicBoolean shutdown = new AtomicBoolean(false);
-	private final AtomicReference<Runnable> callback;
+	private final AtomicBoolean canRestart = new AtomicBoolean(true);
 	private final AtomicReference<ServerSocket> socket = new AtomicReference<ServerSocket>(null);
 	private final AtomicReference<SSHClient> sshClient = new AtomicReference<SSHClient>(null);
-	public PortForwardingRunnable(String remoteHost, int port, String user, String fingerprint, Runnable callback) {
+	public PortForwardingRunnable(String remoteHost, int port, String user, String fingerprint) {
 		this.remoteHost = remoteHost;
 		this.port = port;
 		this.user = user;
 		this.fingerprint = fingerprint;
-		this.callback = new AtomicReference<Runnable>(callback);
 		synchronized(forwardingClients) {
 			forwardingClients.add(this);
 		}
@@ -39,8 +38,16 @@ public class PortForwardingRunnable implements Runnable {
 		return shutdown.get();
 	}
 
+	public boolean isBound() {
+		ServerSocket ss = socket.get();
+		if (ss != null) {
+			return ss.isBound();
+		}
+		return false;
+	}
+
 	public void shutdown() {
-		callback.set(null);
+		canRestart.set(false);
 		ServerSocket ss = socket.get();
 		if (ss != null) {
 			try {
@@ -101,19 +108,14 @@ public class PortForwardingRunnable implements Runnable {
 			socket.set(null);
 			sshClient.set(null);
 			Logger.warn("SSH port forwarding is closing");
-			Runnable callback = this.callback.get();
-			if (callback != null) {
-				callback.run();
+			if (canRestart.get()) {
+				Thread listenThread = new Thread(new PortForwardingRunnable(remoteHost, port, user, fingerprint), "Mongodb port forwarding thread");
+				listenThread.start();
 			}
 		}
 	}
 
 	private static final List<PortForwardingRunnable> forwardingClients = new LinkedList<PortForwardingRunnable>();
-	public static void initialize(String remoteHost, int port, String user, String fingerprint) {
-		CreatePortForwardingThread createForwarding = new CreatePortForwardingThread(remoteHost, port, user, fingerprint);
-		createForwarding.run();
-	}
-
 	public static void shutdownAll() {
 		synchronized(forwardingClients) {
 			for (PortForwardingRunnable runnable : forwardingClients) {
@@ -128,26 +130,6 @@ public class PortForwardingRunnable implements Runnable {
 	public static int totalClients() {
 		synchronized(forwardingClients) {
 			return forwardingClients.size();
-		}
-	}
-
-	private static class CreatePortForwardingThread implements Runnable {
-		private final String remoteHost;
-		private final int port;
-		private final String user;
-		private final String fingerprint;
-		public CreatePortForwardingThread(String remoteHost, int port, String user, String fingerprint) {
-			this.remoteHost = remoteHost;
-			this.port = port;
-			this.user = user;
-			this.fingerprint = fingerprint;
-		}
-	
-		@Override
-		public void run() {
-			Logger.info("Starting port forwarding listening thread");
-			Thread listenThread = new Thread(new PortForwardingRunnable(remoteHost, port, user, fingerprint, this), "Mongodb port forwarding thread");
-			listenThread.start();
 		}
 	}
 }

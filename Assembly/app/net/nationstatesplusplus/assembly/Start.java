@@ -51,7 +51,7 @@ public class Start {
 			//Statement caching
 			pool.setMaxStatementsPerConnection(10);
 
-			//Connection testing
+			//Connection testing (supports connection reconnecting)
 			pool.setTestConnectionOnCheckin(true);
 			pool.setTestConnectionOnCheckout(true);
 			pool.setPreferredTestQuery("SELECT 1");

@@ -19,31 +19,15 @@ public class NationUpdateTask implements Runnable {
 	private final DatabaseAccess access;
 	private final int waUpdates;
 	private final int nonWaUpdates;
-	private final HealthMonitor monitor;
-	private long lastRun = 0;
-	private final HappeningsTask task;
-	public NationUpdateTask(NationStates api, DatabaseAccess access, int waUpdates, int nonWaUpdates, HealthMonitor health, HappeningsTask task) {
+	public NationUpdateTask(NationStates api, DatabaseAccess access, int waUpdates, int nonWaUpdates) {
 		this.api = api;
 		this.access = access;
 		this.waUpdates = waUpdates;
 		this.nonWaUpdates = nonWaUpdates;
-		this.monitor = health;
-		this.task = task;
 	}
 
 	@Override
 	public void run() {
-		if (lastRun + Duration.standardSeconds(30).getMillis() > System.currentTimeMillis()) {
-			Logger.info("Skipping nation updates, too soon.");
-			return;
-		}
-		lastRun = System.currentTimeMillis();
-		
-		if (task.isHighActivity()) {
-			Logger.info("Skipping nation updates run, high happenings activity");
-			return;
-		}
-		
 		final int waLimit = Math.min((api.getRateLimitRemaining() * 2) / 3, this.waUpdates);
 		if (waLimit <= 1) {
 			Logger.info("Skipping wa nation updates, no rate limit remaining");
@@ -86,8 +70,6 @@ public class NationUpdateTask implements Runnable {
 			Logger.warn("Endorsement monitoring rate limited!");
 		} catch (Exception e) {
 			Logger.error("Unable to update endorsements", e);
-		} finally {
-			if (monitor != null) monitor.endorsementHeartbeat();
 		}
 	}
 }

@@ -187,18 +187,18 @@ public enum RequestType implements Request {
 						} catch (NumberFormatException e) {
 							return generateError("invalid rss key, must be numeric", request);
 						}
-						Logger.info("Received authentication request from {}", context.getNation());
+						Logger.debug("Received authentication request from {}", context.getNation());
 						
 						//Try cache
 						Integer cachedResult = context.getAccess().getAuthenticationCache().getIfPresent(context.getNationId());
 						if (cachedResult != null && rssAuth == cachedResult) {
-							Logger.info("Validing authentication request from {} from cached result.", context.getNation());
+							Logger.debug("Validing authentication request from {} from cached result.", context.getNation());
 							return toSimpleResult("success");
 						}
 						
 						Authentication auth = new Authentication(context.getNation(), context.getNationId(), rssAuth, context.getAccess());
 						if (auth.isValid()) {
-							Logger.info("Validing authentication request from {} from calculated result.", context.getNation());
+							Logger.debug("Validing authentication request from {} from calculated result.", context.getNation());
 							context.getAccess().getAuthenticationCache().put(context.getNationId(), rssAuth);
 							return toSimpleResult("success");
 						} else {
