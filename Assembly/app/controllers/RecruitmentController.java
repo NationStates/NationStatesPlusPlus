@@ -666,7 +666,8 @@ public class RecruitmentController extends NationStatesController {
 			return Json.toJson(wait);
 		}
 		*/
-		//If another nation is already recruiting right now, abort
+	public static JsonNode calculateRecruitmentTarget(DatabaseAccess access, Connection conn, int regionId, String nation) throws SQLException, ExecutionException {
+		//Unless another nation is already recruiting, get a target
 		if (canRecruit(conn, regionId)) {
 			Map<String, Object> data = getRecruitmentTarget(access, conn, regionId, nation);
 			if (data != null) {
@@ -678,6 +679,7 @@ public class RecruitmentController extends NationStatesController {
 			}
 		}
 		
+		//Otherwise, abort with an instruction to delay retrying
 		Map<String, Object> wait = new HashMap<String, Object>();
 		long timestamp = System.currentTimeMillis();
 		try (PreparedStatement lastRecruitment = conn.prepareStatement("SELECT nation, timestamp, recruiter FROM assembly.recruitment_results WHERE region = ? ORDER BY timestamp DESC LIMIT 0, 1")) {

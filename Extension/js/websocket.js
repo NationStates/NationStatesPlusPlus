@@ -155,6 +155,7 @@
 	}
 
 	function keepAlive() {
+		// TODO revisit the below
 		var delay = isPageActive() ? 60000 : 30000; // 1 min or 30 s
 		delay += keepAliveAttempts * 5000;
 		if (ws != null && ws.readyState === 1) {
