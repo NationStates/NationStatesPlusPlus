@@ -34,10 +34,10 @@ public class Authentication {
 	}
 
 	/**
-	 * Returns true if the rss key, is valid. Validation first checks to see if the database contains the sha256 hash of the key.
+	 * Returns true if the rss key, is valid. Validation first checks to see if the database contains the salted sha256 hash of the key.
 	 * If the hash is not in the database, or the hash does not match the database value, and this authentication attempt is not too recent
 	 *  (> 1 min since the previous attempt), then a connection to nationstates is opened to verify the rss key.
-	 *  If the rss key is confirmed valid, a bcrypted-hash of the key is stored in the database to avoid unnecessary future nationstates calls.
+	 *  If the rss key is confirmed valid, a salted sha256 hash of the key is stored in the database to avoid unnecessary future nationstates calls.
 	 *  <p>
 	 *  If the authentication is not valid, a failure reason will be available from getFailureReason
 	 * 
@@ -57,8 +57,8 @@ public class Authentication {
 			}
 			
 			//Check the nation's bcrypt hash of the rss key next
-			if (hash.bcyrptHash != null) {
-				if (BCrypt.checkpw(String.valueOf(rssKey), hash.bcyrptHash)) {
+			if (hash.bcryptHash != null) {
+				if (BCrypt.checkpw(String.valueOf(rssKey), hash.bcryptHash)) {
 					migrateBcryptHash(rssKey);
 					return true;
 				}
@@ -152,11 +152,11 @@ public class Authentication {
 	}
 
 	private static class Hashsums {
-		private final String bcyrptHash;
+		private final String bcryptHash;
 		private final String shaHash;
 		private final long shaSalt;
 		Hashsums(String bcryptHash, String shaHash, long shaSalt) {
-			this.bcyrptHash = bcryptHash;
+			this.bcryptHash = bcryptHash;
 			this.shaHash = shaHash;
 			this.shaSalt = shaSalt;
 		}
