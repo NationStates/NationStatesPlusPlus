@@ -666,7 +666,6 @@ public class RecruitmentController extends NationStatesController {
 			return Json.toJson(wait);
 		}
 		*/
-	public static JsonNode calculateRecruitmentTarget(DatabaseAccess access, Connection conn, int regionId, String nation) throws SQLException, ExecutionException {
 		//Unless another nation is already recruiting, get a target
 		if (canRecruit(conn, regionId)) {
 			Map<String, Object> data = getRecruitmentTarget(access, conn, regionId, nation);
