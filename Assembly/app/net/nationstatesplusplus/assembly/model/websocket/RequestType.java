@@ -192,13 +192,13 @@ public enum RequestType implements Request {
 						//Try cache
 						Integer cachedResult = context.getAccess().getAuthenticationCache().getIfPresent(context.getNationId());
 						if (cachedResult != null && rssAuth == cachedResult) {
-							Logger.debug("Validing authentication request from {} from cached result.", context.getNation());
+							Logger.debug("Validating authentication request from {} from cached result.", context.getNation());
 							return toSimpleResult("success");
 						}
 						
 						Authentication auth = new Authentication(context.getNation(), context.getNationId(), rssAuth, context.getAccess());
 						if (auth.isValid()) {
-							Logger.debug("Validing authentication request from {} from calculated result.", context.getNation());
+							Logger.debug("Validating authentication request from {} from calculated result.", context.getNation());
 							context.getAccess().getAuthenticationCache().put(context.getNationId(), rssAuth);
 							return toSimpleResult("success");
 						} else {

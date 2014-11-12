@@ -12,13 +12,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.atomic.AtomicLong;
-
 import net.nationstatesplusplus.assembly.HappeningsTask;
 import net.nationstatesplusplus.assembly.model.HappeningType;
 import net.nationstatesplusplus.assembly.model.RecruitmentType;
@@ -637,48 +633,23 @@ public class RecruitmentController extends NationStatesController {
 		}
 	}
 
-	private static volatile long recruitmentCount = 0;
-	private static final ConcurrentHashMap<Integer, AtomicLong> recruiterPerformance = new ConcurrentHashMap<Integer, AtomicLong>();
-	private static final ConcurrentHashMap<Integer, String> recruiterNames = new ConcurrentHashMap<Integer, String>();
-	private static final ConcurrentHashMap<Integer, AtomicLong> recruitmentCounts = new ConcurrentHashMap<Integer, AtomicLong>();
 	public static JsonNode calculateRecruitmentTarget(DatabaseAccess access, Connection conn, int regionId, String nation, int nationId) throws SQLException, ExecutionException {
-		
-		Logger.info("Recruitment count: {}", recruitmentCount);
-		recruitmentCount++;
-		if (recruitmentCount % 50 == 0) {
-			for (Entry<Integer, AtomicLong> e : recruiterPerformance.entrySet()) {
-				Logger.info("Recruitment time for nation: [" + e.getKey() + ", " + recruiterNames.get(e.getKey()) + "] was {} ({} times)", e.getValue().get(), recruitmentCounts.get(e.getKey()));
-			}
-			recruiterPerformance.clear();
-			recruitmentCounts.clear();
-		}
-		recruiterNames.putIfAbsent(nationId, nation);
-		final AtomicLong count = recruitmentCounts.putIfAbsent(nationId, new AtomicLong(1));
-		if (count != null) count.incrementAndGet();
-		final AtomicLong timeSpent = recruiterPerformance.getOrDefault(nationId, new AtomicLong(0L));
-		long time = System.currentTimeMillis();
-		
+		final long startTime = System.currentTimeMillis();
+		int status = 0; // 0 - successful recruitment, 1 - unable to find recruitment target, 2 - can not recruit (blocked)
 
-		//TODO: fix!!!!
-		/*
-		if (regionId != 1837) {
-			Map<String, Object> wait = new HashMap<String, Object>();
-			wait.put("wait", Duration.standardMinutes(3).getMillis());
-			return Json.toJson(wait);
-		}
-		*/
 		//Unless another nation is already recruiting, get a target
 		if (canRecruit(conn, regionId)) {
+			status = 1;
 			Map<String, Object> data = getRecruitmentTarget(access, conn, regionId, nation);
 			if (data != null) {
-				
-				timeSpent.getAndAdd(System.currentTimeMillis() - time);
-				recruiterPerformance.putIfAbsent(nationId, timeSpent);
-				
+				int campaignId = (Integer)data.get("campaign_id");
+				logRecruitmentPerformance(conn, nationId, regionId, (int)(System.currentTimeMillis() - startTime), 0, campaignId);
 				return Json.toJson(data);
 			}
+		} else {
+			status = 2;
 		}
-		
+
 		//Otherwise, abort with an instruction to delay retrying
 		Map<String, Object> wait = new HashMap<String, Object>();
 		long timestamp = System.currentTimeMillis();
@@ -697,36 +668,49 @@ public class RecruitmentController extends NationStatesController {
 		final Duration timeUntilNextRecruitment = Duration.standardMinutes(3).plus(SAFETY_FACTOR).minus(timeSinceLastRecruitment);
 		wait.put("wait", Math.max(timeUntilNextRecruitment.getStandardSeconds(), 10));
 		
-		timeSpent.getAndAdd(System.currentTimeMillis() - time);
-		recruiterPerformance.putIfAbsent(nationId, timeSpent);
+		logRecruitmentPerformance(conn, nationId, regionId, (int)(System.currentTimeMillis() - startTime), status, -1);
 		return Json.toJson(wait);
+	}
+
+	private static void logRecruitmentPerformance(Connection conn, int recruiter, int regionId, int timeElapsed, int targetStatus, int campaignId) throws SQLException {
+		try (PreparedStatement insert = conn.prepareStatement("INSERT INTO assembly.recruitment_performance (recruiter, region, time_elapsed, target_status, recruitment_campaign, timestamp) VALUES (?, ?, ?, ?, ?, ?)")) {
+			insert.setInt(1, recruiter);
+			insert.setInt(2, regionId);
+			insert.setInt(3, timeElapsed);
+			insert.setByte(4, (byte)targetStatus);
+			insert.setInt(5, campaignId);
+			insert.setLong(6, System.currentTimeMillis());
+			insert.executeUpdate();
+		}
+		if ((new Random().nextInt(1000)) == 0) {
+			try (PreparedStatement delete = conn.prepareStatement("DELETE FROM assembly.recruitment_performance WHERE timestamp < ?")) {
+				delete.setLong(1,System.currentTimeMillis() - Duration.standardDays(7).getMillis());
+				delete.executeUpdate();
+			}
+			Logger.info("Cleared recruitment_performance older than 1 week");
+		}
 	}
 
 	private static final Duration SAFETY_FACTOR = Duration.standardSeconds(10);
 	private static boolean canRecruit(Connection conn, int region) throws SQLException {
-		PreparedStatement lastRecruitment = null;
-		ResultSet recruitment = null;
-		try {
-			lastRecruitment = conn.prepareStatement("SELECT timestamp, confirmed FROM assembly.recruitment_results WHERE region = ? ORDER BY timestamp DESC LIMIT 0, 1");
+		try (PreparedStatement lastRecruitment = conn.prepareStatement("SELECT timestamp, confirmed FROM assembly.recruitment_results WHERE region = ? ORDER BY timestamp DESC LIMIT 0, 1")) {
 			lastRecruitment.setInt(1, region);
-			recruitment = lastRecruitment.executeQuery();
-			if (recruitment.next()) {
-				long timestamp = recruitment.getLong(1);
-				int confirmed = recruitment.getInt(2);
-				
-				final DateTime time = new DateTime(timestamp);
-				if (confirmed == 1 && time.plus(SAFETY_FACTOR).plus(Duration.standardMinutes(3)).isBefore(DateTime.now())) {
-					return true;
-				} else if (confirmed == 0 && time.plus(SAFETY_FACTOR).plus(Duration.standardMinutes(4)).isBefore(DateTime.now())) {
+			try (ResultSet recruitment = lastRecruitment.executeQuery()) {
+				if (recruitment.next()) {
+					long timestamp = recruitment.getLong(1);
+					int confirmed = recruitment.getInt(2);
+					
+					final DateTime time = new DateTime(timestamp);
+					if (confirmed == 1 && time.plus(SAFETY_FACTOR).plus(Duration.standardMinutes(3)).isBefore(DateTime.now())) {
+						return true;
+					} else if (confirmed == 0 && time.plus(SAFETY_FACTOR).plus(Duration.standardMinutes(4)).isBefore(DateTime.now())) {
+						return true;
+					}
+				} else {
 					return true;
 				}
-			} else {
-				return true;
 			}
 			return false;
-		} finally {
-			DbUtils.closeQuietly(lastRecruitment);
-			DbUtils.closeQuietly(recruitment);
 		}
 	}
 
@@ -788,6 +772,7 @@ public class RecruitmentController extends NationStatesController {
 								data.put("tgid", tgid);
 								data.put("secret_key", secretKey);
 								data.put("nation", target);
+								data.put("campaign_id", campaign);
 								return data;
 							} else {
 								Logger.warn("Recruitment Target [" + target + "] has no nation id");
