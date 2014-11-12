@@ -754,6 +754,7 @@ public class RecruitmentController extends NationStatesController {
 									try {
 										Map<String, Object> wait = tryUpdateRecruitmentResults(conn, insertId, region, nation);
 										if (wait != null) {
+											wait.put("campaign_id", campaign);
 											return wait;
 										}
 										success = true;
