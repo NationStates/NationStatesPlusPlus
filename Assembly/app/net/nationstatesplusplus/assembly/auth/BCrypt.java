@@ -620,13 +620,18 @@ public class BCrypt {
 		for (i = 0; i < rounds; i++) {
 			key(password);
 			key(salt);
+			// Terrible hack to keep bcrypt from hogging CPU
+			Thread.yield();
 		}
 
 		for (i = 0; i < 64; i++) {
 			for (j = 0; j < (clen >> 1); j++)
 				encipher(cdata, j << 1);
 		}
-
+		
+		// Terrible hack to keep bcrypt from hogging CPU
+		Thread.yield();
+		
 		ret = new byte[clen * 4];
 		for (i = 0, j = 0; i < clen; i++) {
 			ret[j++] = (byte)((cdata[i] >> 24) & 0xff);
