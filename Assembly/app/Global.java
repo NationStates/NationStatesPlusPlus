@@ -21,7 +21,6 @@ import net.nationstatesplusplus.assembly.amqp.NullAMQPConenctionFactory;
 import net.nationstatesplusplus.assembly.model.HappeningType;
 import net.nationstatesplusplus.assembly.model.RecruitmentType;
 import net.nationstatesplusplus.assembly.model.websocket.WebsocketManager;
-import net.nationstatesplusplus.assembly.mongodb.PortForwardingRunnable;
 import net.nationstatesplusplus.assembly.util.DatabaseAccess;
 import net.nationstatesplusplus.assembly.logging.LoggerOutputStream;
 
@@ -162,26 +161,6 @@ public class Global extends GlobalSettings {
 	private static MongoClient setupMongoDB(YamlConfiguration config) {
 		MongoClient mongoClient = null;
 		final int port = config.getChild("mongodb").getChild("port").getInt();
-		final String remoteHost = config.getChild("mongodb").getChild("host").getString();
-		final String user = config.getChild("mongodb").getChild("user").getString();
-		final String fingerprint = config.getChild("mongodb").getChild("fingerprint").getString();
-		
-		Logger.info("Starting port forwarding listening thread");
-		final PortForwardingRunnable portForwarding = new PortForwardingRunnable(remoteHost, port, user, fingerprint);
-		final Thread listenThread = new Thread(portForwarding, "Mongodb port forwarding thread");
-		listenThread.start();
-
-		for (int i = 0; i < 10; i++) {
-			if (portForwarding.isBound() || portForwarding.isShutdown()) {
-				break;
-			}
-			try {
-				Thread.sleep(1000L);
-			} catch (InterruptedException e) {
-				break;
-			}
-		}
-		Logger.info("Binding port forwarding for mongodb on {} with port {}", remoteHost, port);
 
 		try {
 			mongoClient = new MongoClient("127.0.0.1", port);
@@ -197,7 +176,6 @@ public class Global extends GlobalSettings {
 	@Override
 	public void onStop(Application app) {
 		pool.close();
-		PortForwardingRunnable.shutdownAll();
 	}
 
 	@SuppressWarnings("unchecked")
