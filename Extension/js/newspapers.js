@@ -85,28 +85,21 @@ var newspaperAdminHTML = '<form class="form-horizontal"><fieldset><div class="co
 	var createEventHandler = function(selector) {
 		var settings = (new UserSettings()).child("newspapers");
 		var handler = function(event) {
-			settings.off();
-			settings.on(function(data) {
-				var lastRead = data.newspapers[event.json.newspaper_id];
-				var html = "";
-				if (lastRead == null || event.json.timestamp > lastRead) {
-					html = " (1)";
-				}
-				if (isRiftTheme()) {
-					if (html.length > 0)
-						$(selector).html(1).show();
-					else
-						$(selector).html(0).hide();
+			if (isRiftTheme()) {
+				if (event.json.unread_articles > 0) {
+					$(selector).html(event.json.unread_articles).show();
 				} else {
-					$(selector).html(html);
+					$(selector).html(0).hide();
 				}
-			}, []);
+			} else if (event.json.unread_articles > 0 && event.json.unread_articles < 10) {
+				$(selector).html(" (" + event.json.unread_articles + ")");
+			} else if (event.json.unread_articles > 10) {
+				$(selector).html(" (*)");
+			}
 			$(selector).parents("li").attr("news-id", event.json.newspaper_id).show();
-		}
+		};
 		return handler;
-	}
-	//$(window).on("websocket.gameplay_news_sidebar", new createEventHandler("#gnews span[name='nag']"));
-	//$(window).on("websocket.roleplay_news_sidebar", new createEventHandler("#rpnews span[name='nag']"));
+	};
 	$(window).on("websocket.regional_news_sidebar", new createEventHandler("#rnews span[name='nag'], #rnews div[name='nag']"));
 
 	$(window).on("websocket.pending_news_submissions", function(event) {

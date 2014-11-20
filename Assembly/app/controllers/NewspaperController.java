@@ -18,8 +18,10 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import net.nationstatesplusplus.assembly.model.Nation;
+import net.nationstatesplusplus.assembly.model.websocket.NationContext;
 import net.nationstatesplusplus.assembly.model.websocket.PageType;
 import net.nationstatesplusplus.assembly.model.websocket.RequestType;
+import net.nationstatesplusplus.assembly.nation.MongoSettings;
 import net.nationstatesplusplus.assembly.util.DatabaseAccess;
 import net.nationstatesplusplus.assembly.util.Utils;
 
@@ -157,7 +159,7 @@ public class NewspaperController extends NationStatesController {
 		int regionId = getDatabase().getRegionId(region);
 		if (regionId != -1) {
 			try (Connection conn = getConnection()) {
-				JsonNode newspaper = getNewspaper(conn, getDatabase().getRegionId(region));
+				JsonNode newspaper = Json.toJson(getNewspaper(conn, getDatabase().getRegionId(region)));
 				if (newspaper != null) {
 					Result r = Utils.handleDefaultGetHeaders(request(), response(), String.valueOf(newspaper.hashCode()), "300");
 					if (r != null) {
@@ -172,15 +174,15 @@ public class NewspaperController extends NationStatesController {
 		return Results.notFound();
 	}
 
-	public static JsonNode getNewspaper(Connection conn, int region) throws SQLException {
+	public static Map<String, Object> getNewspaper(Connection conn, int region) throws SQLException {
 		try (PreparedStatement articles = conn.prepareStatement("SELECT id, title FROM assembly.newspapers WHERE disbanded = 0 AND region = ?")) {
 			articles.setInt(1, region);
 			try (ResultSet result = articles.executeQuery()) {
 				if (result.next()) {
-					Map<String, Object> newspaper = new HashMap<String, Object>();
+					Map<String, Object> newspaper = new HashMap<>();
 					newspaper.put("newspaper_id", result.getInt(1));
 					newspaper.put("title", result.getString(2));
-					return Json.toJson(newspaper);
+					return newspaper;
 				}
 			}
 		}
@@ -214,18 +216,53 @@ public class NewspaperController extends NationStatesController {
 		return Json.toJson(newspaper);
 	}
 
-	public static JsonNode getLatestUpdateForRegion(Connection conn, int regionId) throws SQLException {
-		Map<String, Object> newspaper = new HashMap<String, Object>();
+	@SuppressWarnings("unchecked")
+	public static JsonNode getLatestUpdateForRegion(Connection conn, NationContext context) throws SQLException {
+		Map<String, Object> newspaper = getNewspaper(conn, context.getUserRegionId());
+		long lastRead = 0;
+		if (newspaper != null && newspaper.containsKey("newspaper_id") && context.getNationId() != -1) {
+			final String newspaperId = String.valueOf((Integer)newspaper.get("newspaper_id"));
+			
+			Map<String, Long> newspapersLastRead;
+			try {
+				newspapersLastRead = (Map<String, Long>) context.getSettings().getValue("newspapers", Collections.emptyMap(), Map.class);
+			} catch (ClassCastException ex) {
+				//If the user's newspapers settings are malformed, call fixNewspaperTypes, stored function on mongodb server
+				Logger.info("User [{}] newspaper settings are malformed, attempting to correct...", context.getNation());
+				MongoSettings dbSettings = (MongoSettings)context.getSettings();
+				
+				//Is this a risk of nosql injection attacks?
+				Object result = dbSettings.getCollection().getDB().eval("fixNewspaperTypes('" + context.getNation() + "')");
+				Logger.info("Corrected [{}] newspaper settings, result: {}", context.getNation(), result);
+				newspapersLastRead = (Map<String, Long>) context.getSettings().getValue("newspapers", Collections.emptyMap(), Map.class);
+			}
+			if (newspapersLastRead.containsKey(newspaperId)) {
+				lastRead = newspapersLastRead.get(newspaperId);
+			}
+		}
+		Map<String, Object> newspaperData = new HashMap<>();
 		try (PreparedStatement articles = conn.prepareStatement("SELECT max(articles.timestamp), articles.newspaper FROM assembly.articles INNER JOIN assembly.newspapers ON newspapers.id = articles.newspaper WHERE newspapers.region = ? AND newspapers.disbanded = 0 AND articles.visible = 1")) {
-			articles.setInt(1, regionId);
+			articles.setInt(1, context.getUserRegionId());
 			try (ResultSet result = articles.executeQuery()) {
 				if (result.next()) {
-					newspaper.put("timestamp", result.getLong(1));
-					newspaper.put("newspaper_id", result.getInt(2));
+					newspaperData.put("timestamp", result.getLong(1));
+					newspaperData.put("newspaper_id", result.getInt(2));
+					newspaperData.put("last_read", lastRead);
+					try (PreparedStatement unreadArticles = conn.prepareStatement("SELECT count(*) FROM assembly.articles WHERE articles.newspaper = ? AND articles.timestamp > ?")) {
+						unreadArticles.setInt(1, result.getInt(2));
+						unreadArticles.setLong(2, lastRead);
+						try (ResultSet unread = unreadArticles.executeQuery()) {
+							if (unread.next()) {
+								newspaperData.put("unread_articles", unread.getInt(1));
+							} else {
+								newspaperData.put("unread_articles", 0);
+							}
+						}
+					}
 				}
 			}
 		}
-		return Json.toJson(newspaper);
+		return Json.toJson(newspaperData);
 	}
 
 	public static JsonNode getPendingSubmissions(Connection conn, int newspaper) throws SQLException {

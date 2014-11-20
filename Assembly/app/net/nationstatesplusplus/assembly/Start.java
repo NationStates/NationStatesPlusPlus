@@ -38,7 +38,7 @@ public class Start {
 			pool.setJdbcUrl(settings.getChild("jbdc").getString());
 
 			//Connection Pooling
-			pool.setMaxPoolSize(50);
+			pool.setMaxPoolSize(75);
 			pool.setMinPoolSize(1);
 
 			pool.setMaxIdleTime(180); // 3 min after being unused, conn is closed
@@ -46,7 +46,7 @@ public class Start {
 
 			//Connection Debugging
 			pool.setDebugUnreturnedConnectionStackTraces(true);
-			pool.setUnreturnedConnectionTimeout(60 * 60);
+			pool.setUnreturnedConnectionTimeout(6 * 60); //throw an exception if any code holds a connection open for > 6 min
 
 			//Statement caching
 			pool.setMaxStatementsPerConnection(10);
@@ -55,6 +55,9 @@ public class Start {
 			pool.setTestConnectionOnCheckin(true);
 			pool.setTestConnectionOnCheckout(true);
 			pool.setPreferredTestQuery("SELECT 1");
+			
+			//Timeout aqcuiring a connection after 30000ms (30s)
+			pool.setCheckoutTimeout(1000 * 30);
 
 			//Connection Auth
 			Logger.info("Authenticating database connection pool with user [ " + settings.getChild("user").getString() + " ]");

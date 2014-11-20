@@ -147,7 +147,7 @@ public enum RequestType implements Request {
 				}
 			case REGION_NEWSPAPER:
 				if (page instanceof RegionPage) {
-					return toList(NewspaperController.getNewspaper(conn, ((RegionPage)page).getRegionId()));
+					return toList(Json.toJson(NewspaperController.getNewspaper(conn, ((RegionPage)page).getRegionId())));
 				}
 			case REGION_UPDATES:
 				if (page instanceof RegionPage) {
@@ -166,7 +166,7 @@ public enum RequestType implements Request {
 					return toList(RegionController.getRecordPopulation(conn, ((RegionPage)page).getRegion()));
 				}
 			case REGIONAL_NEWS_SIDEBAR:
-				return toList(NewspaperController.getLatestUpdateForRegion(conn, context.getUserRegionId()));
+				return toList(NewspaperController.getLatestUpdateForRegion(conn, context));
 			case PENDING_NEWS_SUBMISSIONS:
 				Set<Integer> newspapers = NewspaperController.getEditorshipsOfNation(context.getNationId(), conn);
 				List<JsonNode> nodes = new ArrayList<JsonNode>(newspapers.size());

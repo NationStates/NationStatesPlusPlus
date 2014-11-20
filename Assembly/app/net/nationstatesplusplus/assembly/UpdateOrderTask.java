@@ -7,7 +7,6 @@ import java.sql.ResultSet;
 import net.nationstatesplusplus.assembly.util.DatabaseAccess;
 import net.nationstatesplusplus.assembly.util.Utils;
 
-import org.apache.commons.dbutils.DbUtils;
 import org.joda.time.Duration;
 
 import play.Logger;
@@ -33,56 +32,53 @@ public class UpdateOrderTask implements Runnable{
 			return;
 		}
 		lastRun = System.currentTimeMillis();
-		Connection conn = null;
-		try {
-			conn = access.getPool().getConnection();
-			PreparedStatement select = conn.prepareStatement("SELECT last_update_order_region FROM assembly.settings WHERE id = 1");
-			ResultSet result = select.executeQuery();
-			result.next();
-			final int id = result.getInt(1);
-			DbUtils.closeQuietly(result);
-			DbUtils.closeQuietly(select);
-			
-			select = conn.prepareStatement("SELECT name, id FROM assembly.region WHERE id > ? AND alive = 1 LIMIT 0, 2");
-			select.setInt(1, id);
-			result = select.executeQuery();
-			int lastId = id;
-			final int startId = lastId;
-			while(result.next()) {
-				RegionData data;
-				try {
-					data = api.getRegionInfo(result.getString(1), RegionData.Shards.NATIONS);
-				} catch (UnknownRegionException e) {
-					PreparedStatement setDead = conn.prepareStatement("UPDATE assembly.region SET alive = 0 WHERE id = ?");
-					setDead.setInt(1, result.getInt(2));
-					setDead.executeUpdate();
-					DbUtils.closeQuietly(setDead);
-					continue;
+		try (Connection conn = access.getPool().getConnection()) {
+			final int id;
+			try (PreparedStatement select = conn.prepareStatement("SELECT last_update_order_region FROM assembly.settings WHERE id = 1")) {
+				try (ResultSet result = select.executeQuery()) {
+					result.next();
+					id = result.getInt(1);
 				}
-				PreparedStatement updateBatch = conn.prepareStatement("UPDATE assembly.nation SET update_order = ? WHERE name = ?");
-				for (int i = 0; i < data.nations.length; i++) {
-					updateBatch.setInt(1, data.nations.length - i);
-					updateBatch.setString(2, Utils.sanitizeName(data.nations[i]));
-					updateBatch.addBatch();
-				}
-				updateBatch.executeBatch();
-				DbUtils.closeQuietly(updateBatch);
-				lastId = result.getInt(2);
-				Logger.debug("Updated update order for region id [" + lastId + "]");
 			}
-			PreparedStatement update = conn.prepareStatement("UPDATE assembly.settings SET last_update_order_region = ? WHERE id = 1");
-			update.setInt(1, (lastId != startId ? lastId : 0));
-			update.executeUpdate();
-			DbUtils.closeQuietly(update);
-			
-			DbUtils.closeQuietly(result);
-			DbUtils.closeQuietly(select);
+
+			try (PreparedStatement select = conn.prepareStatement("SELECT name, id FROM assembly.region WHERE id > ? AND alive = 1 LIMIT 0, 2")) {
+				select.setInt(1, id);
+
+				int lastId = id;
+				final int startId = lastId;
+
+				try (ResultSet result = select.executeQuery()) {
+					while (result.next()) {
+						RegionData data;
+						try {
+							data = api.getRegionInfo(result.getString(1), RegionData.Shards.NATIONS);
+						} catch (UnknownRegionException e) {
+							try (PreparedStatement setDead = conn.prepareStatement("UPDATE assembly.region SET alive = 0 WHERE id = ?")) {
+								setDead.setInt(1, result.getInt(2));
+								setDead.executeUpdate();
+							}
+							continue;
+						}
+						try (PreparedStatement updateBatch = conn.prepareStatement("UPDATE assembly.nation SET update_order = ? WHERE name = ?")) {
+							for (int i = 0; i < data.nations.length; i++) {
+								updateBatch.setInt(1, data.nations.length - i);
+								updateBatch.setString(2, Utils.sanitizeName(data.nations[i]));
+								updateBatch.addBatch();
+							}
+							updateBatch.executeBatch();
+						}
+						lastId = result.getInt(2);
+						Logger.debug("Updated update order for region id [" + lastId + "]");
+					}
+				}
+				PreparedStatement update = conn.prepareStatement("UPDATE assembly.settings SET last_update_order_region = ? WHERE id = 1");
+				update.setInt(1, (lastId != startId ? lastId : 0));
+				update.executeUpdate();
+			}
 		} catch (RateLimitReachedException e) {
 			Logger.warn("Update order task rate limited!");
 		} catch (Exception e) {
 			Logger.error("Unable to update region update order", e);
-		} finally {
-			DbUtils.closeQuietly(conn);
 		}
 	}
 }

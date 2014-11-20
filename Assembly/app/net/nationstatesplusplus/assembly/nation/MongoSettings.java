@@ -88,4 +88,8 @@ public class MongoSettings implements NationSettings {
 		BasicDBObject update = new BasicDBObject("$set", obj);
 		this.users.update(find, update);
 	}
+
+	public DBCollection getCollection() {
+		return users;
+	}
 }
