@@ -713,7 +713,7 @@ fieldset.preview {
 	display: inline-block;
 }
 
-#alert_msg_box {
+#alert_msg_box, .centered_modal_style {
 	position: absolute;
 	top: 200px;
 	left: 300px;
@@ -724,6 +724,7 @@ fieldset.preview {
 	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
 	color: black;
 }
+
 .puppet-wa {
 	height: 25px !important;
 	padding-left: 19px !important;
@@ -842,35 +843,6 @@ fieldset.preview {
 	background-color: blue;
 	width: 375px;
 	height: 20px;
-}
-
-#current_login {
-	position:relative;
-	left: 15px;
-}
-
-#toggle_dossier_label {
-	border: 2px solid black;
-	border-radius: 4px;
-	font-size: 14px;
-	font-weight: bold;
-	padding: 5px;
-}
-
-#toggle_dossier {
-	vertical-align: -2px;
-	margin-left: 10px;
-}
-
-#toggle_dossier_div {
-	position: absolute;
-	right: 10px;
-	top: 121px;
-}
-
-#dossier_seperator{
-	border: 1px solid;
-	margin-top: -15px;
 }
 
 .banner-theme {

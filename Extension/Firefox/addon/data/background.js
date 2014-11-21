@@ -55,6 +55,9 @@ var pageUrl = window.location.href;
 
 	if ($("link[href^='/ns.dark']").length > 0) {
 		addStylesheetString(darkThemeCSS);
+		addStylesheet("//ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/themes/ui-darkness/jquery-ui.min.css");
+	} else {
+		addStylesheet("//ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/themes/ui-lightness/jquery-ui.min.css");
 	}
 
 	if (document.head.innerHTML.indexOf("//ajax.googleapis.com/ajax/libs/jquery") != -1) {
