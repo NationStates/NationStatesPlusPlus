@@ -46,7 +46,7 @@ public class IRCController extends NationStatesController {
 		return Results.noContent();
 	}
 
-	public Result setIRCNetwork(String region) throws SQLException {
+	public Result setIRCNetwork(String region, boolean deleteIRC) throws SQLException {
 		Utils.handleDefaultPostHeaders(request(), response());
 		final int regionId = getDatabase().getRegionId(region);
 		if (regionId == -1) {
@@ -60,11 +60,14 @@ public class IRCController extends NationStatesController {
 		if (nationId == -1) {
 			return Results.badRequest();
 		}
+		
 		final String ircNetwork = Utils.getPostValue(request(), "irc_network");
 		final String ircChannel = Utils.getPostValue(request(), "irc_channel");
 		final String ircPort = Utils.getPostValue(request(), "irc_port");
-		if (ircNetwork == null || ircNetwork.isEmpty() || ircChannel == null || ircChannel.isEmpty() || ircPort == null || ircPort.isEmpty()) {
-			return Results.badRequest("Missing irc network, irc channel");
+		if (!deleteIRC) {
+			if (ircNetwork == null || ircNetwork.isEmpty() || ircChannel == null || ircChannel.isEmpty() || ircPort == null || ircPort.isEmpty()) {
+				return Results.badRequest("Missing irc network, irc channel");
+			}
 		}
 		String authToken = Utils.getPostValue(request(), "rss_token");
 		if (authToken == null || authToken.isEmpty()) {
@@ -101,12 +104,14 @@ public class IRCController extends NationStatesController {
 				delete.setInt(1, regionId);
 				delete.executeQuery();
 			}
-			try (PreparedStatement insert = conn.prepareStatement("INSERT INTO assembly.irc_networks (region, irc_network, irc_channel, irc_port) VALUES (?, ?, ?, ?)")) {
-				insert.setInt(1, regionId);
-				insert.setString(2, ircNetwork);
-				insert.setString(3, ircChannel);
-				insert.setInt(4, Integer.parseInt(ircPort));
-				insert.executeQuery();
+			if (!deleteIRC) {
+				try (PreparedStatement insert = conn.prepareStatement("INSERT INTO assembly.irc_networks (region, irc_network, irc_channel, irc_port) VALUES (?, ?, ?, ?)")) {
+					insert.setInt(1, regionId);
+					insert.setString(2, ircNetwork);
+					insert.setString(3, ircChannel);
+					insert.setInt(4, Integer.parseInt(ircPort));
+					insert.executeQuery();
+				}
 			}
 		}
 		return Results.noContent();

@@ -64,7 +64,7 @@ POST    /region/title/                @controllers.RegionController.setRegionalT
 GET     /region/summary/              @controllers.RegionController.getRegionSummary(region: String ?= "")
 GET     /region/embassies/            @controllers.RegionController.getEmbassies(region: String ?= "")
 GET     /region/irc/                  @controllers.IRCController.getIRCNetwork(region: String ?= "")
-POST    /region/irc/                  @controllers.IRCController.setIRCNetwork(region: String ?= "")
+POST    /region/irc/                  @controllers.IRCController.setIRCNetwork(region: String ?= "", deleteIRC: Boolean ?= false)
 
 GET     /recruitment/                 @controllers.RecruitmentController.getRecruitmentNations()
 GET     /recruitment/puppet/          @controllers.RecruitmentController.markPuppetNation(nation: String ?= "")
