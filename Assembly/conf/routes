@@ -41,7 +41,8 @@ GET     /nation/name/                 @controllers.AutocompleteController.getTit
 GET     /nation/latest_update/        @controllers.NationController.getLastSettingsUpdate(name: String ?= "")
 GET     /nation/settings/             @controllers.NationController.retrieveSettings(name: String ?= "")
 POST    /nation/settings/             @controllers.NationController.updateSettings()
-GET     /nation/settings/forum        @controllers.NationController.retreiveForumSettings(name: String ?= "")
+GET     /nation/settings/forum        @controllers.NationController.retrieveForumSettings(name: String ?= "")
+POST    /nation/settings/all          @controllers.NationController.retrieveAllSettings(name: String ?= "")
 
 POST    /nation/data/get/             @controllers.NationController.retrieveData()
 POST    /nation/data/set/             @controllers.NationController.updateData()

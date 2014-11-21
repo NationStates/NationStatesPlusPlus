@@ -8,6 +8,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
+import net.nationstatesplusplus.assembly.auth.Authentication;
+import net.nationstatesplusplus.assembly.nation.MongoSettings;
 import net.nationstatesplusplus.assembly.nation.NationSettings;
 import net.nationstatesplusplus.assembly.util.DatabaseAccess;
 import net.nationstatesplusplus.assembly.util.Utils;
@@ -18,6 +20,8 @@ import org.spout.cereal.config.yaml.YamlConfiguration;
 
 import com.google.common.collect.Maps;
 import com.limewoodMedia.nsapi.NationStates;
+import com.mongodb.BasicDBObject;
+import com.mongodb.DBCursor;
 
 import play.libs.Json;
 import play.mvc.Result;
@@ -233,7 +237,7 @@ public class NationController extends NationStatesController {
 		}
 	}
 
-	public Result retreiveForumSettings(String name) throws SQLException, ExecutionException {
+	public Result retrieveForumSettings(String name) throws SQLException, ExecutionException {
 		Utils.handleDefaultPostHeaders(request(), response());
 		final int nationId = getDatabase().getNationId(name);
 		if (nationId == -1) {
@@ -250,4 +254,38 @@ public class NationController extends NationStatesController {
 		return Results.ok(Json.toJson(json)).as("application/json");
 	}
 
+	public Result retrieveAllSettings(String name) throws SQLException {
+		Utils.handleDefaultPostHeaders(request(), response());
+		final int nationId = getDatabase().getNationId(name);
+		if (nationId == -1) {
+			return Results.badRequest();
+		}
+		String authToken = Utils.getPostValue(request(), "rss_token");
+		if (authToken == null || authToken.isEmpty()) {
+			return Results.badRequest();
+		}
+		int rssToken;
+		try {
+			rssToken = Integer.parseInt(authToken);
+		} catch (NumberFormatException e) {
+			return Results.unauthorized("Malformed rss token, expected integer");
+		}
+		
+		Authentication auth = new Authentication(Utils.sanitizeName(name), nationId, rssToken, this.getDatabase());
+		if (!auth.isValid()) {
+			return Results.unauthorized("Invalid rss token");
+		}
+		
+		NationSettings settings = getDatabase().getNationSettings(name, false);
+		if (settings instanceof MongoSettings) {
+			MongoSettings mongoSettings = (MongoSettings)settings;
+			BasicDBObject find = new BasicDBObject("nation", Utils.sanitizeName(name));
+			try (DBCursor cursor = mongoSettings.getCollection().find(find)) {
+				if (cursor.hasNext()) {
+					return Results.ok(Json.toJson(cursor.next().toMap())).as("application/json");
+				}
+			}
+		}
+		return Results.noContent();
+	}
 }

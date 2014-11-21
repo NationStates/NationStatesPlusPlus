@@ -32,23 +32,27 @@ var settingsHTML = '<form id="target" class="form-horizontal"> <fieldset> <h1>Na
 			}
 		});
 
+		getRSSPrivateKey(false, function(rssKey) {
+			$.post("https://nationstatesplusplus.net/api/nation/settings/all?name=" + getUserNation(), "rss_token=" + encodeURIComponent(rssKey), function(data) {
+				$(".form-horizontal").show();
+				$("#loading_gif").hide();
+				for (var setting in data) {
+					var value = data[setting];
+					var element = $("#" + setting);
+					if (element.length > 0) {
+						if (element.is("input[type='checkbox']")) {
+							element.prop("checked", value);
+						} else {
+							element.val(value)
+						}
+					}
+				}
+			});
+		});
+		
 		if (supportsColorInput) {
 			$("input[type='color']").css("width", "15px");
 		}
-		$("#content").find("input[type='checkbox']").each(function() {
-			var settingId = $(this).attr("id");
-			(new UserSettings()).child(settingId).on(function(data) {
-				$(".form-horizontal").show();
-				$("#loading_gif").hide();
-				$("#" + settingId).prop("checked", data[settingId]);
-			}, $(this).attr("default"));
-		});
-		$("#content").find("input[type='text'], input[type='color']").each(function() {
-			var settingId = $(this).attr("id");
-			(new UserSettings()).child(settingId).on(function(data) {
-				$("#" + settingId).val(data[settingId]);
-			}, $(this).attr("default"));
-		});
 		$("#export_puppets").on("click", function(event) {
 			event.preventDefault();
 			var puppetArr = new Array();
