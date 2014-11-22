@@ -21,7 +21,6 @@ import net.nationstatesplusplus.assembly.model.Nation;
 import net.nationstatesplusplus.assembly.model.websocket.NationContext;
 import net.nationstatesplusplus.assembly.model.websocket.PageType;
 import net.nationstatesplusplus.assembly.model.websocket.RequestType;
-import net.nationstatesplusplus.assembly.nation.MongoSettings;
 import net.nationstatesplusplus.assembly.util.DatabaseAccess;
 import net.nationstatesplusplus.assembly.util.Utils;
 

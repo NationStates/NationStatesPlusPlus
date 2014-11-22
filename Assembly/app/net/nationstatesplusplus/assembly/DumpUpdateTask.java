@@ -8,9 +8,12 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Types;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import net.nationstatesplusplus.assembly.util.DatabaseAccess;
 import net.nationstatesplusplus.assembly.util.Utils;
@@ -20,6 +23,7 @@ import org.slf4j.LoggerFactory;
 
 import com.afforess.nsdump.NationsDump;
 import com.afforess.nsdump.RegionsDump;
+import com.google.common.collect.Lists;
 import com.mchange.v2.c3p0.ComboPooledDataSource;
 
 /**
@@ -64,7 +68,7 @@ public class DumpUpdateTask implements Runnable {
 	 */
 	private void updateRegions(RegionsDump dump) {
 		try (Connection h2Conn = dump.getDatabaseConnection()) {
-			final HashSet<String> dumpRegions = new HashSet<String>(20000);
+			final Set<String> dumpRegions = new HashSet<String>(20000);
 			try (PreparedStatement statement = h2Conn.prepareStatement("SELECT name FROM regions")) {
 				try (ResultSet result = statement.executeQuery()) {
 					while (result.next()) {
@@ -73,21 +77,25 @@ public class DumpUpdateTask implements Runnable {
 				}
 			}
 			logger.info("Updating {} regions from daily dump", dumpRegions.size());
-			try (Connection conn = pool.getConnection()) {
-				int newRegions = 0;
-				try (PreparedStatement select = h2Conn.prepareStatement("SELECT title, flag, delegate, founder, numnations, update_order, embassies FROM regions WHERE name = ?")) {
-					for (String region : dumpRegions) {
-						select.setString(1, region);
-						try (ResultSet result = select.executeQuery()) {
-							result.next();
-							newRegions += updateRegion(conn, region, result.getString(1), result.getString(2), result.getString(3), result.getString(4), result.getInt(5), result.getInt(6), result.getString(7));
+			int newRegions = 0;
+
+			List<List<String>> regionLists = Lists.partition(new ArrayList<String>(dumpRegions), 1000);
+			for (List<String> regions : regionLists) {
+				try (Connection conn = pool.getConnection()) {
+					try (PreparedStatement select = h2Conn.prepareStatement("SELECT title, flag, delegate, founder, numnations, update_order, embassies FROM regions WHERE name = ?")) {
+						for (String region : regions) {
+							select.setString(1, region);
+							try (ResultSet result = select.executeQuery()) {
+								result.next();
+								newRegions += updateRegion(conn, region, result.getString(1), result.getString(2), result.getString(3), result.getString(4), result.getInt(5), result.getInt(6), result.getString(7));
+							}
 						}
 					}
 				}
-
-				logger.info("Added {} regions to the database", newRegions);
-
-				HashSet<String> allRegions = new HashSet<String>(20000);
+			}
+			logger.info("Added {} regions to the database", newRegions);
+			Set<String> allRegions = new HashSet<String>(20000);
+			try (Connection conn = pool.getConnection()) {
 				try (PreparedStatement select = conn.prepareStatement("SELECT name FROM assembly.region WHERE alive = 1")) {
 					try (ResultSet result = select.executeQuery()) {
 						while (result.next()) {
@@ -95,9 +103,10 @@ public class DumpUpdateTask implements Runnable {
 						}
 					}
 				}
-				allRegions.removeAll(dumpRegions);
-				logger.info("Marking {} regions as dead", allRegions.size());
-				
+			}
+			allRegions.removeAll(dumpRegions);
+			logger.info("Marking {} regions as dead", allRegions.size());
+			try (Connection conn = pool.getConnection()) {
 				for (String region : allRegions) {
 					access.markRegionDead(region, conn);
 				}
@@ -209,58 +218,64 @@ public class DumpUpdateTask implements Runnable {
 			}
 			
 			logger.info("Updating {} nations from daily dump", set.size());
-			
 			int newNations = 0;
-			try (Connection conn = pool.getConnection()) {
-				try (PreparedStatement select = h2Conn.prepareStatement("SELECT title, fullname, unstatus, influence, lastlogin, flag, region, motto," +
-						"currency, animal, capital, leader, religion, category, civilrights, economy, politicalfreedom, population, tax, majorindustry," + 
-						"governmentpriority, environment, socialequality, education, lawandorder, administration, welfare, spirituality, defence," +
-						"publictransport, healthcare, commerce, civilrightscore, economyscore, politicalfreedomscore, publicsector FROM nations WHERE name = ?")) {
-				
-					Map<String, Integer> columnMapping = null;
+
+			List<List<String>> nationLists = Lists.partition(new ArrayList<String>(set), 1000);
+			for (List<String> nations : nationLists) {
+				try (Connection conn = pool.getConnection()) {
+					try (PreparedStatement select = h2Conn.prepareStatement("SELECT title, fullname, unstatus, influence, lastlogin, flag, region, motto," +
+							"currency, animal, capital, leader, religion, category, civilrights, economy, politicalfreedom, population, tax, majorindustry," + 
+							"governmentpriority, environment, socialequality, education, lawandorder, administration, welfare, spirituality, defence," +
+							"publictransport, healthcare, commerce, civilrightscore, economyscore, politicalfreedomscore, publicsector FROM nations WHERE name = ?")) {
 					
-					for (String nation : set) {
-						select.setString(1, nation);
-						try (ResultSet result = select.executeQuery()) {
-							result.next();
-							//These are the legacy fields that don't map directly to nationstate dump field names
-							newNations += updateNation(conn, nation, result.getString("title"), result.getString("fullname"), !result.getString("unstatus").toLowerCase().equals("non-member"),
-									result.getString("influence"), result.getInt("lastlogin"), result.getString("flag"), result.getString("region"));
-							
-							//Cache the column name -> column index mapping
-							ResultSetMetaData metaData = result.getMetaData();
-							if (columnMapping == null) {
-								int columns = metaData.getColumnCount();
-								columnMapping = new HashMap<String, Integer>();
-								for (int i = 1; i <= columns; i++) {
-									columnMapping.put(metaData.getColumnName(i).toLowerCase(), i);
+						Map<String, Integer> columnMapping = null;
+						
+						for (String nation : nations) {
+							select.setString(1, nation);
+							try (ResultSet result = select.executeQuery()) {
+								result.next();
+								//These are the legacy fields that don't map directly to nationstate dump field names
+								newNations += updateNation(conn, nation, result.getString("title"), result.getString("fullname"), !result.getString("unstatus").toLowerCase().equals("non-member"),
+										result.getString("influence"), result.getInt("lastlogin"), result.getString("flag"), result.getString("region"));
+								
+								//Cache the column name -> column index mapping
+								ResultSetMetaData metaData = result.getMetaData();
+								if (columnMapping == null) {
+									int columns = metaData.getColumnCount();
+									columnMapping = new HashMap<String, Integer>();
+									for (int i = 1; i <= columns; i++) {
+										columnMapping.put(metaData.getColumnName(i).toLowerCase(), i);
+									}
 								}
-							}
-							
-							//Note: this sql works because the nation will always exist after updateNation above runs
-							//If that behavior changes, this will have to be changed too
-							//update extra nation fields, build sql with field names
-							StringBuilder fields = new StringBuilder("UPDATE assembly.nation SET ");
-							for (int i = 0; i < NATION_FIELDS.length; i++) {
-								fields.append(NATION_FIELDS[i]).append(" = ?");
-								if (i != NATION_FIELDS.length - 1) fields.append(", ");
-							}
-							//Add search clause
-							fields.append(" WHERE name = ?");
-							logger.trace("Update fields sql statement: {}", fields);
-							try (PreparedStatement updateFields = conn.prepareStatement(fields.toString())) {
+								
+								//Note: this sql works because the nation will always exist after updateNation above runs
+								//If that behavior changes, this will have to be changed too
+								//update extra nation fields, build sql with field names
+								StringBuilder fields = new StringBuilder("UPDATE assembly.nation SET ");
 								for (int i = 0; i < NATION_FIELDS.length; i++) {
-									updateFields.setObject(i + 1, result.getObject(columnMapping.get(NATION_FIELDS[i])), metaData.getColumnType(columnMapping.get(NATION_FIELDS[i])));
+									fields.append(NATION_FIELDS[i]).append(" = ?");
+									if (i != NATION_FIELDS.length - 1) fields.append(", ");
 								}
-								updateFields.setString(NATION_FIELDS.length + 1, nation);
-								updateFields.executeUpdate();
+								//Add search clause
+								fields.append(" WHERE name = ?");
+								logger.trace("Update fields sql statement: {}", fields);
+								try (PreparedStatement updateFields = conn.prepareStatement(fields.toString())) {
+									for (int i = 0; i < NATION_FIELDS.length; i++) {
+										updateFields.setObject(i + 1, result.getObject(columnMapping.get(NATION_FIELDS[i])), metaData.getColumnType(columnMapping.get(NATION_FIELDS[i])));
+									}
+									updateFields.setString(NATION_FIELDS.length + 1, nation);
+									updateFields.executeUpdate();
+								}
 							}
 						}
 					}
 				}
-				logger.info("Added {} nations to the database", newNations);
-				
-				HashSet<String> allNations = new HashSet<String>(150000);
+			}
+			logger.info("Added {} nations to the database", newNations);
+
+			final Set<String> allNations;
+			try (Connection conn = pool.getConnection()) {
+				allNations = new HashSet<String>(150000);
 				try (PreparedStatement select = conn.prepareStatement("SELECT name FROM assembly.nation WHERE alive = 1")) {
 					try (ResultSet result = select.executeQuery() ){
 						while (result.next()) {
@@ -268,13 +283,17 @@ public class DumpUpdateTask implements Runnable {
 						}
 					}
 				}
+			}
+			try (Connection conn = pool.getConnection()) {
 				allNations.removeAll(set);
 				logger.info("Marking " + allNations.size() + " nations as dead");
 				for (String nation : allNations) {
 					access.markNationDead(nation, conn);
 				}
-				h2Conn.prepareStatement("DROP TABLE nations").execute();
-				h2Conn.prepareStatement("SHUTDOWN COMPACT").execute();
+			}
+			h2Conn.prepareStatement("DROP TABLE nations").execute();
+			h2Conn.prepareStatement("SHUTDOWN COMPACT").execute();
+			try (Connection conn = pool.getConnection()) {
 				int cleanupNations = 0;
 				try (PreparedStatement deadWAMembers = conn.prepareStatement("SELECT id FROM assembly.nation WHERE alive = 0 AND wa_member = 1")) {
 					try (ResultSet result = deadWAMembers.executeQuery()) {
