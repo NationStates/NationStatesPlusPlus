@@ -229,10 +229,8 @@ public class NewspaperController extends NationStatesController {
 			} catch (ClassCastException ex) {
 				//If the user's newspapers settings are malformed, call fixNewspaperTypes, stored function on mongodb server
 				Logger.info("User [{}] newspaper settings are malformed, attempting to correct...", context.getNation());
-				MongoSettings dbSettings = (MongoSettings)context.getSettings();
-				
 				//Is this a risk of nosql injection attacks?
-				Object result = dbSettings.getCollection().getDB().eval("fixNewspaperTypes('" + context.getNation() + "')");
+				Object result = context.getAccess().getMongoDB().eval("fixNewspaperTypes('" + context.getNation() + "')");
 				Logger.info("Corrected [{}] newspaper settings, result: {}", context.getNation(), result);
 				newspapersLastRead = (Map<String, Long>) context.getSettings().getValue("newspapers", Collections.emptyMap(), Map.class);
 			}
@@ -792,7 +790,9 @@ public class NewspaperController extends NationStatesController {
 				if (imageData.startsWith("data:image/jpeg;base64,")) {
 					try {
 						String imgurUrl = Utils.uploadToImgur(null, imageData.substring("data:image/jpeg;base64,".length()), imgurClientKey);
-						return imgurizeArticle(article.replaceAll(Pattern.quote(match), "[img]" + imgurUrl + "[/img]"), imgurClientKey);
+						if (imgurUrl != null) {
+							return imgurizeArticle(article.replaceAll(Pattern.quote(match), "[img]" + imgurUrl + "[/img]"), imgurClientKey);
+						}
 					} catch (IOException e) {
 						Logger.error("Unable to upload base64 data [" + imageData.substring("data:image/jpeg;base64,".length()) + "] to imgur", e);
 					}
@@ -800,7 +800,9 @@ public class NewspaperController extends NationStatesController {
 				else if (!imageData.contains("imgur.com")) {
 					try {
 						String imgurUrl = Utils.uploadToImgur(imageData, null, imgurClientKey);
-						return imgurizeArticle(article.replaceAll(Pattern.quote(match), "[img]" + imgurUrl + "[/img]"), imgurClientKey);
+						if (imgurUrl != null) {
+							return imgurizeArticle(article.replaceAll(Pattern.quote(match), "[img]" + imgurUrl + "[/img]"), imgurClientKey);
+						}
 					} catch (IOException e) {
 						Logger.error("Unable to upload url [" + imageData + "] to imgur", e);
 					}

@@ -279,31 +279,29 @@ public class Utils {
 		conn.setDoOutput(true);
 		conn.setUseCaches(false);
 		conn.setRequestMethod("POST");
-		OutputStream out = null;
-		try {
-			out = conn.getOutputStream();
+		try (OutputStream out = conn.getOutputStream()) {
 			if (url != null) {
 				IOUtils.write("image=" + EncodingUtil.encodeURIComponent(url) + "&type=URL", out);
 			} else {
 				IOUtils.write("image=" + EncodingUtil.encodeURIComponent(base64) + "&type=base64", out);
 			}
 			out.flush();
-		} finally {
-			IOUtils.closeQuietly(out);
 		}
 
-		InputStream stream = null;
-		try {
-			stream = conn.getInputStream();
+		try (InputStream stream = conn.getInputStream()) {
 			Map<String, Object> result = new ObjectMapper().readValue(stream, new TypeReference<HashMap<String,Object>>() {});
-			@SuppressWarnings("unchecked")
-			Map<String, Object> data = (Map<String, Object>) result.get("data");
-			String link = (String) data.get("link");
-			return "https://" + link.substring(7);
+			if (result != null && result.containsKey("data")) {
+				@SuppressWarnings("unchecked")
+				Map<String, Object> data = (Map<String, Object>) result.get("data");
+				if (data != null && data.containsKey("link")) {
+					String link = (String) data.get("link");
+					return "https://" + link.substring(7);
+				}
+			}
 		} finally {
-			IOUtils.closeQuietly(stream);
 			conn.disconnect();
 		}
+		return null;
 	}
 
 	public static void updateNation(final Connection conn, final DatabaseAccess access, final NationStates api, final String nation, final int id) throws SQLException {
