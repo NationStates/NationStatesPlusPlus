@@ -38,6 +38,8 @@ public enum RequestType implements Request {
 	REGION_NEWSPAPER("region_newspaper"),
 	REGION_EMBASSIES("region_embassies"),
 	RMB_RATINGS("rmb_ratings"),
+	GAMEPLAY_NEWS_SIDEBAR("gameplay_news_sidebar"),
+	ROLEPLAY_NEWS_SIDEBAR("roleplay_news_sidebar"),
 	REGIONAL_NEWS_SIDEBAR("regional_news_sidebar"),
 	PENDING_NEWS_SUBMISSIONS("pending_news_submissions"),
 	REGION_POPULATION("region_record_population"),
@@ -88,6 +90,10 @@ public enum RequestType implements Request {
 		switch(this) {
 			case REGION_EMBASSIES:
 				return context.getSettings().getValue("embassy_flags", true, Boolean.class);
+			case GAMEPLAY_NEWS_SIDEBAR:
+				return context.getSettings().getValue("show_gameplay_news", true, Boolean.class);
+			case ROLEPLAY_NEWS_SIDEBAR:
+				return context.getSettings().getValue("show_roleplay_news", true, Boolean.class);
 			case REGIONAL_NEWS_SIDEBAR:
 				return context.getSettings().getValue("show_regional_news", true, Boolean.class);
 			case PENDING_NEWS_SUBMISSIONS:
@@ -165,6 +171,10 @@ public enum RequestType implements Request {
 				if (page instanceof RegionPage) {
 					return toList(RegionController.getRecordPopulation(conn, ((RegionPage)page).getRegion()));
 				}
+			case GAMEPLAY_NEWS_SIDEBAR:
+				return toList(NewspaperController.getLatestUpdate(conn, NewspaperController.GAMEPLAY_NEWS));
+			case ROLEPLAY_NEWS_SIDEBAR:
+				return toList(NewspaperController.getLatestUpdate(conn, NewspaperController.ROLEPLAY_NEWS));
 			case REGIONAL_NEWS_SIDEBAR:
 				return toList(NewspaperController.getLatestUpdateForRegion(conn, context));
 			case PENDING_NEWS_SUBMISSIONS:
