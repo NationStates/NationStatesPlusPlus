@@ -217,7 +217,7 @@ public class NewspaperController extends NationStatesController {
 	}
 
 	@SuppressWarnings("unchecked")
-	public static JsonNode getLatestUpdateForRegion(Connection conn, NationContext context) throws SQLException {
+	private static long getLastReadTimestampForNewspaper(Connection conn, NationContext context) throws SQLException {
 		Map<String, Object> newspaper = getNewspaper(conn, context.getUserRegionId());
 		long lastRead = 0;
 		if (newspaper != null && newspaper.containsKey("newspaper_id") && context.getNationId() != -1) {
@@ -240,6 +240,11 @@ public class NewspaperController extends NationStatesController {
 				lastRead = newspapersLastRead.get(newspaperId);
 			}
 		}
+		return lastRead;
+	}
+
+	public static JsonNode getLatestUpdateForRegion(Connection conn, NationContext context) throws SQLException {
+		final long lastRead = getLastReadTimestampForNewspaper(conn, context);
 		Map<String, Object> newspaperData = new HashMap<>();
 		try (PreparedStatement articles = conn.prepareStatement("SELECT max(articles.timestamp), articles.newspaper FROM assembly.articles INNER JOIN assembly.newspapers ON newspapers.id = articles.newspaper WHERE newspapers.region = ? AND newspapers.disbanded = 0 AND articles.visible = 1")) {
 			articles.setInt(1, context.getUserRegionId());
