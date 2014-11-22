@@ -55,7 +55,7 @@
 					if (error.status == 401) {
 						$("#title_error").html("You are not authorized to update the regional titles").show();
 					} else {
-						$("#title_error").html(error.responseText).show();
+						$("#title_error").text(error.responseText).show();
 					}
 					$("#update_titles").attr("disabled", false);
 				});
@@ -72,7 +72,7 @@
 				if (error.status == 401) {
 					$("#title_error").html("You are not authorized to reset the regional titles").show();
 				} else {
-					$("#title_error").html(error.responseText).show();
+					$("#title_error").text(error.responseText).show();
 				}
 				$("#reset_titles").attr("disabled", false);
 			});
@@ -119,7 +119,7 @@
 					if (error.status == 401) {
 						$("#map_error").html("You are not authorized to update the regional map").show();
 					} else {
-						$("#map_error").html(error.responseText).show();
+						$("#map_error").text(error.responseText).show();
 					}
 					$("#update_map").attr("disabled", false);
 				});
@@ -136,7 +136,7 @@
 				if (error.status == 401) {
 					$("#map_error").html("You are not authorized to disband the regional map").show();
 				} else {
-					$("#map_error").html(error.responseText).show();
+					$("#map_error").text(error.responseText).show();
 				}
 				$("#disband_map").attr("disabled", false);
 			});
@@ -177,7 +177,7 @@
 					$("#irc_network_success").html("IRC network updated!").show();
 					$("#irc_network_success").fadeOut(5000);
 				}).fail(function(error) {
-					$("#irc_network_error").html(error.responseText).show();
+					$("#irc_network_error").text(error.responseText).show();
 				}).always(function() {
 					$("#irc_network, #irc_channel, #irc_port, #update_irc_network, #reset_irc_network").attr("disabled", false);
 				});
@@ -194,7 +194,7 @@
 					$("#irc_network_success").fadeOut(5000);
 					$("#irc_network, #irc_channel, #irc_port").val("");
 				}).fail(function(error) {
-					$("#irc_network_error").html(error.responseText).show();
+					$("#irc_network_error").text(error.responseText).show();
 				}).always(function() {
 					$("#irc_network, #irc_channel, #irc_port, #update_irc_network, #reset_irc_network").attr("disabled", false);
 				});
