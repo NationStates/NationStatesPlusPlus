@@ -1,7 +1,7 @@
 (function() {
 	if (getVisiblePage() == "region" && getUserNation() !== "") {
 		$.get("https://nationstatesplusplus.net/api/region/irc/?region=" + getVisibleRegion(), function(data) {
-			if (data.irc_network) {
+			if ( data && data.irc_network) {
 				$("<div id='region-irc'></div><div class='hzln'></div>").insertBefore($("h2:contains('Today's World Census Report')"));
 				$("#region-irc").append("<h2 style='display: inline-block; margin-bottom: 0;'>Regional IRC</h2>");
 				$("#region-irc").append("<div style='display: inline; margin-left: 10px;'><a class='irc-link' href='javascript:void(0)'>(Show)</a></div>");
