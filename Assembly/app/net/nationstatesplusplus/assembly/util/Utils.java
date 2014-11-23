@@ -17,6 +17,7 @@ import java.util.regex.Pattern;
 
 import javax.net.ssl.HttpsURLConnection;
 
+import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.dbutils.DbUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.WordUtils;
@@ -273,6 +274,22 @@ public class Utils {
 	}
 
 	public static String uploadToImgur(String url, String base64, String clientKey) throws IOException {
+		try {
+			return executeUploadToImgur(url, base64, clientKey);
+		} catch (IOException e) {
+			if (e.getMessage().toLowerCase().contains("server returned http response code: 400")) {
+				//Image may be served with wrong content type by server, try downloading it and uploading ourselves
+				byte[] image = IOUtils.toByteArray(new URL(url));
+				String base64EncodedImage = Base64.encodeBase64String(image);
+				Logger.info("uploading of [{}] as url to imgur failed, attempting upload as base64 encoded data instead...");
+				return executeUploadToImgur(null, base64EncodedImage, clientKey);
+			} else {
+				throw e;
+			}
+		}
+	}
+
+	private static String executeUploadToImgur(String url, String base64, String clientKey) throws IOException {
 		HttpsURLConnection conn = (HttpsURLConnection) (new URL("https://api.imgur.com/3/image")).openConnection();
 		conn.addRequestProperty("Authorization", "Client-ID " + clientKey);
 		conn.setDoInput(true);
