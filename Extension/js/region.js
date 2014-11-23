@@ -77,10 +77,12 @@ function setupRegionPage() {
 			relocatePostMessageBox();
 			//Relocate ads
 			handleRMBAds();
-			//Move forum view link
-			var forumViewHTML = $('#content .rmbview')[0].outerHTML;
-			$('#content .rmbview').remove();
-			$(forumViewHTML).insertBefore(".rmbtable2:first");
+			//Move forum view link if it exists
+			if( $('#content .rmbview').length > 0 ) {
+				var forumViewHTML = $('#content .rmbview')[0].outerHTML;
+				$('#content .rmbview').remove();
+				$(forumViewHTML).insertBefore(".rmbtable2:first");
+			}
 			//Show footer link when scrolling down
 			$("h3:contains('Regional Message Board')").attr("id", "rmb_header");
 			$(window).scroll(showFooterLink);
@@ -123,7 +125,8 @@ function setupRegionPage() {
 			$('.rmbolder').css("margin-top", "20px");
 			$("#rmb-post-form").hide();
 			
-			var wideboxArea = $(".widebox:contains('Forum View')");
+			var rmbform = $('#rmb-post-form');
+			var wideboxArea = rmbform.parent();
 			//Add rmb menu area
 			$("<div id='rmb-menu' style='text-align: center;'><button class='button RoundedButton rmb-message'>Leave a message</button> <button class='button RoundedButton search-rmb'>Search messages</button></div").insertBefore(wideboxArea);
 			$("<div id='searchbox' style='display: none;'><div style='margin-top:6px; text-align:center;'><input id='rmb-search-input' placeholder='Search' type='text' style='width:36.5%;' class='text-input-lg'><p><input id='rmb-search-input-region' placeholder='Region' type='text' style='width:16.5%; margin-right: 2%;'  class='text-input-lg'><input id='rmb-search-input-author' placeholder='Author' type='text' style='width:16.5%;' class='text-input-lg'><p></div></div>").insertBefore(wideboxArea);
