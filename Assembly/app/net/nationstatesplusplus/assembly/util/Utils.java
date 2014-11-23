@@ -277,7 +277,7 @@ public class Utils {
 		try {
 			return executeUploadToImgur(url, base64, clientKey);
 		} catch (IOException e) {
-			if (e.getMessage().toLowerCase().contains("server returned http response code: 400")) {
+			if (url != null && e.getMessage().toLowerCase().contains("server returned http response code: 400")) {
 				//Image may be served with wrong content type by server, try downloading it and uploading ourselves
 				byte[] image = IOUtils.toByteArray(new URL(url));
 				String base64EncodedImage = Base64.encodeBase64String(image);
