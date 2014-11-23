@@ -36,7 +36,7 @@ public class WebSocketController extends DatabaseController {
 	/**
 	 * Opens a websocket for the given user nation and their current home region, when a user is viewing a region page (which may or may not be their own).
 	 * 
-	 * @param user nation that is opening the websocket.
+	 * @param nation nation that is opening the websocket.
 	 * @param userRegion name of the region the user currently resides in.
 	 * @param region the name of the region that the user currently is looking at.
 	 * @param reconnect whether this is the first time opening the websocket, or a reconnection attempt.
@@ -53,7 +53,7 @@ public class WebSocketController extends DatabaseController {
 	/**
 	 * Opens a websocket for the given user nation and their current home region, when a user is viewing a nation page (which may or may not be their own).
 	 * 
-	 * @param user nation that is opening the websocket.
+	 * @param nation nation that is opening the websocket.
 	 * @param userRegion name of the region the user currently resides in.
 	 * @param visibleNation the name of the nation that the user currently is looking at.
 	 * @param reconnect whether this is the first time opening the websocket, or a reconnection attempt.
@@ -69,7 +69,7 @@ public class WebSocketController extends DatabaseController {
 	/**
 	 * Opens a websocket for the given user nation and their current home region, and the region they are viewing the regional controls page for.
 	 * 
-	 * @param user nation that is opening the websocket.
+	 * @param nation nation that is opening the websocket.
 	 * @param userRegion name of the region the user currently resides in.
 	 * @param adminRegion the name of the region that the user currently is looking at in the regional controls.
 	 * @param reconnect whether this is the first time opening the websocket, or a reconnection attempt.
