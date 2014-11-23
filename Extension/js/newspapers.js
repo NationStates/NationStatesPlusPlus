@@ -11,8 +11,8 @@ var newspaperAdminHTML = '<form class="form-horizontal"><fieldset><div class="co
 	} else {
 		$("<li id='regional_newspaper' style='display:none;'><a id='rnews' style='display: inline;' href='//www.nationstates.net/page=blank/?regional_news=" + getUserRegion() + "'>REGIONAL NEWS<span name='nag'></span></a></li>").insertAfter($("#wa_props").length > 0 ? $("#wa_props") : menu.find("a[href='page=un']").parent());
 	}
-	//$("<li id='gameplay_newspaper' style='display:none;'><a id='gnews' style='display: inline;' href='//www.nationstates.net/page=blank/?gameplay_news'>GAMEPLAY NEWS<span name='nag'></span></a></li>").insertAfter($("#regional_newspaper"));
-	//$("<li id='roleplay_newspaper' style='display:none;'><a id='rpnews' style='display: inline;' href='//www.nationstates.net/page=blank/?roleplay_news'>ROLEPLAY NEWS<span name='nag'></span></a></li>").insertAfter($("#gameplay_newspaper"));
+	$("<li id='gameplay_newspaper' style='display:none;'><a id='gnews' style='display: inline;' href='//www.nationstates.net/page=blank/?gameplay_news'>GAMEPLAY NEWS<span name='nag'></span></a></li>").insertAfter($("#regional_newspaper"));
+	$("<li id='roleplay_newspaper' style='display:none;'><a id='rpnews' style='display: inline;' href='//www.nationstates.net/page=blank/?roleplay_news'>ROLEPLAY NEWS<span name='nag'></span></a></li>").insertAfter($("#gameplay_newspaper"));
 
 	//Newspaper sidebar link fallback for Forum pages
 	if (getVisiblePage() == "hpanel" || getVisiblePage() == "panel") {
@@ -100,6 +100,8 @@ var newspaperAdminHTML = '<form class="form-horizontal"><fieldset><div class="co
 		};
 		return handler;
 	};
+	//$(window).on("websocket.gameplay_news_sidebar", new createEventHandler("#gnews span[name='nag']"));		+	//$(window).on("websocket.gameplay_news_sidebar", new createEventHandler("#gnews span[name='nag']"));
+	$(window).on("websocket.roleplay_news_sidebar", new createEventHandler("#rpnews span[name='nag']"));
 	$(window).on("websocket.regional_news_sidebar", new createEventHandler("#rnews span[name='nag'], #rnews div[name='nag']"));
 
 	$(window).on("websocket.pending_news_submissions", function(event) {
