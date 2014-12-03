@@ -108,8 +108,8 @@ public class Global extends GlobalSettings {
 
 			//Schedule the task multiple times, staggered 10 seconds apart, repeating each minute
 			HappeningsTask task = new HappeningsTask(access, api);
-			for (int i = 0; i < 6; i++) {
-				schedule(Duration.standardSeconds(5 + 10 * i), Duration.standardMinutes(1), task);
+			for (int i = 0; i < 12; i++) {
+				schedule(Duration.standardSeconds(5 + 10 * i), Duration.standardMinutes(2), task);
 			}
 			
 			schedule(Duration.standardSeconds(60), Duration.standardSeconds(31), new NationUpdateTask(api, access, 12, 12));
