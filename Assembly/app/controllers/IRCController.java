@@ -102,7 +102,7 @@ public class IRCController extends NationStatesController {
 
 			try (PreparedStatement delete = conn.prepareStatement("DELETE FROM assembly.irc_networks WHERE region = ?")) {
 				delete.setInt(1, regionId);
-				delete.executeQuery();
+				delete.executeUpdate();
 			}
 			if (!deleteIRC) {
 				try (PreparedStatement insert = conn.prepareStatement("INSERT INTO assembly.irc_networks (region, irc_network, irc_channel, irc_port) VALUES (?, ?, ?, ?)")) {
