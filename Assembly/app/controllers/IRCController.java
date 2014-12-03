@@ -110,7 +110,7 @@ public class IRCController extends NationStatesController {
 					insert.setString(2, ircNetwork);
 					insert.setString(3, ircChannel);
 					insert.setInt(4, Integer.parseInt(ircPort));
-					insert.executeQuery();
+					insert.executeUpdate();
 				}
 			}
 		}
