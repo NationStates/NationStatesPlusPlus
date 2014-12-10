@@ -6,9 +6,11 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.joda.time.Duration;
 
@@ -16,13 +18,17 @@ import play.Logger;
 
 public class RepeatingTaskThread extends Thread {
 	private static final List<RepeatingTaskThread> threads = new LinkedList<RepeatingTaskThread>();
+	private static final AtomicInteger createdCount = new AtomicInteger(0);
 	private final Runnable task;
 	private final Duration initialDelay;
 	private final Duration repeatingDelay;
 	private final AtomicBoolean shutdown = new AtomicBoolean(false);
-	private final ExecutorService service = Executors.newFixedThreadPool(1);
+	private final ExecutorService service;
+	private final String serviceName;
 	public RepeatingTaskThread(Duration initialDelay, Duration repeatingDelay, Runnable task) {
 		super("Repeating Task Thread - [" + task.getClass().getSimpleName() + "]");
+		this.serviceName = task.getClass().getSimpleName() + "-" + createdCount.incrementAndGet();
+		this.service = Executors.newFixedThreadPool(1, new NamedThreadFactory(serviceName));
 		this.initialDelay = initialDelay;
 		this.repeatingDelay = repeatingDelay;
 		this.task = task;
@@ -31,7 +37,7 @@ public class RepeatingTaskThread extends Thread {
 			threads.add(this);
 		}
 	}
-	
+
 	@Override
 	public void run() {
 		try {
@@ -89,6 +95,19 @@ public class RepeatingTaskThread extends Thread {
 				}
 				if (!executionFinished) {
 					Logger.error("Execution of running task [" + task.getClass().getSimpleName() + "] has exceeded 5x max its duration, the task will be interrupted forcefully!");
+					Thread[] thread = new Thread[Thread.activeCount()];
+					Thread.enumerate(thread);
+					for (int i = 0; i < thread.length; i++) {
+						if (thread[i] != null && thread[i].getName().equals(serviceName)) {
+							Logger.error("Debugging stalled thread: " + thread[i].getName());
+							Logger.error("    PID: " + thread[i].getId() + " | Alive: " + thread[i].isAlive() + " | State: " + thread[i].getState());
+							Logger.error("    Stack:");
+							StackTraceElement[] stack = thread[i].getStackTrace();
+							for (int line = 0; line < stack.length; line++) {
+								Logger.error("        " + stack[line].toString());
+							}
+						}
+					}
 					future.cancel(true);
 				}
 				
@@ -125,6 +144,19 @@ public class RepeatingTaskThread extends Thread {
 				}
 			}
 			threads.clear();
+		}
+	}
+
+	private static class NamedThreadFactory implements ThreadFactory {
+		private final String name;
+		public NamedThreadFactory(String name) {
+			this.name = name;
+		}
+
+		@Override
+		public Thread newThread(Runnable r) {
+			Thread thread = new Thread(r, name);
+			return thread;
 		}
 	}
 }
