@@ -113,13 +113,7 @@
 	}
 
 	function showNationChallenge() {
-		if (isRiftTheme()) {
-			if (getUserNation() != getVisibleNation()) {
-				$(".nationnavbar").append("<a id='challenge-link' href='/page=challenge?entity_name=" + getVisibleNation() + "'><i class='fa fa-empire'></i><span class='navtext'>Challenge</span></a>");
-			} else {
-				$(".nationnavbar").append("<a id='challenge-link' href='/page=challenge'><i class='fa fa-empire'></i><span class='navtext'>Challenge</span></a>");
-			}
-		} else {
+		if (!isRiftTheme()) {
 			if (getUserNation() != getVisibleNation()) {
 				$(".nationnavbar").append($('<div/>').html(" &#8226; ").text() + "<a id='challenge-link' href='/page=challenge?entity_name=" + getVisibleNation() + "'>Challenge</a>");
 			} else {

@@ -24,8 +24,16 @@
 	}
 
 	if ($(".STANDOUT").length > 0) {
+		var scrollTimer;
 		var flagScroll = function() {
-			$("#panel").css("margin-top", "-" + Math.min($(window).scrollTop(), 100) + "px");
+			if (scrollTimer) return;
+			scrollTimer = setTimeout(function() {
+				$("#panel").hide();
+				$("#panel").attr("offsetHeight");
+				$("#panel").show();
+				$("#panel").css("margin-top", "-" + Math.min($(window).scrollTop(), 100) + "px");
+				scrollTimer = null;
+			}, 200);
 		};
 		var handleFloatingSidepanel = function() {
 			var data = arguments[0];

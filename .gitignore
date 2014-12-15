@@ -57,3 +57,4 @@
 /Extension/Firefox/xpi.bat
 /Extension/Firefox/copy.bat
 /Extension/Chrome.zip
+/Extension/*.sublime*

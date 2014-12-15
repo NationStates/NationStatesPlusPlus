@@ -217,19 +217,23 @@ function handleRMBAds() {
 	var adContent = $("#regionbanneradboxinner");
 	var lastTop = 0;
 	var updateAdPosition = function() {
-		if (adContent.width() > 10 && adContent.height() > 10)
-		{
+		if (adBox.is(":visible") && adContent.width() > 10 && adContent.height() > 10) {
 			adBox.css("border", "2px solid black");
+			if (lastTop != filler.offset().top) {
+				adBox.css("position", "absolute").css("top", filler.offset().top + 5 + "px").css("margin-left", "16.5%").css("margin-left", "calc(50% - " + (adBox.width() / 2 + 100) + "px");
+				lastTop = filler.offset().top;
+				filler.height(adBox.height());
+			}
+			setTimeout(updateAdPosition, 50);
 		}
-		if (lastTop != filler.offset().top) {
-			adBox.css("position", "absolute").css("top", filler.offset().top + 5 + "px").css("margin-left", "16.5%").css("margin-left", "calc(50% - " + (adBox.width() / 2 + 100) + "px");
-			lastTop = filler.offset().top;
-			filler.height(adBox.height());
-		}
-		setTimeout(updateAdPosition, 50);
 	};
-	$(window).resize(updateAdPosition);
 	updateAdPosition();
+	$(window).resize(updateAdPosition);
+	setTimeout(function() {
+		if (adContent.height() <=  20) {
+			adBox.hide();
+		}
+	}, 3300)
 }
 
 function relocatePostMessageBox() {
