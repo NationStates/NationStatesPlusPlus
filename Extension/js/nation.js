@@ -85,9 +85,13 @@
 				$("#nspp_trophy").attr("title", $("#nspp_trophy").attr("title") + "\nCurrently Online!");
 			} else {
 				var opacity = 1 - ((Date.now() - data.last_nation_activity + 3 * 24 * 60 * 60 * 1000) / (30 * 24 * 60 * 60 * 1000));
-				$("#nspp_trophy").attr("title", $("#nspp_trophy").attr("title") + "\nLast seen " + timestampToTimeAgo(data.last_nation_activity).toLowerCase() + " ago.");
-				$("#nspp_trophy").css("opacity", Math.max(0, Math.min(1, opacity)));
-			}				
+				if (opacity > 0) {
+					$("#nspp_trophy").attr("title", $("#nspp_trophy").attr("title") + "\nLast seen " + timestampToTimeAgo(data.last_nation_activity).toLowerCase() + " ago.");
+					$("#nspp_trophy").css("opacity", Math.max(0, Math.min(1, opacity)));
+				} else {
+					$("#nspp_trophy").remove();
+				}
+			}
 			$("#nspp_trophy").show();
 		});
 		$.get("https://nationstatesplusplus.net/nationstates/feature_authors.json", function(data) {
