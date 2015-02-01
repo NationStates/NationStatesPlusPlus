@@ -93,8 +93,9 @@
 			window.onbeforeunload = function() { return "Puppet actions are currently processing..."; }
 		};
 
-		$("#left-buttons").append("<button class='btn' id='login_puppets' disabled>Login</button>");
-		$("#left-buttons").append("<button class='btn' id='dismiss_issues' disabled>Dismiss Issues</button>");
+		$("#left-buttons").append("<button style='margin-right: 5px;' class='btn' id='login_puppets' disabled>Login</button>");
+		$("#left-buttons").append("<button style='margin-right: 5px;' class='btn' id='dismiss_issues' disabled>Dismiss Issues</button>");
+		$("#left-buttons").append("<button style='margin-right: 5px;' class='btn' id='select_all_puppets'>Select All</button>");
 		$("#dismiss_issues").on("click", function(event) {
 			event.preventDefault();
 			puppetAction(function(name, pass) {
@@ -110,6 +111,12 @@
 				$.post("//www.nationstates.net/?nspp=1", "logging_in=1&nation=" + encodeURIComponent(name) + "&password=" + encodeURIComponent(pass) + "&autologin=no", function(data) { 
 				});
 			}, "Puppet Auto-Login");
+		});
+
+		$("#select_all_puppets").on("click", function(event) {
+			event.preventDefault();
+			$("#active_puppets tr.puppet_row").addClass("puppet_active_row");
+			updateLeftButtions();
 		});
 
 		var updatePuppetLists = function() {
@@ -179,6 +186,17 @@
 			html += "</td></tr>";
 			return html;
 		};
+
+		var updateLeftButtions = function() {
+			//Toggle buttons enabled/disabled if there are any rows selected
+			if ($("#active_puppets tr.puppet_active_row").length > 0) {
+				$("#left-buttons button").removeAttr("disabled");
+			} else {
+				$("#left-buttons button").attr("disabled", true);
+			}
+			//Select is always accessable
+			$("#select_all_puppets").removeAttr("disabled");
+		}
 		
 		var updatePuppetTable = function() {
 			var manager = getPuppetManager();
@@ -273,11 +291,7 @@
 				}
 				
 				//Toggle buttons enabled/disabled if there are any rows selected
-				if ($("#active_puppets tr.puppet_active_row").length > 0) {
-					$("#left-buttons button").removeAttr("disabled");
-				} else {
-					$("#left-buttons button").attr("disabled", true);
-				}
+				updateLeftButtions();
 				
 				//Store the last selected row
 				if ($(this).hasClass("puppet_active_row")) {
@@ -285,11 +299,7 @@
 				}
 			});
 			
-			if ($("#active_puppets tr.puppet_active_row").length > 0) {
-				$("#left-buttons button").removeAttr("disabled");
-			} else {
-				$("#left-buttons button").attr("disabled", true);
-			}
+			updateLeftButtions();
 		};
 		updatePuppetTable();
 	}
