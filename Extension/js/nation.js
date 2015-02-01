@@ -133,7 +133,16 @@
 			$("#wa_stats_link").addClass("quietlink");
 			
 			$("form").filter(function() { return $(this).attr("action") == null || $(this).attr("action").startsWith("page"); }).remove();
+
+			//Add highcharts lib, if missing
+			if ($("head").html().match(/highcharts_.*.js/) == null) {
+				var script = document.createElement('script');
+				script.type = "text/javascript";
+				script.src = "/highcharts_v1421386524.js";
+				document.head.appendChild(script);
+			}
 			
+			//Clear out the bottom section of the page so we can insert WA stats
 			if (isRiftTheme()) {
 				$(".nationsummary").hide();
 				$(".nationsummary").next().hide();
