@@ -128,7 +128,7 @@
 
 	function showWorldAssemblyInfo() {
 		if (isRiftTheme()) {
-			$(".nationnavbar").append("<a id='wa_stats_link' href='nation=" + getVisibleNation() + "/detail=wa_stats'><i class='fa fa-users'></i><span class='navtext'>World Assembly</span></a>");
+			$(".nationnavbar").append("<a style='margin-left: -8px;' id='wa_stats_link' href='nation=" + getVisibleNation() + "/detail=wa_stats'><i class='fa fa-users'></i><span class='navtext'>World Assembly</span></a>");
 		} else {
 			$(".nationnavbar").append($('<div/>').html(" &#8226; ").text() + "<a id='wa_stats_link' href='nation=" + getVisibleNation() + "/detail=wa_stats'>World Assembly</a>");
 		}
