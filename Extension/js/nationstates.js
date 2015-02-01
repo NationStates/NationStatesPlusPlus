@@ -48,7 +48,7 @@
 				}
 				var createdByAd = $("div[id^='createdby']");
 				if ($("#panel_flag").length == 0) {
-					$("<a id='panel_flag' href='//www.nationstates.net/nation=" + getUserNation() + "'><img src='" + flag + "' style='max-width: 192px; display: block; margin-left: auto; margin-right: auto; max-height: 400px;'></a>").insertBefore(createdByAd);
+					$("#panel").prepend($("<a id='panel_flag' href='//www.nationstates.net/nation=" + getUserNation() + "'><img src='" + flag + "' style='max-width: 192px; display: block; margin-left: auto; margin-right: auto; max-height: 400px;'></a>"));	
 				}
 				$("#panel_flag").show();
 				createdByAd.hide();
