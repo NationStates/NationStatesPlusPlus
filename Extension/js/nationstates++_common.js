@@ -278,10 +278,19 @@ function showPuppets() {
 	
 	var html = "<h3>Puppets</h3><ul>";
 	var numPuppets = 0;
+	var y = 0;
 	for (var name in puppets) {
 		if (name.length > 0) {
 			html += "<li><div class='puppet-form-inner' style='margin-bottom: -15px;'><p style='margin-top: 3px;'><a class='puppet-name' id='" + name + "' href='/nation=" + name + "' style='color: white;'>" + name.split("_").join(" ").toTitleCase() + "</a></p></div><img name='" + name + "' class='puppet-form-remove' src='https://nationstatesplusplus.net/nationstates/static/remove.png'></img></li>";
 			numPuppets++;
+			y += 15;
+			if (y > $(window).height() - 250) {
+				html += "<li><div class='puppet-form-inner' style='margin-bottom: -15px;'><p style='margin-top: 10px;'><b><b>There are too many puppets!</b></p></div></li>";
+				html += "<li><div class='puppet-form-inner' style='margin-bottom: -15px;'><p style='margin-top: 3px;'><b>Visit the puppet manager</b></p></div></li>";
+				html += "<li><div class='puppet-form-inner' style='margin-bottom: -15px;'><p style='margin-top: 3px;'><b>and reduce the puppet list</b></p></div></li>";
+				html += "<li><div class='puppet-form-inner' style='margin-bottom: -15px;'><p style='margin-top: 3px;'><b>or organize them into lists</b></p></div></li>";
+				break;
+			}
 		}
 	}
 	if (numPuppets == 0) {

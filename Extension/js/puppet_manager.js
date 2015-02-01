@@ -8,9 +8,9 @@
 		}
 		if (window.location.href.indexOf('forum.nationstates.net/') == -1 ) {
 			if (isRiftTheme()) {
-				$("<div class='bel' id='puppet_setting' style='display:none;'><a href='javascript:void(0)' class='bellink'><i class='fa fa-group'></i>Puppets</a></div>").insertAfter($(".belspacer.belspacermain .belspacer"));
+				$("<div class='bel' id='puppet_setting' style='display:none;'><a href='/page=blank?puppet_manager' class='bellink'><i class='fa fa-group'></i>Puppets</a></div>").insertAfter($(".belspacer.belspacermain .belspacer"));
 			} else {
-				$(banner).append("<div id='puppet_setting' style='display:none;'><a href='javascript:void(0)' class='banner-theme' style='right: 248px;'>Puppets</a></div>");
+				$(banner).append("<div id='puppet_setting' style='display:none;'><a href='/page=blank?puppet_manager' class='banner-theme' style='right: 248px;'>Puppets</a></div>");
 			}
 		}
 	}
