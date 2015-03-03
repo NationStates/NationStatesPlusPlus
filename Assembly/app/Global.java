@@ -209,13 +209,16 @@ public class Global extends GlobalSettings {
 		Logger.info("Setting up Logback");
 		Logger.info("Application running from: {}", Start.getApplicationDirectory().getAbsolutePath());
 		System.setProperty("application.home", Start.getApplicationDirectory().getAbsolutePath());
-		try {
-			JoranConfigurator configurator = new JoranConfigurator();
-			configurator.setContext(context);
-			context.reset();
-			configurator.doConfigure(new File(new File(Start.getApplicationDirectory(), "conf"), "application-logger.xml"));
-		} catch (JoranException je) {
-			// StatusPrinter will handle this
+		File xmlConfig = new File(new File(Start.getApplicationDirectory(), "conf"), "application-logger.xml");
+		if (xmlConfig.exists()) {
+			try {
+				JoranConfigurator configurator = new JoranConfigurator();
+				configurator.setContext(context);
+				context.reset();
+				configurator.doConfigure(xmlConfig);
+			} catch (JoranException je) {
+				// StatusPrinter will handle this
+			}
 		}
 		//System.setOut(new PrintStream(new LoggerOutputStream(Level.INFO, Logger.underlying()), true));
 		System.setErr(new PrintStream(new LoggerOutputStream(Level.OFF, Logger.underlying()), true));
