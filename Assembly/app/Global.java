@@ -161,10 +161,11 @@ public class Global extends GlobalSettings {
 	private static MongoClient setupMongoDB(YamlConfiguration config) {
 		MongoClient mongoClient = null;
 		final int port = config.getChild("mongodb").getChild("port").getInt();
+		final String dbName = config.getChild("mongodb").getChild("database").getString();
 
 		try {
 			mongoClient = new MongoClient("127.0.0.1", port);
-			DB db = mongoClient.getDB("nspp");
+			DB db = mongoClient.getDB(dbName);
 			Logger.info("MongoDB stats: {}", db.getStats());
 			return mongoClient;
 		} catch (Exception e) {
