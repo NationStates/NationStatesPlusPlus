@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+
 import net.nationstatesplusplus.assembly.HappeningsTask;
 import net.nationstatesplusplus.assembly.model.HappeningType;
 import net.nationstatesplusplus.assembly.model.RecruitmentType;
@@ -24,9 +25,10 @@ import net.nationstatesplusplus.assembly.util.Utils;
 import org.apache.commons.dbutils.DbUtils;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.spout.cereal.config.yaml.YamlConfiguration;
 
-import play.Logger;
 import play.libs.Json;
 import play.mvc.Result;
 import play.mvc.Results;
@@ -36,6 +38,7 @@ import com.limewoodMedia.nsapi.NationStates;
 import com.mysql.jdbc.exceptions.jdbc4.MySQLTransactionRollbackException;
 
 public class RecruitmentController extends NationStatesController {
+	private static final Logger logger = LoggerFactory.getLogger(RecruitmentController.class);
 	public RecruitmentController(DatabaseAccess access, YamlConfiguration config, NationStates api) {
 		super(access, config, api);
 	}
@@ -126,7 +129,7 @@ public class RecruitmentController extends NationStatesController {
 		summary.put("week", weekCount);
 		summary.put("day", dayCount);
 
-		Logger.info("Recruitment effectiveness for region: " + regionId + " took " + (System.nanoTime() - start) / 1E6D + " ms");
+		logger.info("Recruitment effectiveness for region: " + regionId + " took " + (System.nanoTime() - start) / 1E6D + " ms");
 		return Json.toJson(summary);
 	}
 
@@ -197,7 +200,7 @@ public class RecruitmentController extends NationStatesController {
 		Result ret = Utils.validateRequest(request(), response(), getAPI(), getDatabase());
 		String nation = Utils.sanitizeName(Utils.getPostValue(request(), "nation"));
 		if (ret != null) {
-			Logger.debug("Nation {} tried to view recruitment campaigns for {} but did not have permission", nation, region);
+			logger.debug("Nation {} tried to view recruitment campaigns for {} but did not have permission", nation, region);
 			return ret;
 		}
 		Utils.handleDefaultPostHeaders(request(), response());
@@ -571,11 +574,11 @@ public class RecruitmentController extends NationStatesController {
 				if (set.next()) {
 					regionId = set.getInt(1);
 					if (nation.equalsIgnoreCase(set.getString(2))) {
-						Logger.debug("Nation [{}] is the delegate and a valid recruitment administrator for {}", nation, region);
+						logger.debug("Nation [{}] is the delegate and a valid recruitment administrator for {}", nation, region);
 						return regionId;
 					}
 					if (nation.equalsIgnoreCase(set.getString(3))) {
-						Logger.debug("Nation [{}] is the founder and a valid recruitment administrator for {}", nation, region);
+						logger.debug("Nation [{}] is the founder and a valid recruitment administrator for {}", nation, region);
 						return regionId;
 					}
 				}
@@ -586,11 +589,11 @@ public class RecruitmentController extends NationStatesController {
 				officers.setInt(2, nationId);
 				try (ResultSet set = officers.executeQuery()) {
 					if (set.next()) {
-						Logger.debug("Nation [{}] is an assigned recruitment officer and a valid recruitment administrator for {}", nation, region);
+						logger.debug("Nation [{}] is an assigned recruitment officer and a valid recruitment administrator for {}", nation, region);
 						return regionId;
 					}
 					if (nation.equalsIgnoreCase("shadow_afforess") || nation.equalsIgnoreCase("sseroffa")) {
-						Logger.debug("Nation [{}] is a super-admin and a valid recruitment administrator for {}", nation, region);
+						logger.debug("Nation [{}] is a super-admin and a valid recruitment administrator for {}", nation, region);
 						return regionId;
 					}
 				}
@@ -666,7 +669,7 @@ public class RecruitmentController extends NationStatesController {
 		}
 		final Duration timeSinceLastRecruitment = new Duration(DateTime.now(), new DateTime(timestamp));
 		final Duration timeUntilNextRecruitment = Duration.standardMinutes(3).plus(SAFETY_FACTOR).minus(timeSinceLastRecruitment);
-		wait.put("wait", Math.max(timeUntilNextRecruitment.getStandardSeconds(), 10));
+		wait.put("wait", Math.min(Math.max(timeUntilNextRecruitment.getStandardSeconds(), 10), 300)); 
 		
 		logRecruitmentPerformance(conn, nationId, regionId, (int)(System.currentTimeMillis() - startTime), status, -1);
 		return Json.toJson(wait);
@@ -687,7 +690,7 @@ public class RecruitmentController extends NationStatesController {
 				delete.setLong(1,System.currentTimeMillis() - Duration.standardDays(7).getMillis());
 				delete.executeUpdate();
 			}
-			Logger.info("Cleared recruitment_performance older than 1 week");
+			logger.info("Cleared recruitment_performance older than 1 week");
 		}
 	}
 
@@ -705,6 +708,8 @@ public class RecruitmentController extends NationStatesController {
 						return true;
 					} else if (confirmed == 0 && time.plus(SAFETY_FACTOR).plus(Duration.standardMinutes(4)).isBefore(DateTime.now())) {
 						return true;
+					} else if (time.isAfter(DateTime.now())) {
+						logger.warn("System clock unreliable! Database last recruitment time is AFTER current time, database is in the future!");
 					}
 				} else {
 					return true;
@@ -764,7 +769,7 @@ public class RecruitmentController extends NationStatesController {
 									}
 								}
 								if (!success) {
-									Logger.error("Unable to execute recruitment results confirmation, failed all 3 tries!", deadlock);
+									logger.error("Unable to execute recruitment results confirmation, failed all 3 tries!", deadlock);
 									return null;
 								}
 		
@@ -776,7 +781,7 @@ public class RecruitmentController extends NationStatesController {
 								data.put("campaign_id", campaign);
 								return data;
 							} else {
-								Logger.warn("Recruitment Target [" + target + "] has no nation id");
+								logger.warn("Recruitment Target [" + target + "] has no nation id");
 							}
 						} else {
 							//findRecruitmentTarget returned null, means there is no target to recruit!
@@ -784,7 +789,7 @@ public class RecruitmentController extends NationStatesController {
 								update.setLong(1, System.currentTimeMillis() + Duration.standardHours(1).getMillis());
 								update.setInt(2, campaign);
 								update.executeUpdate();
-								Logger.warn("[RECRUITMENT] Due to a lack of a target for recruitment campaign {}, it has been given a 1 hr cooldown period", campaign);
+								logger.warn("[RECRUITMENT] Due to a lack of a target for recruitment campaign {}, it has been given a 1 hr cooldown period", campaign);
 							}
 						}
 					}
@@ -803,7 +808,7 @@ public class RecruitmentController extends NationStatesController {
 			delete.setInt(1, insertId);
 			delete.setLong(2, System.currentTimeMillis() - Duration.standardMinutes(5).getMillis());
 			delete.executeUpdate();
-			Logger.info("Prevented double recruitment for region [" + region + "], by [" + nation + "].");
+			logger.info("Prevented double recruitment for region [" + region + "], by [" + nation + "].");
 			Map<String, Object> wait = new HashMap<String, Object>();
 			wait.put("wait", Duration.standardMinutes(3).plus(SAFETY_FACTOR).getStandardSeconds());
 			return wait;
