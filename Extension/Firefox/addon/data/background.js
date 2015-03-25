@@ -1,6 +1,6 @@
 //Minified js taken from /unminified-js and minified by http://jscompress.com/
 
-$.nspp = "2.5.1.1";
+$.nspp = "2.5.1.2";
 
 var googleAnalytics = 'function update(e){setTimeout(function(){_gaq.push(["_setAccount","UA-41267101-1"]);_gaq.push(["_trackPageview"]);_gaq.push(["_setCustomVar",1,"Version","v' + $.nspp + '",2]);if(e==1){_gaq.push(["_trackEvent","NationStates","URL",window.location.href])}update(6e4)},e)}var _gaq=_gaq||[];update(1)';
 
