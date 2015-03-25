@@ -243,14 +243,19 @@ public class NewspaperController extends NationStatesController {
 	public static JsonNode getLatestUpdateForRegion(Connection conn, NationContext context) throws SQLException {
 		final long lastRead = getLastReadTimestampForNewspaper(conn, context);
 		Map<String, Object> newspaperData = new HashMap<>();
-		try (PreparedStatement articles = conn.prepareStatement("SELECT max(articles.timestamp), articles.newspaper FROM assembly.articles INNER JOIN assembly.newspapers ON newspapers.id = articles.newspaper WHERE newspapers.region = ? AND newspapers.disbanded = 0 AND articles.visible = 1")) {
+		try (PreparedStatement articles = conn.prepareStatement(
+				"SELECT max(articles.timestamp), articles.newspaper "
+				+ "FROM assembly.articles INNER JOIN assembly.newspapers ON newspapers.id = articles.newspaper "
+				+ "WHERE newspapers.region = ? AND newspapers.disbanded = 0 AND articles.visible = 1")) {
 			articles.setInt(1, context.getUserRegionId());
 			try (ResultSet result = articles.executeQuery()) {
-				if (result.next()) {
+				if (result.next() && result.getInt(2) != 0) {
 					newspaperData.put("timestamp", result.getLong(1));
 					newspaperData.put("newspaper_id", result.getInt(2));
 					newspaperData.put("last_read", lastRead);
-					try (PreparedStatement unreadArticles = conn.prepareStatement("SELECT count(*) FROM assembly.articles WHERE articles.newspaper = ? AND articles.timestamp > ?")) {
+					try (PreparedStatement unreadArticles = conn.prepareStatement(
+							"SELECT count(*) FROM assembly.articles "
+							+ "WHERE articles.newspaper = ? AND articles.timestamp > ?")) {
 						unreadArticles.setInt(1, result.getInt(2));
 						unreadArticles.setLong(2, lastRead);
 						try (ResultSet unread = unreadArticles.executeQuery()) {
