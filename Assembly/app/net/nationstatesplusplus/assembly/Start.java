@@ -56,7 +56,7 @@ public class Start {
 			pool.setTestConnectionOnCheckout(true);
 			pool.setPreferredTestQuery("SELECT 1");
 			
-			//Timeout aqcuiring a connection after 30000ms (30s)
+			//Timeout acquiring a connection after 30000ms (30s)
 			pool.setCheckoutTimeout(1000 * 30);
 
 			//Connection Auth
