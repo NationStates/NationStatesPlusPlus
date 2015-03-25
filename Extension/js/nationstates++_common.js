@@ -601,14 +601,19 @@ function doAuthorizedPostRequestInternal(nation, url, authToken, postData, succe
 /*
 	Returns the nation name of the active user, or empty string if no active user.
 */
-function getUserNation() {
-	if ($(".bannernation a").attr("href")) {
-		return $(".bannernation a").attr("href").trim().substring(8);
-	}
-	if ($(".STANDOUT:first").attr("href")) {
-		return $(".STANDOUT:first").attr("href").substring(7);
+function getUserNation(page) {
+	if (typeof page === "undefined") {
+		var x = $(document);
 	} else {
-		var nationSelector = $("a:contains('Logout'):last");
+		var x = $(page);
+	}
+	if (x.find(".bannernation a").attr("href")) {
+		return x.find(".bannernation a").attr("href").trim().substring(8);
+	}
+	if (x.find(".STANDOUT:first").attr("href")) {
+		return x.find(".STANDOUT:first").attr("href").substring(7);
+	} else {
+		var nationSelector = x.find("a:contains('Logout'):last");
 		if (typeof nationSelector.text() != 'undefined' && nationSelector.text().length > 0) {
 			return nationSelector.text().substring(9, nationSelector.text().length - 2).replaceAll(" ", "_").toLowerCase();
 		}

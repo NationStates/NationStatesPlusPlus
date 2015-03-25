@@ -61,7 +61,7 @@
 					if (population.length == 0) {
 						$("#error_label").html("Creating New Region...").show();
 						$.get("//www.nationstates.net/page=create_region?nspp=1", function(data) {
-							if ($(data).find(".STANDOUT:first").attr("href").substring(7) != $("#puppet_name").val().replaceAll(" ", "_").toLowerCase()) {
+							if (getUserNation(data) != $("#puppet_name").val().replaceAll(" ", "_").toLowerCase()) {
 								$("#error_label").removeClass("progress_alert").addClass("danger_alert").html("Not logged in as '" + $("#puppet_name").val() + "'. Log in or found '" + $("#puppet_name").val() + "' and try again.").show();
 							} else {
 								$.post("//www.nationstates.net/page=create_region?nspp=1", "page=create_region&region_name=" + encodeURIComponent($("#destination").val()) + "&desc=+&founder_control=1&delegate_control=0&create_region=+Create+Region+", function(data) {
@@ -76,7 +76,7 @@
 					} else {
 						$("#error_label").html("Moving To Existing Region...").show();
 						$.get("//www.nationstates.net/region=" + $("#destination").val().replaceAll(" ", "_").toLowerCase() + "?nspp=1", function(data) {
-							if ($(data).find(".STANDOUT:first").attr("href").substring(7) != $("#puppet_name").val().replaceAll(" ", "_").toLowerCase()) {
+							if (getUserNation(data) != $("#puppet_name").val().replaceAll(" ", "_").toLowerCase()) {
 								$("#error_label").removeClass("progress_alert").addClass("danger_alert").html("Not logged in as '" + $("#puppet_name").val() + "'. Log in or found '" + $("#puppet_name").val() + "' and try again.").show();
 							} else if ($(data).find("img[alt='Password required']").length > 0) {
 								$("#error_label").removeClass("progress_alert").addClass("danger_alert").html("Can not move into passworded regions. Move the nation manually.").show();
