@@ -22,8 +22,8 @@
 	
 	$(window).on("websocket.region_happenings", function(event) {
 		$.get(window.location.href + "?nspp=1", function(page) {
-			var happenings = $(page).find("h3:contains('Regional Happenings')").next();
-			var current = $("h3:contains('Regional Happenings')").next();
+			var happenings = findRegionHappenings(page);
+			var current = findRegionHappenings();
 			var added = addHappenings(current, happenings);
 			happeningsIndex += added;
 		});
@@ -31,17 +31,36 @@
 	
 	$(window).on("websocket.nation_happenings", function(event) {
 		$.get(window.location.href + "?nspp=1", function(page) {
-			var happenings = $(page).find(".newsbox").find("ul");
-			var current = $(".newsbox").find("ul");
+			var happenings = findNationHappenings(page);
+			var current = findNationHappenings();
 			var added = addHappenings(current, happenings);
 			happeningsIndex += added;
 		});
 	});
 	
+	function findNationHappenings(page) {
+		if (typeof page === "undefined") {
+			var x = $(document);
+		} else {
+			var x = $(page);
+		}
+		return x.find(".newsbox").find("ul");
+	}
+
+	function findRegionHappenings() {
+		if (typeof page === "undefined") {
+			var x = $(document);
+		} else {
+			var x = $(page);
+		}
+		// Rift has an h2 where Century has an h3.
+		return x.find("h3:contains('Regional Happenings'),h2:contains('Regional Happenings')").next();
+	}
+
 	var happeningsIndex = 10;
 	var endHappenings = false;
 	function addInfiniteHappenings() {
-		var happenings = (getVisiblePage() == "nation" ? $(".newsbox").find("ul") : $("h3:contains('Regional Happenings')").next());
+		var happenings = (getVisiblePage() == "nation" ? findNationHappenings() : findRegionHappenings());
 		$("<div class='older' style='display: block;margin-left: 1%;  margin-right: 50%;'><a href='javascript:void(0)' id='more_happenings'><span id='load_more_happenings'>&#8593; Load More Happenings</span><span id='error_happenings'>Error Loading Happenings</span><span id='loading_happenings'>Loading...</span><span id='end_of_happenings'>End of Happenings</span></a></div>").insertAfter(happenings);
 		$("#more_happenings").find("span").hide();
 		$("#load_more_happenings").show();
@@ -75,7 +94,7 @@
 	}
 
 	function parseHappenings(json, national) {
-		var happenings = (national ? $(".newsbox").find("ul") : $("h3:contains('Regional Happenings')").next());
+		var happenings = (national ? findNationHappenings() : findRegionHappenings());
 		for (var i = 0; i < json.length; i++) {
 			var data = json[i];
 			if (i == 0 && (data.happening.contains("Unknown nation:") || data.happening.contains("Unknown region:"))) {
