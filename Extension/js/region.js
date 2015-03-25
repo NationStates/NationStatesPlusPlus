@@ -219,7 +219,7 @@ function handleRMBAds() {
 	var updateAdPosition = function() {
 		if (adBox.is(":visible") && adContent.width() > 10 && adContent.height() > 10) {
 			adBox.css("border", "2px solid black");
-			if (lastTop != filler.offset().top) {
+			if ( filler.length > 0 && lastTop != filler.offset().top) {
 				adBox.css("position", "absolute").css("top", filler.offset().top + 5 + "px").css("margin-left", "16.5%").css("margin-left", "calc(50% - " + (adBox.width() / 2 + 100) + "px");
 				lastTop = filler.offset().top;
 				filler.height(adBox.height());
@@ -794,7 +794,7 @@ function showFooterLink() {
 	var bottomHeight = (41 * ($("#foot").css("position") == "fixed" ? 1 : 2));
 	if ((atEarliestMessage || $("#end-search-results").length == 1) && $(document).scrollTop() + $(window).height() > $(document).height() - bottomHeight) {
 		$("#foot").css("position", "inherit");
-	} else if ($(document).scrollTop() > ($("#rmb_header").offset().top - 41)) {
+	} else if ( $("#rmb_header").length > 0 && $(document).scrollTop() > ($("#rmb_header").offset().top - 41)) {
 		var bottom = -Math.max(0, $("#rmb_header").offset().top - $(document).scrollTop());
 		$("#foot").css("position", "fixed").css("margin-left", "194px").css("width", $(window).width() - 194 + "px").css("width", "calc(100% - 194px)").css("bottom", bottom + "px");
 	}
