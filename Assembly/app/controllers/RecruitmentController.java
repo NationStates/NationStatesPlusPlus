@@ -24,6 +24,7 @@ import net.nationstatesplusplus.assembly.util.Utils;
 
 import org.apache.commons.dbutils.DbUtils;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.joda.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -604,12 +605,6 @@ public class RecruitmentController extends NationStatesController {
 
 	public Result findRecruitmentTarget(String region, String accessKey, boolean userAgentFix) throws SQLException, ExecutionException {
 		Utils.handleDefaultPostHeaders(request(), response());
-		//TODO: this is legacy, phase out client side code that sets this query parameter, then remove the parameter
-		if (!userAgentFix) {
-			Map<String, Object> temp = new HashMap<String, Object>();
-			temp.put("wait", "30");
-			return ok(Json.toJson(temp)).as("application/json");
-		}
 
 		final boolean validScriptAccess = isValidAccessKey(region, accessKey);
 		//Bypass standard nation authentication if we are a valid script
@@ -630,8 +625,11 @@ public class RecruitmentController extends NationStatesController {
 			}
 
 			if (regionId == -1) {
+				logger.debug("Unauthorized recruitment request by nation [{}] for region [{}]", nation, region);
 				return Results.unauthorized();
 			}
+			
+			logger.debug("Making valid recruitment request for region [{}] by recruiter nation [{}]", region, nation);
 			return ok(Json.toJson(calculateRecruitmentTarget(getDatabase(), conn, regionId, nation, getDatabase().getNationId(nation)))).as("application/json");
 		}
 	}
@@ -652,6 +650,8 @@ public class RecruitmentController extends NationStatesController {
 		} else {
 			status = 2;
 		}
+		
+		logger.trace("Recruitment target status for region [{}] by recruiter nation [{}] is {}", regionId, nation, status);
 
 		//Otherwise, abort with an instruction to delay retrying
 		Map<String, Object> wait = new HashMap<String, Object>();
@@ -664,12 +664,14 @@ public class RecruitmentController extends NationStatesController {
 					wait.put("timestamp", set.getLong("timestamp"));
 					wait.put("recruiter", access.getReverseIdCache().get(set.getInt("recruiter")));
 					timestamp = set.getLong("timestamp");
+					logger.trace("Recruitment results table shows last recruitment for region [{}] was by recruiter [{}] at time [{}]", regionId, wait.get("nation"), new DateTime(timestamp, DateTimeZone.UTC));
 				}
 			}
 		}
 		final Duration timeSinceLastRecruitment = new Duration(DateTime.now(), new DateTime(timestamp));
 		final Duration timeUntilNextRecruitment = Duration.standardMinutes(3).plus(SAFETY_FACTOR).minus(timeSinceLastRecruitment);
 		wait.put("wait", Math.min(Math.max(timeUntilNextRecruitment.getStandardSeconds(), 10), 300)); 
+		logger.trace("Instructing recruiter [{}] to wait for {} seconds before next recruitment attempt", wait.get("wait"));
 		
 		logRecruitmentPerformance(conn, nationId, regionId, (int)(System.currentTimeMillis() - startTime), status, -1);
 		return Json.toJson(wait);
@@ -703,20 +705,27 @@ public class RecruitmentController extends NationStatesController {
 					long timestamp = recruitment.getLong(1);
 					int confirmed = recruitment.getInt(2);
 					
-					final DateTime time = new DateTime(timestamp);
-					if (confirmed == 1 && time.plus(SAFETY_FACTOR).plus(Duration.standardMinutes(3)).isBefore(DateTime.now())) {
+					final DateTime time = new DateTime(timestamp, DateTimeZone.UTC);
+					if (confirmed == 1 && time.plus(SAFETY_FACTOR).plus(Duration.standardMinutes(3)).isBefore(DateTime.now(DateTimeZone.UTC))) {
+						logger.trace("Recruitment is possible for region [{}], last confirmed recruitment was at {}", region, time);
 						return true;
-					} else if (confirmed == 0 && time.plus(SAFETY_FACTOR).plus(Duration.standardMinutes(4)).isBefore(DateTime.now())) {
+					} else if (confirmed == 0 && time.plus(SAFETY_FACTOR).plus(Duration.standardMinutes(4)).isBefore(DateTime.now(DateTimeZone.UTC))) {
+						logger.trace("Recruitment is possible for region [{}], last unconfirmed recruitment was at {}", region, time);
 						return true;
 					} else if (time.isAfter(DateTime.now())) {
 						logger.warn("System clock unreliable! Database last recruitment time is AFTER current time, database is in the future!");
+					} else {
+						logger.trace("Recruitment is NOT possible for region [{}], last recruitment was at {} and confirmation status is {} (current time is {})", region, time, confirmed, DateTime.now(DateTimeZone.UTC));
+						return false;
 					}
 				} else {
+					logger.trace("Recruitment is possible for region [{}], no previous recruitment attempts", region);
 					return true;
 				}
 			}
-			return false;
 		}
+		logger.debug("Recruitment is NOT possible for region [{}], unknown reason!", region);
+		return false;
 	}
 
 	private static Map<String, Object> getRecruitmentTarget(DatabaseAccess access, Connection conn, int region, String nation) throws SQLException {
@@ -779,6 +788,7 @@ public class RecruitmentController extends NationStatesController {
 								data.put("secret_key", secretKey);
 								data.put("nation", target);
 								data.put("campaign_id", campaign);
+								logger.trace("Found recruitment target for region [{}] and recruiter nation [{}], target is [{}]", region, nation, target);
 								return data;
 							} else {
 								logger.warn("Recruitment Target [" + target + "] has no nation id");
@@ -796,6 +806,7 @@ public class RecruitmentController extends NationStatesController {
 				}
 			}
 		}
+		logger.debug("No recruitment targets were available for region [{}] and recruiter nation [{}]", region, nation);
 		return null;
 	}
 
