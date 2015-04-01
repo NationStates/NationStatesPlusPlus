@@ -189,12 +189,11 @@
 								"<h4>Endorsements given by " + nation + "</h4><div id='endorsements-given'>Loading...</div>");
 								
 		$.get("https://nationstatesplusplus.net/api/nation/missingendo/?fullData=true&name=" + getVisibleNation(), function(data) {
-			var html = "";
+			var html = [];
 			for (var i = 0; i < data.length; i++) {
 				var nation = data[i];
-				if (i > 0) html += ", ";
-				html += "<a href='nation=" + nation.name + "' class='nlink' title='" + nation.fullName + "'><img class='miniflag' alt='" + nation.fullName + 
-				"' src='" + nation.flag + "'>" + nation.title + "</a>";
+				if (i > 0) html.push(", ");
+				html.push(nationLink(nation));
 			}
 			if (html.length == 0) {
 				html = getVisibleNation().replaceAll("_", " ").toTitleCase() + " has endorsed all the nations in " + $(".rlink:first").attr("href").substring(7).replaceAll("_", " ").toTitleCase();
@@ -202,12 +201,11 @@
 			$("#missingendo").html(html);
 		});
 		$.get("https://nationstatesplusplus.net/api/nation/unreturnedendo/?fullData=true&name=" + getVisibleNation(), function(data) {
-			var html = "";
+			var html = [];
 			for (var i = 0; i < data.length; i++) {
 				var nation = data[i];
-				if (i > 0) html += ", ";
-				html += "<a href='nation=" + nation.name + "' class='nlink' title='" + nation.fullName + "'><img class='miniflag' alt='" + nation.fullName + 
-				"' src='" + nation.flag + "'>" + nation.title + "</a>";
+				if (i > 0) html.push(", ");
+				html.push(nationLink(nation));
 			}
 			if (html.length == 0) {
 				html = getVisibleNation().replaceAll("_", " ").toTitleCase() + " has been mutually endorsed by every nation.";
@@ -215,12 +213,11 @@
 			$("#unreturnedendo").html(html);
 		});
 		$.get("https://nationstatesplusplus.net/api/nation/endorsements/?fullData=true&name=" + getVisibleNation(), function(data) {
-			var html = "";
+			var html = [];
 			for (var i = 0; i < data.length; i++) {
 				var nation = data[i];
-				if (i > 0) html += ", ";
-				html += "<a href='nation=" + nation.name + "' class='nlink' title='" + nation.fullName + "'><img class='miniflag' alt='" + nation.fullName + 
-				"' src='" + nation.flag + "'>" + nation.title + "</a>";
+				if (i > 0) html.push(", ");
+				html.push(nationLink(nation));
 			}
 			if (html.length == 0) {
 				html = getVisibleNation().replaceAll("_", " ").toTitleCase() + " has not endorsed any World Assembly Member Nations!";
@@ -316,6 +313,19 @@
 			if (!isRiftTheme())
 				html += "</p>";
 			$("#rinf, .newrinfbubble .newmainlinebubblebottom").html(html);
+		});
+	}
+
+	function nationLink(nation) {
+		return $("<a></a>", { 
+			href: "nation=" + nation.name,
+			"class": "nlink",
+			title: nation.fullName,
+			html: [$("<img/>",{
+				"class": "miniflag",
+				alt: nation.fullName,
+				src: nation.flag, 
+			}), nation.title],
 		});
 	}
 })();
