@@ -323,9 +323,12 @@
 			title: nation.fullName,
 			html: [$("<img/>",{
 				"class": "miniflag",
+				css: { "width": "20px"},
 				alt: nation.fullName,
 				src: nation.flag, 
-			}), nation.title],
+			}), $("<span></span>",{
+				html: nation.title,
+			})],
 		});
 	}
 })();
