@@ -53,9 +53,13 @@ var pageUrl = window.location.href;
 
 	if ($("link[href^='/ns.dark']").length > 0) {
 		addStylesheetString(darkThemeCSS);
-		addStylesheet("//ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/themes/ui-darkness/jquery-ui.min.css");
-	} else {
-		addStylesheet("//ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/themes/ui-lightness/jquery-ui.min.css");
+	}
+	if (pageUrl.indexOf("page=blank") != -1 ) {
+		if ($("link[href^='/ns.dark']").length > 0) {
+			addStylesheet("//ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/themes/ui-darkness/jquery-ui.min.css");
+		} else {
+			addStylesheet("//ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/themes/ui-lightness/jquery-ui.min.css");
+		}
 	}
 	addStylesheet("//netdna.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css");
 
