@@ -130,12 +130,7 @@
 		var chk = $("input[name='chk']");
 		if (chk.length != 0) {
 			$.get("/page=tgsettings?nspp=1", function(html) {
-				var nation = "";
-				if ($(html).find(".bannernation a").attr("href")) {
-					nation = $(html).find(".bannernation a").attr("href").trim().substring(8);
-				} else {
-					nation = $(html).find(".STANDOUT:first").attr("href").substring(7);
-				}
+				var nation = getUserNation(html);
 				
 				if (nation == getUserNation()) {
 					chk.val($(html).find("input[name='chk']").val());
