@@ -522,19 +522,35 @@ function addFontAwesomeIcons() {
 function addRegionalControls() {
 	var rControls = $("a[href='page=region_control/region=" + getVisibleRegion() + "']");
 	if (rControls.length > 0) {
-		$("<a href='page=region_admin/region=" + getVisibleRegion() + "'>Administration</a><span> &#8226; </span>").insertBefore(rControls);
-		rControls.html("Regional Controls");
-		
+		if (isRiftTheme()) {
+			$("<a href='page=region_admin/region=" + getVisibleRegion() + "'><i class='icon-town-hall'></i><span class='navtext'>Admin</span></a>").insertBefore(rControls);
+			rControls.html("<i class='fa fa-wrench'></i><span class='navtext'>Controls</span>");
+		} else {
+			$("<a href='page=region_admin/region=" + getVisibleRegion() + "'>Administration</a><span> &#8226; </span>").insertBefore(rControls);
+			rControls.html("Regional Controls");
+		}		
+
 		var founder = $("strong:contains('Founder'):first");
 		var userIsFounder = (founder.length > 0 && (typeof founder.next().attr("href") != "undefined") && founder.next().attr("href").substring(7) == getUserNation());
-		$("<span> &#8226; </span><a name='rc' href='page=blank/?banhammer=" + getVisibleRegion() + (userIsFounder ? "&free=true" : "") + "'>Banhammer</a>").insertAfter(rControls);
+        if (isRiftTheme()) {
+            $("<a name='rc' href='page=blank/?banhammer=" + getVisibleRegion() + (userIsFounder ? "&free=true" : "") + "'><i class='fa fa-gavel'></i><span class='navtext'>Banhammer</span></a>").insertAfter(rControls);
+        } else {
+    		$("<span> &#8226; </span><a name='rc' href='page=blank/?banhammer=" + getVisibleRegion() + (userIsFounder ? "&free=true" : "") + "'>Banhammer</a>").insertAfter(rControls);
+        }
 	} else {
 		rControls = $("a[href='page=region_admin/region=" + getVisibleRegion() + "']");
-		$("<span> &#8226; </span><a name='rc' href='page=region_control/region=" + getVisibleRegion() + "'>Regional Controls</a>").insertAfter(rControls);
+		if (isRiftTheme()) {
+			$("<a href='page=region_control/region=" + getVisibleRegion() + "'><i class='fa fa-wrench'></i><span class='navtext'>Controls</span></a>").insertAfter(rControls);
+		} else {
+			$("<span> &#8226; </span><a name='rc' href='page=region_control/region=" + getVisibleRegion() + "'>Regional Controls</a>").insertAfter(rControls);
+		}
 	}
-	rControls.parent().append("<span id='recruit-admin' style='display:none'> &#8226; <a href='page=blank?recruitment=" + getVisibleRegion() + "'>Recruitment</a></span>");
-
-	rControls.parent().prepend("<i style='margin-right:4px;' class='fa fa-wrench'></i>");
+	if (isRiftTheme()) {
+		$("<a href='page=blank?recruitment=" + getVisibleRegion() + "'><i class='fa fa-user'></i><span class='navtext'>Recruitment</span></a>").insertAfter(rControls);
+	} else {
+		rControls.parent().append("<span id='recruit-admin' style='display:none'> &#8226; <a href='page=blank?recruitment=" + getVisibleRegion() + "'>Recruitment</a></span>");
+		rControls.parent().prepend("<i style='margin-right:4px;' class='fa fa-wrench'></i>");
+	}
 }
 
 function addUpdateTime() {
