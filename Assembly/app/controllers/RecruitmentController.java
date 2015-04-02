@@ -712,8 +712,12 @@ public class RecruitmentController extends NationStatesController {
 					} else if (confirmed == 0 && time.plus(SAFETY_FACTOR).plus(Duration.standardMinutes(4)).isBefore(DateTime.now(DateTimeZone.UTC))) {
 						logger.trace("Recruitment is possible for region [{}], last unconfirmed recruitment was at {}", region, time);
 						return true;
+					} else if (confirmed == -1 && time.plus(SAFETY_FACTOR).plus(Duration.standardMinutes(5)).isBefore(DateTime.now(DateTimeZone.UTC))) {
+						logger.trace("Recruitment should be possible for region [{}], last recruitment attempt was at {}", region, time);
+						return true;
 					} else if (time.isAfter(DateTime.now())) {
 						logger.warn("System clock unreliable! Database last recruitment time is AFTER current time, database is in the future!");
+						return false;
 					} else {
 						logger.trace("Recruitment is NOT possible for region [{}], last recruitment was at {} and confirmation status is {} (current time is {})", region, time, confirmed, DateTime.now(DateTimeZone.UTC));
 						return false;
@@ -724,8 +728,6 @@ public class RecruitmentController extends NationStatesController {
 				}
 			}
 		}
-		logger.debug("Recruitment is NOT possible for region [{}], unknown reason!", region);
-		return false;
 	}
 
 	private static Map<String, Object> getRecruitmentTarget(DatabaseAccess access, Connection conn, int region, String nation) throws SQLException {
