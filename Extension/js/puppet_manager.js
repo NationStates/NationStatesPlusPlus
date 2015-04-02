@@ -227,7 +227,15 @@
 								$("span[region='" + name + "']").html("<span style='width: 24px; display: inline-block;'><img class='miniflag' style='margin-bottom:4px' src='" + event.json[name].region.flag + "'></span> " + event.json[name].region.title);
 							}
 						}
-						$("span[name='" + name + "']").css("width", "32px").css("display", "inline-block").html("<img class='miniflag' title='" + title + "' style='max-height: 18px; max-width: 28px;' src='" + flag + "'>");
+						$("span[name='" + name + "']").css("width", "32px").css("display", "inline-block").html($("<img/>",{ 
+							class: 'miniflag',
+							title: title,
+							css: {
+								"max-height": "18px",
+								"max-width": "28px",
+							},
+							src: flag,
+						}));
 					}
 				}
 			});
