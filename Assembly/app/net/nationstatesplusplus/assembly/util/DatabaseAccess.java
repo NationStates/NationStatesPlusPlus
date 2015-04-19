@@ -16,7 +16,6 @@ import net.nationstatesplusplus.assembly.nation.DefaultSettings;
 import net.nationstatesplusplus.assembly.nation.MongoSettings;
 import net.nationstatesplusplus.assembly.nation.NationSettings;
 
-import org.apache.commons.dbutils.DbUtils;
 import org.joda.time.Duration;
 
 import play.Logger;
@@ -314,22 +313,20 @@ public class DatabaseAccess {
 		if (authToken == null || authToken.length() != 64) {
 			return false;
 		}
-		Connection conn = null;
-		try {
-			conn = pool.getConnection();
-			PreparedStatement statement = conn.prepareStatement("SELECT auth from assembly.nation_auth WHERE nation_id = ? AND time > ?");
-			statement.setInt(1, id);
-			statement.setLong(2, System.currentTimeMillis());
-			ResultSet result = statement.executeQuery();
-			while (result.next()) {
-				if (authToken.equals(result.getString(1))) {
-					return true;
+		try (Connection conn = pool.getConnection()) {
+			try (PreparedStatement statement = conn.prepareStatement("SELECT auth from assembly.nation_auth WHERE nation_id = ? AND time > ?")) {
+				statement.setInt(1, id);
+				statement.setLong(2, System.currentTimeMillis());
+				try (ResultSet result = statement.executeQuery()) {
+					while (result.next()) {
+						if (authToken.equals(result.getString(1))) {
+							return true;
+						}
+					}
 				}
 			}
 		} catch (SQLException e) {
 			Logger.error("Unable to verify auth token", e);
-		} finally {
-			DbUtils.closeQuietly(conn);
 		}
 		return false;
 	}
@@ -399,44 +396,37 @@ public class DatabaseAccess {
 	}
 
 	public void markNationDead(int nationId, Connection conn) throws SQLException {
-		final boolean givenConn = conn != null;
-		if (!givenConn) {
-			conn = pool.getConnection();
-		}
-		try {
-			PreparedStatement markDead = conn.prepareStatement("UPDATE assembly.nation SET alive = 0, wa_member = 0, cte = ? WHERE id = ?");
+		try (PreparedStatement markDead = conn.prepareStatement("UPDATE assembly.nation SET alive = 0, wa_member = 0, cte = ? WHERE id = ?")) {
 			markDead.setLong(1, System.currentTimeMillis() / 1000L);
 			markDead.setInt(2, nationId);
 			markDead.executeUpdate();
+		}
 			
-			PreparedStatement hasEndorsement = conn.prepareStatement("DELETE FROM assembly.endorsements WHERE endorsed = ? OR endorser = ?");
+		try (PreparedStatement hasEndorsement = conn.prepareStatement("DELETE FROM assembly.endorsements WHERE endorsed = ? OR endorser = ?")) {
 			hasEndorsement.setInt(1, nationId);
 			hasEndorsement.setInt(2, nationId);
 			hasEndorsement.execute();
-			hasEndorsement.close();
-		} finally {
-			if (!givenConn) {
-				DbUtils.closeQuietly(conn);
-			}
 		}
 	}
 
 	public void markRegionDead(String region, Connection conn) throws SQLException {
 		int regionId = getRegionId(region);
 		if (regionId > -1 && region != null) {
-			
-			PreparedStatement disbandNewspapers = conn.prepareStatement("UPDATE assembly.newspapers SET disbanded = 1 WHERE disbanded = 0 AND region = ?");
-			disbandNewspapers.setString(1, Utils.sanitizeName(region));
-			disbandNewspapers.executeUpdate();
-			
-			PreparedStatement disbandRecruitmentCampaigns = conn.prepareStatement("UPDATE assembly.recruit_campaign SET retired = ? WHERE retired IS NOT NULL AND region = ?");
-			disbandRecruitmentCampaigns.setLong(1, System.currentTimeMillis());
-			disbandRecruitmentCampaigns.setInt(2, regionId);
-			disbandRecruitmentCampaigns.executeUpdate();
-			
-			PreparedStatement markDead = conn.prepareStatement("UPDATE assembly.region SET alive = 0, update_order = -1, embassies = NULL, population = 0 WHERE name = ?");
-			markDead.setString(1, Utils.sanitizeName(region));
-			markDead.executeUpdate();
+			try (PreparedStatement disbandNewspapers = conn.prepareStatement("UPDATE assembly.newspapers SET disbanded = 1 WHERE disbanded = 0 AND region = ?")) {
+				disbandNewspapers.setString(1, Utils.sanitizeName(region));
+				disbandNewspapers.executeUpdate();
+			}
+
+			try (PreparedStatement disbandRecruitmentCampaigns = conn.prepareStatement("UPDATE assembly.recruit_campaign SET retired = ? WHERE retired IS NOT NULL AND region = ?")) {
+				disbandRecruitmentCampaigns.setLong(1, System.currentTimeMillis());
+				disbandRecruitmentCampaigns.setInt(2, regionId);
+				disbandRecruitmentCampaigns.executeUpdate();
+			}
+
+			try (PreparedStatement markDead = conn.prepareStatement("UPDATE assembly.region SET alive = 0, update_order = -1, embassies = NULL, population = 0 WHERE name = ?")) {
+				markDead.setString(1, Utils.sanitizeName(region));
+				markDead.executeUpdate();
+			}
 		}
 	}
 }
