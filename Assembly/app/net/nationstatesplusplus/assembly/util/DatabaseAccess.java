@@ -413,7 +413,7 @@ public class DatabaseAccess {
 		int regionId = getRegionId(region);
 		if (regionId > -1 && region != null) {
 			try (PreparedStatement disbandNewspapers = conn.prepareStatement("UPDATE assembly.newspapers SET disbanded = 1 WHERE disbanded = 0 AND region = ?")) {
-				disbandNewspapers.setString(1, Utils.sanitizeName(region));
+				disbandNewspapers.setInt(1, regionId);
 				disbandNewspapers.executeUpdate();
 			}
 
