@@ -252,12 +252,13 @@
 		$("div[name='wa_stats']").hide();
 		$("#" + stats).html("");
 		$("#" + stats).show();
+        var region = $(".menu.rlink:first").attr("href").substring(7);
 		if (stats == "power") {
-			loadRegionEndorsements($(".rlink:first").attr("href").substring(7), false);
+			loadRegionEndorsements(region, false);
 		} else if (stats == "influence") {
-			loadRegionEndorsements($(".rlink:first").attr("href").substring(7), true);
+			loadRegionEndorsements(region, true);
 		} else if (stats == "endorsements") {
-			loadEndorsementStats($(".rlink:first").attr("href").substring(7));
+			loadEndorsementStats(region);
 		}
 	}
 
