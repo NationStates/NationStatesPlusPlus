@@ -6,7 +6,7 @@
 		var nsppIcon = "<span style='font-size:12px' title='This is a setting that is provided by the NationStates++ extension'>(NS<i class='fa fa-plus'></i><i class='fa fa-plus'></i>) </span>";
 		
 		//Found Newspaper button
-		$("<div id='regional_newspaper'></div>").insertBefore("h4:contains('Welcome Telegrams')");
+		$("<div id='regional_newspaper'></div>").prependTo(":header:contains('Communications') + .divindent");
 		$("#regional_newspaper").html("<h4>" + nsppIcon + "Regional Newspaper</h4>");
 		$.get("https://nationstatesplusplus.net/api/newspaper/region/?region=" + getVisibleRegion() + "&time=" + Date.now(), function(data) {
 			$("#regional_newspaper").append("<button id='disband_news' class='button danger'>Disband Regional Newspaper</button><span id='lack_authority' style='display:none;margin-left: 5px;color:red;'>You do not have authority to disband.</span><span id='disbanded_success' style='display:none;margin-left: 5px;color:green;'>The regional newspaper has been disbanded.</span>");
