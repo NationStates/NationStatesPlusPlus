@@ -79,7 +79,7 @@ function loadJavascript() {
 	if (pageUrl.indexOf('www.nationstates.net/') > -1) {
 		console.log('[NationStates++] Detected NationStates Page. Loading...');
 
-		if (document.head.innerHTML.indexOf("//ajax.googleapis.com/ajax/libs/jquery") != -1) {
+		if (document.head.innerHTML.search(/jquery_v\d+\.js/) != -1) {
 			addJavascriptString(highchartsAdapter);
 		}
 
