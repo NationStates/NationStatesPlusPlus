@@ -46,9 +46,9 @@
 
 	function addNavBarLink(iconCode, iconClasses, text, hrefFn) {
 		if (isRiftTheme()) {
-			$(".newmainlinebox+.nationnavbar").append("<a href='" + hrefFn(getVisibleNation()) + "'><i class='" + iconClasses + "'></i><span class='navtext'>"+text+"</span></a>");
+			$("p.nationnavbar").append("<a href='" + hrefFn(getVisibleNation()) + "'><i class='" + iconClasses + "'></i><span class='navtext'>"+text+"</span></a>");
 		} else {
-			$(".nationnavbar").append($('<div/>').html(" &#" + iconCode + "; ").text() + "<a href='" + hrefFn(getVisibleNation()) + "'>" + text + "</a>");
+			$("p.nationnavbar").append($('<div/>').html(" &#" + iconCode + "; ").text() + "<a href='" + hrefFn(getVisibleNation()) + "'>" + text + "</a>");
 		}
 	}
 	
