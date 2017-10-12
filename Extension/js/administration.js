@@ -4,37 +4,11 @@
 		$("input[type='button']").addClass("button");
 
 		var nsppIcon = "<span style='font-size:12px' title='This is a setting that is provided by the NationStates++ extension'>(NS<i class='fa fa-plus'></i><i class='fa fa-plus'></i>) </span>";
-		
-		//Found Newspaper button
-		$("<div id='regional_newspaper'></div>").prependTo(":header:contains('Communications') + .divindent");
-		$("#regional_newspaper").html("<h4>" + nsppIcon + "Regional Newspaper</h4>");
-		$.get("https://nationstatesplusplus.net/api/newspaper/region/?region=" + getVisibleRegion() + "&time=" + Date.now(), function(data) {
-			$("#regional_newspaper").append("<button id='disband_news' class='button danger'>Disband Regional Newspaper</button><span id='lack_authority' style='display:none;margin-left: 5px;color:red;'>You do not have authority to disband.</span><span id='disbanded_success' style='display:none;margin-left: 5px;color:green;'>The regional newspaper has been disbanded.</span>");
-			$("#disband_news").on("click", function(event) {
-				event.preventDefault();
-				doAuthorizedPostRequest("https://nationstatesplusplus.net/api/newspaper/disband/?region=" + getVisibleRegion(), "", function(data) {
-					$("#disband_news").toggleDisabled();
-					$("#disbanded_success").show();
-				}, function() {
-					$("#lack_authority").show();
-					$("#disband_news").toggleDisabled();
-				});
-			});
-		}).fail(function() {
-			$("#regional_newspaper").append("<button id='found_news' class='button'>Found Regional Newspaper</button><span id='lack_authority' style='display:none;margin-left: 5px;color:red;'>You do not have authority.</span>");
-			$("#found_news").on("click", function(event) {
-				event.preventDefault();
-				doAuthorizedPostRequest("https://nationstatesplusplus.net/api/newspaper/found/?region=" + getVisibleRegion(), "", function(json) {
-					window.location.href = "//www.nationstates.net/page=blank?manage_newspaper=" + json.newspaper_id;
-				}, function() {
-					$("#lack_authority").show();
-					$("#found_news").toggleDisabled();
-				});
-			});
-		});
 
+        $(".divindent:first").after("<h2 id='nspp'><i class='fa fa-plus-square'></i> NS++</h2><div class='divindent'></div>");
+	
 		//Regional Titles
-		$(".divindent:first").append("<div id='regional_titles'><h4>" + nsppIcon + "Regional Titles</h4><fieldset>" +
+		$("#nspp+.divindent").append("<div id='regional_titles'><h4>" + nsppIcon + "Regional Titles</h4><fieldset>" +
 			"<p><span id='rd_label'><b>Regional Delegate Title: </b></span><input placeholder='Title for the WA Delegate' id='rd_title' style='width:500px' maxlength='40' class='text-input' type='text' disabled></p>" +
 			"<p><span id='rf_label'><b>Regional Founder Title: </b></span><input placeholder='Title for the Founder' id='rf_title' style='width:500px' maxlength='40' class='text-input' type='text' disabled>" + 
 			"</p><p><button class='button' id='update_titles' disabled>Update Titles</button><button class='button danger icon remove' id='reset_titles' disabled>Reset Titles</button>" +
@@ -92,7 +66,7 @@
 		});
 
 		//Regional Map
-		$(".divindent:first").append("<div id='regional_map'><h4>" + nsppIcon + "Regional Map</h4><fieldset>" +
+		$("#nspp+.divindent").append("<div id='regional_map'><h4>" + nsppIcon + "Regional Map</h4><fieldset>" +
 			"<p><span id='rml_label'><b>Regional Map Link: </b></span><input placeholder='URL to map discussion' id='region_map_link' style='width:700px' class='text-input' type='text'></p>" +
 			"<p><span id='rmp_label'><b>Regional Map Preview Image: </b></span><input placeholder='URL to map image' id='region_map_preview' style='width:700px' class='text-input' type='text'>" + 
 			"</p><p><button class='button' id='update_map'>Update Map</button><button class='button danger icon remove' id='disband_map'>Disband Map</button>" +
@@ -143,7 +117,7 @@
 		});
 		
 		//Regional IRC
-		$("<div id='regional_irc'></div>").insertAfter("#regional_newspaper");
+		$("<div id='regional_irc'></div>").appendTo("#nspp+.divindent");
 		$("#regional_irc").html("<h4>" + nsppIcon + "Regional IRC</h4><fieldset>" +
 			"<p><span id='irc_network_label'><b>IRC Network: </b></span><input placeholder='irc.esper.net' id='irc_network' style='width:500px' maxlength='40' class='text-input' type='text'></p>" +
 			"<p><span id='irc_channel_label'><b>IRC Channel: </b></span><input placeholder='' id='irc_channel' style='width:500px' maxlength='40' class='text-input' type='text'>" + 
