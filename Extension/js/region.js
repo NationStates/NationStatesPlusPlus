@@ -15,6 +15,10 @@
 	}
 })();
 
+function getVisibleRegionName() {
+    return $("h1 a").attr("href").split("=")[1];
+}
+
 function setupRegionPage() {
 	(new UserSettings()).child("auto_update").on(function(data) {
 		if (data["auto_update"]) {
@@ -77,12 +81,8 @@ function setupRegionPage() {
 			relocatePostMessageBox();
 			//Relocate ads
 			handleRMBAds();
-			//Move forum view link if it exists
-			if( $('#content .rmbview').length > 0 ) {
-				var forumViewHTML = $('#content .rmbview')[0].outerHTML;
-				$('#content .rmbview').remove();
-				$(forumViewHTML).insertBefore(".rmbtable2:first");
-			}
+			//Create forum view link in useful location
+            $("<p class='rightbox'><a href='/page=display_region_rmb/region="+getVisibleRegionName()+"'>Forum View</a></p>").insertBefore(".rmbtable2:first");
 			//Show footer link when scrolling down
 			$("h3:contains('Regional Message Board')").attr("id", "rmb_header");
 			$(window).scroll(showFooterLink);
