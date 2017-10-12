@@ -31,7 +31,6 @@ function setupRegionPage() {
 		}
 	}, true);
 
-	addUpdateTime();
 	addRegionalControls();
 	addFontAwesomeIcons();
 	updateButtonCSS();
@@ -552,27 +551,6 @@ function addRegionalControls() {
 		rControls.parent().append("<span id='recruit-admin' style='display:none'> &#8226; <a href='page=blank?recruitment=" + getVisibleRegion() + "'>Recruitment</a></span>");
 		rControls.parent().prepend("<i style='margin-right:4px;' class='fa fa-wrench'></i>");
 	}
-}
-
-function addUpdateTime() {
-	$(window).on("websocket.region_updates", function(event) {
-		var data = event.json;
-		var text;
-		var update;
-		var hours = (Math.floor(Date.now() / (24 * 60 * 60 * 1000)) * 24 * 60 * 60 * 1000);
-		if ((Date.now() - hours) > data.minor.mean || (Date.now() - hours) < data.major.mean){
-			update = data.major;
-		} else {
-			update = data.minor;
-		}
-		if (update.mean != 0) {
-			var nextUpdate = hours + update.mean;
-			if ($("h1:first .updatetime").length == 0)
-				$("h1:first").append("<span class='updatetime'></span>");
-			$("h1:first .updatetime").html("Next Update: " + (new Date(nextUpdate)).customFormat("#hh#:#mm#:#ss# #AMPM#") + " [&plusmn; " + Math.floor(update.std * 2 / 1000) + " s]");
-			$("h1:first .updatetime").attr("title", "Update Order: " + update.update_order);
-		}
-	});
 }
 
 function encodeRMBPost(message) {
