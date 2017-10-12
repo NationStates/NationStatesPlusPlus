@@ -58,23 +58,6 @@
 		});
 	}
 
-	function displayAfforess() {
-		window.document.title = "The Free Republic of Afforess";
-		var contents = "https://nationstatesplusplus.net/nationstates/afforess.html";
-		if (getPageDetail() == "people") {
-			contents = "https://nationstatesplusplus.net/nationstates/people.html"
-		}
-		if (getPageDetail() == "government") {
-			contents = "https://nationstatesplusplus.net/nationstates/government.html"
-		}
-		if (getPageDetail() == "trend") {
-			contents = "https://nationstatesplusplus.net/nationstates/trend.html"
-		}
-		$.get(contents, function(data) {
-			$("#content").html($(data).html());
-		});
-	}
-
 	function loadNSPPSupporterIcon() {
 		var trophyContainer = null;
 		if ($(".trophy").length == 0) {
