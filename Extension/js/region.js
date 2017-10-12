@@ -56,6 +56,7 @@ function setupRegionPage() {
 			}
 		});
 	};
+
 	(new UserSettings()).child("clickable_links").on(function(data) {
 		console.log("clickable links: " + data["clickable_links"]);
 		if (data["clickable_links"]) {
@@ -902,7 +903,7 @@ function updateRMB() {
 			});
 			//Insert new posts
 			if (html.length > 0) {
-				var isInfiniteScroll = $(".rmbolder").length == 0;
+				var isInfiniteScroll = !localStorage.getItem("infinite_scroll"); 
  				if (isInfiniteScroll) {
 					$(html).insertBefore('.rmbrow:first').hide().show('slow');
 				} else {
