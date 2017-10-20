@@ -1,15 +1,6 @@
 (function() {
 	if (getVisiblePage() == "region" || getVisiblePage() == "display_region") {
 		setupRegionPage();
-	} else if (getVisiblePage() == "display_region_rmb") {
-		$('[name="lodge_message"]').attr("class", "button icon approve primary");
-		$('[name="lodge_message"]').attr("value", "1");
-		$('[name="lodge_message"]').changeElementType("button");
-		$('[name="lodge_message"]').html("Lodge Message");
-		$('[name="preview"]').attr("class", "previewbutton button search icon");
-		$('[name="preview"]').removeAttr("value");
-		$('[name="preview"]').changeElementType("button");
-		$('[name="preview"]').html("Preview");
 	} else if (getVisiblePage() == "region_control") {
 		addFormattingButtons();
 	}
@@ -243,9 +234,11 @@ function relocatePostMessageBox() {
 			if ($(this).html().indexOf("From: ") != -1)
 				$(this).remove();
 		});
-		if ($("form[id='rmb']").length > 0) {
-			formHtml = "<div id='rmb-post-form'><form id='rmb'>" + $("form[id='rmb']").html() + "</form></div>";
-			$("form[id='rmb']").remove();
+		$rmbform = $("form[id='rmb']");
+		if ($rmbform.length > 0) {
+			formHtml = $("<div id='rmb-post-form'></div>");
+			$rmbform.remove();
+			formHtml.append($rmbform);
 		}
 		$('.widebox:last').prepend(formHtml);
 	}
